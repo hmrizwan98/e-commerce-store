@@ -1,61 +1,62 @@
-"use client";
+'use client';
 
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   NoSymbolIcon,
   ClockIcon,
   SparklesIcon,
-} from "@heroicons/react/24/outline";
-import ButtonPrimary from "@/shared/Button/ButtonPrimary";
-import ButtonSecondary from "@/shared/Button/ButtonSecondary";
-import NcImage from "@/shared/NcImage/NcImage";
-import ReviewItem from "@/components/ReviewItem";
-import detail21JPG from "@/images/products/detail3-1.webp";
-import detail22JPG from "@/images/products/detail3-2.webp";
-import detail23JPG from "@/images/products/detail3-3.webp";
-import detail24JPG from "@/images/products/detail3-4.webp";
-import { PRODUCTS } from "@/data/data";
-import IconDiscount from "@/components/IconDiscount";
-import NcInputNumber from "@/components/NcInputNumber";
-import BagIcon from "@/components/BagIcon";
-import toast from "react-hot-toast";
-import { StarIcon } from "@heroicons/react/24/solid";
-import SectionSliderProductCard from "@/components/SectionSliderProductCard";
-import NotifyAddTocart from "@/components/NotifyAddTocart";
-import Image, { StaticImageData } from "next/image";
-import LikeSaveBtns from "@/components/LikeSaveBtns";
-import AccordionInfo from "@/components/AccordionInfo";
-import Policy from "../product-detail/Policy";
-import ModalViewAllReviews from "../product-detail/ModalViewAllReviews";
-import ListingImageGallery from "@/components/listing-image-gallery/ListingImageGallery";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Route } from "next";
+} from '@heroicons/react/24/outline';
+import ButtonPrimary from '@/shared/Button/ButtonPrimary';
+import ButtonSecondary from '@/shared/Button/ButtonSecondary';
+import NcImage from '@/shared/NcImage/NcImage';
+import ReviewItem from '@/components/ReviewItem';
+import detail21JPG from '@/images/products/detail3-1.webp';
+import detail22JPG from '@/images/products/detail3-2.webp';
+import detail23JPG from '@/images/products/detail3-3.webp';
+import detail24JPG from '@/images/products/detail3-4.webp';
+import { PRODUCTS } from '@/data/data';
+import IconDiscount from '@/components/IconDiscount';
+import NcInputNumber from '@/components/NcInputNumber';
+import BagIcon from '@/components/BagIcon';
+import toast from 'react-hot-toast';
+import { StarIcon } from '@heroicons/react/24/solid';
+import SectionSliderProductCard from '@/components/SectionSliderProductCard';
+import NotifyAddTocart from '@/components/NotifyAddTocart';
+import Image, { StaticImageData } from 'next/image';
+import LikeSaveBtns from '@/components/LikeSaveBtns';
+import AccordionInfo from '@/components/AccordionInfo';
+import Policy from '../product-detail/Policy';
+import ModalViewAllReviews from '../product-detail/ModalViewAllReviews';
+import ListingImageGallery from '@/components/listing-image-gallery/ListingImageGallery';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { Route } from 'next';
 
 const LIST_IMAGES_GALLERY_DEMO: (string | StaticImageData)[] = [
   detail21JPG,
   detail22JPG,
   detail23JPG,
   detail24JPG,
-  "https://images.pexels.com/photos/3812433/pexels-photo-3812433.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
-  "https://images.pexels.com/photos/1884581/pexels-photo-1884581.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
-  "https://images.pexels.com/photos/1127000/pexels-photo-1127000.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
-  "https://images.pexels.com/photos/292999/pexels-photo-292999.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
-  "https://images.pexels.com/photos/1778412/pexels-photo-1778412.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
-  "https://images.pexels.com/photos/871494/pexels-photo-871494.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
-  "https://images.pexels.com/photos/2850487/pexels-photo-2850487.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+  'https://images.pexels.com/photos/3812433/pexels-photo-3812433.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
+  'https://images.pexels.com/photos/1884581/pexels-photo-1884581.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
+  'https://images.pexels.com/photos/1127000/pexels-photo-1127000.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
+  'https://images.pexels.com/photos/292999/pexels-photo-292999.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
+  'https://images.pexels.com/photos/1778412/pexels-photo-1778412.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
+  'https://images.pexels.com/photos/871494/pexels-photo-871494.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
+  'https://images.pexels.com/photos/2850487/pexels-photo-2850487.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
 ];
 const PRICE = 108;
 
-const ProductDetailPage2 = ({}) => {
+const ProductDetailPage2 = (props: any) => {
+  console.log('___props', props);
   const { sizes, variants, status, allOfSizes, image } = PRODUCTS[0];
   //
   const router = useRouter();
   const thisPathname = usePathname();
-  const searchParams = useSearchParams();
-  const modal = searchParams?.get("modal");
+  // const searchParams = useSearchParams();
+  const modal = props.searchParams?.modal;
   //
   const [variantActive, setVariantActive] = useState(0);
-  const [sizeSelected, setSizeSelected] = useState(sizes ? sizes[0] : "");
+  const [sizeSelected, setSizeSelected] = useState(sizes ? sizes[0] : '');
   const [qualitySelected, setQualitySelected] = useState(1);
   const [isOpenModalViewAllReviews, setIsOpenModalViewAllReviews] =
     useState(false);
@@ -63,7 +64,7 @@ const ProductDetailPage2 = ({}) => {
   //
   const handleCloseModalImageGallery = () => {
     let params = new URLSearchParams(document.location.search);
-    params.delete("modal");
+    params.delete('modal');
     router.push(`${thisPathname}/?${params.toString()}` as Route);
   };
   const handleOpenModalImageGallery = () => {
@@ -93,24 +94,22 @@ const ProductDetailPage2 = ({}) => {
               onClick={() => setVariantActive(index)}
               className={`relative flex-1 max-w-[75px] h-10 sm:h-11 rounded-full border-2 cursor-pointer ${
                 variantActive === index
-                  ? "border-primary-6000 dark:border-primary-500"
-                  : "border-transparent"
-              }`}
-            >
+                  ? 'border-primary-6000 dark:border-primary-500'
+                  : 'border-transparent'
+              }`}>
               <div
                 className="absolute inset-0.5 rounded-full overflow-hidden z-0 bg-cover"
                 style={{
                   backgroundImage: `url(${
                     // @ts-ignore
-                    typeof variant.thumbnail?.src === "string"
+                    typeof variant.thumbnail?.src === 'string'
                       ? // @ts-ignore
                         variant.thumbnail?.src
-                      : typeof variant.thumbnail === "string"
+                      : typeof variant.thumbnail === 'string'
                       ? variant.thumbnail
-                      : ""
+                      : ''
                   })`,
-                }}
-              ></div>
+                }}></div>
             </div>
           ))}
         </div>
@@ -129,7 +128,7 @@ const ProductDetailPage2 = ({}) => {
           variantActive={variantActive}
         />
       ),
-      { position: "top-right", id: "nc-product-notify", duration: 3000 }
+      { position: 'top-right', id: 'nc-product-notify', duration: 3000 }
     );
   };
 
@@ -150,8 +149,7 @@ const ProductDetailPage2 = ({}) => {
             target="_blank"
             rel="noopener noreferrer"
             href="##"
-            className="text-primary-6000 hover:text-primary-500"
-          >
+            className="text-primary-6000 hover:text-primary-500">
             See sizing chart
           </a>
         </div>
@@ -165,20 +163,19 @@ const ProductDetailPage2 = ({}) => {
                 className={`relative h-10 sm:h-11 rounded-2xl border flex items-center justify-center 
                 text-sm sm:text-base uppercase font-semibold select-none overflow-hidden z-0 ${
                   sizeOutStock
-                    ? "text-opacity-20 dark:text-opacity-20 cursor-not-allowed"
-                    : "cursor-pointer"
+                    ? 'text-opacity-20 dark:text-opacity-20 cursor-not-allowed'
+                    : 'cursor-pointer'
                 } ${
                   isActive
-                    ? "bg-primary-6000 border-primary-6000 text-white hover:bg-primary-6000"
-                    : "border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-200 hover:bg-neutral-50 dark:hover:bg-neutral-700"
+                    ? 'bg-primary-6000 border-primary-6000 text-white hover:bg-primary-6000'
+                    : 'border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-200 hover:bg-neutral-50 dark:hover:bg-neutral-700'
                 }`}
                 onClick={() => {
                   if (sizeOutStock) {
                     return;
                   }
                   setSizeSelected(size);
-                }}
-              >
+                }}>
                 {size}
               </div>
             );
@@ -193,8 +190,8 @@ const ProductDetailPage2 = ({}) => {
       return null;
     }
     const CLASSES =
-      "text-sm flex items-center text-slate-700 text-slate-900 dark:text-slate-300";
-    if (status === "New in") {
+      'text-sm flex items-center text-slate-700 text-slate-900 dark:text-slate-300';
+    if (status === 'New in') {
       return (
         <div className={CLASSES}>
           <SparklesIcon className="w-3.5 h-3.5" />
@@ -202,7 +199,7 @@ const ProductDetailPage2 = ({}) => {
         </div>
       );
     }
-    if (status === "50% Discount") {
+    if (status === '50% Discount') {
       return (
         <div className={CLASSES}>
           <IconDiscount className="w-3.5 h-3.5" />
@@ -210,7 +207,7 @@ const ProductDetailPage2 = ({}) => {
         </div>
       );
     }
-    if (status === "Sold Out") {
+    if (status === 'Sold Out') {
       return (
         <div className={CLASSES}>
           <NoSymbolIcon className="w-3.5 h-3.5" />
@@ -218,7 +215,7 @@ const ProductDetailPage2 = ({}) => {
         </div>
       );
     }
-    if (status === "limited edition") {
+    if (status === 'limited edition') {
       return (
         <div className={CLASSES}>
           <ClockIcon className="w-3.5 h-3.5" />
@@ -243,8 +240,7 @@ const ProductDetailPage2 = ({}) => {
 
               <a
                 href="#reviews"
-                className="flex items-center text-sm font-medium"
-              >
+                className="flex items-center text-sm font-medium">
                 <div className="">
                   <StarIcon className="w-5 h-5 pb-[1px] text-orange-400" />
                 </div>
@@ -274,8 +270,7 @@ const ProductDetailPage2 = ({}) => {
             </div>
             <ButtonPrimary
               className="flex-1 flex-shrink-0"
-              onClick={notifyAddTocart}
-            >
+              onClick={notifyAddTocart}>
               <BagIcon className="hidden sm:inline-block w-5 h-5 mb-0.5" />
               <span className="ml-3">Add to cart</span>
             </ButtonPrimary>
@@ -319,8 +314,7 @@ const ProductDetailPage2 = ({}) => {
           <div className="flex items-center mt-4 sm:mt-5">
             <a
               href="#reviews"
-              className="hidden sm:flex items-center text-sm font-medium "
-            >
+              className="hidden sm:flex items-center text-sm font-medium ">
               <div className="">
                 <StarIcon className="w-5 h-5 pb-[1px] text-slate-800 dark:text-slate-200" />
               </div>
@@ -401,8 +395,8 @@ const ProductDetailPage2 = ({}) => {
               data={{
                 comment: `I love the charcoal heavyweight hoodie. Still looks new after plenty of washes. 
                   If you’re unsure which hoodie to pick.`,
-                date: "December 22, 2021",
-                name: "Stiven Hokinhs",
+                date: 'December 22, 2021',
+                name: 'Stiven Hokinhs',
                 starPoint: 5,
               }}
             />
@@ -410,8 +404,8 @@ const ProductDetailPage2 = ({}) => {
               data={{
                 comment: `The quality and sizing mentioned were accurate and really happy with the purchase. Such a cozy and comfortable hoodie. 
                 Now that it’s colder, my husband wears his all the time. I wear hoodies all the time. `,
-                date: "August 15, 2022",
-                name: "Gropishta keo",
+                date: 'August 15, 2022',
+                name: 'Gropishta keo',
                 starPoint: 5,
               }}
             />
@@ -419,8 +413,8 @@ const ProductDetailPage2 = ({}) => {
               data={{
                 comment: `Before buying this, I didn't really know how I would tell a "high quality" sweatshirt, but after opening, I was very impressed. 
                 The material is super soft and comfortable and the sweatshirt also has a good weight to it.`,
-                date: "December 12, 2022",
-                name: "Dahon Stiven",
+                date: 'December 12, 2022',
+                name: 'Dahon Stiven',
                 starPoint: 5,
               }}
             />
@@ -428,8 +422,7 @@ const ProductDetailPage2 = ({}) => {
 
           <ButtonSecondary
             onClick={() => setIsOpenModalViewAllReviews(true)}
-            className="mt-10 border border-slate-300 dark:border-slate-700 "
-          >
+            className="mt-10 border border-slate-300 dark:border-slate-700 ">
             Show me all 142 reviews
           </ButtonSecondary>
         </div>
@@ -445,8 +438,7 @@ const ProductDetailPage2 = ({}) => {
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3 lg:gap-6">
               <div
                 className="md:h-full col-span-2 md:col-span-1 row-span-2 relative rounded-md sm:rounded-xl cursor-pointer"
-                onClick={handleOpenModalImageGallery}
-              >
+                onClick={handleOpenModalImageGallery}>
                 <NcImage
                   alt="firt"
                   containerClassName="aspect-w-3 aspect-h-4 relative md:aspect-none md:absolute md:inset-0"
@@ -462,8 +454,7 @@ const ProductDetailPage2 = ({}) => {
               {/*  */}
               <div
                 className="col-span-1 row-span-2 relative rounded-md sm:rounded-xl overflow-hidden z-0 cursor-pointer"
-                onClick={handleOpenModalImageGallery}
-              >
+                onClick={handleOpenModalImageGallery}>
                 <NcImage
                   alt=""
                   fill
@@ -481,16 +472,15 @@ const ProductDetailPage2 = ({}) => {
                   <div
                     key={index}
                     className={`relative rounded-md sm:rounded-xl overflow-hidden z-0 ${
-                      index >= 2 ? "block" : ""
-                    }`}
-                  >
+                      index >= 2 ? 'block' : ''
+                    }`}>
                     <NcImage
                       alt=""
                       fill
                       sizes="(max-width: 640px) 100vw, 33vw"
                       containerClassName="aspect-w-6 aspect-h-5 lg:aspect-h-4"
                       className="object-cover w-full h-full rounded-md sm:rounded-xl "
-                      src={item || ""}
+                      src={item || ''}
                     />
 
                     {/* OVERLAY */}
@@ -504,15 +494,13 @@ const ProductDetailPage2 = ({}) => {
             </div>
             <div
               className="absolute hidden md:flex md:items-center md:justify-center left-3 bottom-3 px-4 py-2 rounded-xl bg-white text-slate-500 cursor-pointer hover:bg-slate-200 z-10"
-              onClick={handleOpenModalImageGallery}
-            >
+              onClick={handleOpenModalImageGallery}>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-5 w-5"
                 fill="none"
                 viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
+                stroke="currentColor">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -567,7 +555,7 @@ const ProductDetailPage2 = ({}) => {
       />
 
       <ListingImageGallery
-        isShowModal={modal === "PHOTO_TOUR_SCROLLABLE"}
+        isShowModal={modal === 'PHOTO_TOUR_SCROLLABLE'}
         onClose={handleCloseModalImageGallery}
         images={LIST_IMAGES_GALLERY_DEMO.map((item, index) => {
           return {

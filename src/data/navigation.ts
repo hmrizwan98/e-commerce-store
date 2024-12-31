@@ -1,7 +1,7 @@
 import { NavItemType } from "@/shared/Navigation/NavigationItem";
 import ncNanoId from "@/utils/ncNanoId";
 
-export const MEGAMENU_TEMPLATES: NavItemType[] = [
+export const MEGAMENU_TEMPLATES: NavItemType[] | any = [
   {
     id: ncNanoId(),
     href: "/#",
@@ -22,7 +22,7 @@ export const MEGAMENU_TEMPLATES: NavItemType[] = [
       { id: ncNanoId(), href: "/collection", name: "Category Page 1" },
       { id: ncNanoId(), href: "/collection-2", name: "Category Page 2" },
       { id: ncNanoId(), href: "/product-detail", name: "Product Page 1" },
-      { id: ncNanoId(), href: "/product-detail-2", name: "Product Page 2" },
+      { id: ncNanoId(), href: "/", name: "Product Page 2" },
       { id: ncNanoId(), href: "/cart", name: "Cart Page" },
       { id: ncNanoId(), href: "/checkout", name: "Checkout Page" },
     ],
@@ -98,7 +98,7 @@ const OTHER_PAGE_CHILD: NavItemType[] = [
       },
       {
         id: ncNanoId(),
-        href: "/product-detail-2",
+        href: "/",
         name: "Product detail 2",
       },
     ],
