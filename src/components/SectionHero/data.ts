@@ -1,8 +1,8 @@
-import Image, { StaticImageData } from "next/image";
-import { Route } from "@/routers/types";
-import imageRightPng from "@/images/hero-right.png";
-import imageRightPng2 from "@/images/hero-right-2.png";
-import imageRightPng3 from "@/images/hero-right-3.png";
+import Image, { StaticImageData } from 'next/image';
+import { Route } from '@/routers/types';
+import imageRightPng from '@/images/hero-right.png';
+import imageRightPng2 from '@/images/hero-right-2.png';
+import imageRightPng3 from '@/images/hero-right-3.png';
 
 interface Hero2DataType {
   image: StaticImageData | string;
@@ -15,23 +15,23 @@ interface Hero2DataType {
 export const HERO2_DEMO_DATA: Hero2DataType[] = [
   {
     image: imageRightPng2,
-    heading: "Exclusive collection for everyone",
-    subHeading: "In this season, find the best 🔥",
-    btnText: "Explore now",
-    btnLink: "/",
+    heading: 'Exclusive collection for everyone',
+    subHeading: 'In this season, find the best 🔥',
+    btnText: 'Explore now',
+    btnLink: '/',
   },
   {
     image: imageRightPng3,
-    heading: "Exclusive collection for everyone",
-    subHeading: "In this season, find the best 🔥",
-    btnText: "Explore now",
-    btnLink: "/",
+    heading: 'Exclusive collection for everyone',
+    subHeading: 'In this season, find the best 🔥',
+    btnText: 'Explore now',
+    btnLink: '/',
   },
   {
     image: imageRightPng,
-    heading: "Exclusive collection for everyone",
-    subHeading: "In this season, find the best 🔥",
-    btnText: "Explore now",
-    btnLink: "/",
+    heading: 'Exclusive collection for everyone',
+    subHeading: 'In this season, find the best 🔥',
+    btnText: 'Explore now',
+    btnLink: '/',
   },
 ];
