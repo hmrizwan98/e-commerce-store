@@ -5,6 +5,8 @@ const appendBaseUrl = (path: string) => {
 class Paths {
   static BASE_URL = `${process.env.NEXT_PUBLIC_BASE_URL}/api/v1`;
   static SLIDER = appendBaseUrl('slider');
+  static CATEGORY = appendBaseUrl('category');
+  static SUB_CATEGORY = appendBaseUrl('sub-category');
   // static USER_QUERY_IMAGE = appendBaseUrl(`user/user-query-image`);
   // static USER_QUERY = appendBaseUrl(`user/user-query`);
 }

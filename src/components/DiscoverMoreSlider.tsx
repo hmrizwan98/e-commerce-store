@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import React, { useEffect, useId, useRef, useState } from "react";
-import Heading from "./Heading/Heading";
-import CardCategory3 from "./CardCategories/CardCategory3";
+import React, { useEffect, useId, useRef, useState } from 'react';
+import Heading from './Heading/Heading';
+import CardCategory3 from './CardCategories/CardCategory3';
 // @ts-ignore
-import Glide from "@glidejs/glide/dist/glide.esm";
-import { CATS_DISCOVER } from "./CardCategories/data";
+import Glide from '@glidejs/glide/dist/glide.esm';
+import { CATS_DISCOVER } from './CardCategories/data';
 
 const DiscoverMoreSlider = () => {
   const sliderRef = useRef(null);
@@ -55,15 +55,13 @@ const DiscoverMoreSlider = () => {
     <div
       ref={sliderRef}
       className={`nc-DiscoverMoreSlider nc-p-l-container ${
-        isShow ? "" : "invisible"
-      }`}
-    >
+        isShow ? '' : 'invisible'
+      }`}>
       <Heading
         className="mb-12 lg:mb-14 text-neutral-900 dark:text-neutral-50 nc-p-r-container "
         desc=""
         rightDescText="Good things are waiting for you"
-        hasNextPrev
-      >
+        hasNextPrev>
         Discover more
       </Heading>
       <div className="" data-glide-el="track">
