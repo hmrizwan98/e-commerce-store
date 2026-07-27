@@ -2,9 +2,11 @@ import ButtonPrimary from "@/shared/Button/ButtonPrimary";
 import React from "react";
 import I404Png from "@/images/404.png";
 import NcImage from "@/shared/NcImage/NcImage";
+import NotFoundTracker from "@/components/analytics/NotFoundTracker";
 
 const Page404 = () => (
   <div className="nc-Page404">
+    <NotFoundTracker />
     <div className="container relative pt-5 pb-16 lg:pb-20 lg:pt-5">
       {/* HEADER */}
       <header className="text-center max-w-2xl mx-auto space-y-2">

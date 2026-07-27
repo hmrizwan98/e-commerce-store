@@ -20,7 +20,7 @@ import explore8Png from "@/images/collections/explore8.png";
 import explore9Png from "@/images/collections/explore9.png";
 
 export interface ExploreType {
-  id: number;
+  id: number | string;
   name: string;
   desc: string;
   image: string | StaticImageData;

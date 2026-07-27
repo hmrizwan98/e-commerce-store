@@ -1,3 +1,8 @@
+// NOTE: not yet migrated to Firebase (Phase 2 scope) - the product sections
+// below render whatever each component's own default/empty state is, since
+// this page no longer imports the legacy PRODUCTS/SPORT_PRODUCTS demo arrays
+// (those aren't compatible with ProductCard's canonical Product type
+// anymore). See src/app/page.tsx for the real dynamic home page.
 import React from "react";
 import SectionHowItWork from "@/components/SectionHowItWork/SectionHowItWork";
 import BackgroundSection from "@/components/BackgroundSection/BackgroundSection";
@@ -8,8 +13,13 @@ import { DEMO_MORE_EXPLORE_DATA_2 } from "@/components/SectionGridMoreExplore/da
 import SectionPromo2 from "@/components/SectionPromo2";
 import SectionHero3 from "@/components/SectionHero/SectionHero3";
 import SectionPromo1 from "@/components/SectionPromo1";
-import { SPORT_PRODUCTS } from "@/data/data";
 import SectionGridFeatureItems from "@/components/SectionGridFeatureItems";
+
+// SectionGridFeatureItems -> HeaderFilterSection -> TabFilters reads
+// useSearchParams() (Phase 2b filters), which requires either a Suspense
+// boundary or opting out of static prerendering - this page can't be
+// statically generated anyway once client filter state is in the tree.
+export const dynamic = "force-dynamic";
 
 function PageHome2() {
   return (
@@ -22,10 +32,7 @@ function PageHome2() {
         <SectionHowItWork />
 
         {/* SECTION */}
-        <SectionSliderProductCard
-          data={SPORT_PRODUCTS.filter((_, i) => i < 8)}
-          subHeading="New Sports equipment"
-        />
+        <SectionSliderProductCard subHeading="New Sports equipment" />
 
         {/* SECTION */}
         <SectionPromo2 />
@@ -40,7 +47,7 @@ function PageHome2() {
         </div>
 
         {/* SECTION */}
-        <SectionGridFeatureItems data={SPORT_PRODUCTS} />
+        <SectionGridFeatureItems />
 
         {/* SECTION */}
         <SectionPromo1 />

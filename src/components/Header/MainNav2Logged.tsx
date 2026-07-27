@@ -8,13 +8,21 @@ import Navigation from "@/shared/Navigation/Navigation";
 import CartDropdown from "./CartDropdown";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
+import type { ThemeHeader } from "@/types/theme";
 
-export interface MainNav2LoggedProps {}
+export interface MainNav2LoggedProps {
+  headerSettings?: ThemeHeader;
+  transparentActive?: boolean;
+}
 
-const MainNav2Logged: FC<MainNav2LoggedProps> = () => {
+const MainNav2Logged: FC<MainNav2LoggedProps> = ({ headerSettings, transparentActive }) => {
   const inputRef = createRef<HTMLInputElement>();
   const [showSearchForm, setShowSearchForm] = useState(false);
   const router = useRouter();
+
+  const showSearch = headerSettings?.showSearch ?? true;
+  const showAccount = headerSettings?.showAccount ?? true;
+  const showCart = headerSettings?.showCart ?? true;
 
   const renderMagnifyingGlassIcon = () => {
     return (
@@ -83,11 +91,15 @@ const MainNav2Logged: FC<MainNav2LoggedProps> = () => {
         </div>
 
         <div className="flex-[2] hidden lg:flex justify-center mx-4">
-          {showSearchForm ? renderSearchForm() : <Navigation />}
+          {showSearchForm && showSearch ? renderSearchForm() : <Navigation />}
         </div>
 
-        <div className="flex-1 flex items-center justify-end text-slate-700 dark:text-slate-100">
-          {!showSearchForm && (
+        <div
+          className={`flex-1 flex items-center justify-end ${
+            transparentActive ? "text-white" : "text-slate-700 dark:text-slate-100"
+          }`}
+        >
+          {!showSearchForm && showSearch && (
             <button
               className="hidden lg:flex w-10 h-10 sm:w-12 sm:h-12 rounded-full text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none items-center justify-center"
               onClick={() => setShowSearchForm(!showSearchForm)}
@@ -95,15 +107,21 @@ const MainNav2Logged: FC<MainNav2LoggedProps> = () => {
               {renderMagnifyingGlassIcon()}
             </button>
           )}
-          <AvatarDropdown />
-          <CartDropdown />
+          {showAccount && <AvatarDropdown />}
+          {showCart && <CartDropdown />}
         </div>
       </div>
     );
   };
 
   return (
-    <div className="nc-MainNav2Logged relative z-10 bg-white dark:bg-neutral-900 border-b border-slate-100 dark:border-slate-700">
+    <div
+      className={`nc-MainNav2Logged relative z-10 ${
+        transparentActive ? "bg-transparent" : "bg-[var(--header-bg)]"
+      } dark:bg-neutral-900 border-b ${
+        transparentActive ? "border-transparent" : "border-slate-100 dark:border-slate-700"
+      }`}
+    >
       <div className="container ">{renderContent()}</div>
     </div>
   );

@@ -35,4 +35,17 @@
   --c-neutral-700: 55, 65, 81;
   --c-neutral-800: 31, 41, 55;
   --c-neutral-900: 17, 24, 39;
+
+  // ACCENT COLOR (static fallback - the dynamic theme <style> tag from
+  // src/lib/theme/css-variables.ts normally overrides these at request time)
+  --c-accent-50: 245, 243, 255;
+  --c-accent-100: 237, 233, 254;
+  --c-accent-200: 221, 214, 254;
+  --c-accent-300: 196, 181, 253;
+  --c-accent-400: 167, 139, 250;
+  --c-accent-500: 139, 92, 246;
+  --c-accent-600: 124, 58, 237;
+  --c-accent-700: 109, 40, 217;
+  --c-accent-800: 91, 33, 182;
+  --c-accent-900: 76, 29, 149;
 }

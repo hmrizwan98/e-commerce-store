@@ -8,16 +8,31 @@ import Input from "@/shared/Input/Input";
 import Radio from "@/shared/Radio/Radio";
 import Select from "@/shared/Select/Select";
 
+export interface ShippingAddressValue {
+  fullName: string;
+  line1: string;
+  line2: string;
+  city: string;
+  country: string;
+  state: string;
+  postalCode: string;
+  addressType: "home" | "office";
+}
+
 interface Props {
   isActive: boolean;
   onCloseActive: () => void;
   onOpenActive: () => void;
+  value: ShippingAddressValue;
+  onChange: (patch: Partial<ShippingAddressValue>) => void;
 }
 
 const ShippingAddress: FC<Props> = ({
   isActive,
   onCloseActive,
   onOpenActive,
+  value,
+  onChange,
 }) => {
   const renderShippingAddress = () => {
     return (
@@ -87,7 +102,9 @@ const ShippingAddress: FC<Props> = ({
             </h3>
             <div className="font-semibold mt-1 text-sm">
               <span className="">
-                {`St. Paul's Road, Norris, SD 57560, Dakota, USA`}
+                {[value.line1, value.city, value.state, value.country]
+                  .filter(Boolean)
+                  .join(", ") || "Enter your address"}
               </span>
             </div>
           </div>
@@ -104,15 +121,13 @@ const ShippingAddress: FC<Props> = ({
           }`}
         >
           {/* ============ */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-3">
-            <div>
-              <Label className="text-sm">First name</Label>
-              <Input className="mt-1.5" defaultValue="Cole" />
-            </div>
-            <div>
-              <Label className="text-sm">Last name</Label>
-              <Input className="mt-1.5" defaultValue="Enrico " />
-            </div>
+          <div>
+            <Label className="text-sm">Full name</Label>
+            <Input
+              className="mt-1.5"
+              value={value.fullName}
+              onChange={(e) => onChange({ fullName: e.target.value })}
+            />
           </div>
 
           {/* ============ */}
@@ -121,14 +136,18 @@ const ShippingAddress: FC<Props> = ({
               <Label className="text-sm">Address</Label>
               <Input
                 className="mt-1.5"
-                placeholder=""
-                defaultValue={"123, Dream Avenue, USA"}
                 type={"text"}
+                value={value.line1}
+                onChange={(e) => onChange({ line1: e.target.value })}
               />
             </div>
             <div className="sm:w-1/3">
-              <Label className="text-sm">Apt, Suite *</Label>
-              <Input className="mt-1.5" defaultValue="55U - DD5 " />
+              <Label className="text-sm">Apt, Suite</Label>
+              <Input
+                className="mt-1.5"
+                value={value.line2}
+                onChange={(e) => onChange({ line2: e.target.value })}
+              />
             </div>
           </div>
 
@@ -136,19 +155,26 @@ const ShippingAddress: FC<Props> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-3">
             <div>
               <Label className="text-sm">City</Label>
-              <Input className="mt-1.5" defaultValue="Norris" />
+              <Input
+                className="mt-1.5"
+                value={value.city}
+                onChange={(e) => onChange({ city: e.target.value })}
+              />
             </div>
             <div>
               <Label className="text-sm">Country</Label>
-              <Select className="mt-1.5" defaultValue="United States ">
+              <Select
+                className="mt-1.5"
+                value={value.country}
+                onChange={(e) => onChange({ country: e.target.value })}
+              >
+                <option value="Pakistan">Pakistan</option>
                 <option value="United States">United States</option>
-                <option value="United States">Canada</option>
-                <option value="United States">Mexico</option>
-                <option value="United States">Israel</option>
-                <option value="United States">France</option>
-                <option value="United States">England</option>
-                <option value="United States">Laos</option>
-                <option value="United States">China</option>
+                <option value="Canada">Canada</option>
+                <option value="Mexico">Mexico</option>
+                <option value="United Kingdom">United Kingdom</option>
+                <option value="France">France</option>
+                <option value="China">China</option>
               </Select>
             </div>
           </div>
@@ -157,11 +183,19 @@ const ShippingAddress: FC<Props> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-3">
             <div>
               <Label className="text-sm">State/Province</Label>
-              <Input className="mt-1.5" defaultValue="Texas" />
+              <Input
+                className="mt-1.5"
+                value={value.state}
+                onChange={(e) => onChange({ state: e.target.value })}
+              />
             </div>
             <div>
               <Label className="text-sm">Postal code</Label>
-              <Input className="mt-1.5" defaultValue="2500 " />
+              <Input
+                className="mt-1.5"
+                value={value.postalCode}
+                onChange={(e) => onChange({ postalCode: e.target.value })}
+              />
             </div>
           </div>
 
@@ -173,12 +207,15 @@ const ShippingAddress: FC<Props> = ({
                 label={`<span class="text-sm font-medium">Home <span class="font-light">(All Day Delivery)</span></span>`}
                 id="Address-type-home"
                 name="Address-type"
-                defaultChecked
+                defaultChecked={value.addressType === "home"}
+                onChange={() => onChange({ addressType: "home" })}
               />
               <Radio
                 label={`<span class="text-sm font-medium">Office <span class="font-light">(Delivery <span class="font-medium">9 AM - 5 PM</span>)</span> </span>`}
                 id="Address-type-office"
                 name="Address-type"
+                defaultChecked={value.addressType === "office"}
+                onChange={() => onChange({ addressType: "office" })}
               />
             </div>
           </div>

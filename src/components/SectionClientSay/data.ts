@@ -1,4 +1,6 @@
-export const DEMO_DATA = [
+import type { SectionClientSayItem } from "./SectionClientSay";
+
+export const DEMO_DATA: SectionClientSayItem[] = [
   {
     id: 1,
     clientName: "Tiana Abie",

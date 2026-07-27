@@ -6,18 +6,22 @@ import Heading from "@/components/Heading/Heading";
 import Glide from "@glidejs/glide/dist/glide.esm";
 import CollectionCard from "./CollectionCard";
 import CollectionCard2 from "./CollectionCard2";
-import { DEMO_LARGE_PRODUCTS } from "./SectionSliderLargeProduct2";
 import Link from "next/link";
+import type { Product } from "@/types/product";
 
 export interface SectionSliderLargeProductProps {
   className?: string;
   itemClassName?: string;
   cardStyle?: "style1" | "style2";
+  heading?: string;
+  data?: Product[];
 }
 
 const SectionSliderLargeProduct: FC<SectionSliderLargeProductProps> = ({
   className = "",
   cardStyle = "style2",
+  heading = "Chosen by our experts",
+  data = [],
 }) => {
   const sliderRef = useRef(null);
 
@@ -65,17 +69,20 @@ const SectionSliderLargeProduct: FC<SectionSliderLargeProductProps> = ({
     <div className={`nc-SectionSliderLargeProduct ${className}`}>
       <div ref={sliderRef} className={`flow-root ${isShow ? "" : "invisible"}`}>
         <Heading isCenter={false} hasNextPrev>
-          Chosen by our experts
+          {heading}
         </Heading>
         <div className="glide__track" data-glide-el="track">
           <ul className="glide__slides">
-            {DEMO_LARGE_PRODUCTS.map((product, index) => (
-              <li className={`glide__slide`} key={index}>
+            {data.map((product) => (
+              <li className={`glide__slide`} key={product.id}>
                 <MyCollectionCard
                   name={product.name}
                   price={product.price}
                   imgs={product.images}
-                  description={product.desc}
+                  description={product.shortDescription || product.description}
+                  rating={product.rating}
+                  numberOfReviews={product.numberOfReviews}
+                  href={`/product/${product.slug}`}
                 />
               </li>
             ))}

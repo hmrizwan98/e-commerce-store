@@ -2,9 +2,10 @@
 
 import React, { FC, useState } from "react";
 import LikeButton from "./LikeButton";
+import CompareButton from "./CompareButton";
 import Prices from "./Prices";
 import { ArrowsPointingOutIcon } from "@heroicons/react/24/outline";
-import { Product, PRODUCTS } from "@/data/data";
+import type { Product } from "@/types/product";
 import { StarIcon } from "@heroicons/react/24/solid";
 import ButtonPrimary from "@/shared/Button/ButtonPrimary";
 import ButtonSecondary from "@/shared/Button/ButtonSecondary";
@@ -17,33 +18,44 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import NcImage from "@/shared/NcImage/NcImage";
+import { trackEvent } from "@/lib/analytics/track";
+import { safeImageSrc } from "@/utils/safeImageSrc";
 
 export interface ProductCardProps {
   className?: string;
-  data?: Product;
+  data: Product;
   isLiked?: boolean;
 }
 
 const ProductCard: FC<ProductCardProps> = ({
   className = "",
-  data = PRODUCTS[0],
+  data,
   isLiked,
 }) => {
   const {
     name,
     price,
+    compareAtPrice,
+    shortDescription,
     description,
-    sizes,
-    variants,
-    variantType,
-    status,
-    image,
+    badge,
+    images,
     rating,
-    id,
+    slug,
     numberOfReviews,
   } = data;
 
-  const [variantActive, setVariantActive] = useState(0);
+  const image = safeImageSrc(images[0]);
+  // Color-type attribute swatches render straight off the product doc (zero
+  // extra reads across a grid of cards). Image/style-type swatches and true
+  // per-size stock are PDP-only (would otherwise be an N+1 variants fetch here).
+  const colorAttribute = data.attributes.find((a) => a.type === "color");
+  const sizeAttribute = data.attributes.find(
+    (a) => a.type === "text" && a.name.toLowerCase() === "size"
+  );
+  const sizeHints = (sizeAttribute?.values as string[] | undefined) ?? [];
+
+  const [colorActive, setColorActive] = useState(0);
   const [showModalQuickView, setShowModalQuickView] = useState(false);
   const router = useRouter();
 
@@ -70,13 +82,18 @@ const ProductCard: FC<ProductCardProps> = ({
       ),
       {
         position: "top-right",
-        id: String(id) || "product-detail",
+        id: data.id || "product-detail",
         duration: 3000,
       }
     );
   };
 
   const renderProductCartOnNotify = ({ size }: { size?: string }) => {
+    const colorLabel = colorAttribute
+      ? typeof colorAttribute.values[colorActive] === "string"
+        ? (colorAttribute.values[colorActive] as string)
+        : (colorAttribute.values[colorActive] as { label: string }).label
+      : undefined;
     return (
       <div className="flex ">
         <div className="h-24 w-20 flex-shrink-0 overflow-hidden rounded-xl bg-slate-100">
@@ -95,14 +112,12 @@ const ProductCard: FC<ProductCardProps> = ({
               <div>
                 <h3 className="text-base font-medium ">{name}</h3>
                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                  <span>
-                    {variants ? variants[variantActive].name : `Natural`}
-                  </span>
+                  <span>{colorLabel || `Natural`}</span>
                   <span className="mx-2 border-s border-slate-200 dark:border-slate-700 h-4"></span>
-                  <span>{size || "XL"}</span>
+                  <span>{size || "One size"}</span>
                 </p>
               </div>
-              <Prices price={price} className="mt-0.5" />
+              <Prices price={price} compareAtPrice={compareAtPrice} className="mt-0.5" />
             </div>
           </div>
           <div className="flex flex-1 items-end justify-between text-sm">
@@ -126,88 +141,36 @@ const ProductCard: FC<ProductCardProps> = ({
     );
   };
 
-  const getBorderClass = (Bgclass = "") => {
-    if (Bgclass.includes("red")) {
-      return "border-red-500";
-    }
-    if (Bgclass.includes("violet")) {
-      return "border-violet-500";
-    }
-    if (Bgclass.includes("orange")) {
-      return "border-orange-500";
-    }
-    if (Bgclass.includes("green")) {
-      return "border-green-500";
-    }
-    if (Bgclass.includes("blue")) {
-      return "border-blue-500";
-    }
-    if (Bgclass.includes("sky")) {
-      return "border-sky-500";
-    }
-    if (Bgclass.includes("yellow")) {
-      return "border-yellow-500";
-    }
-    return "border-transparent";
+  const getBorderClass = (hex?: string) => {
+    return hex ? "border-slate-900 dark:border-slate-100" : "border-transparent";
   };
 
   const renderVariants = () => {
-    if (!variants || !variants.length || !variantType) {
+    if (!colorAttribute || !colorAttribute.values.length) {
       return null;
     }
 
-    if (variantType === "color") {
-      return (
-        <div className="flex space-x-1">
-          {variants.map((variant, index) => (
+    return (
+      <div className="flex space-x-1">
+        {colorAttribute.values.map((value, index) => {
+          const hex = typeof value === "string" ? undefined : value.hex;
+          const label = typeof value === "string" ? value : value.label;
+          return (
             <div
               key={index}
-              onClick={() => setVariantActive(index)}
+              onClick={() => setColorActive(index)}
               className={`relative w-6 h-6 rounded-full overflow-hidden z-10 border cursor-pointer ${
-                variantActive === index
-                  ? getBorderClass(variant.color)
-                  : "border-transparent"
+                colorActive === index ? getBorderClass(hex) : "border-transparent"
               }`}
-              title={variant.name}
+              title={label}
             >
               <div
-                className={`absolute inset-0.5 rounded-full z-0 ${variant.color}`}
+                className="absolute inset-0.5 rounded-full z-0"
+                style={{ backgroundColor: hex || "#94a3b8" }}
               ></div>
             </div>
-          ))}
-        </div>
-      );
-    }
-
-    return (
-      <div className="flex ">
-        {variants.map((variant, index) => (
-          <div
-            key={index}
-            onClick={() => setVariantActive(index)}
-            className={`relative w-11 h-6 rounded-full overflow-hidden z-10 border cursor-pointer ${
-              variantActive === index
-                ? "border-black dark:border-slate-300"
-                : "border-transparent"
-            }`}
-            title={variant.name}
-          >
-            <div
-              className="absolute inset-0.5 rounded-full overflow-hidden z-0 bg-cover"
-              style={{
-                backgroundImage: `url(${
-                  // @ts-ignore
-                  typeof variant.thumbnail?.src === "string"
-                    ? // @ts-ignore
-                      variant.thumbnail?.src
-                    : typeof variant.thumbnail === "string"
-                    ? variant.thumbnail
-                    : ""
-                })`,
-              }}
-            ></div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     );
   };
@@ -219,7 +182,7 @@ const ProductCard: FC<ProductCardProps> = ({
           className="shadow-lg"
           fontSize="text-xs"
           sizeClass="py-2 px-4"
-          onClick={() => notifyAddTocart({ size: "XL" })}
+          onClick={() => notifyAddTocart({})}
         >
           <BagIcon className="w-3.5 h-3.5 mb-0.5" />
           <span className="ms-1">Add to bag</span>
@@ -238,13 +201,13 @@ const ProductCard: FC<ProductCardProps> = ({
   };
 
   const renderSizeList = () => {
-    if (!sizes || !sizes.length) {
+    if (!sizeHints.length) {
       return null;
     }
 
     return (
       <div className="absolute bottom-0 inset-x-1 space-x-1.5 rtl:space-x-reverse flex justify-center opacity-0 invisible group-hover:bottom-4 group-hover:opacity-100 group-hover:visible transition-all">
-        {sizes.map((size, index) => {
+        {sizeHints.map((size, index) => {
           return (
             <div
               key={index}
@@ -262,24 +225,29 @@ const ProductCard: FC<ProductCardProps> = ({
   return (
     <>
       <div
-        className={`nc-ProductCard relative flex flex-col bg-transparent ${className}`}
+        className={`nc-ProductCard relative flex flex-col bg-transparent rounded-[var(--product-card-radius)] ${className}`}
       >
-        <Link href={"/product-detail"} className="absolute inset-0"></Link>
+        <Link
+          href={`/product/${slug}`}
+          className="absolute inset-0"
+          onClick={() => trackEvent("product_click", { productId: data.id })}
+        ></Link>
 
-        <div className="relative flex-shrink-0 bg-slate-50 dark:bg-slate-300 rounded-3xl overflow-hidden z-1 group">
-          <Link href={"/product-detail"} className="block">
+        <div className="relative flex-shrink-0 bg-slate-50 dark:bg-slate-300 rounded-[var(--product-image-radius)] overflow-hidden z-1 group">
+          <Link href={`/product/${slug}`} className="block">
             <NcImage
               containerClassName="flex aspect-w-11 aspect-h-12 w-full h-0"
               src={image}
               className="object-cover w-full h-full drop-shadow-xl"
               fill
               sizes="(max-width: 640px) 100vw, (max-width: 1200px) 50vw, 40vw"
-              alt="product"
+              alt={name}
             />
           </Link>
-          <ProductStatus status={status} />
-          <LikeButton liked={isLiked} className="absolute top-3 end-3 z-10" />
-          {sizes ? renderSizeList() : renderGroupButtons()}
+          <ProductStatus status={badge} />
+          <LikeButton liked={isLiked} productId={data.id} className="absolute top-3 end-3 z-10" />
+          <CompareButton productId={data.id} className="absolute top-14 end-3 z-10" />
+          {sizeHints.length ? renderSizeList() : renderGroupButtons()}
         </div>
 
         <div className="space-y-4 px-2.5 pt-5 pb-2.5">
@@ -289,12 +257,12 @@ const ProductCard: FC<ProductCardProps> = ({
               {name}
             </h2>
             <p className={`text-sm text-slate-500 dark:text-slate-400 mt-1 `}>
-              {description}
+              {shortDescription || description}
             </p>
           </div>
 
           <div className="flex justify-between items-end ">
-            <Prices price={price} />
+            <Prices price={price} compareAtPrice={compareAtPrice} />
             <div className="flex items-center mb-0.5">
               <StarIcon className="w-5 h-5 pb-[1px] text-amber-400" />
               <span className="text-sm ms-1 text-slate-500 dark:text-slate-400">
@@ -307,6 +275,7 @@ const ProductCard: FC<ProductCardProps> = ({
 
       {/* QUICKVIEW */}
       <ModalQuickView
+        product={data}
         show={showModalQuickView}
         onCloseModalQuickView={() => setShowModalQuickView(false)}
       />

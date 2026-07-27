@@ -5,18 +5,23 @@ import Nav from "@/shared/Nav/Nav";
 import NavItem from "@/shared/NavItem/NavItem";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
 import ButtonPrimary from "@/shared/Button/ButtonPrimary";
-import TabFilters from "@/components/TabFilters";
+import TabFilters, { FilterCategoryOption } from "@/components/TabFilters";
 import { Transition } from "@/app/headlessui";
+import { useFilterParams } from "@/hooks/useFilterParams";
 
 export interface HeaderFilterSearchPageProps {
   className?: string;
+  categories?: FilterCategoryOption[];
 }
 
 const HeaderFilterSearchPage: FC<HeaderFilterSearchPageProps> = ({
   className = "mb-12",
+  categories = [],
 }) => {
   const [isOpen, setIsOpen] = useState(true);
-  const [tabActive, setTabActive] = useState("All items");
+  const { filters, applyFilters } = useFilterParams();
+  const activeCategory = filters.category[0] ?? "All items";
+  const tabs = ["All items", ...categories.map((c) => c.name)];
 
   return (
     <div className={`flex flex-col relative ${className}`}>
@@ -25,17 +30,17 @@ const HeaderFilterSearchPage: FC<HeaderFilterSearchPageProps> = ({
           className="sm:space-x-2"
           containerClassName="relative flex w-full overflow-x-auto text-sm md:text-base hiddenScrollbar"
         >
-          {["All items", "Women", "Man", "Jewels", "Kids"].map(
-            (item, index) => (
-              <NavItem
-                key={index}
-                isActive={tabActive === item}
-                onClick={() => setTabActive(item)}
-              >
-                {item}
-              </NavItem>
-            )
-          )}
+          {tabs.map((item, index) => (
+            <NavItem
+              key={index}
+              isActive={activeCategory === item}
+              onClick={() =>
+                applyFilters({ category: item === "All items" ? [] : [item] })
+              }
+            >
+              {item}
+            </NavItem>
+          ))}
         </Nav>
         <span className="block flex-shrink-0 text-right">
           <ButtonPrimary
@@ -97,7 +102,7 @@ const HeaderFilterSearchPage: FC<HeaderFilterSearchPageProps> = ({
         leaveTo="opacity-0"
       >
         <div className="w-full border-b border-neutral-200/70 dark:border-neutral-700 my-8"></div>
-        <TabFilters />
+        <TabFilters categories={categories} />
       </Transition>
     </div>
   );

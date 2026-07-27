@@ -1,0 +1,118 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.role == 'admin';
+    }
+
+    // Public read-only content, managed exclusively from the admin panel.
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if isAdmin();
+
+      match /variants/{variantId} {
+        allow read: if true;
+        allow write: if isAdmin();
+      }
+    }
+
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /brands/{brandId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /menus/{menuId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /banners/{bannerId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /homepageSections/{sectionId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // General/shipping/payment/email settings - all non-secret, admin-managed.
+    match /siteSettings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // CMS pages (About/Contact/Privacy/Terms/FAQ) and homepage testimonials -
+    // public content, admin-managed.
+    match /pages/{pageId} {
+      allow read: if true;
+      allow write: if isAdmin();
+
+      match /sections/{sectionId} {
+        allow read: if true;
+        allow write: if isAdmin();
+      }
+    }
+
+    match /testimonials/{testimonialId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /faqs/{faqId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /announcementBars/{announcementBarId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Read-only in Phase 2: only approved reviews are publicly readable.
+    // Customer submission (auth-gated, verified-purchase) arrives once
+    // customer accounts + orders exist.
+    match /reviews/{reviewId} {
+      allow read: if resource.data.status == 'approved';
+      allow write: if isAdmin();
+    }
+
+    // Orders/customers: admin-only for now - there's no customer-facing
+    // checkout or account area reading/writing these yet, so a customer
+    // "owner" clause is intentionally not added until that exists (adding it
+    // early, untested, would be a false sense of security).
+    match /orders/{orderId} {
+      allow read: if isAdmin();
+      allow write: if isAdmin();
+    }
+
+    match /users/{userId} {
+      allow read: if isAdmin();
+      allow write: if isAdmin();
+
+      match /addresses/{addressId} {
+        allow read: if isAdmin();
+        allow write: if isAdmin();
+      }
+    }
+
+    // Everything else is schema reserved for later phases (cart/wishlist) -
+    // locked down to admin-only / owner-only now so no collection is ever
+    // writable by an unauthenticated client by default.
+    match /{document=**} {
+      allow read: if false;
+      allow write: if isAdmin();
+    }
+  }
+}

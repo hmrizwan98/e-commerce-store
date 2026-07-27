@@ -1,6 +1,5 @@
 import React, { FC } from "react";
 import Heading from "@/components/Heading/Heading";
-import Pagination from "@/shared/Pagination/Pagination";
 import ButtonPrimary from "@/shared/Button/ButtonPrimary";
 import WidgetCategories from "./WidgetCategories";
 import WidgetPosts from "./WidgetPosts";
@@ -27,7 +26,6 @@ const SectionLatestPosts: FC<SectionLatestPostsProps> = ({
             ))}
           </div>
           <div className="flex flex-col mt-12 md:mt-20 space-y-5 sm:space-y-0 sm:space-x-3 sm:flex-row sm:justify-between sm:items-center">
-            <Pagination />
             <ButtonPrimary>Show me more</ButtonPrimary>
           </div>
         </div>

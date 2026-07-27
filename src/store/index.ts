@@ -1,10 +1,8 @@
 import { configureStore, combineReducers } from '@reduxjs/toolkit';
-
-// Reducer
-import homePage from './slices/homePageSlice';
+import cartReducer, { CART_STORAGE_KEY } from './slices/cartSlice';
 
 const combinedReducer = combineReducers({
-  homePage,
+  cart: cartReducer,
 });
 
 const rootReducer = (
@@ -21,6 +19,14 @@ const rootReducer = (
 const store = configureStore({
   reducer: rootReducer,
 });
+
+// Cart is the only slice persisted client-side (no redux-persist dependency -
+// this project has none installed, and a single key/subscribe pair is enough).
+if (typeof window !== 'undefined') {
+  store.subscribe(() => {
+    window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(store.getState().cart.items));
+  });
+}
 
 export default store;
 

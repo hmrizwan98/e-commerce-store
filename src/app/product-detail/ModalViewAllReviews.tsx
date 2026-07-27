@@ -1,19 +1,44 @@
+"use client";
+
 import { Dialog, Transition } from "@/app/headlessui";
 import { StarIcon } from "@heroicons/react/24/solid";
 import ReviewItem from "@/components/ReviewItem";
 import SortOrderFilter from "@/components/SectionGridMoreExplore/SortOrderFilter";
-import React, { FC, Fragment } from "react";
+import React, { FC, Fragment, useMemo, useState } from "react";
 import ButtonClose from "@/shared/ButtonClose/ButtonClose";
+import type { Review } from "@/types/review";
 
 export interface ModalViewAllReviewsProps {
   show: boolean;
   onCloseModalViewAllReviews: () => void;
+  reviews?: Review[];
+  rating?: number;
 }
+
+const SORT_OPTIONS = [
+  { name: "Sort order" },
+  { name: "Newest rating" },
+  { name: "Highest rating" },
+  { name: "Lowest rating" },
+];
 
 const ModalViewAllReviews: FC<ModalViewAllReviewsProps> = ({
   show,
   onCloseModalViewAllReviews,
+  reviews = [],
+  rating,
 }) => {
+  const [sortOrder, setSortOrder] = useState(SORT_OPTIONS[0].name);
+
+  const sortedReviews = useMemo(() => {
+    const list = [...reviews];
+    if (sortOrder === "Highest rating") return list.sort((a, b) => b.rating - a.rating);
+    if (sortOrder === "Lowest rating") return list.sort((a, b) => a.rating - b.rating);
+    if (sortOrder === "Newest rating")
+      return list.sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));
+    return list;
+  }, [reviews, sortOrder]);
+
   return (
     <Transition appear show={show} as={Fragment}>
       <Dialog
@@ -66,29 +91,38 @@ const ModalViewAllReviews: FC<ModalViewAllReviewsProps> = ({
                 <div className="px-8 my-5 flex justify-between flex-wrap">
                   <h2 className="text-xl sm:text-2xl font-semibold flex items-center">
                     <StarIcon className="w-7 h-7 mb-0.5" />
-                    <span className="ml-1.5"> 4,87 · 142 Reviews</span>
+                    <span className="ml-1.5">
+                      {" "}
+                      {rating ? rating.toFixed(1) : "New"} · {reviews.length} Reviews
+                    </span>
                   </h2>
                   <SortOrderFilter
                     className="my-2"
-                    data={[
-                      { name: "Sort order" },
-                      { name: "Newest rating" },
-                      { name: "Highest rating" },
-                      { name: "Lowest rating" },
-                    ]}
+                    data={SORT_OPTIONS}
+                    onChange={setSortOrder}
                   />
                 </div>
                 <div className="px-8 py-8 border-t border-slate-200 dark:border-slate-700 overflow-auto grid grid-cols-1 md:grid-cols-2 gap-x-14 gap-y-10">
-                  <ReviewItem />
-                  <ReviewItem />
-                  <ReviewItem />
-                  <ReviewItem />
-                  <ReviewItem />
-                  <ReviewItem />
-                  <ReviewItem />
-                  <ReviewItem />
-                  <ReviewItem />
-                  <ReviewItem />
+                  {sortedReviews.length ? (
+                    sortedReviews.map((review) => (
+                      <ReviewItem
+                        key={review.id}
+                        data={{
+                          name: review.userName,
+                          avatar: review.userAvatar,
+                          date: review.createdAt
+                            ? new Date(review.createdAt).toLocaleDateString()
+                            : "",
+                          comment: review.comment,
+                          starPoint: review.rating,
+                        }}
+                      />
+                    ))
+                  ) : (
+                    <p className="text-slate-500 dark:text-slate-400 col-span-2">
+                      No reviews yet.
+                    </p>
+                  )}
                 </div>
               </div>
             </div>

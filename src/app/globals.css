@@ -1,3 +1,73 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Theme typography - values come from the dynamic <style id="theme-vars">
+   tag rendered by src/app/layout.tsx (see src/lib/theme/css-variables.ts);
+   these var(...,fallback) defaults only apply if that tag is ever absent. */
+body {
+  font-size: var(--base-font-size, 16px);
+  line-height: var(--line-height, 1.5);
+  letter-spacing: var(--letter-spacing, 0px);
+}
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading, inherit);
+  font-weight: var(--heading-weight, 600);
+}
+
+/* Announcement bar auto-scroll (marquee) */
+@keyframes announcement-marquee {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}
+.announcement-marquee {
+  display: inline-block;
+  white-space: nowrap;
+  animation: announcement-marquee 16s linear infinite;
+}
+
+/* Analytics chart palette - categorical hues in fixed order (never cycled/reassigned),
+   plus status colors reserved for up/down deltas. See dataviz skill reference palette. */
+:root {
+  --chart-surface: #fcfcfb;
+  --chart-text-primary: #0b0b0b;
+  --chart-text-secondary: #52514e;
+  --chart-muted: #898781;
+  --chart-grid: #e1e0d9;
+  --chart-1: #2a78d6; /* blue */
+  --chart-2: #1baf7a; /* aqua */
+  --chart-3: #eda100; /* yellow */
+  --chart-4: #008300; /* green */
+  --chart-5: #4a3aa7; /* violet */
+  --chart-6: #e34948; /* red */
+  --chart-7: #e87ba4; /* magenta */
+  --chart-8: #eb6834; /* orange */
+  --chart-good: #0ca30c;
+  --chart-warning: #fab219;
+  --chart-serious: #ec835a;
+  --chart-critical: #d03b3b;
+}
+
+.dark {
+  --chart-surface: #1a1a19;
+  --chart-text-primary: #ffffff;
+  --chart-text-secondary: #c3c2b7;
+  --chart-muted: #898781;
+  --chart-grid: #2c2c2a;
+  --chart-1: #3987e5;
+  --chart-2: #199e70;
+  --chart-3: #c98500;
+  --chart-4: #008300;
+  --chart-5: #9085e9;
+  --chart-6: #e66767;
+  --chart-7: #d55181;
+  --chart-8: #d95926;
+  --chart-good: #0ca30c;
+  --chart-warning: #fab219;
+  --chart-serious: #ec835a;
+  --chart-critical: #d03b3b;
+}

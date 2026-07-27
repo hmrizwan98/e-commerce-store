@@ -2,7 +2,6 @@
 
 import { Popover, Transition } from '@/app/headlessui';
 import { ChevronDownIcon } from '@heroicons/react/24/solid';
-import CardCategory3 from '@/components/CardCategories/CardCategory3';
 import React, { FC, Fragment, useState } from 'react';
 import { Route } from '@/routers/types';
 import Link from 'next/link';
@@ -49,22 +48,17 @@ const NavigationItem: FC<NavigationItemProps> = ({ menuItem }) => {
         <div className="absolute inset-x-0 z-50 invisible transform sub-menu top-full">
           <div className="bg-white shadow-lg dark:bg-neutral-900">
             <div className="container">
-              <div className="flex text-sm border-t border-slate-200 dark:border-slate-700 py-14">
-                <div className="grid flex-1 grid-cols-4 gap-6 pr-6 xl:gap-8 xl:pr-8">
-                  {menu.children.map((item: any, index: number) => (
-                    <div key={index}>
-                      <p className="font-medium text-slate-900 dark:text-neutral-200">
-                        {item.name}
-                      </p>
-                      <ul className="grid mt-4 space-y-4">
-                        {item.children?.map(renderMegaMenuNavlink)}
-                      </ul>
-                    </div>
-                  ))}
-                </div>
-                <div className="w-[40%] xl:w-[35%]">
-                  <CardCategory3 />
-                </div>
+              <div className="grid grid-cols-4 gap-x-8 gap-y-10 text-sm border-t border-slate-200 dark:border-slate-700 py-10">
+                {menu.children.map((item: any, index: number) => (
+                  <div key={index}>
+                    <p className="font-semibold text-base text-slate-900 dark:text-neutral-100">
+                      {item.name}
+                    </p>
+                    <ul className="grid mt-5 space-y-1">
+                      {item.children?.map(renderMegaMenuNavlink)}
+                    </ul>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
@@ -77,7 +71,7 @@ const NavigationItem: FC<NavigationItemProps> = ({ menuItem }) => {
     return (
       <li key={item.id} className={`${item.isNew ? 'menuIsNew' : ''}`}>
         <Link
-          className="font-normal text-slate-600 hover:text-black dark:text-slate-400 dark:hover:text-white "
+          className="block font-normal text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-neutral-800 rounded-lg -mx-2 px-2 py-1.5 transition-colors"
           href={{
             pathname: item.href || undefined,
           }}>

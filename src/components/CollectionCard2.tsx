@@ -5,6 +5,7 @@ import NcImage from "@/shared/NcImage/NcImage";
 import Prices from "./Prices";
 import Link from "next/link";
 import { StaticImageData } from "next/image";
+import type { Route } from "next";
 
 export interface CollectionCard2Props {
   className?: string;
@@ -12,6 +13,9 @@ export interface CollectionCard2Props {
   name?: string;
   price?: number;
   description?: string;
+  rating?: number;
+  numberOfReviews?: number;
+  href?: string;
 }
 
 const CollectionCard2: FC<CollectionCard2Props> = ({
@@ -20,37 +24,47 @@ const CollectionCard2: FC<CollectionCard2Props> = ({
   name = "Product Name",
   description = "Product Description",
   price,
+  rating,
+  numberOfReviews,
+  href = "/product-detail-2",
 }) => {
+  const mainImg = imgs[0];
+  const thumb = (index: number) => imgs[index] ?? mainImg;
+
   return (
     <div className={`CollectionCard2 group relative ${className}`}>
       <div className="relative flex flex-col">
         <NcImage
-          containerClassName="aspect-w-8 aspect-h-5 bg-neutral-100 rounded-2xl overflow-hidden"
+          containerClassName="relative aspect-w-8 aspect-h-5 bg-neutral-100 rounded-2xl overflow-hidden"
           className="object-contain w-full h-full rounded-2xl"
-          src={imgs[0]}
+          src={mainImg}
           alt=""
+          fill
           sizes="400px"
         />
         <div className="grid grid-cols-3 gap-2.5 mt-2.5">
           <NcImage
-            containerClassName="w-full h-24 sm:h-28"
+            containerClassName="relative w-full h-24 sm:h-28"
             className="object-cover w-full h-full rounded-2xl"
-            src={imgs[1]}
+            src={thumb(1)}
             alt=""
+            fill
             sizes="150px"
           />
           <NcImage
-            containerClassName="w-full h-24 sm:h-28"
+            containerClassName="relative w-full h-24 sm:h-28"
             className="object-cover w-full h-full rounded-2xl"
-            src={imgs[2]}
+            src={thumb(2)}
             alt=""
+            fill
             sizes="150px"
           />
           <NcImage
-            containerClassName="w-full h-24 sm:h-28"
+            containerClassName="relative w-full h-24 sm:h-28"
             className="object-cover w-full h-full rounded-2xl"
-            src={imgs[3]}
+            src={thumb(3)}
             alt=""
+            fill
             sizes="150px"
           />
         </div>
@@ -68,13 +82,15 @@ const CollectionCard2: FC<CollectionCard2Props> = ({
             <span className="h-5 mx-1 sm:mx-2 border-l border-slate-200 dark:border-slate-700"></span>
             <StarIcon className="w-4 h-4 text-orange-400" />
             <span className="text-sm ml-1 ">
-              <span className="line-clamp-1">4.9 (269 reviews)</span>
+              <span className="line-clamp-1">
+                {rating || "New"} ({numberOfReviews || 0} reviews)
+              </span>
             </span>
           </div>
         </div>
         <Prices className="mt-0.5 sm:mt-1 ml-4" price={price} />
       </div>
-      <Link href={"/product-detail-2"} className="absolute inset-0 "></Link>
+      <Link href={href as Route} className="absolute inset-0 "></Link>
     </div>
   );
 };

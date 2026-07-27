@@ -1,5 +1,8 @@
 'use client';
 
+// NOTE: not yet migrated to Firebase (Phase 2 scope) - still renders the
+// static PRODUCTS[0] demo product. See src/app/product/[slug]/page.tsx for
+// the real dynamic PDP. Revisit this alternate layout in a later pass.
 import React, { useState } from 'react';
 import {
   NoSymbolIcon,
@@ -48,7 +51,7 @@ const PRICE = 108;
 
 const ProductDetailPage2 = (props: any) => {
   console.log('___props', props);
-  const { sizes, variants, status, allOfSizes, image } = PRODUCTS[0];
+  const { sizes, variants, status, allOfSizes, image, name } = PRODUCTS[0];
   //
   const router = useRouter();
   const thisPathname = usePathname();
@@ -121,11 +124,11 @@ const ProductDetailPage2 = (props: any) => {
     toast.custom(
       (t) => (
         <NotifyAddTocart
-          productImage={image}
+          product={{ name, price: PRICE, images: [image] as unknown as string[] }}
           qualitySelected={qualitySelected}
           show={t.visible}
           sizeSelected={sizeSelected}
-          variantActive={variantActive}
+          variantLabel={variants ? variants[variantActive].name : undefined}
         />
       ),
       { position: 'top-right', id: 'nc-product-notify', duration: 3000 }

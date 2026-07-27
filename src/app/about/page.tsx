@@ -1,5 +1,5 @@
 import rightImg from "@/images/hero-right1.png";
-import React, { FC } from "react";
+import React from "react";
 import SectionFounder from "./SectionFounder";
 import SectionStatistic from "./SectionStatistic";
 import BgGlassmorphism from "@/components/BgGlassmorphism/BgGlassmorphism";
@@ -7,8 +7,13 @@ import BackgroundSection from "@/components/BackgroundSection/BackgroundSection"
 import SectionHero from "./SectionHero";
 import SectionClientSay from "@/components/SectionClientSay/SectionClientSay";
 import SectionPromo3 from "@/components/SectionPromo3";
+import { getActiveTestimonials } from "@/lib/firebase/repositories/testimonials";
 
-const PageAbout = ({}) => {
+export const dynamic = "force-dynamic";
+
+const PageAbout = async () => {
+  const testimonials = await getActiveTestimonials();
+
   return (
     <div className={`nc-PageAbout overflow-hidden relative`}>
       {/* ======== BG GLASS ======== */}
@@ -25,7 +30,7 @@ const PageAbout = ({}) => {
         <SectionFounder />
         <div className="relative py-16">
           <BackgroundSection />
-          <SectionClientSay />
+          <SectionClientSay data={testimonials.length ? testimonials : undefined} />
         </div>
 
         <SectionStatistic />

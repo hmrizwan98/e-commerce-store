@@ -13,14 +13,20 @@ const DEMO_DATA = [
 interface Props {
   data?: { name: string }[];
   className?: string;
+  onChange?: (name: string) => void;
 }
 
-const SortOrderFilter: FC<Props> = ({ data = DEMO_DATA, className = "" }) => {
+const SortOrderFilter: FC<Props> = ({ data = DEMO_DATA, className = "", onChange }) => {
   const [selected, setSelected] = useState(data[0]);
+
+  const handleChange = (value: { name: string }) => {
+    setSelected(value);
+    onChange?.(value.name);
+  };
 
   return (
     <div className={className}>
-      <Listbox value={selected} onChange={setSelected}>
+      <Listbox value={selected} onChange={handleChange}>
         <div className="relative mt-1">
           <Listbox.Button as={Fragment}>
             <button className="font-medium border bg-white dark:bg-neutral-900 border-neutral-200 text-neutral-500 dark:text-neutral-400 dark:border-neutral-700 inline-flex items-center justify-center rounded-full px-5 py-2">

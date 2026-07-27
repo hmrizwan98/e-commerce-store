@@ -50,12 +50,11 @@ const SectionHero3: FC<SectionHero3Props> = ({ className = "" }) => {
 
       {/* BG */}
       <div className="absolute inset-0 bg-[#F7F0EA] rounded-2xl overflow-hidden z-0">
-        <Image
-          fill
-          sizes="(max-width: 768px) 100vw, 50vw"
-          className="absolute w-full h-full object-contain"
-          src={backgroundLineSvg}
-          alt="hero"
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          className="absolute inset-0 w-full h-full object-contain"
+          src={backgroundLineSvg.src}
+          alt=""
         />
       </div>
     </div>

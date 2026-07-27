@@ -36,12 +36,11 @@ const Logo: React.FC<LogoProps> = ({
         "Logo Here"
       )}
       {imgLight && (
-        <Image
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
           className="hidden h-8 sm:h-10 w-auto dark:block"
-          src={imgLight}
+          src={(imgLight as unknown as { src: string }).src ?? imgLight}
           alt="Logo-Light"
-          sizes="200px"
-          priority
         />
       )}
     </Link>

@@ -1,4 +1,5 @@
 import React, { FC } from "react";
+import { StaticImageData } from "next/image";
 import NcImage from "@/shared/NcImage/NcImage";
 import HIW1img from "@/images/HIW1img.png";
 import HIW2img from "@/images/HIW2img.png";
@@ -6,14 +7,24 @@ import HIW3img from "@/images/HIW3img.png";
 import HIW4img from "@/images/HIW4img.png";
 import VectorImg from "@/images/VectorHIW.svg";
 import Badge from "@/shared/Badge/Badge";
-import Image from "next/image";
+import { safeImageSrc } from "@/utils/safeImageSrc";
+
+export interface HowItWorkItem {
+  id: number | string;
+  img?: StaticImageData | string;
+  imgDark?: StaticImageData | string;
+  /** Emoji/text icon shown in place of img/imgDark when no image is set. */
+  icon?: string;
+  title?: string;
+  desc?: string;
+}
 
 export interface SectionHowItWorkProps {
   className?: string;
-  data?: typeof DEMO_DATA[0][];
+  data?: HowItWorkItem[];
 }
 
-const DEMO_DATA = [
+const DEMO_DATA: HowItWorkItem[] = [
   {
     id: 1,
     img: HIW1img,
@@ -51,23 +62,30 @@ const SectionHowItWork: FC<SectionHowItWorkProps> = ({
   return (
     <div className={`nc-SectionHowItWork ${className}`}>
       <div className="relative grid sm:grid-cols-2 lg:grid-cols-4 gap-10 sm:gap-16 xl:gap-20">
-        <Image
-          className="hidden md:block absolute inset-x-0 top-5"
-          src={VectorImg}
-          alt="vector"
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          className="hidden md:block absolute inset-x-0 top-5 w-full"
+          src={VectorImg.src}
+          alt=""
         />
-        {data.map((item: typeof DEMO_DATA[number], index: number) => (
+        {data.map((item: HowItWorkItem, index: number) => (
           <div
             key={item.id}
             className="relative flex flex-col items-center max-w-xs mx-auto"
           >
-            <NcImage
-              containerClassName="mb-4 sm:mb-10 max-w-[140px] mx-auto"
-              className="rounded-3xl"
-              src={item.img}
-              sizes="150px"
-              alt="HIW"
-            />
+            {item.img ? (
+              <NcImage
+                containerClassName="mb-4 sm:mb-10 max-w-[140px] mx-auto"
+                className="rounded-3xl"
+                src={typeof item.img === "string" ? safeImageSrc(item.img) : item.img}
+                sizes="150px"
+                alt="HIW"
+              />
+            ) : item.icon ? (
+              <div className="mb-4 sm:mb-10 max-w-[140px] h-[140px] mx-auto flex items-center justify-center text-6xl">
+                {item.icon}
+              </div>
+            ) : null}
             <div className="text-center mt-auto space-y-5">
               <Badge
                 name={`Step ${index + 1}`}

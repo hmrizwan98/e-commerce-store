@@ -1,25 +1,32 @@
-'use client';
 import React, { FC } from 'react';
 import NcImage from '@/shared/NcImage/NcImage';
 import SocialsShare from '@/shared/SocialsShare/SocialsShare';
 import { imgHigtQualitys, _getTitleRd } from '@/contains/fakeData';
 import PostCardMeta from '@/components/PostCardMeta/PostCardMeta';
 import Link from 'next/link';
+import type { BlogPost } from '@/types/blog-post';
+import { safeImageSrc } from '@/utils/safeImageSrc';
 
 export interface Card12Props {
   className?: string;
+  post?: BlogPost;
 }
 
-const Card12: FC<Card12Props> = ({ className = 'h-full' }) => {
+const Card12: FC<Card12Props> = ({ className = 'h-full', post }) => {
+  const title = post?.title ?? _getTitleRd();
+  const image = post?.coverImage ?? imgHigtQualitys[0];
+  const excerpt = post?.excerpt;
+  const publishedAt = post?.publishedAt;
+
   return (
     <div className={`nc-Card12 group relative flex flex-col ${className}`}>
       <Link
         href={'/blog-single'}
         className="relative flex-grow flex-shrink-0 block w-full h-0 overflow-hidden aspect-w-4 aspect-h-3 rounded-3xl">
         <NcImage
-          src={imgHigtQualitys[0]}
+          src={safeImageSrc(image)}
           containerClassName="absolute inset-0"
-          alt={'title'}
+          alt={title}
           fill
           sizes="(max-width: 768px) 100vw, 50vw"
         />
@@ -33,18 +40,28 @@ const Card12: FC<Card12Props> = ({ className = 'h-full' }) => {
           <Link
             href={'/blog-single'}
             className="capitalize line-clamp-2"
-            title={'title'}>
-            {_getTitleRd()}
+            title={title}>
+            {title}
           </Link>
         </h2>
         <span className="hidden mt-4 sm:block text-neutral-500 dark:text-neutral-400">
           <span className="line-clamp-2">
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Obcaecati
-            vero perspiciatis ullam ea? Nihil accusamus similique debitis
-            tempore mollitia? Aperiam.
+            {excerpt ?? (
+              <>
+                Lorem ipsum dolor sit amet consectetur adipisicing elit. Obcaecati
+                vero perspiciatis ullam ea? Nihil accusamus similique debitis
+                tempore mollitia? Aperiam.
+              </>
+            )}
           </span>
         </span>
-        <PostCardMeta className="mt-5" />
+        {publishedAt ? (
+          <span className="mt-5 text-sm text-neutral-500 dark:text-neutral-400">
+            {new Date(publishedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+          </span>
+        ) : (
+          <PostCardMeta className="mt-5" />
+        )}
       </div>
     </div>
   );

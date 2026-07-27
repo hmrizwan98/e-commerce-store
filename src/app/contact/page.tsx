@@ -1,28 +1,30 @@
-import React, { FC } from "react";
+import React from "react";
 import SocialsList from "@/shared/SocialsList/SocialsList";
-import Label from "@/components/Label/Label";
-import Input from "@/shared/Input/Input";
-import Textarea from "@/shared/Textarea/Textarea";
-import ButtonPrimary from "@/shared/Button/ButtonPrimary";
 import BackgroundSection from "@/components/BackgroundSection/BackgroundSection";
 import SectionPromo1 from "@/components/SectionPromo1";
+import ContactForm from "./ContactForm";
+import { getGeneralSettings } from "@/lib/firebase/repositories/site-settings";
 
-const info = [
-  {
-    title: "🗺 ADDRESS",
-    desc: "Photo booth tattooed prism, portland taiyaki hoodie neutra typewriter",
-  },
-  {
-    title: "💌 EMAIL",
-    desc: "nc.example@example.com",
-  },
-  {
-    title: "☎ PHONE",
-    desc: "000-123-456-7890",
-  },
-];
+export const dynamic = "force-dynamic";
 
-const PageContact = ({}) => {
+const PageContact = async () => {
+  const general = await getGeneralSettings();
+
+  const info = [
+    {
+      title: "🗺 ADDRESS",
+      desc: general.storeAddress || "Address not set yet.",
+    },
+    {
+      title: "💌 EMAIL",
+      desc: general.storeEmail,
+    },
+    {
+      title: "☎ PHONE",
+      desc: general.storePhone || "Phone not set yet.",
+    },
+  ];
+
   return (
     <div className={`nc-PageContact overflow-hidden`}>
       <div className="">
@@ -50,34 +52,7 @@ const PageContact = ({}) => {
               </div>
             </div>
             <div>
-              <form className="grid grid-cols-1 gap-6" action="#" method="post">
-                <label className="block">
-                  <Label>Full name</Label>
-
-                  <Input
-                    placeholder="Example Doe"
-                    type="text"
-                    className="mt-1"
-                  />
-                </label>
-                <label className="block">
-                  <Label>Email address</Label>
-
-                  <Input
-                    type="email"
-                    placeholder="example@example.com"
-                    className="mt-1"
-                  />
-                </label>
-                <label className="block">
-                  <Label>Message</Label>
-
-                  <Textarea className="mt-1" rows={6} />
-                </label>
-                <div>
-                  <ButtonPrimary type="submit">Send Message</ButtonPrimary>
-                </div>
-              </form>
+              <ContactForm />
             </div>
           </div>
         </div>

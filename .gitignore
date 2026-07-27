@@ -12,6 +12,12 @@
 /.next/
 /out/
 
+firebase-service-account.json
+firebase-service-account*.json
+.env
+.env.local
+
+
 # production
 /build
 

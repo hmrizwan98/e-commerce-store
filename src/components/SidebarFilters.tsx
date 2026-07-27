@@ -5,81 +5,74 @@ import Checkbox from "@/shared/Checkbox/Checkbox";
 import Slider from "rc-slider";
 import Radio from "@/shared/Radio/Radio";
 import MySwitch from "@/components/MySwitch";
+import { FILTER_COLORS, FILTER_SIZES, PRICE_RANGE, SORT_OPTIONS } from "@/lib/filters/constants";
+import { useFilterParams } from "@/hooks/useFilterParams";
+import type { FilterCategoryOption } from "@/components/TabFilters";
 
-// DEMO DATA
-const DATA_categories = [
-  {
-    name: "Backpacks",
-  },
-  {
-    name: "Travel Bags",
-  },
-  {
-    name: "Laptop Sleeves",
-  },
-  {
-    name: "Organization",
-  },
-  {
-    name: "Accessories",
-  },
-];
+export interface SidebarFiltersProps {
+  categories?: FilterCategoryOption[];
+}
 
-const DATA_colors = [
-  { name: "White" },
-  { name: "Beige" },
-  { name: "Blue" },
-  { name: "Black" },
-  { name: "Brown" },
-  { name: "Green" },
-  { name: "Navy" },
-];
+const DATA_colors = FILTER_COLORS.map((name) => ({ name }));
+const DATA_sizes = FILTER_SIZES.map((name) => ({ name }));
+const DATA_sortOrderRadios = SORT_OPTIONS;
 
-const DATA_sizes = [
-  { name: "XS" },
-  { name: "S" },
-  { name: "M" },
-  { name: "L" },
-  { name: "XL" },
-  { name: "2XL" },
-];
+// This sidebar has no explicit Apply step (unlike TabFilters' popovers), so
+// every change commits straight to the URL.
+const SidebarFilters = ({ categories = [] }: SidebarFiltersProps) => {
+  const { filters, applyFilters } = useFilterParams();
+  const DATA_categories = categories.map((c) => ({ name: c.name }));
 
-const DATA_sortOrderRadios = [
-  { name: "Most Popular", id: "Most-Popular" },
-  { name: "Best Rating", id: "Best-Rating" },
-  { name: "Newest", id: "Newest" },
-  { name: "Price Low - Hight", id: "Price-low-hight" },
-  { name: "Price Hight - Low", id: "Price-hight-low" },
-];
-
-const PRICE_RANGE = [1, 500];
-//
-const SidebarFilters = () => {
-  //
-  const [isOnSale, setIsIsOnSale] = useState(true);
-  const [rangePrices, setRangePrices] = useState([100, 500]);
-  const [categoriesState, setCategoriesState] = useState<string[]>([]);
-  const [colorsState, setColorsState] = useState<string[]>([]);
-  const [sizesState, setSizesState] = useState<string[]>([]);
-  const [sortOrderStates, setSortOrderStates] = useState<string>("");
+  const [isOnSale, setIsIsOnSale] = useState(filters.sale);
+  const [rangePrices, setRangePrices] = useState<number[]>([
+    filters.minPrice ?? PRICE_RANGE[0],
+    filters.maxPrice ?? PRICE_RANGE[1],
+  ]);
+  const [categoriesState, setCategoriesState] = useState<string[]>(filters.category);
+  const [colorsState, setColorsState] = useState<string[]>(filters.color);
+  const [sizesState, setSizesState] = useState<string[]>(filters.size);
+  const [sortOrderStates, setSortOrderStates] = useState<string>(filters.sort ?? "");
 
   //
   const handleChangeCategories = (checked: boolean, name: string) => {
-    checked
-      ? setCategoriesState([...categoriesState, name])
-      : setCategoriesState(categoriesState.filter((i) => i !== name));
+    const next = checked
+      ? [...categoriesState, name]
+      : categoriesState.filter((i) => i !== name);
+    setCategoriesState(next);
+    applyFilters({ category: next });
   };
 
   const handleChangeColors = (checked: boolean, name: string) => {
-    checked
-      ? setColorsState([...colorsState, name])
-      : setColorsState(colorsState.filter((i) => i !== name));
+    const next = checked ? [...colorsState, name] : colorsState.filter((i) => i !== name);
+    setColorsState(next);
+    applyFilters({ color: next });
   };
 
   const handleChangeSizes = (checked: boolean, name: string) => {
-    checked
-      ? setSizesState([...sizesState, name])
-      : setSizesState(sizesState.filter((i) => i !== name));
+    const next = checked ? [...sizesState, name] : sizesState.filter((i) => i !== name);
+    setSizesState(next);
+    applyFilters({ size: next });
+  };
+
+  const handleChangeSortOrder = (id: string) => {
+    setSortOrderStates(id);
+    applyFilters({ sort: id || undefined });
+  };
+
+  const handleChangeOnSale = (enabled: boolean) => {
+    setIsIsOnSale(enabled);
+    applyFilters({ sale: enabled });
+  };
+
+  const handleChangePriceRange = (range: number[]) => {
+    setRangePrices(range);
+  };
+
+  const commitPriceRange = () => {
+    applyFilters({
+      minPrice: rangePrices[0] === PRICE_RANGE[0] ? undefined : rangePrices[0],
+      maxPrice: rangePrices[1] === PRICE_RANGE[1] ? undefined : rangePrices[1],
+    });
   };
 
   //
@@ -161,8 +154,9 @@ const SidebarFilters = () => {
             defaultValue={[rangePrices[0], rangePrices[1]]}
             allowCross={false}
             onChange={(_input: number | number[]) =>
-              setRangePrices(_input as number[])
+              handleChangePriceRange(_input as number[])
             }
+            onAfterChange={commitPriceRange}
           />
         </div>
 
@@ -227,7 +221,7 @@ const SidebarFilters = () => {
             label={item.name}
             defaultChecked={sortOrderStates === item.id}
             sizeClassName="w-5 h-5"
-            onChange={setSortOrderStates}
+            onChange={handleChangeSortOrder}
             className="!text-sm"
           />
         ))}
@@ -246,7 +240,7 @@ const SidebarFilters = () => {
           label="On sale!"
           desc="Products currently on sale"
           enabled={isOnSale}
-          onChange={setIsIsOnSale}
+          onChange={handleChangeOnSale}
         />
       </div>
       {renderTabsSortOrder()}

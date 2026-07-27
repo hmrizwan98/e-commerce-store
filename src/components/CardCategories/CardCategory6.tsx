@@ -2,8 +2,9 @@ import React, { FC } from "react";
 import NcImage from "@/shared/NcImage/NcImage";
 import explore1Svg from "@/images/collections/explore1.svg";
 import { ArrowRightIcon } from "@heroicons/react/24/outline";
-import Image, { StaticImageData } from "next/image";
+import { StaticImageData } from "next/image";
 import Link from "next/link";
+import { safeImageSrc } from "@/utils/safeImageSrc";
 
 export interface CardCategory6Props {
   className?: string;
@@ -28,14 +29,15 @@ const CardCategory6: FC<CardCategory6Props> = ({
     >
       <div>
         <div className="absolute bottom-0 right-0 top-0 opacity-10">
-          <Image src={bgSVG} alt="" />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={(bgSVG as unknown as { src: string }).src ?? bgSVG} alt="" />
         </div>
 
         <div className="absolute inset-5 flex flex-col justify-between items-center">
           <div className="flex justify-center items-center">
             <NcImage
               alt=""
-              src={featuredImage}
+              src={typeof featuredImage === "string" ? safeImageSrc(featuredImage) : featuredImage}
               containerClassName={`w-20 h-20 rounded-full overflow-hidden z-0 ${color}`}
             />
           </div>

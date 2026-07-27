@@ -1,11 +1,30 @@
-import React, { FC } from "react";
+import React from "react";
 import SectionSliderCollections from "@/components/SectionSliderLargeProduct";
 import SectionPromo1 from "@/components/SectionPromo1";
 import ProductCard from "@/components/ProductCard";
-import { PRODUCTS } from "@/data/data";
+import Pagination from "@/shared/Pagination/Pagination";
+import { searchProducts } from "@/lib/firebase/repositories/products";
+import { getCategories } from "@/lib/firebase/repositories/categories";
+import {
+  parseProductSearchParams,
+  buildPageHref,
+  type RawSearchParams,
+} from "@/lib/filters/parse-search-params";
 import SidebarFilters from "@/components/SidebarFilters";
 
-const PageCollection2 = ({}) => {
+export const dynamic = "force-dynamic";
+
+const PageCollection2 = async ({
+  searchParams,
+}: {
+  searchParams: RawSearchParams;
+}) => {
+  const params = parseProductSearchParams(searchParams);
+  const [{ products, totalPages }, categories] = await Promise.all([
+    searchProducts(params),
+    getCategories(),
+  ]);
+
   return (
     <div className={`nc-PageCollection2`}>
       <div className="container py-16 lg:pb-28 lg:pt-20 space-y-16 sm:space-y-20 lg:space-y-28">
@@ -26,14 +45,26 @@ const PageCollection2 = ({}) => {
             {/* LOOP ITEMS */}
             <div className="flex flex-col lg:flex-row">
               <div className="lg:w-1/3 xl:w-1/4 pr-4">
-                <SidebarFilters />
+                <SidebarFilters categories={categories} />
               </div>
               <div className="flex-shrink-0 mb-10 lg:mb-0 lg:mx-4 border-t lg:border-t-0"></div>
               <div className="flex-1 ">
                 <div className="flex-1 grid sm:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-10 ">
-                  {PRODUCTS.map((item, index) => (
-                    <ProductCard data={item} key={index} />
+                  {products.map((item) => (
+                    <ProductCard data={item} key={item.id} />
                   ))}
+                </div>
+                {!products.length && (
+                  <p className="mt-10 text-center text-slate-500 dark:text-slate-400">
+                    No products match these filters.
+                  </p>
+                )}
+                <div className="flex mt-12 lg:mt-16 justify-center">
+                  <Pagination
+                    currentPage={params.page ?? 1}
+                    totalPages={totalPages}
+                    buildHref={(page) => `/collection-2${buildPageHref(searchParams, page)}`}
+                  />
                 </div>
               </div>
             </div>

@@ -10,71 +10,59 @@ import Slider from "rc-slider";
 import Radio from "@/shared/Radio/Radio";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
 import MySwitch from "@/components/MySwitch";
+import { FILTER_COLORS, FILTER_SIZES, PRICE_RANGE, SORT_OPTIONS } from "@/lib/filters/constants";
+import { useFilterParams } from "@/hooks/useFilterParams";
 
-// DEMO DATA
-const DATA_categories = [
-  {
-    name: "New Arrivals",
-  },
-  {
-    name: "Sale",
-  },
-  {
-    name: "Backpacks",
-  },
-  {
-    name: "Travel Bags",
-  },
-  {
-    name: "Laptop Sleeves",
-  },
-  {
-    name: "Organization",
-  },
-  {
-    name: "Accessories",
-  },
-];
+export interface FilterCategoryOption {
+  id: string;
+  name: string;
+}
 
-const DATA_colors = [
-  { name: "White" },
-  { name: "Beige" },
-  { name: "Blue" },
-  { name: "Black" },
-  { name: "Brown" },
-  { name: "Green" },
-  { name: "Navy" },
-];
+export interface TabFiltersProps {
+  categories?: FilterCategoryOption[];
+}
 
-const DATA_sizes = [
-  { name: "XXS" },
-  { name: "XS" },
-  { name: "S" },
-  { name: "M" },
-  { name: "L" },
-  { name: "XL" },
-  { name: "2XL" },
-];
+const DATA_colors = FILTER_COLORS.map((name) => ({ name }));
+const DATA_sizes = FILTER_SIZES.map((name) => ({ name }));
+const DATA_sortOrderRadios = SORT_OPTIONS;
 
-const DATA_sortOrderRadios = [
-  { name: "Most Popular", id: "Most-Popular" },
-  { name: "Best Rating", id: "Best-Rating" },
-  { name: "Newest", id: "Newest" },
-  { name: "Price Low - Hight", id: "Price-low-hight" },
-  { name: "Price Hight - Low", id: "Price-hight-low" },
-];
+const TabFilters = ({ categories = [] }: TabFiltersProps) => {
+  const { filters, applyFilters, clearAll } = useFilterParams();
+  // Category filter values round-trip through the URL as category *names*
+  // (matching this component's existing name-keyed state) - searchProducts()
+  // resolves name -> categoryId server-side.
+  const DATA_categories = categories.map((c) => ({ name: c.name }));
 
-const PRICE_RANGE = [1, 500];
-//
-const TabFilters = () => {
   const [isOpenMoreFilter, setisOpenMoreFilter] = useState(false);
   //
-  const [isOnSale, setIsIsOnSale] = useState(false);
-  const [rangePrices, setRangePrices] = useState([100, 500]);
-  const [categoriesState, setCategoriesState] = useState<string[]>([]);
-  const [colorsState, setColorsState] = useState<string[]>([]);
-  const [sizesState, setSizesState] = useState<string[]>([]);
-  const [sortOrderStates, setSortOrderStates] = useState<string>("");
+  const [isOnSale, setIsIsOnSale] = useState(filters.sale);
+  const [rangePrices, setRangePrices] = useState<number[]>([
+    filters.minPrice ?? PRICE_RANGE[0],
+    filters.maxPrice ?? PRICE_RANGE[1],
+  ]);
+  const [categoriesState, setCategoriesState] = useState<string[]>(filters.category);
+  const [colorsState, setColorsState] = useState<string[]>(filters.color);
+  const [sizesState, setSizesState] = useState<string[]>(filters.size);
+  const [sortOrderStates, setSortOrderStates] = useState<string>(filters.sort ?? "");
+
+  const commit = () => {
+    applyFilters({
+      category: categoriesState,
+      color: colorsState,
+      size: sizesState,
+      minPrice: rangePrices[0] === PRICE_RANGE[0] ? undefined : rangePrices[0],
+      maxPrice: rangePrices[1] === PRICE_RANGE[1] ? undefined : rangePrices[1],
+      sale: isOnSale,
+      sort: sortOrderStates || undefined,
+    });
+  };
+
+  const activeFilterCount =
+    categoriesState.length +
+    colorsState.length +
+    sizesState.length +
+    (isOnSale ? 1 : 0) +
+    (rangePrices[0] !== PRICE_RANGE[0] || rangePrices[1] !== PRICE_RANGE[1] ? 1 : 0);
 
   //
   const closeModalMoreFilter = () => setisOpenMoreFilter(false);
@@ -193,7 +181,12 @@ const TabFilters = () => {
               {!categoriesState.length ? (
                 <ChevronDownIcon className="w-4 h-4 ml-3" />
               ) : (
-                <span onClick={() => setCategoriesState([])}>
+                <span
+                  onClick={() => {
+                    setCategoriesState([]);
+                    applyFilters({ category: [] });
+                  }}
+                >
                   {renderXClear()}
                 </span>
               )}
@@ -237,15 +230,19 @@ const TabFilters = () => {
                   <div className="p-5 bg-neutral-50 dark:bg-neutral-900 dark:border-t dark:border-neutral-800 flex items-center justify-between">
                     <ButtonThird
                       onClick={() => {
-                        close();
                         setCategoriesState([]);
+                        applyFilters({ category: [] });
+                        close();
                       }}
                       sizeClass="px-4 py-2 sm:px-5"
                     >
                       Clear
                     </ButtonThird>
                     <ButtonPrimary
-                      onClick={close}
+                      onClick={() => {
+                        commit();
+                        close();
+                      }}
                       sizeClass="px-4 py-2 sm:px-5"
                     >
                       Apply
@@ -328,7 +325,12 @@ const TabFilters = () => {
               {!sortOrderStates.length ? (
                 <ChevronDownIcon className="w-4 h-4 ml-3" />
               ) : (
-                <span onClick={() => setSortOrderStates("")}>
+                <span
+                  onClick={() => {
+                    setSortOrderStates("");
+                    applyFilters({ sort: undefined });
+                  }}
+                >
                   {renderXClear()}
                 </span>
               )}
@@ -359,15 +361,19 @@ const TabFilters = () => {
                   <div className="p-5 bg-neutral-50 dark:bg-neutral-900 dark:border-t dark:border-neutral-800 flex items-center justify-between">
                     <ButtonThird
                       onClick={() => {
-                        close();
                         setSortOrderStates("");
+                        applyFilters({ sort: undefined });
+                        close();
                       }}
                       sizeClass="px-4 py-2 sm:px-5"
                     >
                       Clear
                     </ButtonThird>
                     <ButtonPrimary
-                      onClick={close}
+                      onClick={() => {
+                        commit();
+                        close();
+                      }}
                       sizeClass="px-4 py-2 sm:px-5"
                     >
                       Apply
@@ -449,7 +455,14 @@ const TabFilters = () => {
               {!colorsState.length ? (
                 <ChevronDownIcon className="w-4 h-4 ml-3" />
               ) : (
-                <span onClick={() => setColorsState([])}>{renderXClear()}</span>
+                <span
+                  onClick={() => {
+                    setColorsState([]);
+                    applyFilters({ color: [] });
+                  }}
+                >
+                  {renderXClear()}
+                </span>
               )}
             </Popover.Button>
             <Transition
@@ -480,15 +493,19 @@ const TabFilters = () => {
                   <div className="p-5 bg-slate-50 dark:bg-slate-900 dark:border-t dark:border-slate-800 flex items-center justify-between">
                     <ButtonThird
                       onClick={() => {
-                        close();
                         setColorsState([]);
+                        applyFilters({ color: [] });
+                        close();
                       }}
                       sizeClass="px-4 py-2 sm:px-5"
                     >
                       Clear
                     </ButtonThird>
                     <ButtonPrimary
-                      onClick={close}
+                      onClick={() => {
+                        commit();
+                        close();
+                      }}
                       sizeClass="px-4 py-2 sm:px-5"
                     >
                       Apply
@@ -559,7 +576,14 @@ const TabFilters = () => {
               {!sizesState.length ? (
                 <ChevronDownIcon className="w-4 h-4 ml-3" />
               ) : (
-                <span onClick={() => setSizesState([])}>{renderXClear()}</span>
+                <span
+                  onClick={() => {
+                    setSizesState([]);
+                    applyFilters({ size: [] });
+                  }}
+                >
+                  {renderXClear()}
+                </span>
               )}
             </Popover.Button>
             <Transition
@@ -590,15 +614,19 @@ const TabFilters = () => {
                   <div className="p-5 bg-slate-50 dark:bg-slate-900 dark:border-t dark:border-slate-800 flex items-center justify-between">
                     <ButtonThird
                       onClick={() => {
-                        close();
                         setSizesState([]);
+                        applyFilters({ size: [] });
+                        close();
                       }}
                       sizeClass="px-4 py-2 sm:px-5"
                     >
                       Clear
                     </ButtonThird>
                     <ButtonPrimary
-                      onClick={close}
+                      onClick={() => {
+                        commit();
+                        close();
+                      }}
                       sizeClass="px-4 py-2 sm:px-5"
                     >
                       Apply
@@ -654,7 +682,12 @@ const TabFilters = () => {
               <span className="ml-2 min-w-[90px]">{`${rangePrices[0]}$ - ${rangePrices[1]}$`}</span>
               {rangePrices[0] === PRICE_RANGE[0] &&
               rangePrices[1] === PRICE_RANGE[1] ? null : (
-                <span onClick={() => setRangePrices(PRICE_RANGE)}>
+                <span
+                  onClick={() => {
+                    setRangePrices(PRICE_RANGE);
+                    applyFilters({ minPrice: undefined, maxPrice: undefined });
+                  }}
+                >
                   {renderXClear()}
                 </span>
               )}
@@ -735,6 +768,7 @@ const TabFilters = () => {
                     <ButtonThird
                       onClick={() => {
                         setRangePrices(PRICE_RANGE);
+                        applyFilters({ minPrice: undefined, maxPrice: undefined });
                         close();
                       }}
                       sizeClass="px-4 py-2 sm:px-5"
@@ -742,7 +776,10 @@ const TabFilters = () => {
                       Clear
                     </ButtonThird>
                     <ButtonPrimary
-                      onClick={close}
+                      onClick={() => {
+                        commit();
+                        close();
+                      }}
                       sizeClass="px-4 py-2 sm:px-5"
                     >
                       Apply
@@ -766,7 +803,11 @@ const TabFilters = () => {
             ? "border-primary-500 bg-primary-50 text-primary-900"
             : "border-neutral-300 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 hover:border-neutral-400 dark:hover:border-neutral-500"
         }`}
-        onClick={() => setIsIsOnSale(!isOnSale)}
+        onClick={() => {
+          const next = !isOnSale;
+          setIsIsOnSale(next);
+          applyFilters({ sale: next });
+        }}
       >
         <svg
           className="w-4 h-4"
@@ -912,7 +953,10 @@ const TabFilters = () => {
             />
           </svg>
 
-          <span className="ml-2">Products filters (3)</span>
+          <span className="ml-2">
+            Products filters
+            {activeFilterCount ? ` (${activeFilterCount})` : ""}
+          </span>
           {renderXClear()}
         </div>
 
@@ -1105,7 +1149,10 @@ const TabFilters = () => {
                         setRangePrices(PRICE_RANGE);
                         setCategoriesState([]);
                         setColorsState([]);
+                        setSizesState([]);
                         setSortOrderStates("");
+                        setIsIsOnSale(false);
+                        clearAll();
                         closeModalMoreFilter();
                       }}
                       sizeClass="px-4 py-2 sm:px-5"
@@ -1113,7 +1160,10 @@ const TabFilters = () => {
                       Clear
                     </ButtonThird>
                     <ButtonPrimary
-                      onClick={closeModalMoreFilter}
+                      onClick={() => {
+                        commit();
+                        closeModalMoreFilter();
+                      }}
                       sizeClass="px-4 py-2 sm:px-5"
                     >
                       Apply

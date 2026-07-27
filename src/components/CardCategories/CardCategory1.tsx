@@ -1,8 +1,9 @@
-import { _getImgRd, _getTagNameRd } from "@/contains/fakeData";
+import { _getTagNameRd } from "@/contains/fakeData";
 import React, { FC } from "react";
 import NcImage from "@/shared/NcImage/NcImage";
 import Link from "next/link";
 import { StaticImageData } from "next/image";
+import { safeImageSrc } from "@/utils/safeImageSrc";
 
 export interface CardCategory1Props {
   className?: string;
@@ -29,7 +30,7 @@ const CardCategory1: FC<CardCategory1Props> = ({
         containerClassName={`flex-shrink-0 relative ${
           size === "large" ? "w-20 h-20" : "w-12 h-12"
         } rounded-lg mr-4 overflow-hidden`}
-        src={featuredImage || _getImgRd()}
+        src={featuredImage || safeImageSrc()}
         sizes="(max-width: 640px) 100vw, 40vw"
         fill
       />

@@ -1,4 +1,3 @@
-'use client';
 import PostCardMeta from '@/components/PostCardMeta/PostCardMeta';
 import { _getImgRd, _getTitleRd } from '@/contains/fakeData';
 import React, { FC } from 'react';

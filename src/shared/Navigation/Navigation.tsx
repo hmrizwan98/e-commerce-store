@@ -1,16 +1,14 @@
+'use client';
+
 import React from 'react';
 import NavigationItem from './NavigationItem';
-// import navigation from '@/data/navigation';
-import { useAppSelector } from '@/utils/hooks/store';
-import useNavigationHook from '@/data/useNavigationHook';
+import { useMenu } from '@/hooks/useMenu';
 
 function Navigation() {
-  const { NAVIGATION_DEMO_2 } = useNavigationHook();
-  const navigation = useAppSelector((state) => state.homePage);
-  console.log('_____navigation', navigation);
+  const items = useMenu('header');
   return (
     <ul className="flex items-center nc-Navigation">
-      {NAVIGATION_DEMO_2.map((item) => (
+      {items.map((item) => (
         <NavigationItem key={item.id} menuItem={item} />
       ))}
     </ul>

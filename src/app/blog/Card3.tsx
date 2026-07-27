@@ -1,4 +1,3 @@
-'use client';
 import React, { FC } from 'react';
 import NcImage from '@/shared/NcImage/NcImage';
 import Badge from '@/shared/Badge/Badge';

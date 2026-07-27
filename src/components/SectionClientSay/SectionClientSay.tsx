@@ -17,12 +17,26 @@ import quotationImg2 from "@/images/quotation2.png";
 import { StarIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import { DEMO_DATA } from "./data";
+import { safeImageSrc } from "@/utils/safeImageSrc";
+
+export interface SectionClientSayItem {
+  id: string | number;
+  clientName: string;
+  content: string;
+  rating?: number;
+  image?: string;
+  designation?: string;
+  company?: string;
+  country?: string;
+}
 
 export interface SectionClientSayProps {
   className?: string;
+  data?: SectionClientSayItem[];
 }
 
-const SectionClientSay: FC<SectionClientSayProps> = ({ className = "" }) => {
+const SectionClientSay: FC<SectionClientSayProps> = ({ className = "", data }) => {
+  const testimonials = data?.length ? data : DEMO_DATA;
   const sliderRef = useRef(null);
 
   const [isShow, setIsShow] = useState(false);
@@ -113,31 +127,47 @@ const SectionClientSay: FC<SectionClientSayProps> = ({ className = "" }) => {
           />
           <div className="glide__track " data-glide-el="track">
             <ul className="glide__slides ">
-              {DEMO_DATA.map((item) => (
-                <li
-                  key={item.id}
-                  className="glide__slide flex flex-col items-center text-center"
-                >
-                  <span className="block text-2xl">{item.content}</span>
-                  <span className="block mt-8 text-2xl font-semibold">
-                    {item.clientName}
-                  </span>
-                  <div className="flex items-center space-x-0.5 mt-3.5 text-yellow-500">
-                    <StarIcon className="w-6 h-6" />
-                    <StarIcon className="w-6 h-6" />
-                    <StarIcon className="w-6 h-6" />
-                    <StarIcon className="w-6 h-6" />
-                    <StarIcon className="w-6 h-6" />
-                  </div>
-                </li>
-              ))}
+              {testimonials.map((item) => {
+                const rating = item.rating ?? 5;
+                const meta = [item.designation, item.company, item.country].filter(Boolean).join(" · ");
+                return (
+                  <li
+                    key={item.id}
+                    className="glide__slide flex flex-col items-center text-center"
+                  >
+                    {item.image && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={safeImageSrc(item.image)}
+                        alt={item.clientName}
+                        className="w-16 h-16 rounded-full object-cover mb-5 border-2 border-white dark:border-neutral-800 shadow-sm"
+                      />
+                    )}
+                    <span className="block text-2xl">{item.content}</span>
+                    <span className="block mt-8 text-2xl font-semibold">
+                      {item.clientName}
+                    </span>
+                    {meta && (
+                      <span className="block mt-1 text-sm text-neutral-500">{meta}</span>
+                    )}
+                    <div className="flex items-center space-x-0.5 mt-3.5 text-yellow-500">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <StarIcon
+                          key={star}
+                          className={`w-6 h-6 ${star > rating ? "text-neutral-300 dark:text-neutral-700" : ""}`}
+                        />
+                      ))}
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           </div>
           <div
             className="mt-10 glide__bullets flex items-center justify-center"
             data-glide-el="controls[nav]"
           >
-            {DEMO_DATA.map((item, index) => (
+            {testimonials.map((item, index) => (
               <button
                 key={item.id}
                 className="glide__bullet w-2 h-2 rounded-full bg-neutral-300 mx-1 focus:outline-none"

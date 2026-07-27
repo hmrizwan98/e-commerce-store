@@ -5,7 +5,9 @@ import Heading from "@/components/Heading/Heading";
 // @ts-ignore
 import Glide from "@glidejs/glide/dist/glide.esm";
 import ProductCard from "./ProductCard";
-import { Product, PRODUCTS } from "@/data/data";
+import ButtonSecondary from "@/shared/Button/ButtonSecondary";
+import type { Route } from "@/routers/types";
+import type { Product } from "@/types/product";
 
 export interface SectionSliderProductCardProps {
   className?: string;
@@ -15,6 +17,8 @@ export interface SectionSliderProductCardProps {
   headingClassName?: string;
   subHeading?: string;
   data?: Product[];
+  viewAllText?: string;
+  viewAllHref?: string;
 }
 
 const SectionSliderProductCard: FC<SectionSliderProductCardProps> = ({
@@ -24,7 +28,9 @@ const SectionSliderProductCard: FC<SectionSliderProductCardProps> = ({
   headingClassName,
   heading,
   subHeading = "REY backpacks & bags",
-  data = PRODUCTS.filter((_, i) => i < 8 && i > 2),
+  data = [],
+  viewAllText,
+  viewAllHref,
 }) => {
   const sliderRef = useRef(null);
 
@@ -89,6 +95,11 @@ const SectionSliderProductCard: FC<SectionSliderProductCardProps> = ({
             ))}
           </ul>
         </div>
+        {viewAllText && viewAllHref && (
+          <div className="flex justify-center mt-10">
+            <ButtonSecondary href={viewAllHref as Route}>{viewAllText}</ButtonSecondary>
+          </div>
+        )}
       </div>
     </div>
   );

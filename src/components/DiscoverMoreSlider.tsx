@@ -7,7 +7,23 @@ import CardCategory3 from './CardCategories/CardCategory3';
 import Glide from '@glidejs/glide/dist/glide.esm';
 import { CATS_DISCOVER } from './CardCategories/data';
 
-const DiscoverMoreSlider = () => {
+export interface DiscoverMoreSliderProps {
+  heading?: string;
+  rightDescText?: string;
+  data?: {
+    name: string;
+    desc: string;
+    featuredImage: string;
+    color?: string;
+    href?: string;
+  }[];
+}
+
+const DiscoverMoreSlider: React.FC<DiscoverMoreSliderProps> = ({
+  heading = 'Discover more',
+  rightDescText = 'Good things are waiting for you',
+  data,
+}) => {
   const sliderRef = useRef(null);
 
   const [isShow, setIsShow] = useState(false);
@@ -51,6 +67,8 @@ const DiscoverMoreSlider = () => {
     };
   }, [sliderRef]);
 
+  const items = data && data.length ? data : CATS_DISCOVER;
+
   return (
     <div
       ref={sliderRef}
@@ -60,19 +78,20 @@ const DiscoverMoreSlider = () => {
       <Heading
         className="mb-12 lg:mb-14 text-neutral-900 dark:text-neutral-50 nc-p-r-container "
         desc=""
-        rightDescText="Good things are waiting for you"
+        rightDescText={rightDescText}
         hasNextPrev>
-        Discover more
+        {heading}
       </Heading>
       <div className="" data-glide-el="track">
         <ul className="glide__slides">
-          {CATS_DISCOVER.map((item, index) => (
+          {items.map((item, index) => (
             <li key={index} className={`glide__slide`}>
               <CardCategory3
                 name={item.name}
                 desc={item.desc}
                 featuredImage={item.featuredImage}
                 color={item.color}
+                href={item.href}
               />
             </li>
           ))}

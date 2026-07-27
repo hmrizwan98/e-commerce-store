@@ -4,7 +4,6 @@ import facebook from "@/images/socials/facebook.svg";
 import twitter from "@/images/socials/twitter.svg";
 import telegram from "@/images/socials/telegram.svg";
 import youtube from "@/images/socials/youtube.svg";
-import Image from "next/image";
 
 export interface SocialsList1Props {
   className?: string;
@@ -26,7 +25,8 @@ const SocialsList1: FC<SocialsList1Props> = ({ className = "space-y-3" }) => {
         key={index}
       >
         <div className="flex-shrink-0 w-5 ">
-          <Image sizes="40px" src={item.icon} alt="" />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={(item.icon as unknown as { src: string }).src} alt="" className="w-5 h-5" />
         </div>
         <span className="hidden lg:block text-sm">{item.name}</span>
       </a>

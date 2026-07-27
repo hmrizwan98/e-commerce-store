@@ -50,12 +50,15 @@ const ReviewItem: FC<ReviewItemProps> = ({
             </span>
           </div>
 
-          <div className="mt-0.5 flex text-yellow-500">
-            <StarIcon className="w-5 h-5" />
-            <StarIcon className="w-5 h-5" />
-            <StarIcon className="w-5 h-5" />
-            <StarIcon className="w-5 h-5" />
-            <StarIcon className="w-5 h-5" />
+          <div className="mt-0.5 flex">
+            {[1, 2, 3, 4, 5].map((point) => (
+              <StarIcon
+                key={point}
+                className={`w-5 h-5 ${
+                  point <= data.starPoint ? "text-yellow-500" : "text-slate-300 dark:text-slate-600"
+                }`}
+              />
+            ))}
           </div>
         </div>
       </div>

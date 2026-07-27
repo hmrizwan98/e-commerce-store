@@ -2,7 +2,9 @@ import React, { FC } from "react";
 import ButtonSecondary from "@/shared/Button/ButtonSecondary";
 import Link from "next/link";
 import Image, { StaticImageData } from "next/image";
+import type { Route } from "next";
 import { CATS_DISCOVER } from "./data";
+import { safeImageSrc } from "@/utils/safeImageSrc";
 
 export interface CardCategory3Props {
   className?: string;
@@ -10,6 +12,7 @@ export interface CardCategory3Props {
   name?: string;
   desc?: string;
   color?: string;
+  href?: string;
 }
 
 const CardCategory3: FC<CardCategory3Props> = ({
@@ -18,10 +21,11 @@ const CardCategory3: FC<CardCategory3Props> = ({
   name = CATS_DISCOVER[2].name,
   desc = CATS_DISCOVER[2].desc,
   color = CATS_DISCOVER[2].color,
+  href = "/collection",
 }) => {
   return (
     <Link
-      href={"/collection"}
+      href={href as Route}
       className={`nc-CardCategory3 block ${className}`}
     >
       <div
@@ -31,7 +35,7 @@ const CardCategory3: FC<CardCategory3Props> = ({
           <div className="absolute inset-5 sm:inset-8">
             <Image
               alt=""
-              src={featuredImage || ""}
+              src={typeof featuredImage === "string" ? safeImageSrc(featuredImage) : featuredImage ?? safeImageSrc()}
               className="absolute end-0 w-1/2 max-w-[260px] h-full object-contain drop-shadow-xl"
             />
           </div>

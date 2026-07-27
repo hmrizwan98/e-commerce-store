@@ -2,8 +2,9 @@ import React, { FC } from "react";
 import NcImage from "@/shared/NcImage/NcImage";
 import explore1Svg from "@/images/collections/explore1.svg";
 import { ArrowRightIcon } from "@heroicons/react/24/outline";
-import Image, { StaticImageData } from "next/image";
+import { StaticImageData } from "next/image";
 import Link from "next/link";
+import { safeImageSrc } from "@/utils/safeImageSrc";
 
 export interface CardCategory4Props {
   className?: string;
@@ -30,21 +31,24 @@ const CardCategory4: FC<CardCategory4Props> = ({
     >
       <div>
         <div className="absolute bottom-0 right-0 max-w-[280px] opacity-80">
-          <Image src={bgSVG} alt="" />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={(bgSVG as unknown as { src: string }).src ?? bgSVG} alt="" />
         </div>
 
         <div className="absolute inset-5 sm:inset-8 flex flex-col justify-between">
           <div className="flex justify-between items-center">
             <NcImage
               alt=""
-              src={featuredImage}
+              src={typeof featuredImage === "string" ? safeImageSrc(featuredImage) : featuredImage}
               containerClassName={`w-20 h-20 rounded-full overflow-hidden z-0 ${color}`}
               width={80}
               height={80}
             />
-            <span className="text-xs text-slate-700 dark:text-neutral-300 font-medium">
-              {count} products
-            </span>
+            {count != null && (
+              <span className="text-xs text-slate-700 dark:text-neutral-300 font-medium">
+                {count} products
+              </span>
+            )}
           </div>
 
           <div className="">

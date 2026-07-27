@@ -1,5 +1,9 @@
 "use client";
 
+// NOTE: not yet migrated to Firebase (Phase 2 scope) - still renders the
+// static PRODUCTS[0] demo product. See src/app/product/[slug]/page.tsx for
+// the real dynamic PDP, which reuses this file's layout. Left in place only
+// because ModalViewAllReviews.tsx/Policy.tsx are imported from this folder.
 import React, { FC, useState } from "react";
 import ButtonPrimary from "@/shared/Button/ButtonPrimary";
 import LikeButton from "@/components/LikeButton";
@@ -31,7 +35,7 @@ import AccordionInfo from "@/components/AccordionInfo";
 const LIST_IMAGES_DEMO = [detail1JPG, detail2JPG, detail3JPG];
 
 const ProductDetailPage = () => {
-  const { sizes, variants, status, allOfSizes, image } = PRODUCTS[0];
+  const { sizes, variants, status, allOfSizes, image, name, price } = PRODUCTS[0];
   //
   const [variantActive, setVariantActive] = useState(0);
   const [sizeSelected, setSizeSelected] = useState(sizes ? sizes[0] : "");
@@ -44,11 +48,11 @@ const ProductDetailPage = () => {
     toast.custom(
       (t) => (
         <NotifyAddTocart
-          productImage={image}
+          product={{ name, price, images: [image] as unknown as string[] }}
           qualitySelected={qualitySelected}
           show={t.visible}
           sizeSelected={sizeSelected}
-          variantActive={variantActive}
+          variantLabel={variants ? variants[variantActive].name : undefined}
         />
       ),
       { position: "top-right", id: "nc-product-notify", duration: 3000 }

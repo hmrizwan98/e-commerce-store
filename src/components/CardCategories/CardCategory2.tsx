@@ -2,6 +2,7 @@ import React, { FC } from "react";
 import NcImage from "@/shared/NcImage/NcImage";
 import Link from "next/link";
 import { StaticImageData } from "next/image";
+import { safeImageSrc } from "@/utils/safeImageSrc";
 
 export interface CardCategory2Props {
   className?: string;
@@ -29,15 +30,14 @@ const CardCategory2: FC<CardCategory2Props> = ({
       <div
         className={`flex-1 relative w-full h-0 rounded-2xl overflow-hidden group ${ratioClass} ${bgClass}`}
       >
-        <div className="pt-14">
-          <NcImage
-            alt=""
-            containerClassName="w-full h-full flex justify-center"
-            src={featuredImage}
-            className="object-cover rounded-2xl"
-            sizes="400px"
-          />
-        </div>
+        <NcImage
+          alt=""
+          containerClassName="absolute inset-x-0 top-14 bottom-0 flex justify-center"
+          src={typeof featuredImage === "string" ? safeImageSrc(featuredImage) : featuredImage}
+          className="object-contain rounded-2xl"
+          fill
+          sizes="400px"
+        />
         <span className="opacity-0 group-hover:opacity-100 absolute inset-0 bg-black bg-opacity-10 transition-opacity rounded-2xl"></span>
       </div>
       <div className="mt-5 flex-1 text-center">
