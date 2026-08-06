@@ -1,11 +1,8 @@
-"use client";
-
-import React from "react";
 import Link from "next/link";
 import AccordionInfo from "@/components/AccordionInfo";
 import { PLATFORM_FAQS } from "@/lib/marketing/faq-data";
 
-function FaqTeaser() {
+export default function FaqTeaser() {
   const data = PLATFORM_FAQS.slice(0, 4).map((f) => ({ name: f.question, content: f.answer }));
 
   return (
@@ -22,5 +19,3 @@ function FaqTeaser() {
     </section>
   );
 }
-
-export default React.memo(FaqTeaser);

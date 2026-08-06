@@ -238,11 +238,11 @@ export async function adjustProductStock(id: string, stock: number): Promise<voi
     throw new Error("Stock cannot be negative.");
   }
   const col = await tenantCollection("products");
-  await col
-    .doc(id)
-    .update({ stock, updatedAt: FieldValue.serverTimestamp() });
+  const ref = col.doc(id);
+  const existing = await ref.get();
+  await ref.update({ stock, updatedAt: FieldValue.serverTimestamp() });
   revalidatePath("/admin/inventory");
-  revalidateStorefront();
+  revalidateStorefront(existing.data()?.slug as string | undefined);
   await logProductActivity(id, "stock_adjusted", decoded.uid, { newStock: String(stock) });
 }
 

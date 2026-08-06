@@ -45,7 +45,8 @@ export async function getCategoryById(id: string): Promise<Category | null> {
 export async function getCategoriesByIds(ids: string[]): Promise<Category[]> {
   if (!ids.length) return [];
   const col = await tenantCollection(COLLECTION);
-  const docs = await Promise.all(ids.map((id) => col.doc(id).get()));
+  const refs = ids.map((id) => col.doc(id));
+  const docs = await col.firestore.getAll(...refs);
   return docs
     .map((doc) => docData<Category>(doc))
     .filter((c): c is Category => c !== null && c.isActive && !c.isDeleted);

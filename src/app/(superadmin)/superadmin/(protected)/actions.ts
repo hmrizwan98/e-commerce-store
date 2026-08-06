@@ -41,8 +41,12 @@ async function revokeStoreAdminSessions(storeId: string) {
   try {
     const userRecord = await adminAuth().getUserByEmail(store.email);
     await adminAuth().revokeRefreshTokens(userRecord.uid);
-  } catch {
-    // No matching Auth user (e.g. store created without one) - nothing to revoke.
+  } catch (err) {
+    // "No matching Auth user" (store created without one) is expected and silent;
+    // anything else (network/permission failure) means the admin's existing
+    // session was NOT revoked despite the store being suspended/archived - log it
+    // so that isn't invisible.
+    console.error(`[revokeStoreAdminSessions] failed for store ${storeId}`, err);
   }
 }
 
@@ -115,8 +119,8 @@ async function normalizeAndValidateDomains(domains: string[] | undefined, exclud
 async function cleanupPartialStore(ref: FirebaseFirestore.DocumentReference, uid: string): Promise<void> {
   await adminAuth()
     .deleteUser(uid)
-    .catch(() => {});
-  await ref.delete().catch(() => {});
+    .catch((err) => console.error(`[cleanupPartialStore] failed to delete auth user ${uid}`, err));
+  await ref.delete().catch((err) => console.error(`[cleanupPartialStore] failed to delete store doc ${ref.id}`, err));
 }
 
 interface ProvisionShellInput {
@@ -405,6 +409,7 @@ export async function cloneStore(sourceStoreId: string, input: CloneStoreInput):
 
 export async function updateStore(id: string, input: StoreFormInput): Promise<void> {
   const decoded = await requireSuperAdmin();
+  await enforceRateLimit(decoded.uid);
   const domains = await normalizeAndValidateDomains(input.domains, id);
   const before = await getStoreById(id);
   await adminDb()
@@ -654,8 +659,11 @@ export async function transferOwnership(
       const oldUser = await adminAuth().getUserByEmail(store.email);
       await adminAuth().setCustomUserClaims(oldUser.uid, {});
       await adminAuth().revokeRefreshTokens(oldUser.uid);
-    } catch {
-      // No matching Auth user for the old owner - nothing to strip.
+    } catch (err) {
+      // "No matching Auth user" for the old owner is expected and silent;
+      // anything else means the old owner's admin access was NOT stripped
+      // despite the transfer proceeding - log it so that isn't invisible.
+      console.error(`[transferOwnership] failed to strip old owner access for store ${storeId}`, err);
     }
   }
 

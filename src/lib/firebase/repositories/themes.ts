@@ -1,5 +1,6 @@
 import "server-only";
 import { tenantCollection } from "@/lib/firebase/tenant-scope";
+import { requestMemo } from "@/lib/request-cache";
 import { docData } from "./utils";
 import type { Theme } from "@/types/theme";
 
@@ -122,12 +123,18 @@ export const DEFAULT_THEME: Theme = {
   darkMode: { enabled: false },
 };
 
+/** Memoized per-request (requestMemo) - already re-fetched independently by
+ * several pages in the same request as the root layout's own theme
+ * resolution (onboarding) - same dedup this codebase already applies to
+ * getCurrentTenant(). */
 export async function getActiveTheme(): Promise<Theme> {
-  const col = await tenantCollection(COLLECTION);
-  const snap = await col.where("isActive", "==", true).limit(1).get();
-  if (snap.empty) return DEFAULT_THEME;
-  const theme = docData<Theme>(snap.docs[0]);
-  return theme ?? DEFAULT_THEME;
+  return requestMemo("active-theme", async () => {
+    const col = await tenantCollection(COLLECTION);
+    const snap = await col.where("isActive", "==", true).limit(1).get();
+    if (snap.empty) return DEFAULT_THEME;
+    const theme = docData<Theme>(snap.docs[0]);
+    return theme ?? DEFAULT_THEME;
+  });
 }
 
 export async function getThemeById(id: string): Promise<Theme | null> {

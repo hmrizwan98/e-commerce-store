@@ -157,9 +157,8 @@ export async function getRelatedProducts(
 export async function getProductsByIds(ids: string[], limit = 8): Promise<Product[]> {
   if (!ids.length) return [];
   const col = await tenantCollection(COLLECTION);
-  const docs = await Promise.all(
-    ids.slice(0, limit).map((id) => col.doc(id).get())
-  );
+  const refs = ids.slice(0, limit).map((id) => col.doc(id));
+  const docs = await col.firestore.getAll(...refs);
   return docs
     .map((doc) => docData<Product>(doc))
     .filter((p): p is Product => p !== null && !p.isDeleted && p.status === "active");
@@ -189,12 +188,18 @@ export interface SearchProductsResult {
 
 /**
  * Firestore can only apply a range/inequality filter on ONE field per query,
- * and the first orderBy must match that field when present. So: every
- * equality/array-contains facet (category/brand/color/size/inStock) is a
- * real Firestore filter, freely combinable; price range is the one allowed
- * range filter (and forces ordering by price); `minRating` is applied as an
- * in-memory refinement over the fetched page - acceptable at this catalog's
- * size, revisit with Algolia/Typesense (see README/plan) if that stops being true.
+ * and the first orderBy must match that field when present. Firestore also
+ * allows AT MOST ONE array-contains/array-contains-any clause per query -
+ * category (array-contains), color, and size (both array-contains-any)
+ * cannot be combined as three separate real filters. So: category is always
+ * a real Firestore filter when present; color/size are real Firestore
+ * filters only when category is absent AND at most one of them is requested
+ * - the moment more than one array-type facet is active at once, every
+ * facet after the first is applied as an in-memory refinement over the
+ * fetched page instead, the same trade-off already accepted for `minRating`
+ * below. brand/inStock/sale remain real Firestore filters (no array-type
+ * conflict); price range is the one allowed range filter (and forces
+ * ordering by price).
  */
 export async function searchProducts(
   params: SearchProductsParams
@@ -207,9 +212,8 @@ export async function searchProducts(
     .where("status", "==", "active")
     .where("isDeleted", "==", false);
 
-  if (params.categoryId) {
-    query = query.where("categoryIds", "array-contains", params.categoryId);
-  } else if (params.category) {
+  let categoryId: string | undefined = params.categoryId;
+  if (!categoryId && params.category) {
     const categories = await getCategories();
     const match = categories.find(
       (c) => c.name.toLowerCase() === params.category!.toLowerCase()
@@ -217,27 +221,30 @@ export async function searchProducts(
     if (!match) {
       return { products: [], total: 0, totalPages: 1 };
     }
-    query = query.where("categoryIds", "array-contains", match.id);
+    categoryId = match.id;
+  }
+
+  const colorValues = params.color?.length ? params.color.map((c) => c.toLowerCase()).slice(0, 10) : undefined;
+  const sizeValues = params.size?.length ? params.size.map((s) => s.toLowerCase()).slice(0, 10) : undefined;
+
+  // At most one array-type facet becomes a real Firestore filter; any others
+  // are refined in-memory below (same shape as the minRating refinement).
+  let inMemoryColor: string[] | undefined;
+  let inMemorySize: string[] | undefined;
+
+  if (categoryId) {
+    query = query.where("categoryIds", "array-contains", categoryId);
+    inMemoryColor = colorValues;
+    inMemorySize = sizeValues;
+  } else if (colorValues) {
+    query = query.where("colorFacets", "array-contains-any", colorValues);
+    inMemorySize = sizeValues;
+  } else if (sizeValues) {
+    query = query.where("sizeFacets", "array-contains-any", sizeValues);
   }
 
   if (params.brand) {
     query = query.where("brandId", "==", params.brand);
-  }
-
-  if (params.color?.length) {
-    query = query.where(
-      "colorFacets",
-      "array-contains-any",
-      params.color.map((c) => c.toLowerCase()).slice(0, 10)
-    );
-  }
-
-  if (params.size?.length) {
-    query = query.where(
-      "sizeFacets",
-      "array-contains-any",
-      params.size.map((s) => s.toLowerCase()).slice(0, 10)
-    );
   }
 
   if (params.inStock) {
@@ -292,6 +299,12 @@ export async function searchProducts(
       .map((doc) => docData<Product>(doc))
       .filter((p): p is Product => p !== null);
 
+    if (inMemoryColor) {
+      products = products.filter((p) => p.colorFacets?.some((c) => inMemoryColor!.includes(c.toLowerCase())));
+    }
+    if (inMemorySize) {
+      products = products.filter((p) => p.sizeFacets?.some((s) => inMemorySize!.includes(s.toLowerCase())));
+    }
     if (params.minRating != null) {
       products = products.filter((p) => (p.rating ?? 0) >= params.minRating!);
     }

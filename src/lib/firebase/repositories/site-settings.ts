@@ -1,5 +1,6 @@
 import "server-only";
 import { tenantCollection } from "@/lib/firebase/tenant-scope";
+import { requestMemo } from "@/lib/request-cache";
 import type {
   GeneralSettings,
   PaymentSettings,
@@ -118,16 +119,24 @@ export const DEFAULT_TAX_SETTINGS: TaxSettings = {
   taxRegistered: false,
 };
 
+/** Memoized per-request (requestMemo) - read-heavy, rarely-changing, and
+ * already re-fetched independently by several pages in the same request as
+ * the root layout's own theme/settings resolution (checkout, cart, contact,
+ * onboarding) - same dedup this codebase already applies to getCurrentTenant(). */
 export async function getGeneralSettings(): Promise<GeneralSettings> {
-  const col = await tenantCollection(COLLECTION);
-  const doc = await col.doc("general").get();
-  return doc.exists ? { ...DEFAULT_GENERAL_SETTINGS, ...doc.data() } : DEFAULT_GENERAL_SETTINGS;
+  return requestMemo("general-settings", async () => {
+    const col = await tenantCollection(COLLECTION);
+    const doc = await col.doc("general").get();
+    return doc.exists ? { ...DEFAULT_GENERAL_SETTINGS, ...doc.data() } : DEFAULT_GENERAL_SETTINGS;
+  });
 }
 
 export async function getShippingSettings(): Promise<ShippingSettings> {
-  const col = await tenantCollection(COLLECTION);
-  const doc = await col.doc("shipping").get();
-  return doc.exists ? { ...DEFAULT_SHIPPING_SETTINGS, ...doc.data() } : DEFAULT_SHIPPING_SETTINGS;
+  return requestMemo("shipping-settings", async () => {
+    const col = await tenantCollection(COLLECTION);
+    const doc = await col.doc("shipping").get();
+    return doc.exists ? { ...DEFAULT_SHIPPING_SETTINGS, ...doc.data() } : DEFAULT_SHIPPING_SETTINGS;
+  });
 }
 
 export async function getPaymentSettings(): Promise<PaymentSettings> {

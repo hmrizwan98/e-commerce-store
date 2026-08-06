@@ -1,5 +1,6 @@
 import "server-only";
 import { adminDb } from "../admin";
+import { tenantCollection } from "@/lib/firebase/tenant-scope";
 import { docData } from "./utils";
 import { safeQuery } from "./safe-query";
 import { getProductsByIds } from "./products";
@@ -19,6 +20,7 @@ const EVENTS = "analyticsEvents";
 const ACTIVE_SESSIONS = "activeSessions";
 const VISITORS = "visitors";
 const ORDERS = "orders";
+const PRODUCTS = "products";
 
 export interface DateRange {
   start: number;
@@ -63,18 +65,27 @@ async function fetchAllEventsOfType(type: AnalyticsEventType): Promise<Analytics
   });
 }
 
+/** Orders live at stores/{storeId}/orders (see orders.ts) - not a root-level
+ * collection, so this must go through tenantCollection() like every other
+ * order read, rather than adminDb().collection(ORDERS) which points at an
+ * always-empty root collection no order is ever written to. */
 async function fetchOrders(range: DateRange): Promise<Order[]> {
-  const snap = await adminDb()
-    .collection(ORDERS)
-    .where("createdAt", ">=", range.start)
-    .where("createdAt", "<=", range.end)
-    .get();
-  return snap.docs.map((d) => docData<Order>(d)).filter((o): o is Order => o !== null);
+  return safeQuery("fetchOrders", [], async () => {
+    const col = await tenantCollection(ORDERS);
+    const snap = await col
+      .where("createdAt", ">=", range.start)
+      .where("createdAt", "<=", range.end)
+      .get();
+    return snap.docs.map((d) => docData<Order>(d)).filter((o): o is Order => o !== null);
+  });
 }
 
 async function fetchAllOrders(): Promise<Order[]> {
-  const snap = await adminDb().collection(ORDERS).get();
-  return snap.docs.map((d) => docData<Order>(d)).filter((o): o is Order => o !== null);
+  return safeQuery("fetchAllOrders", [], async () => {
+    const col = await tenantCollection(ORDERS);
+    const snap = await col.get();
+    return snap.docs.map((d) => docData<Order>(d)).filter((o): o is Order => o !== null);
+  });
 }
 
 // --- Shared helpers ---
@@ -141,9 +152,8 @@ export async function getVisitorOverview(range: DateRange): Promise<VisitorOverv
   });
 
   const visitorIds = Array.from(new Set(pageViews.map((e) => e.visitorId)));
-  const visitorDocs = await Promise.all(
-    visitorIds.map((id) => adminDb().collection(VISITORS).doc(id).get())
-  );
+  const visitorRefs = visitorIds.map((id) => adminDb().collection(VISITORS).doc(id));
+  const visitorDocs = visitorRefs.length ? await adminDb().getAll(...visitorRefs) : [];
   let returningVisitors = 0;
   visitorDocs.forEach((doc) => {
     const v = docData<Visitor>(doc);
@@ -439,8 +449,8 @@ export async function getCatalogHealth(): Promise<CatalogHealth> {
     fetchAllEventsOfType("product_view"),
     fetchAllOrders(),
     safeQuery("getCatalogHealth:products", [] as { productId: string; name: string }[], async () => {
-      const snap = await adminDb()
-        .collection("products")
+      const col = await tenantCollection(PRODUCTS);
+      const snap = await col
         .where("isDeleted", "==", false)
         .where("status", "==", "active")
         .get();

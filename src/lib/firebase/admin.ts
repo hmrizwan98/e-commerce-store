@@ -33,14 +33,26 @@ function getAdminApp(): App {
 
 export const adminAuth = () => getAuth(getAdminApp());
 
-let firestoreConfigured = false;
+// Firestore.settings() may only be called once, ever, on a given Firestore
+// instance - calling it a second time throws "Firestore has already been
+// initialized". Next.js bundles this module SEPARATELY per route/action (each
+// route gets its own compiled chunk), so a plain module-scoped `let` flag is
+// duplicated once per chunk and does NOT track whether some OTHER chunk,
+// running in the same warm serverless instance, already configured the one
+// truly-shared Firestore instance (getFirestore(app) itself IS a real
+// singleton, keyed by the underlying firebase-admin package's own registry -
+// only this app-level guard flag was not). Storing the guard on `globalThis`
+// keys it to the actual single JS global object for the whole process,
+// immune to per-route code-splitting, so it reflects reality regardless of
+// which chunk runs first.
+const FIRESTORE_CONFIGURED_KEY = Symbol.for("app.firestoreConfigured");
 export const adminDb = () => {
   const db = getFirestore(getAdminApp());
   // Optional fields throughout this codebase are written as `field: value || undefined`;
   // the Admin SDK rejects literal `undefined` values unless this is set.
-  if (!firestoreConfigured) {
+  if (!(globalThis as Record<symbol, boolean>)[FIRESTORE_CONFIGURED_KEY]) {
     db.settings({ ignoreUndefinedProperties: true });
-    firestoreConfigured = true;
+    (globalThis as Record<symbol, boolean>)[FIRESTORE_CONFIGURED_KEY] = true;
   }
   return db;
 };
