@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { FieldValue } from "firebase-admin/firestore";
-import { adminDb } from "@/lib/firebase/admin";
+import { tenantCollection } from "@/lib/firebase/tenant-scope";
 import { requireAdmin } from "@/lib/firebase/require-admin";
 import { stripUndefined, docData } from "@/lib/firebase/repositories/utils";
 import { deleteImagesByUrls, diffRemovedImages } from "@/lib/images/cleanup";
@@ -26,7 +26,8 @@ export async function createHomepageSection(
   config: HomepageSectionConfig = {}
 ): Promise<string> {
   await requireAdmin();
-  const ref = adminDb().collection(COLLECTION).doc();
+  const col = await tenantCollection(COLLECTION);
+  const ref = col.doc();
   await ref.set({
     type,
     title,
@@ -45,7 +46,8 @@ export async function updateHomepageSection(
   patch: { title?: string; isActive?: boolean; order?: number; config?: HomepageSectionConfig }
 ): Promise<void> {
   await requireAdmin();
-  const ref = adminDb().collection(COLLECTION).doc(id);
+  const col = await tenantCollection(COLLECTION);
+  const ref = col.doc(id);
   const before = docData<HomepageSection>(await ref.get());
 
   await ref.update({ ...stripUndefined(patch), updatedAt: FieldValue.serverTimestamp() });
@@ -63,12 +65,13 @@ export async function updateHomepageSections(
   await requireAdmin();
   if (!patches.length) return;
 
-  const beforeSnaps = await Promise.all(patches.map(({ id }) => adminDb().collection(COLLECTION).doc(id).get()));
+  const col = await tenantCollection(COLLECTION);
+  const beforeSnaps = await Promise.all(patches.map(({ id }) => col.doc(id).get()));
   const befores = beforeSnaps.map((snap) => docData<HomepageSection>(snap));
 
-  const batch = adminDb().batch();
+  const batch = col.firestore.batch();
   patches.forEach(({ id, patch }) => {
-    batch.update(adminDb().collection(COLLECTION).doc(id), {
+    batch.update(col.doc(id), {
       ...stripUndefined(patch),
       updatedAt: FieldValue.serverTimestamp(),
     });
@@ -86,7 +89,8 @@ export async function updateHomepageSections(
 
 export async function deleteHomepageSection(id: string): Promise<void> {
   await requireAdmin();
-  const ref = adminDb().collection(COLLECTION).doc(id);
+  const col = await tenantCollection(COLLECTION);
+  const ref = col.doc(id);
   const before = docData<HomepageSection>(await ref.get());
 
   await ref.delete();
@@ -97,9 +101,10 @@ export async function deleteHomepageSection(id: string): Promise<void> {
 
 export async function reorderHomepageSections(orderedIds: string[]): Promise<void> {
   await requireAdmin();
-  const batch = adminDb().batch();
+  const col = await tenantCollection(COLLECTION);
+  const batch = col.firestore.batch();
   orderedIds.forEach((id, index) => {
-    batch.update(adminDb().collection(COLLECTION).doc(id), {
+    batch.update(col.doc(id), {
       order: index,
       updatedAt: FieldValue.serverTimestamp(),
     });

@@ -50,7 +50,6 @@ const LIST_IMAGES_GALLERY_DEMO: (string | StaticImageData)[] = [
 const PRICE = 108;
 
 const ProductDetailPage2 = (props: any) => {
-  console.log('___props', props);
   const { sizes, variants, status, allOfSizes, image, name } = PRODUCTS[0];
   //
   const router = useRouter();

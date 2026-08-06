@@ -1,7 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { adminDb, serverTimestamp } from "@/lib/firebase/admin";
+import { serverTimestamp } from "@/lib/firebase/admin";
+import { tenantCollection } from "@/lib/firebase/tenant-scope";
 import { requireAdmin } from "@/lib/firebase/require-admin";
 import { stripUndefined, docData } from "@/lib/firebase/repositories/utils";
 import { deleteImagesByUrls, diffRemovedImages } from "@/lib/images/cleanup";
@@ -27,7 +28,8 @@ function revalidateStorefront(slug?: string) {
 
 export async function createBrand(input: BrandFormInput): Promise<string> {
   await requireAdmin();
-  const ref = adminDb().collection("brands").doc();
+  const col = await tenantCollection("brands");
+  const ref = col.doc();
   await ref.set({
     ...stripUndefined(input),
     isDeleted: false,
@@ -41,7 +43,8 @@ export async function createBrand(input: BrandFormInput): Promise<string> {
 
 export async function updateBrand(id: string, input: BrandFormInput): Promise<void> {
   await requireAdmin();
-  const ref = adminDb().collection("brands").doc(id);
+  const col = await tenantCollection("brands");
+  const ref = col.doc(id);
   const before = docData<Brand>(await ref.get());
 
   await ref.update({ ...stripUndefined(input), updatedAt: serverTimestamp() });
@@ -54,8 +57,8 @@ export async function updateBrand(id: string, input: BrandFormInput): Promise<vo
 
 export async function softDeleteBrand(id: string, slug?: string): Promise<void> {
   await requireAdmin();
-  await adminDb()
-    .collection("brands")
+  const col = await tenantCollection("brands");
+  await col
     .doc(id)
     .update({ isDeleted: true, deletedAt: Date.now(), updatedAt: serverTimestamp() });
   revalidateStorefront(slug);
@@ -63,8 +66,8 @@ export async function softDeleteBrand(id: string, slug?: string): Promise<void> 
 
 export async function restoreBrand(id: string, slug?: string): Promise<void> {
   await requireAdmin();
-  await adminDb()
-    .collection("brands")
+  const col = await tenantCollection("brands");
+  await col
     .doc(id)
     .update({ isDeleted: false, deletedAt: null, updatedAt: serverTimestamp() });
   revalidateStorefront(slug);

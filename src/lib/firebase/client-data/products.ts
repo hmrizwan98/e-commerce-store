@@ -4,10 +4,10 @@ import { doc, getDoc } from "firebase/firestore";
 import { getFirebaseDb } from "@/lib/firebase/client";
 import type { Product } from "@/types/product";
 
-export async function fetchProductsByIds(ids: string[]): Promise<Product[]> {
+export async function fetchProductsByIds(ids: string[], tenantId: string): Promise<Product[]> {
   if (!ids.length) return [];
   const db = getFirebaseDb();
-  const docs = await Promise.all(ids.map((id) => getDoc(doc(db, "products", id))));
+  const docs = await Promise.all(ids.map((id) => getDoc(doc(db, "stores", tenantId, "products", id))));
   return docs
     .filter((d) => d.exists())
     .map((d) => ({ ...(d.data() as Product), id: d.id }))

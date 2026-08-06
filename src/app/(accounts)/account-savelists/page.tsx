@@ -6,17 +6,19 @@ import ProductCard from "@/components/ProductCard";
 import ButtonPrimary from "@/shared/Button/ButtonPrimary";
 import { useWishlist } from "@/hooks/useWishlist";
 import { fetchProductsByIds } from "@/lib/firebase/client-data/products";
+import { useTenantId } from "@/lib/tenant/TenantContext";
 import type { Product } from "@/types/product";
 
 const AccountSavelists = () => {
   const { ids } = useWishlist();
+  const tenantId = useTenantId();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    fetchProductsByIds(ids).then((result) => {
+    fetchProductsByIds(ids, tenantId).then((result) => {
       if (!cancelled) {
         setProducts(result);
         setLoading(false);
@@ -25,7 +27,7 @@ const AccountSavelists = () => {
     return () => {
       cancelled = true;
     };
-  }, [ids]);
+  }, [ids, tenantId]);
 
   return (
     <div className="space-y-10 sm:space-y-12">

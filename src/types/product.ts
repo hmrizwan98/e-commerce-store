@@ -2,6 +2,10 @@ export type ProductStatusValue = "draft" | "active" | "archived";
 
 export type ProductBadge = "new" | "sold_out" | "limited_edition" | "sale" | null;
 
+/** What the storefront should do when trackInventory is on and available stock hits 0 -
+ * metadata only in this phase, not enforced by Checkout/Orders (out of scope here). */
+export type OutOfStockBehavior = "hide" | "show_disabled" | "allow_backorder";
+
 export type ProductAttributeType = "color" | "text" | "image";
 
 export interface ProductAttributeValue {
@@ -47,9 +51,23 @@ export interface Product {
   relatedProductIds?: string[];
   crossSellProductIds?: string[];
   upsellProductIds?: string[];
+  frequentlyBoughtWithProductIds?: string[];
   order?: number;
   seoTitle?: string;
   seoDescription?: string;
+  /** Procurement cost - admin/reporting only, never shown to customers. Profit margin is
+   * derived from this + price at read time (see lib/products/profit-margin.ts), not stored. */
+  costPrice?: number;
+  supplierId?: string;
+  collectionIds?: string[];
+  /** Stock held against unconfirmed orders/carts. Available stock = stock - reservedStock,
+   * computed at read time, not stored. Not yet incremented/decremented by Checkout/Orders
+   * (out of scope here) - schema/admin-UI ready for that phase to wire in. */
+  reservedStock?: number;
+  outOfStockBehavior?: OutOfStockBehavior;
+  /** Metadata only - no automatic draft->active flip is performed anywhere yet (would need a
+   * scheduled job, out of scope here). */
+  scheduledPublishAt?: number | null;
   // Denormalized, server-computed only (never client-submitted) - see products
   // repository / admin Server Actions for where these are derived from `attributes`/`name`.
   colorFacets?: string[];

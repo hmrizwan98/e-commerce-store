@@ -8,7 +8,14 @@ import Input from "@/shared/Input/Input";
 import ButtonPrimary from "@/shared/Button/ButtonPrimary";
 import Label from "@/components/Label/Label";
 
-const LoginForm = () => {
+/** redirectTo/errorMessage let the same form + session-cookie flow serve both the store admin and Super Admin login pages. */
+const LoginForm = ({
+  redirectTo = "/admin",
+  errorMessage = "Invalid email or password, or this account is not an admin.",
+}: {
+  redirectTo?: string;
+  errorMessage?: string;
+}) => {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -20,18 +27,33 @@ const LoginForm = () => {
     setError(null);
     setLoading(true);
     try {
+      const attemptCheck = await fetch("/api/admin/login-attempt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const attemptResult = await attemptCheck.json();
+      if (!attemptResult.allowed) {
+        setError(
+          `Too many login attempts. Try again in ${Math.ceil((attemptResult.retryAfterSeconds ?? 60) / 60)} minute(s).`
+        );
+        setLoading(false);
+        return;
+      }
+
       const credential = await signInWithEmailAndPassword(getFirebaseAuth(), email, password);
-      const idToken = await credential.user.getIdToken();
+      // Force-refresh the ID token so any recently-set custom claims are included.
+      const idToken = await credential.user.getIdToken(true);
       const res = await fetch("/api/admin/session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ idToken }),
       });
       if (!res.ok) throw new Error("session-failed");
-      router.push("/admin");
+      router.push(redirectTo as any);
       router.refresh();
     } catch {
-      setError("Invalid email or password, or this account is not an admin.");
+      setError(errorMessage);
       setLoading(false);
     }
   };

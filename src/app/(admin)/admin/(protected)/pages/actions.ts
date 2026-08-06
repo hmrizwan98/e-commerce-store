@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { FieldValue } from "firebase-admin/firestore";
 import { adminDb, serverTimestamp } from "@/lib/firebase/admin";
+import { tenantCollection } from "@/lib/firebase/tenant-scope";
 import { requireAdmin } from "@/lib/firebase/require-admin";
 import { stripUndefined, docData } from "@/lib/firebase/repositories/utils";
 import type { PageSectionConfig, PageSectionType, PageSection } from "@/types/page-section";
@@ -30,7 +31,7 @@ function revalidateStorefront(slug?: string) {
 
 export async function createPage(input: PageFormInput): Promise<string> {
   await requireAdmin();
-  const ref = adminDb().collection("pages").doc();
+  const ref = (await tenantCollection("pages")).doc();
   await ref.set({
     ...stripUndefined(input),
     isActive: input.status === "published",
@@ -43,8 +44,7 @@ export async function createPage(input: PageFormInput): Promise<string> {
 
 export async function updatePage(id: string, input: PageFormInput): Promise<void> {
   await requireAdmin();
-  await adminDb()
-    .collection("pages")
+  await (await tenantCollection("pages"))
     .doc(id)
     .update({ ...stripUndefined(input), isActive: input.status === "published", updatedAt: serverTimestamp() });
   revalidateStorefront(input.slug);
@@ -54,9 +54,11 @@ export async function deletePage(id: string, slug?: string): Promise<void> {
   await requireAdmin();
   const sections = await getAllPageSectionsForAdmin(id);
 
+  const pages = await tenantCollection("pages");
+  const sectionsCol = await sectionsCollection(id);
   const batch = adminDb().batch();
-  sections.forEach((s) => batch.delete(sectionsCollection(id).doc(s.id)));
-  batch.delete(adminDb().collection("pages").doc(id));
+  sections.forEach((s) => batch.delete(sectionsCol.doc(s.id)));
+  batch.delete(pages.doc(id));
   await batch.commit();
 
   revalidateStorefront(slug);
@@ -69,7 +71,7 @@ export async function duplicatePage(id: string): Promise<string> {
   if (!page) throw new Error("Page not found");
 
   const slug = `${page.slug}-copy-${Date.now().toString(36)}`;
-  const ref = adminDb().collection("pages").doc();
+  const ref = (await tenantCollection("pages")).doc();
   const copy: Omit<CmsPage, "id"> = {
     slug,
     title: `${page.title} (copy)`,
@@ -105,8 +107,8 @@ export async function duplicatePage(id: string): Promise<string> {
 
 // --- Page Builder (per-page sections subcollection) ---
 
-function sectionsCollection(pageId: string) {
-  return adminDb().collection("pages").doc(pageId).collection("sections");
+async function sectionsCollection(pageId: string) {
+  return (await tenantCollection("pages")).doc(pageId).collection("sections");
 }
 
 export async function createPageSection(
@@ -117,7 +119,7 @@ export async function createPageSection(
   config: PageSectionConfig = {}
 ): Promise<string> {
   await requireAdmin();
-  const ref = sectionsCollection(pageId).doc();
+  const ref = (await sectionsCollection(pageId)).doc();
   await ref.set({
     type,
     title,
@@ -137,11 +139,10 @@ export async function updatePageSection(
   patch: { title?: string; isActive?: boolean; config?: PageSectionConfig }
 ): Promise<void> {
   await requireAdmin();
-  const before = docData<PageSection>(await sectionsCollection(pageId).doc(id).get());
+  const col = await sectionsCollection(pageId);
+  const before = docData<PageSection>(await col.doc(id).get());
 
-  await sectionsCollection(pageId)
-    .doc(id)
-    .update({ ...stripUndefined(patch), updatedAt: FieldValue.serverTimestamp() });
+  await col.doc(id).update({ ...stripUndefined(patch), updatedAt: FieldValue.serverTimestamp() });
   revalidatePath("/admin/pages");
 
   if (patch.config) {
@@ -159,9 +160,10 @@ export async function updatePageSections(
   const before = await getAllPageSectionsForAdmin(pageId);
   const beforeById = new Map(before.map((s) => [s.id, s]));
 
+  const col = await sectionsCollection(pageId);
   const batch = adminDb().batch();
   patches.forEach(({ id, patch }) => {
-    batch.update(sectionsCollection(pageId).doc(id), {
+    batch.update(col.doc(id), {
       ...stripUndefined(patch),
       updatedAt: FieldValue.serverTimestamp(),
     });
@@ -177,17 +179,19 @@ export async function updatePageSections(
 
 export async function deletePageSection(pageId: string, id: string): Promise<void> {
   await requireAdmin();
-  const section = docData<PageSection>(await sectionsCollection(pageId).doc(id).get());
-  await sectionsCollection(pageId).doc(id).delete();
+  const col = await sectionsCollection(pageId);
+  const section = docData<PageSection>(await col.doc(id).get());
+  await col.doc(id).delete();
   revalidatePath("/admin/pages");
   await deleteImagesByUrls([section?.config.image]);
 }
 
 export async function reorderPageSections(pageId: string, orderedIds: string[]): Promise<void> {
   await requireAdmin();
+  const col = await sectionsCollection(pageId);
   const batch = adminDb().batch();
   orderedIds.forEach((id, index) => {
-    batch.update(sectionsCollection(pageId).doc(id), { order: index, updatedAt: FieldValue.serverTimestamp() });
+    batch.update(col.doc(id), { order: index, updatedAt: FieldValue.serverTimestamp() });
   });
   await batch.commit();
   revalidatePath("/admin/pages");

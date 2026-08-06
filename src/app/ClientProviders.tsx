@@ -12,6 +12,7 @@ import TopBar from "@/components/TopBar";
 import SiteHeader from "@/app/SiteHeader";
 import CommonClient from "./CommonClient";
 import Footer from "@/shared/Footer/Footer";
+import { TenantProvider } from "@/lib/tenant/TenantContext";
 import type { ThemeHeader, ThemeFooter } from "@/types/theme";
 
 export interface ClientProvidersProps {
@@ -19,6 +20,7 @@ export interface ClientProvidersProps {
   headerSettings: ThemeHeader;
   footerSettings: ThemeFooter;
   storeName: string;
+  tenantId: string;
 }
 
 /**
@@ -31,20 +33,23 @@ const ClientProviders: React.FC<ClientProvidersProps> = ({
   headerSettings,
   footerSettings,
   storeName,
+  tenantId,
 }) => {
   return (
-    <Provider store={store}>
-      <CartHydrator />
-      <PageViewTracker />
-      <MarketingPixels />
-      <AnnouncementBar />
-      <TopBar topBar={headerSettings.topBar} />
-      <SiteHeader headerSettings={headerSettings} />
-      {children}
-      <CommonClient />
-      <Footer footerSettings={footerSettings} storeName={storeName} />
-      <WhatsAppButton />
-    </Provider>
+    <TenantProvider tenantId={tenantId}>
+      <Provider store={store}>
+        <CartHydrator />
+        <PageViewTracker />
+        <MarketingPixels />
+        <AnnouncementBar />
+        <TopBar topBar={headerSettings.topBar} />
+        <SiteHeader headerSettings={headerSettings} />
+        {children}
+        <CommonClient />
+        <Footer footerSettings={footerSettings} storeName={storeName} />
+        <WhatsAppButton />
+      </Provider>
+    </TenantProvider>
   );
 };
 

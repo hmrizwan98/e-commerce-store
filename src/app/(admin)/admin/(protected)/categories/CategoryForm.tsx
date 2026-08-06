@@ -4,15 +4,8 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import ImageUploader from "@/components/admin/ImageUploader";
 import { createCategory, updateCategory, type CategoryFormInput } from "./actions";
+import { slugify } from "@/lib/utils/slugify";
 import type { Category } from "@/types/category";
-
-function slugify(name: string) {
-  return name
-    .toLowerCase()
-    .replace(/['"]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
-}
 
 const CategoryForm: React.FC<{ mode: "create" | "edit"; category?: Category; allCategories: Category[] }> = ({
   mode,

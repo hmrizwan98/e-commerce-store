@@ -4,15 +4,8 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import ImageUploader from "@/components/admin/ImageUploader";
 import { createBrand, updateBrand, type BrandFormInput } from "./actions";
+import { slugify } from "@/lib/utils/slugify";
 import type { Brand } from "@/types/brand";
-
-function slugify(name: string) {
-  return name
-    .toLowerCase()
-    .replace(/['"]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
-}
 
 const BrandForm: React.FC<{ mode: "create" | "edit"; brand?: Brand }> = ({ mode, brand }) => {
   const router = useRouter();

@@ -27,9 +27,14 @@ function revalidateStorefront() {
 }
 
 export async function createBlogPost(input: BlogPostFormInput): Promise<string> {
-  await requireAdmin();
+  const decoded = await requireAdmin();
   const ref = adminDb().collection("blogPosts").doc();
-  await ref.set({ ...stripUndefined(input), createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+  await ref.set({
+    storeId: decoded.tenantId,
+    ...stripUndefined(input),
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
   revalidateStorefront();
   return ref.id;
 }
@@ -37,17 +42,19 @@ export async function createBlogPost(input: BlogPostFormInput): Promise<string> 
 export async function updateBlogPost(id: string, input: BlogPostFormInput): Promise<void> {
   await requireAdmin();
   const before = await getBlogPostById(id);
+  if (!before) throw new Error("Blog post not found.");
 
   await adminDb().collection("blogPosts").doc(id).update({ ...stripUndefined(input), updatedAt: serverTimestamp() });
   revalidateStorefront();
 
-  await deleteImagesByUrls(diffRemovedImages([before?.coverImage], [input.coverImage]));
+  await deleteImagesByUrls(diffRemovedImages([before.coverImage], [input.coverImage]));
 }
 
 export async function deleteBlogPost(id: string): Promise<void> {
   await requireAdmin();
   const post = await getBlogPostById(id);
+  if (!post) throw new Error("Blog post not found.");
   await adminDb().collection("blogPosts").doc(id).delete();
   revalidateStorefront();
-  await deleteImagesByUrls([post?.coverImage]);
+  await deleteImagesByUrls([post.coverImage]);
 }

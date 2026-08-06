@@ -1,9 +1,11 @@
 import "server-only";
 import { adminDb } from "../admin";
 import { docData } from "./utils";
+import { safeQuery } from "./safe-query";
 import { getProductsByIds } from "./products";
 import { getCategories } from "./categories";
 import { getBrands } from "./brands";
+import { getCurrentTenant } from "@/lib/tenant/current";
 import type {
   AnalyticsEvent,
   AnalyticsEventType,
@@ -25,13 +27,21 @@ export interface DateRange {
 
 // --- Raw fetch ---
 
+/** EVENTS/ACTIVE_SESSIONS/VISITORS are root-level collections (not tenant-scoped by
+ * path) - storeId is the tenant-isolation boundary, filtered here since this is the
+ * sole choke point every exported analytics function in this file goes through. */
 async function fetchEvents(range: DateRange): Promise<AnalyticsEvent[]> {
-  const snap = await adminDb()
-    .collection(EVENTS)
-    .where("createdAt", ">=", range.start)
-    .where("createdAt", "<=", range.end)
-    .get();
-  return snap.docs.map((d) => docData<AnalyticsEvent>(d)).filter((e): e is AnalyticsEvent => e !== null);
+  const tenant = await getCurrentTenant();
+  if (!tenant) return [];
+  return safeQuery("fetchEvents", [], async () => {
+    const snap = await adminDb()
+      .collection(EVENTS)
+      .where("storeId", "==", tenant.id)
+      .where("createdAt", ">=", range.start)
+      .where("createdAt", "<=", range.end)
+      .get();
+    return snap.docs.map((d) => docData<AnalyticsEvent>(d)).filter((e): e is AnalyticsEvent => e !== null);
+  });
 }
 
 /**
@@ -41,8 +51,16 @@ async function fetchEvents(range: DateRange): Promise<AnalyticsEvent[]> {
  * getOrderStats/getTopSellingProducts elsewhere in this codebase.
  */
 async function fetchAllEventsOfType(type: AnalyticsEventType): Promise<AnalyticsEvent[]> {
-  const snap = await adminDb().collection(EVENTS).where("type", "==", type).get();
-  return snap.docs.map((d) => docData<AnalyticsEvent>(d)).filter((e): e is AnalyticsEvent => e !== null);
+  const tenant = await getCurrentTenant();
+  if (!tenant) return [];
+  return safeQuery("fetchAllEventsOfType", [], async () => {
+    const snap = await adminDb()
+      .collection(EVENTS)
+      .where("storeId", "==", tenant.id)
+      .where("type", "==", type)
+      .get();
+    return snap.docs.map((d) => docData<AnalyticsEvent>(d)).filter((e): e is AnalyticsEvent => e !== null);
+  });
 }
 
 async function fetchOrders(range: DateRange): Promise<Order[]> {
@@ -417,16 +435,22 @@ export interface CatalogHealth {
 
 /** All-time catalog health check, capped to a sample of 25 for display - counts are exact, the lists are a preview. */
 export async function getCatalogHealth(): Promise<CatalogHealth> {
-  const [viewEvents, allOrders, snap] = await Promise.all([
+  const [viewEvents, allOrders, allProducts] = await Promise.all([
     fetchAllEventsOfType("product_view"),
     fetchAllOrders(),
-    adminDb().collection("products").where("isDeleted", "==", false).where("status", "==", "active").get(),
+    safeQuery("getCatalogHealth:products", [] as { productId: string; name: string }[], async () => {
+      const snap = await adminDb()
+        .collection("products")
+        .where("isDeleted", "==", false)
+        .where("status", "==", "active")
+        .get();
+      return snap.docs.map((d) => ({ productId: d.id, name: (d.data().name as string) ?? "(unnamed)" }));
+    }),
   ]);
 
   const viewedIds = new Set(viewEvents.map((e) => e.productId).filter(Boolean));
   const purchasedIds = new Set(allOrders.flatMap((o) => o.items.map((i) => i.productId)));
 
-  const allProducts = snap.docs.map((d) => ({ productId: d.id, name: (d.data().name as string) ?? "(unnamed)" }));
   const neverViewed = allProducts.filter((p) => !viewedIds.has(p.productId));
   const neverPurchased = allProducts.filter((p) => !purchasedIds.has(p.productId));
 
@@ -604,11 +628,19 @@ export interface RealtimeSession {
 const ACTIVE_WINDOW_MS = 60_000;
 
 export async function getRealtimeActiveSessions(): Promise<RealtimeSession[]> {
-  const since = Date.now() - ACTIVE_WINDOW_MS;
-  const snap = await adminDb().collection(ACTIVE_SESSIONS).where("lastSeenAt", ">=", since).get();
-  return snap.docs
-    .map((d) => d.data() as RealtimeSession)
-    .sort((a, b) => b.lastSeenAt - a.lastSeenAt);
+  const tenant = await getCurrentTenant();
+  if (!tenant) return [];
+  return safeQuery("getRealtimeActiveSessions", [], async () => {
+    const since = Date.now() - ACTIVE_WINDOW_MS;
+    const snap = await adminDb()
+      .collection(ACTIVE_SESSIONS)
+      .where("storeId", "==", tenant.id)
+      .where("lastSeenAt", ">=", since)
+      .get();
+    return snap.docs
+      .map((d) => d.data() as RealtimeSession)
+      .sort((a, b) => b.lastSeenAt - a.lastSeenAt);
+  });
 }
 
 export async function getActiveUserCount(): Promise<number> {
@@ -617,6 +649,12 @@ export async function getActiveUserCount(): Promise<number> {
 }
 
 export async function getNewsletterSubscriberCount(): Promise<number> {
-  const snap = await adminDb().collection("newsletterSubscribers").count().get();
+  const tenant = await getCurrentTenant();
+  if (!tenant) return 0;
+  const snap = await adminDb()
+    .collection("newsletterSubscribers")
+    .where("storeId", "==", tenant.id)
+    .count()
+    .get();
   return snap.data().count;
 }

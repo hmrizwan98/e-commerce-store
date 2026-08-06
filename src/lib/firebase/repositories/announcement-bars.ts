@@ -1,5 +1,5 @@
 import "server-only";
-import { adminDb } from "../admin";
+import { tenantCollection } from "../tenant-scope";
 import { docData } from "./utils";
 import type { AnnouncementBar } from "@/types/announcement-bar";
 
@@ -7,7 +7,7 @@ const COLLECTION = "announcementBars";
 
 /** The single bar to render right now: highest-priority active bar whose date window (if any) covers now. */
 export async function getActiveAnnouncementBar(): Promise<AnnouncementBar | null> {
-  const snap = await adminDb().collection(COLLECTION).where("isActive", "==", true).get();
+  const snap = await (await tenantCollection(COLLECTION)).where("isActive", "==", true).get();
   const now = Date.now();
 
   const eligible = snap.docs
@@ -24,12 +24,12 @@ export async function getActiveAnnouncementBar(): Promise<AnnouncementBar | null
 // --- Admin ---
 
 export async function getAnnouncementBarById(id: string): Promise<AnnouncementBar | null> {
-  const doc = await adminDb().collection(COLLECTION).doc(id).get();
+  const doc = await (await tenantCollection(COLLECTION)).doc(id).get();
   return docData<AnnouncementBar>(doc);
 }
 
 export async function getAllAnnouncementBarsForAdmin(): Promise<AnnouncementBar[]> {
-  const snap = await adminDb().collection(COLLECTION).orderBy("priority", "desc").get();
+  const snap = await (await tenantCollection(COLLECTION)).orderBy("priority", "desc").get();
   return snap.docs
     .map((doc) => docData<AnnouncementBar>(doc))
     .filter((b): b is AnnouncementBar => b !== null);

@@ -2,6 +2,7 @@
 
 import React, { FC } from "react";
 import SocialsList1 from "@/shared/SocialsList1/SocialsList1";
+import { useChromeSuppressed } from "@/lib/tenant/useChromeSuppressed";
 import type { ThemeHeader } from "@/types/theme";
 
 export interface TopBarProps {
@@ -9,7 +10,13 @@ export interface TopBarProps {
 }
 
 const TopBar: FC<TopBarProps> = ({ topBar }) => {
-  if (!topBar?.enabled) {
+  // Unlike the other chrome components, TopBar previously had no
+  // pathname/tenant guard of its own - only the data-driven `enabled` check
+  // below, which happens to be false on the platform domain today but gave
+  // no protection on a real tenant's /superadmin view. This intentionally
+  // does not add a new /admin check, matching SiteHeader/Footer's precedent.
+  const isSuppressed = useChromeSuppressed();
+  if (isSuppressed || !topBar?.enabled) {
     return null;
   }
 

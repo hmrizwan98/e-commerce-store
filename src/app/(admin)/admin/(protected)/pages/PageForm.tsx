@@ -3,15 +3,8 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createPage, updatePage, type PageFormInput } from "./actions";
+import { slugify } from "@/lib/utils/slugify";
 import type { CmsPage, CmsPageStatus } from "@/types/page";
-
-function slugify(name: string) {
-  return name
-    .toLowerCase()
-    .replace(/['"]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
-}
 
 const PageForm: React.FC<{ mode: "create" | "edit"; page?: CmsPage }> = ({ mode, page }) => {
   const router = useRouter();

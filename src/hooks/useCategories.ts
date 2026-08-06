@@ -2,15 +2,17 @@
 
 import { useEffect, useState } from "react";
 import { fetchActiveCategories } from "@/lib/firebase/client-data/categories";
+import { useTenantId } from "@/lib/tenant/TenantContext";
 import type { Category } from "@/types/category";
 
 /** Client-side categories fetch for deep client components (header dropdowns). */
 export function useCategories(): Category[] {
+  const tenantId = useTenantId();
   const [categories, setCategories] = useState<Category[]>([]);
 
   useEffect(() => {
     let active = true;
-    fetchActiveCategories()
+    fetchActiveCategories(tenantId)
       .then((data) => {
         if (active) setCategories(data);
       })
@@ -20,7 +22,7 @@ export function useCategories(): Category[] {
     return () => {
       active = false;
     };
-  }, []);
+  }, [tenantId]);
 
   return categories;
 }

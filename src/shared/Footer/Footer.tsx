@@ -4,6 +4,7 @@ import Logo from "@/shared/Logo/Logo";
 import SocialsList1 from "@/shared/SocialsList1/SocialsList1";
 import React, { useState } from "react";
 import { useMenu } from "@/hooks/useMenu";
+import { useChromeSuppressed } from "@/lib/tenant/useChromeSuppressed";
 import PaymentIcons from "@/components/PaymentIcons";
 import Input from "@/shared/Input/Input";
 import ButtonPrimary from "@/shared/Button/ButtonPrimary";
@@ -28,6 +29,7 @@ export interface FooterProps {
 }
 
 const Footer: React.FC<FooterProps> = ({ footerSettings, storeName = "Tradz Glint" }) => {
+  const isSuppressed = useChromeSuppressed();
   const footerItems = useMenu("footer");
   const widgetMenus: WidgetFooterMenu[] = footerItems.map((item) => ({
     id: item.id,
@@ -59,6 +61,11 @@ const Footer: React.FC<FooterProps> = ({ footerSettings, storeName = "Tradz Glin
     }
     setSubmitting(false);
   };
+
+  // This intentionally does not add a new /admin check - Footer never
+  // suppressed itself there before this change either, and that's out of
+  // scope here.
+  if (isSuppressed) return null;
 
   const renderWidgetMenuItem = (menu: WidgetFooterMenu, index: number) => {
     return (

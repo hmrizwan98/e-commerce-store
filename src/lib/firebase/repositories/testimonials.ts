@@ -1,30 +1,32 @@
 import "server-only";
-import { adminDb } from "../admin";
+import { tenantCollection } from "../tenant-scope";
 import { docData } from "./utils";
+import { safeQuery } from "./safe-query";
 import type { Testimonial } from "@/types/testimonial";
 
 const COLLECTION = "testimonials";
 
 export async function getActiveTestimonials(): Promise<Testimonial[]> {
-  const snap = await adminDb()
-    .collection(COLLECTION)
-    .where("isActive", "==", true)
-    .orderBy("order", "asc")
-    .get();
-  return snap.docs
-    .map((doc) => docData<Testimonial>(doc))
-    .filter((t): t is Testimonial => t !== null);
+  return safeQuery("getActiveTestimonials", [], async () => {
+    const snap = await (await tenantCollection(COLLECTION))
+      .where("isActive", "==", true)
+      .orderBy("order", "asc")
+      .get();
+    return snap.docs
+      .map((doc) => docData<Testimonial>(doc))
+      .filter((t): t is Testimonial => t !== null);
+  });
 }
 
 // --- Admin ---
 
 export async function getTestimonialById(id: string): Promise<Testimonial | null> {
-  const doc = await adminDb().collection(COLLECTION).doc(id).get();
+  const doc = await (await tenantCollection(COLLECTION)).doc(id).get();
   return docData<Testimonial>(doc);
 }
 
 export async function getAllTestimonialsForAdmin(): Promise<Testimonial[]> {
-  const snap = await adminDb().collection(COLLECTION).orderBy("order", "asc").get();
+  const snap = await (await tenantCollection(COLLECTION)).orderBy("order", "asc").get();
   return snap.docs
     .map((doc) => docData<Testimonial>(doc))
     .filter((t): t is Testimonial => t !== null);

@@ -1,37 +1,42 @@
 import "server-only";
-import { adminDb } from "../admin";
+import { tenantCollection } from "@/lib/firebase/tenant-scope";
 import { docData } from "./utils";
+import { safeQuery } from "./safe-query";
 import { getCategories } from "./categories";
 import type { Product, ProductVariant } from "@/types/product";
 
 const COLLECTION = "products";
 
 export async function getFeaturedProducts(limit = 8): Promise<Product[]> {
-  const snap = await adminDb()
-    .collection(COLLECTION)
-    .where("status", "==", "active")
-    .where("isDeleted", "==", false)
-    .where("isFeatured", "==", true)
-    .limit(limit)
-    .get();
+  return safeQuery("getFeaturedProducts", [], async () => {
+    const col = await tenantCollection(COLLECTION);
+    const snap = await col
+      .where("status", "==", "active")
+      .where("isDeleted", "==", false)
+      .where("isFeatured", "==", true)
+      .limit(limit)
+      .get();
 
-  return snap.docs
-    .map((doc) => docData<Product>(doc))
-    .filter((p): p is Product => p !== null);
+    return snap.docs
+      .map((doc) => docData<Product>(doc))
+      .filter((p): p is Product => p !== null);
+  });
 }
 
 async function getFlaggedProducts(flag: "isNewArrival" | "isBestSeller" | "isOnSale", limit: number): Promise<Product[]> {
-  const snap = await adminDb()
-    .collection(COLLECTION)
-    .where("status", "==", "active")
-    .where("isDeleted", "==", false)
-    .where(flag, "==", true)
-    .limit(limit)
-    .get();
+  return safeQuery(`getFlaggedProducts:${flag}`, [], async () => {
+    const col = await tenantCollection(COLLECTION);
+    const snap = await col
+      .where("status", "==", "active")
+      .where("isDeleted", "==", false)
+      .where(flag, "==", true)
+      .limit(limit)
+      .get();
 
-  return snap.docs
-    .map((doc) => docData<Product>(doc))
-    .filter((p): p is Product => p !== null);
+    return snap.docs
+      .map((doc) => docData<Product>(doc))
+      .filter((p): p is Product => p !== null);
+  });
 }
 
 export async function getNewArrivalProducts(limit = 8): Promise<Product[]> {
@@ -47,21 +52,23 @@ export async function getOnSaleProducts(limit = 8): Promise<Product[]> {
 }
 
 export async function getProducts(limit = 24): Promise<Product[]> {
-  const snap = await adminDb()
-    .collection(COLLECTION)
-    .where("status", "==", "active")
-    .where("isDeleted", "==", false)
-    .limit(limit)
-    .get();
+  return safeQuery("getProducts", [], async () => {
+    const col = await tenantCollection(COLLECTION);
+    const snap = await col
+      .where("status", "==", "active")
+      .where("isDeleted", "==", false)
+      .limit(limit)
+      .get();
 
-  return snap.docs
-    .map((doc) => docData<Product>(doc))
-    .filter((p): p is Product => p !== null);
+    return snap.docs
+      .map((doc) => docData<Product>(doc))
+      .filter((p): p is Product => p !== null);
+  });
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {
-  const snap = await adminDb()
-    .collection(COLLECTION)
+  const col = await tenantCollection(COLLECTION);
+  const snap = await col
     .where("slug", "==", slug)
     .limit(1)
     .get();
@@ -75,8 +82,8 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
 export async function getProductVariants(
   productId: string
 ): Promise<ProductVariant[]> {
-  const snap = await adminDb()
-    .collection(COLLECTION)
+  const col = await tenantCollection(COLLECTION);
+  const snap = await col
     .doc(productId)
     .collection("variants")
     .orderBy("order", "asc")
@@ -99,11 +106,13 @@ export async function getRelatedProducts(
   limit = 8,
   minCount = 4
 ): Promise<Product[]> {
+  const col = await tenantCollection(COLLECTION);
+
   if (product.relatedProductIds?.length) {
     const docs = await Promise.all(
       product.relatedProductIds
         .slice(0, limit)
-        .map((id) => adminDb().collection(COLLECTION).doc(id).get())
+        .map((id) => col.doc(id).get())
     );
     const manual = docs
       .map((doc) => docData<Product>(doc))
@@ -118,18 +127,19 @@ export async function getRelatedProducts(
     return (await getFeaturedProducts(limit)).filter((p) => p.id !== product.id);
   }
 
-  const snap = await adminDb()
-    .collection(COLLECTION)
-    .where("status", "==", "active")
-    .where("isDeleted", "==", false)
-    .where("categoryIds", "array-contains", product.categoryIds[0])
-    .limit(limit + 1)
-    .get();
+  const related = await safeQuery("getRelatedProducts", [] as Product[], async () => {
+    const snap = await col
+      .where("status", "==", "active")
+      .where("isDeleted", "==", false)
+      .where("categoryIds", "array-contains", product.categoryIds[0])
+      .limit(limit + 1)
+      .get();
 
-  const related = snap.docs
-    .map((doc) => docData<Product>(doc))
-    .filter((p): p is Product => p !== null && p.id !== product.id)
-    .slice(0, limit);
+    return snap.docs
+      .map((doc) => docData<Product>(doc))
+      .filter((p): p is Product => p !== null && p.id !== product.id)
+      .slice(0, limit);
+  });
 
   if (related.length >= minCount) return related;
 
@@ -146,8 +156,9 @@ export async function getRelatedProducts(
 
 export async function getProductsByIds(ids: string[], limit = 8): Promise<Product[]> {
   if (!ids.length) return [];
+  const col = await tenantCollection(COLLECTION);
   const docs = await Promise.all(
-    ids.slice(0, limit).map((id) => adminDb().collection(COLLECTION).doc(id).get())
+    ids.slice(0, limit).map((id) => col.doc(id).get())
   );
   return docs
     .map((doc) => docData<Product>(doc))
@@ -191,8 +202,8 @@ export async function searchProducts(
   const pageSize = params.pageSize ?? 24;
   const page = Math.max(1, params.page ?? 1);
 
-  let query: FirebaseFirestore.Query = adminDb()
-    .collection(COLLECTION)
+  const col = await tenantCollection(COLLECTION);
+  let query: FirebaseFirestore.Query = col
     .where("status", "==", "active")
     .where("isDeleted", "==", false);
 
@@ -267,30 +278,33 @@ export async function searchProducts(
     }
   }
 
-  const countSnap = await query.count().get();
-  const total = countSnap.data().count;
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  return safeQuery("searchProducts", { products: [], total: 0, totalPages: 1 }, async () => {
+    const countSnap = await query.count().get();
+    const total = countSnap.data().count;
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
-  const snap = await query
-    .offset((page - 1) * pageSize)
-    .limit(pageSize)
-    .get();
+    const snap = await query
+      .offset((page - 1) * pageSize)
+      .limit(pageSize)
+      .get();
 
-  let products = snap.docs
-    .map((doc) => docData<Product>(doc))
-    .filter((p): p is Product => p !== null);
+    let products = snap.docs
+      .map((doc) => docData<Product>(doc))
+      .filter((p): p is Product => p !== null);
 
-  if (params.minRating != null) {
-    products = products.filter((p) => (p.rating ?? 0) >= params.minRating!);
-  }
+    if (params.minRating != null) {
+      products = products.filter((p) => (p.rating ?? 0) >= params.minRating!);
+    }
 
-  return { products, total, totalPages };
+    return { products, total, totalPages };
+  });
 }
 
 // --- Admin ---
 
 export async function getProductById(id: string): Promise<Product | null> {
-  const doc = await adminDb().collection(COLLECTION).doc(id).get();
+  const col = await tenantCollection(COLLECTION);
+  const doc = await col.doc(id).get();
   return docData<Product>(doc);
 }
 
@@ -310,8 +324,8 @@ export async function searchAdminProducts(
   const pageSize = params.pageSize ?? 20;
   const page = Math.max(1, params.page ?? 1);
 
-  let query: FirebaseFirestore.Query = adminDb()
-    .collection(COLLECTION)
+  const col = await tenantCollection(COLLECTION);
+  let query: FirebaseFirestore.Query = col
     .where("isDeleted", "==", Boolean(params.trashed));
 
   if (params.status) {
@@ -334,49 +348,61 @@ export async function searchAdminProducts(
     query = query.orderBy("updatedAt", "desc");
   }
 
-  const countSnap = await query.count().get();
-  const total = countSnap.data().count;
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  return safeQuery("searchAdminProducts", { products: [], total: 0, totalPages: 1 }, async () => {
+    const countSnap = await query.count().get();
+    const total = countSnap.data().count;
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
-  const snap = await query
-    .offset((page - 1) * pageSize)
-    .limit(pageSize)
-    .get();
+    const snap = await query
+      .offset((page - 1) * pageSize)
+      .limit(pageSize)
+      .get();
 
-  const products = snap.docs
-    .map((doc) => docData<Product>(doc))
-    .filter((p): p is Product => p !== null);
+    const products = snap.docs
+      .map((doc) => docData<Product>(doc))
+      .filter((p): p is Product => p !== null);
 
-  return { products, total, totalPages };
+    return { products, total, totalPages };
+  });
 }
 
 export async function getInventoryProducts(): Promise<Product[]> {
-  const snap = await adminDb()
-    .collection(COLLECTION)
-    .where("isDeleted", "==", false)
-    .where("trackInventory", "==", true)
-    .get();
+  return safeQuery("getInventoryProducts", [], async () => {
+    const col = await tenantCollection(COLLECTION);
+    const snap = await col
+      .where("isDeleted", "==", false)
+      .where("trackInventory", "==", true)
+      .get();
 
-  return snap.docs
-    .map((doc) => docData<Product>(doc))
-    .filter((p): p is Product => p !== null)
-    .sort((a, b) => a.stock - b.stock);
+    return snap.docs
+      .map((doc) => docData<Product>(doc))
+      .filter((p): p is Product => p !== null)
+      .sort((a, b) => a.stock - b.stock);
+  });
+}
+
+export async function isSkuTaken(sku: string, excludeProductId?: string): Promise<boolean> {
+  const col = await tenantCollection(COLLECTION);
+  const snap = await col.where("sku", "==", sku).limit(2).get();
+  return snap.docs.some((doc) => doc.id !== excludeProductId);
 }
 
 export async function searchProductsByName(q: string, limit = 24): Promise<Product[]> {
   const term = q.trim().toLowerCase();
   if (!term) return getProducts(limit);
 
-  const snap = await adminDb()
-    .collection(COLLECTION)
-    .where("status", "==", "active")
-    .where("isDeleted", "==", false)
-    .where("nameLower", ">=", term)
-    .where("nameLower", "<=", term + "")
-    .limit(limit)
-    .get();
+  return safeQuery("searchProductsByName", [], async () => {
+    const col = await tenantCollection(COLLECTION);
+    const snap = await col
+      .where("status", "==", "active")
+      .where("isDeleted", "==", false)
+      .where("nameLower", ">=", term)
+      .where("nameLower", "<=", term + "")
+      .limit(limit)
+      .get();
 
-  return snap.docs
-    .map((doc) => docData<Product>(doc))
-    .filter((p): p is Product => p !== null);
+    return snap.docs
+      .map((doc) => docData<Product>(doc))
+      .filter((p): p is Product => p !== null);
+  });
 }

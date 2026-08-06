@@ -1,6 +1,7 @@
 import "server-only";
 import { cookies } from "next/headers";
 import { verifySessionCookie, isAdminClaim } from "./admin-auth";
+import { requireCurrentTenant } from "@/lib/tenant/current";
 
 export const ADMIN_SESSION_COOKIE = "admin_session";
 
@@ -9,6 +10,11 @@ export const ADMIN_SESSION_COOKIE = "admin_session";
  * firestore.rules' isAdmin() check (the real security boundary) and the
  * (protected) layout guard (the UX boundary) - this stops a stale/forged
  * request from mutating data even if it somehow reaches the action.
+ *
+ * Also cross-checks the admin's tenantId claim against the subdomain the
+ * request actually arrived on (resolved by middleware.ts) - this is what
+ * stops a store-admin session from acting on a different store's data even
+ * if the same browser has visited multiple tenant subdomains.
  */
 export async function requireAdmin() {
   const sessionCookie = cookies().get(ADMIN_SESSION_COOKIE)?.value;
@@ -19,5 +25,11 @@ export async function requireAdmin() {
   if (!decoded || !isAdminClaim(decoded)) {
     throw new Error("Unauthorized: not an admin");
   }
-  return decoded;
+
+  const tenant = await requireCurrentTenant();
+  if (decoded.tenantId !== tenant.id) {
+    throw new Error("Unauthorized: admin does not belong to this store");
+  }
+
+  return decoded as typeof decoded & { tenantId: string };
 }

@@ -1,12 +1,31 @@
 import React from "react";
 import { notFound } from "next/navigation";
 import { getOrderById } from "@/lib/firebase/repositories/orders";
+import { getRecentOrderActivity } from "@/lib/firebase/repositories/order-activity-logs";
+import { getOrderDocumentHistory } from "@/lib/firebase/repositories/order-documents";
+import {
+  getOrderAgeHours,
+  getFulfillmentDurationHours,
+  getDeliveryDurationHours,
+  isOrderStale,
+} from "@/lib/orders/order-analytics";
 import OrderActions from "../OrderActions";
+import OrderLifecycleActions from "../OrderLifecycleActions";
 
 export const dynamic = "force-dynamic";
 
+function formatHours(hours: number | null): string {
+  if (hours === null) return "—";
+  if (hours < 24) return `${hours.toFixed(1)}h`;
+  return `${(hours / 24).toFixed(1)}d`;
+}
+
 export default async function AdminOrderDetailPage({ params }: { params: { id: string } }) {
-  const order = await getOrderById(params.id);
+  const [order, activity, documents] = await Promise.all([
+    getOrderById(params.id),
+    getRecentOrderActivity(params.id),
+    getOrderDocumentHistory(params.id),
+  ]);
   if (!order) notFound();
 
   return (
@@ -78,14 +97,41 @@ export default async function AdminOrderDetailPage({ params }: { params: { id: s
               )}
             </div>
           </div>
+
+          <OrderLifecycleActions order={order} activity={activity} documents={documents} />
         </div>
 
-        <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-6 h-fit">
-          <h2 className="font-semibold mb-4">Manage order</h2>
-          <p className="text-sm text-neutral-500 mb-4 capitalize">
-            Payment method: {order.paymentMethod.replace("_", " ")}
-          </p>
-          <OrderActions order={order} />
+        <div className="space-y-6">
+          <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-6 h-fit">
+            <h2 className="font-semibold mb-4">Manage order</h2>
+            <p className="text-sm text-neutral-500 mb-4 capitalize">
+              Payment method: {order.paymentMethod.replace("_", " ")}
+            </p>
+            <OrderActions order={order} />
+          </div>
+
+          <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-6 h-fit">
+            <h2 className="font-semibold mb-4">Order analytics</h2>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-neutral-500">Order age</span>
+                <span>{formatHours(getOrderAgeHours(order))}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-neutral-500">Fulfillment time</span>
+                <span>{formatHours(getFulfillmentDurationHours(order))}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-neutral-500">Delivery time</span>
+                <span>{formatHours(getDeliveryDurationHours(order))}</span>
+              </div>
+              {isOrderStale(order) && (
+                <p className="text-xs text-amber-600 dark:text-amber-500 pt-1">
+                  This order has had no status update in over 48 hours.
+                </p>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>

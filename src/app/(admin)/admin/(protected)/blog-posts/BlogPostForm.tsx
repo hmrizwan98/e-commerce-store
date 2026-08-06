@@ -5,15 +5,8 @@ import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import ImageUploader from "@/components/admin/ImageUploader";
 import { createBlogPost, updateBlogPost, type BlogPostFormInput } from "./actions";
+import { slugify } from "@/lib/utils/slugify";
 import type { BlogPost } from "@/types/blog-post";
-
-function slugify(name: string) {
-  return name
-    .toLowerCase()
-    .replace(/['"]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
-}
 
 function toDateInputValue(ms?: number | null): string {
   if (!ms) return "";

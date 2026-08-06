@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase/admin";
 import { stripUndefined } from "@/lib/firebase/repositories/utils";
+import { getCurrentTenant } from "@/lib/tenant/current";
 
 export async function POST(req: NextRequest) {
   let body: Record<string, unknown>;
@@ -20,6 +21,7 @@ export async function POST(req: NextRequest) {
 
   const device = (body.device as Record<string, unknown>) ?? {};
   const geo = (body.geo as Record<string, unknown>) ?? {};
+  const tenant = await getCurrentTenant();
 
   await adminDb()
     .collection("activeSessions")
@@ -28,6 +30,7 @@ export async function POST(req: NextRequest) {
       stripUndefined({
         sessionId: body.sessionId,
         visitorId: body.visitorId,
+        storeId: tenant?.id,
         path: body.path,
         device: {
           type: device.type === "mobile" || device.type === "tablet" ? device.type : "desktop",

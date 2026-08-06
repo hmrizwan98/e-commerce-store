@@ -33,6 +33,11 @@ import { getActiveTestimonials } from '@/lib/firebase/repositories/testimonials'
 import { getBrands } from '@/lib/firebase/repositories/brands';
 import { getActiveBlogPosts } from '@/lib/firebase/repositories/blog-posts';
 import { toCardCategoryData, toHeroSlide, toExploreType } from '@/lib/firebase/adapters';
+import { getCurrentTenant } from '@/lib/tenant/current';
+import { isPlatformDomainRequest } from '@/lib/tenant/platform-domain';
+import PlatformLayout from './(marketing)/platform/layout';
+import PlatformHomePage, { metadata as platformMetadata } from './(marketing)/platform/page';
+import type { Metadata } from 'next';
 import type { HomepageSection, HomepageTile } from '@/types/homepage-section';
 import type { Product } from '@/types/product';
 import type { Category } from '@/types/category';
@@ -41,6 +46,22 @@ import type { Category } from '@/types/category';
 // time, since no Firebase project is configured until the setup guide is
 // completed - see README.md "Firebase Setup Guide".
 export const dynamic = 'force-dynamic';
+
+/**
+ * No tenant resolves for the bare root domain (no subdomain/custom-domain
+ * match) - reuse the /platform page's own metadata there instead of the root
+ * layout's {title:"Admin"} no-tenant fallback. When a tenant exists, return {}
+ * so the layout's existing tenant-based title/favicon logic is unaffected.
+ *
+ * isPlatformDomainRequest() is checked first (see its own comment) so this
+ * never asks getCurrentTenant() a question its local-dev fallback could
+ * answer wrong for the platform's own domain.
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  if (isPlatformDomainRequest()) return platformMetadata;
+  const tenant = await getCurrentTenant();
+  return tenant ? {} : platformMetadata;
+}
 
 /** Resolves the auto/manual product list shared by every product-driven section. */
 async function resolveProducts(
@@ -283,6 +304,24 @@ async function renderSectionInner(section: HomepageSection): Promise<JSX.Element
 }
 
 export default async function PageHome() {
+  // No tenant resolves for the bare root domain - show the public SaaS
+  // marketing site instead of the tenant storefront homepage. Reuses the
+  // existing /platform page/layout directly (no duplicated UI, no new
+  // route) - everything below this branch is the pre-existing tenant
+  // storefront logic, completely unchanged.
+  //
+  // isPlatformDomainRequest() is checked first so this branch is reliably
+  // taken for the platform's own domain even if getCurrentTenant()'s
+  // local-dev fallback would otherwise resolve some unrelated store.
+  const tenant = isPlatformDomainRequest() ? null : await getCurrentTenant();
+  if (!tenant) {
+    return (
+      <PlatformLayout>
+        <PlatformHomePage />
+      </PlatformLayout>
+    );
+  }
+
   const sections = await getActiveHomepageSections();
 
   const heroSection = sections.find((s) => s.type === 'hero');

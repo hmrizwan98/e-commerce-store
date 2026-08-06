@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
+import { useChromeSuppressed } from "@/lib/tenant/useChromeSuppressed";
 
 interface WhatsAppConfig {
   enabled: boolean;
@@ -15,8 +15,7 @@ interface WhatsAppConfig {
  * no fabricated contact info.
  */
 export default function WhatsAppButton() {
-  const pathname = usePathname();
-  const isAdminRoute = pathname?.startsWith("/admin");
+  const isAdminRoute = useChromeSuppressed({ includeAdmin: true });
   const [config, setConfig] = useState<WhatsAppConfig | null>(null);
 
   useEffect(() => {

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { adminDb, serverTimestamp } from "@/lib/firebase/admin";
+import { tenantCollection } from "@/lib/firebase/tenant-scope";
 import { requireAdmin } from "@/lib/firebase/require-admin";
 import { stripUndefined } from "@/lib/firebase/repositories/utils";
 import { getBannerById } from "@/lib/firebase/repositories/banners";
@@ -46,7 +47,7 @@ function revalidateStorefront(placement: BannerPlacement) {
 
 export async function createBanner(placement: BannerPlacement, input: BannerFormInput): Promise<string> {
   await requireAdmin();
-  const ref = adminDb().collection("banners").doc();
+  const ref = (await tenantCollection("banners")).doc();
   await ref.set({
     ...stripUndefined(input),
     placement,
@@ -61,7 +62,7 @@ export async function updateBanner(id: string, input: BannerFormInput): Promise<
   await requireAdmin();
   const before = await getBannerById(id);
 
-  await adminDb().collection("banners").doc(id).update({ ...stripUndefined(input), updatedAt: serverTimestamp() });
+  await (await tenantCollection("banners")).doc(id).update({ ...stripUndefined(input), updatedAt: serverTimestamp() });
   revalidateStorefront(before?.placement ?? "hero");
 
   await deleteImagesByUrls(
@@ -75,7 +76,7 @@ export async function updateBanner(id: string, input: BannerFormInput): Promise<
 export async function deleteBanner(id: string): Promise<void> {
   await requireAdmin();
   const banner = await getBannerById(id);
-  await adminDb().collection("banners").doc(id).delete();
+  await (await tenantCollection("banners")).doc(id).delete();
   revalidateStorefront(banner?.placement ?? "hero");
   await deleteImagesByUrls([banner?.imageDesktop, banner?.imageMobile]);
 }
@@ -84,7 +85,7 @@ export async function duplicateBanner(id: string): Promise<string> {
   await requireAdmin();
   const banner = await getBannerById(id);
   if (!banner) throw new Error("Banner not found");
-  const ref = adminDb().collection("banners").doc();
+  const ref = (await tenantCollection("banners")).doc();
   await ref.set({
     ...stripUndefined({
       title: `${banner.title} (copy)`,
@@ -119,15 +120,16 @@ export async function duplicateBanner(id: string): Promise<string> {
 export async function setBannerActive(id: string, isActive: boolean): Promise<void> {
   await requireAdmin();
   const banner = await getBannerById(id);
-  await adminDb().collection("banners").doc(id).update({ isActive, updatedAt: serverTimestamp() });
+  await (await tenantCollection("banners")).doc(id).update({ isActive, updatedAt: serverTimestamp() });
   revalidateStorefront(banner?.placement ?? "hero");
 }
 
 export async function reorderBanners(orderedIds: string[]): Promise<void> {
   await requireAdmin();
+  const banners = await tenantCollection("banners");
   const batch = adminDb().batch();
   orderedIds.forEach((id, index) => {
-    batch.update(adminDb().collection("banners").doc(id), { order: index, updatedAt: serverTimestamp() });
+    batch.update(banners.doc(id), { order: index, updatedAt: serverTimestamp() });
   });
   await batch.commit();
   revalidatePath("/admin/hero-slides");

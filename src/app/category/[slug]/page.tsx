@@ -12,15 +12,22 @@ import {
   type RawSearchParams,
 } from "@/lib/filters/parse-search-params";
 import EventTracker from "@/components/analytics/EventTracker";
+import { requestMemo } from "@/lib/request-cache";
 
 export const dynamic = "force-dynamic";
+
+/** generateMetadata() and the page body both need this category - memoized per-request
+ * so the same document isn't fetched twice for one render. */
+function getCategoryBySlugMemo(slug: string) {
+  return requestMemo(`category:${slug}`, () => getCategoryBySlug(slug));
+}
 
 export async function generateMetadata({
   params,
 }: {
   params: { slug: string };
 }): Promise<Metadata> {
-  const category = await getCategoryBySlug(params.slug);
+  const category = await getCategoryBySlugMemo(params.slug);
   if (!category || !category.isActive || category.isDeleted) return {};
   return {
     title: category.seoTitle || category.name,
@@ -35,7 +42,7 @@ const PageCategory = async ({
   params: { slug: string };
   searchParams: RawSearchParams;
 }) => {
-  const category = await getCategoryBySlug(params.slug);
+  const category = await getCategoryBySlugMemo(params.slug);
   if (!category || !category.isActive || category.isDeleted) {
     notFound();
   }

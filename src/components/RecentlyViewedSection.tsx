@@ -4,12 +4,14 @@ import { useEffect, useState } from "react";
 import SectionSliderProductCard from "@/components/SectionSliderProductCard";
 import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import { fetchProductsByIds } from "@/lib/firebase/client-data/products";
+import { useTenantId } from "@/lib/tenant/TenantContext";
 import type { Product } from "@/types/product";
 
 const RecentlyViewedSection: React.FC<{ excludeProductId?: string }> = ({
   excludeProductId,
 }) => {
   const { ids } = useRecentlyViewed();
+  const tenantId = useTenantId();
   const [products, setProducts] = useState<Product[]>([]);
 
   useEffect(() => {
@@ -19,13 +21,13 @@ const RecentlyViewedSection: React.FC<{ excludeProductId?: string }> = ({
       return;
     }
     let cancelled = false;
-    fetchProductsByIds(otherIds).then((result) => {
+    fetchProductsByIds(otherIds, tenantId).then((result) => {
       if (!cancelled) setProducts(result);
     });
     return () => {
       cancelled = true;
     };
-  }, [ids, excludeProductId]);
+  }, [ids, excludeProductId, tenantId]);
 
   if (!products.length) return null;
 

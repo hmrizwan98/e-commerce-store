@@ -8,17 +8,19 @@ import ButtonThird from "@/shared/Button/ButtonThird";
 import Prices from "@/components/Prices";
 import { useCompare } from "@/hooks/useCompare";
 import { fetchProductsByIds } from "@/lib/firebase/client-data/products";
+import { useTenantId } from "@/lib/tenant/TenantContext";
 import type { Product } from "@/types/product";
 
 const PageCompare = () => {
   const { ids, remove, clear } = useCompare();
+  const tenantId = useTenantId();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    fetchProductsByIds(ids).then((result) => {
+    fetchProductsByIds(ids, tenantId).then((result) => {
       if (!cancelled) {
         setProducts(result);
         setLoading(false);
@@ -27,7 +29,7 @@ const PageCompare = () => {
     return () => {
       cancelled = true;
     };
-  }, [ids]);
+  }, [ids, tenantId]);
 
   const attributeNames = Array.from(
     new Set(products.flatMap((p) => p.attributes.map((a) => a.name)))

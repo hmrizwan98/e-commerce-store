@@ -2,8 +2,8 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { XMarkIcon } from "@heroicons/react/24/outline";
+import { useChromeSuppressed } from "@/lib/tenant/useChromeSuppressed";
 import type { AnnouncementBar as AnnouncementBarData } from "@/types/announcement-bar";
 
 function dismissKey(id: string) {
@@ -16,8 +16,7 @@ function dismissKey(id: string) {
  * Firestore directly - same pattern as PageViewTracker/MarketingPixels/WhatsAppButton.
  */
 export default function AnnouncementBar() {
-  const pathname = usePathname();
-  const isAdminRoute = pathname?.startsWith("/admin");
+  const isAdminRoute = useChromeSuppressed({ includeAdmin: true });
   const [bar, setBar] = useState<AnnouncementBarData | null>(null);
   const [dismissed, setDismissed] = useState(false);
 

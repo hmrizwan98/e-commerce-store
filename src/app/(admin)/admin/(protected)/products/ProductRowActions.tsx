@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { softDeleteProduct, restoreProduct, permanentlyDeleteProduct } from "./actions";
+import { softDeleteProduct, restoreProduct, permanentlyDeleteProduct, duplicateProduct } from "./actions";
 
 const ProductRowActions: React.FC<{ id: string; slug: string; trashed: boolean }> = ({
   id,
@@ -38,8 +38,23 @@ const ProductRowActions: React.FC<{ id: string; slug: string; trashed: boolean }
     }
   };
 
+  const handleDuplicate = async () => {
+    setLoading(true);
+    try {
+      const newId = await duplicateProduct(id);
+      router.push(`/admin/products/${newId}/edit` as any);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="flex items-center justify-end gap-3">
+      {!trashed && (
+        <button onClick={handleDuplicate} disabled={loading} className="text-sm font-medium disabled:opacity-50">
+          Duplicate
+        </button>
+      )}
       <button
         onClick={handleClick}
         disabled={loading}

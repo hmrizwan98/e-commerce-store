@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb, serverTimestamp } from "@/lib/firebase/admin";
 import { stripUndefined } from "@/lib/firebase/repositories/utils";
+import { getCurrentTenant } from "@/lib/tenant/current";
 import type { AnalyticsEventType } from "@/types/analytics-event";
 
 const VALID_TYPES: AnalyticsEventType[] = [
@@ -44,8 +45,10 @@ export async function POST(req: NextRequest) {
 
   const device = (body.device as Record<string, unknown>) ?? {};
   const geo = (body.geo as Record<string, unknown>) ?? {};
+  const tenant = await getCurrentTenant();
 
   const event = stripUndefined({
+    storeId: tenant?.id,
     type: body.type,
     sessionId: body.sessionId,
     visitorId: body.visitorId,
@@ -87,6 +90,7 @@ export async function POST(req: NextRequest) {
         stripUndefined({
           sessionId: body.sessionId,
           visitorId: body.visitorId,
+          storeId: tenant?.id,
           path: body.path,
           device: event.device,
           geo: event.geo,
@@ -98,7 +102,9 @@ export async function POST(req: NextRequest) {
     visitorRef.get().then((doc) =>
       doc.exists
         ? visitorRef.set({ lastSeenAt: now }, { merge: true })
-        : visitorRef.set({ visitorId: body.visitorId, firstSeenAt: now, lastSeenAt: now })
+        : visitorRef.set(
+            stripUndefined({ visitorId: body.visitorId, storeId: tenant?.id, firstSeenAt: now, lastSeenAt: now })
+          )
     ),
   ]);
 

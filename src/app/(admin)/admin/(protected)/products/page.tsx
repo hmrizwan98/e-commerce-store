@@ -31,12 +31,20 @@ export default async function AdminProductsPage({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Products ({total})</h1>
-        <Link
-          href={"/admin/products/new" as any}
-          className="px-4 py-2 rounded-full bg-primary-6000 text-white text-sm font-medium"
-        >
-          Add product
-        </Link>
+        <div className="flex gap-3">
+          <Link
+            href={"/admin/products/bulk" as any}
+            className="px-4 py-2 rounded-full border border-neutral-300 dark:border-neutral-700 text-sm font-medium"
+          >
+            Bulk Import/Export
+          </Link>
+          <Link
+            href={"/admin/products/new" as any}
+            className="px-4 py-2 rounded-full bg-primary-6000 text-white text-sm font-medium"
+          >
+            Add product
+          </Link>
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-3">

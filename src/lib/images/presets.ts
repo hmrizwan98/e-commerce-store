@@ -17,6 +17,7 @@ export interface ImagePreset {
 export const IMAGE_PRESETS = {
   product: { folder: "products", maxDimension: 1920, quality: 88, targetMinKB: 150, targetMaxKB: 400 },
   category: { folder: "categories", maxDimension: 1920, quality: 85, targetMaxKB: 250 },
+  collection: { folder: "collections", maxDimension: 1920, quality: 85, targetMaxKB: 250 },
   brand: { folder: "brands", maxDimension: 1920, quality: 85, targetMaxKB: 150 },
   bannerHero: { folder: "banners/hero", maxDimension: 1920, quality: 88, targetMaxKB: 700 },
   banner: { folder: "banners", maxDimension: 1920, quality: 88, targetMaxKB: 700 },

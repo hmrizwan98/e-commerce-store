@@ -3,18 +3,21 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import ImageUploader from "@/components/admin/ImageUploader";
-import { createProduct, updateProduct, type ProductFormInput, type ProductVariantInput } from "./actions";
-import type { Product, ProductAttribute, ProductAttributeType, ProductVariant } from "@/types/product";
+import {
+  createProduct,
+  updateProduct,
+  generateProductSku,
+  type ProductFormInput,
+  type ProductVariantInput,
+} from "./actions";
+import { calculateProfitMargin, calculateAvailableStock } from "@/lib/products/inventory-math";
+import { slugify } from "@/lib/utils/slugify";
+import type { Product, ProductAttribute, ProductAttributeType, ProductVariant, OutOfStockBehavior } from "@/types/product";
 import type { Category } from "@/types/category";
 import type { Brand } from "@/types/brand";
-
-function slugify(name: string) {
-  return name
-    .toLowerCase()
-    .replace(/['"]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
-}
+import type { Supplier } from "@/types/supplier";
+import type { Collection } from "@/types/collection";
+import type { ProductActivityLog } from "@/types/product-activity-log";
 
 interface AttributeDraft {
   key: string;
@@ -81,8 +84,21 @@ export interface ProductFormProps {
   variants?: ProductVariant[];
   categories: Category[];
   brands: Brand[];
+  suppliers: Supplier[];
+  collections: Collection[];
   relatedOptions: { id: string; name: string }[];
+  activity?: ProductActivityLog[];
 }
+
+const ACTIVITY_LABELS: Record<string, string> = {
+  created: "Product created",
+  updated: "Product updated",
+  trashed: "Moved to trash",
+  restored: "Restored from trash",
+  permanently_deleted: "Permanently deleted",
+  stock_adjusted: "Stock adjusted",
+  duplicated: "Duplicated",
+};
 
 const ProductForm: React.FC<ProductFormProps> = ({
   mode,
@@ -90,7 +106,10 @@ const ProductForm: React.FC<ProductFormProps> = ({
   variants: initialVariants = [],
   categories,
   brands,
+  suppliers,
+  collections,
   relatedOptions,
+  activity = [],
 }) => {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
@@ -134,6 +153,23 @@ const ProductForm: React.FC<ProductFormProps> = ({
   );
   const [seoTitle, setSeoTitle] = useState(product?.seoTitle ?? "");
   const [seoDescription, setSeoDescription] = useState(product?.seoDescription ?? "");
+
+  const [costPrice, setCostPrice] = useState(product?.costPrice != null ? String(product.costPrice) : "");
+  const [supplierId, setSupplierId] = useState(product?.supplierId ?? "");
+  const [collectionIds, setCollectionIds] = useState<string[]>(product?.collectionIds ?? []);
+  const [reservedStock, setReservedStock] = useState(
+    product?.reservedStock != null ? String(product.reservedStock) : "0"
+  );
+  const [outOfStockBehavior, setOutOfStockBehavior] = useState<OutOfStockBehavior>(
+    product?.outOfStockBehavior ?? "hide"
+  );
+  const [scheduledPublishAt, setScheduledPublishAt] = useState(
+    product?.scheduledPublishAt ? new Date(product.scheduledPublishAt).toISOString().slice(0, 16) : ""
+  );
+  const [frequentlyBoughtWithProductIds, setFrequentlyBoughtWithProductIds] = useState<string[]>(
+    product?.frequentlyBoughtWithProductIds ?? []
+  );
+  const [generatingSku, setGeneratingSku] = useState(false);
 
   const [hasVariants, setHasVariants] = useState(product?.hasVariants ?? false);
   const [attributes, setAttributes] = useState<AttributeDraft[]>(
@@ -179,6 +215,29 @@ const ProductForm: React.FC<ProductFormProps> = ({
     setUpsellProductIds((prev) =>
       prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
     );
+  };
+
+  const toggleFrequentlyBoughtWith = (id: string) => {
+    setFrequentlyBoughtWithProductIds((prev) =>
+      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
+    );
+  };
+
+  const toggleCollection = (id: string) => {
+    setCollectionIds((prev) => (prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]));
+  };
+
+  const handleGenerateSku = async () => {
+    if (!name.trim()) {
+      setError("Enter a product name first.");
+      return;
+    }
+    setGeneratingSku(true);
+    try {
+      setSku(await generateProductSku(name.trim(), product?.id));
+    } finally {
+      setGeneratingSku(false);
+    }
   };
 
   const addAttribute = () => {
@@ -272,8 +331,15 @@ const ProductForm: React.FC<ProductFormProps> = ({
       relatedProductIds,
       crossSellProductIds,
       upsellProductIds,
+      frequentlyBoughtWithProductIds,
       seoTitle: seoTitle || undefined,
       seoDescription: seoDescription || undefined,
+      costPrice: costPrice ? Number(costPrice) : undefined,
+      supplierId: supplierId || undefined,
+      collectionIds,
+      reservedStock: reservedStock ? Number(reservedStock) : undefined,
+      outOfStockBehavior,
+      scheduledPublishAt: scheduledPublishAt ? new Date(scheduledPublishAt).getTime() : null,
       attributes: parsedAttributes,
       hasVariants,
       variants: parsedVariants,
@@ -394,7 +460,17 @@ const ProductForm: React.FC<ProductFormProps> = ({
               </div>
               <div>
                 <label className={labelClass}>SKU</label>
-                <input className={inputClass} value={sku} onChange={(e) => setSku(e.target.value)} />
+                <div className="flex gap-2">
+                  <input className={inputClass} value={sku} onChange={(e) => setSku(e.target.value)} />
+                  <button
+                    type="button"
+                    onClick={handleGenerateSku}
+                    disabled={generatingSku}
+                    className="px-3 py-2 text-xs font-medium rounded-lg border border-neutral-300 dark:border-neutral-700 whitespace-nowrap disabled:opacity-50"
+                  >
+                    {generatingSku ? "…" : "Generate"}
+                  </button>
+                </div>
               </div>
               <div>
                 <label className={labelClass}>Barcode</label>
@@ -422,6 +498,53 @@ const ProductForm: React.FC<ProductFormProps> = ({
                   onChange={(e) => setLowStockThreshold(e.target.value)}
                 />
               </div>
+              <div>
+                <label className={labelClass}>Cost price</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  className={inputClass}
+                  value={costPrice}
+                  onChange={(e) => setCostPrice(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className={labelClass}>Profit margin</label>
+                <div className={`${inputClass} bg-neutral-50 dark:bg-neutral-800/50`}>
+                  {(() => {
+                    const margin = calculateProfitMargin(costPrice ? Number(costPrice) : undefined, Number(price) || 0);
+                    return margin ? `${margin.profit.toFixed(2)} (${margin.marginPercent.toFixed(1)}%)` : "—";
+                  })()}
+                </div>
+              </div>
+              <div>
+                <label className={labelClass}>Reserved stock</label>
+                <input
+                  type="number"
+                  className={inputClass}
+                  value={reservedStock}
+                  onChange={(e) => setReservedStock(e.target.value)}
+                  disabled={hasVariants}
+                />
+              </div>
+              <div>
+                <label className={labelClass}>Available stock</label>
+                <div className={`${inputClass} bg-neutral-50 dark:bg-neutral-800/50`}>
+                  {calculateAvailableStock(Number(stock) || 0, reservedStock ? Number(reservedStock) : undefined)}
+                </div>
+              </div>
+              <div>
+                <label className={labelClass}>Out-of-stock behavior</label>
+                <select
+                  className={inputClass}
+                  value={outOfStockBehavior}
+                  onChange={(e) => setOutOfStockBehavior(e.target.value as OutOfStockBehavior)}
+                >
+                  <option value="hide">Hide from storefront</option>
+                  <option value="show_disabled">Show with disabled buy button</option>
+                  <option value="allow_backorder">Allow backorder</option>
+                </select>
+              </div>
             </div>
             <label className="flex items-center gap-2 text-sm">
               <input
@@ -431,6 +554,10 @@ const ProductForm: React.FC<ProductFormProps> = ({
               />
               Track inventory for this product
             </label>
+            <p className="text-xs text-neutral-500">
+              Reserved/available stock and out-of-stock behavior are architecture-ready fields -
+              Checkout/Orders don&apos;t enforce them yet in this phase.
+            </p>
           </div>
 
           <div className={cardClass}>
@@ -649,6 +776,44 @@ const ProductForm: React.FC<ProductFormProps> = ({
                 ))}
             </div>
           </div>
+
+          <div className={cardClass}>
+            <h2 className="font-semibold">Frequently bought together</h2>
+            <p className="text-xs text-neutral-500">
+              Manually curated bundle suggestions shown alongside this product.
+            </p>
+            <div className="max-h-56 overflow-y-auto space-y-1.5">
+              {relatedOptions
+                .filter((p) => p.id !== product?.id)
+                .map((p) => (
+                  <label key={p.id} className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={frequentlyBoughtWithProductIds.includes(p.id)}
+                      onChange={() => toggleFrequentlyBoughtWith(p.id)}
+                    />
+                    {p.name}
+                  </label>
+                ))}
+            </div>
+          </div>
+
+          {mode === "edit" && (
+            <div className={cardClass}>
+              <h2 className="font-semibold">Activity log</h2>
+              <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
+                {activity.map((log) => (
+                  <div key={log.id} className="py-2 text-sm flex items-center justify-between">
+                    <span>{ACTIVITY_LABELS[log.action] ?? log.action}</span>
+                    <span className="text-xs text-neutral-500">
+                      {log.createdAt ? new Date(log.createdAt).toLocaleString() : ""}
+                    </span>
+                  </div>
+                ))}
+                {!activity.length && <p className="text-sm text-neutral-500 py-2">No activity recorded yet.</p>}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="space-y-6">
@@ -668,6 +833,18 @@ const ProductForm: React.FC<ProductFormProps> = ({
                 <option value="sold_out">Sold out</option>
                 <option value="limited_edition">Limited edition</option>
               </select>
+            </div>
+            <div>
+              <label className={labelClass}>Scheduled publish (optional)</label>
+              <input
+                type="datetime-local"
+                className={inputClass}
+                value={scheduledPublishAt}
+                onChange={(e) => setScheduledPublishAt(e.target.value)}
+              />
+              <p className="text-xs text-neutral-500 mt-1">
+                Metadata only for now - doesn&apos;t automatically flip status to Active yet.
+              </p>
             </div>
           </div>
 
@@ -722,6 +899,32 @@ const ProductForm: React.FC<ProductFormProps> = ({
             <div>
               <label className={labelClass}>Tags (comma separated)</label>
               <input className={inputClass} value={tagsText} onChange={(e) => setTagsText(e.target.value)} />
+            </div>
+            <div>
+              <label className={labelClass}>Supplier</label>
+              <select className={inputClass} value={supplierId} onChange={(e) => setSupplierId(e.target.value)}>
+                <option value="">No supplier</option>
+                {suppliers.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className={labelClass}>Collections</label>
+              <div className="max-h-40 overflow-y-auto space-y-1.5">
+                {collections.map((c) => (
+                  <label key={c.id} className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={collectionIds.includes(c.id)}
+                      onChange={() => toggleCollection(c.id)}
+                    />
+                    {c.name}
+                  </label>
+                ))}
+              </div>
             </div>
           </div>
 

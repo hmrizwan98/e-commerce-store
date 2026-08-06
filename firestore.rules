@@ -7,112 +7,277 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function isSuperAdmin() {
+      return isSignedIn() && request.auth.token.role == 'superadmin';
+    }
+
+    // A store admin's tenantId claim must match the store subtree being
+    // accessed - this is what makes the subcollection model structurally
+    // isolate tenants: even a signed-in admin can only ever satisfy this
+    // check for their own store.
+    function isAdminOf(storeId) {
+      return isSignedIn() && request.auth.token.role == 'admin' && request.auth.token.tenantId == storeId;
+    }
+
+    // The tenant registry itself. Nothing client-side reads this document
+    // directly - the storefront/admin panel render server-side via the Admin
+    // SDK (bypasses rules), and every client-side read goes through a
+    // subcollection below (products/categories/menus/etc, each with its own
+    // rule) - so this is admin-only, not public, to avoid exposing the
+    // store's email/phone/notes/storageLimit/firebaseProject fields to an
+    // anonymous client reading/listing the stores collection directly.
+    match /stores/{storeId} {
+      allow read: if isAdminOf(storeId) || isSuperAdmin();
+      allow write: if isSuperAdmin();
+
+      // Phase 1 tenant-scoped collections. Public read/admin write, mirroring
+      // the pre-multi-tenant rules exactly - just path-scoped under the store
+      // now instead of flat top-level collections.
+      match /products/{productId} {
+        allow read: if true;
+        allow write: if isAdminOf(storeId) || isSuperAdmin();
+
+        match /variants/{variantId} {
+          allow read: if true;
+          allow write: if isAdminOf(storeId) || isSuperAdmin();
+        }
+      }
+
+      match /categories/{categoryId} {
+        allow read: if true;
+        allow write: if isAdminOf(storeId) || isSuperAdmin();
+      }
+
+      match /brands/{brandId} {
+        allow read: if true;
+        allow write: if isAdminOf(storeId) || isSuperAdmin();
+      }
+
+      match /collections/{collectionId} {
+        allow read: if true;
+        allow write: if isAdminOf(storeId) || isSuperAdmin();
+      }
+
+      // Procurement metadata - never customer-facing, unlike brands/collections above.
+      match /suppliers/{supplierId} {
+        allow read: if isAdminOf(storeId) || isSuperAdmin();
+        allow write: if isAdminOf(storeId) || isSuperAdmin();
+      }
+
+      match /themes/{themeId} {
+        allow read: if true;
+        allow write: if isAdminOf(storeId) || isSuperAdmin();
+      }
+
+      match /homepageSections/{sectionId} {
+        allow read: if true;
+        allow write: if isAdminOf(storeId) || isSuperAdmin();
+      }
+
+      // General/shipping/payment/email/whatsapp/analytics settings - all
+      // non-secret, admin-managed.
+      match /siteSettings/{settingId} {
+        allow read: if true;
+        allow write: if isAdminOf(storeId) || isSuperAdmin();
+      }
+
+      // Orders/customers: admin-only for now - there's no customer-facing
+      // checkout or account area reading/writing these directly yet (checkout
+      // goes through a Server Action, not a client-side Firestore write), so
+      // a customer "owner" clause is intentionally not added until that
+      // exists (adding it early, untested, would be a false sense of
+      // security).
+      match /orders/{orderId} {
+        allow read: if isAdminOf(storeId) || isSuperAdmin();
+        allow write: if isAdminOf(storeId) || isSuperAdmin();
+      }
+
+      match /customers/{customerId} {
+        allow read: if isAdminOf(storeId) || isSuperAdmin();
+        allow write: if isAdminOf(storeId) || isSuperAdmin();
+
+        match /addresses/{addressId} {
+          allow read: if isAdminOf(storeId) || isSuperAdmin();
+          allow write: if isAdminOf(storeId) || isSuperAdmin();
+        }
+      }
+
+      // Per-store customer audit trail (src/lib/firebase/repositories/customer-activity-logs.ts) -
+      // admin-only, never customer-facing.
+      match /customerActivityLogs/{logId} {
+        allow read: if isAdminOf(storeId) || isSuperAdmin();
+        allow write: if isAdminOf(storeId) || isSuperAdmin();
+      }
+
+      // Customer CSV/Excel export queue (architecture only, src/lib/firebase/services/customer-export-service.ts) -
+      // admin-only.
+      match /customerExportOperations/{operationId} {
+        allow read: if isAdminOf(storeId) || isSuperAdmin();
+        allow write: if isAdminOf(storeId) || isSuperAdmin();
+      }
+
+      // GDPR Foundation request log (src/lib/firebase/services/gdpr-service.ts) -
+      // admin-only.
+      match /gdprRequests/{requestId} {
+        allow read: if isAdminOf(storeId) || isSuperAdmin();
+        allow write: if isAdminOf(storeId) || isSuperAdmin();
+      }
+
+      match /menus/{menuId} {
+        allow read: if true;
+        allow write: if isAdminOf(storeId) || isSuperAdmin();
+      }
+
+      match /banners/{bannerId} {
+        allow read: if true;
+        allow write: if isAdminOf(storeId) || isSuperAdmin();
+      }
+
+      match /pages/{pageId} {
+        allow read: if true;
+        allow write: if isAdminOf(storeId) || isSuperAdmin();
+
+        match /sections/{sectionId} {
+          allow read: if true;
+          allow write: if isAdminOf(storeId) || isSuperAdmin();
+        }
+      }
+
+      match /testimonials/{testimonialId} {
+        allow read: if true;
+        allow write: if isAdminOf(storeId) || isSuperAdmin();
+      }
+
+      match /faqs/{faqId} {
+        allow read: if true;
+        allow write: if isAdminOf(storeId) || isSuperAdmin();
+      }
+
+      match /announcementBars/{announcementBarId} {
+        allow read: if true;
+        allow write: if isAdminOf(storeId) || isSuperAdmin();
+      }
+
+      // Per-store product audit trail (src/lib/firebase/repositories/product-activity-logs.ts) -
+      // admin-only, never customer-facing.
+      match /productActivityLogs/{logId} {
+        allow read: if isAdminOf(storeId) || isSuperAdmin();
+        allow write: if isAdminOf(storeId) || isSuperAdmin();
+      }
+
+      // Bulk import/export queue (architecture only, src/lib/firebase/services/product-bulk-service.ts) -
+      // admin-only, never customer-facing.
+      match /productBulkOperations/{operationId} {
+        allow read: if isAdminOf(storeId) || isSuperAdmin();
+        allow write: if isAdminOf(storeId) || isSuperAdmin();
+      }
+
+      // Per-store order audit trail (src/lib/firebase/repositories/order-activity-logs.ts) -
+      // admin-only, never customer-facing.
+      match /orderActivityLogs/{logId} {
+        allow read: if isAdminOf(storeId) || isSuperAdmin();
+        allow write: if isAdminOf(storeId) || isSuperAdmin();
+      }
+
+      // Invoice/packing-slip/shipping-label queue (architecture only,
+      // src/lib/firebase/services/order-document-service.ts) - admin-only.
+      match /orderDocuments/{documentId} {
+        allow read: if isAdminOf(storeId) || isSuperAdmin();
+        allow write: if isAdminOf(storeId) || isSuperAdmin();
+      }
+
+      // Order export queue (architecture only, src/lib/firebase/services/order-bulk-service.ts) -
+      // admin-only.
+      match /orderBulkOperations/{operationId} {
+        allow read: if isAdminOf(storeId) || isSuperAdmin();
+        allow write: if isAdminOf(storeId) || isSuperAdmin();
+      }
+
+      // Per-store financial ledger (src/lib/firebase/repositories/transactions.ts) -
+      // admin-only, never customer-facing.
+      match /transactions/{transactionId} {
+        allow read: if isAdminOf(storeId) || isSuperAdmin();
+        allow write: if isAdminOf(storeId) || isSuperAdmin();
+      }
+
+      // Finance report queue (architecture only, src/lib/firebase/services/finance-report-service.ts) -
+      // admin-only.
+      match /financeReports/{reportId} {
+        allow read: if isAdminOf(storeId) || isSuperAdmin();
+        allow write: if isAdminOf(storeId) || isSuperAdmin();
+      }
+
+      // Everything else under a store is schema reserved for a later phase
+      // (reviews/blog/analytics still live in flat top-level collections for
+      // now - see match /{document=**} below) - locked to admin-only by
+      // default so no future subcollection is ever accidentally publicly
+      // writable.
+      match /{document=**} {
+        allow read: if false;
+        allow write: if isAdminOf(storeId) || isSuperAdmin();
+      }
+    }
+
+    // --- Not yet migrated to per-tenant subcollections (deferred phase) ---
+    // Only reviews (keyed by productId, not store-scoped - low severity, see
+    // README's Store Isolation section) and the legacy users collection
+    // remain flat. Everything else now lives under stores/{storeId}/... above.
+
     function isAdmin() {
       return isSignedIn() && request.auth.token.role == 'admin';
     }
 
-    // Public read-only content, managed exclusively from the admin panel.
-    match /products/{productId} {
-      allow read: if true;
-      allow write: if isAdmin();
-
-      match /variants/{variantId} {
-        allow read: if true;
-        allow write: if isAdmin();
-      }
-    }
-
-    match /categories/{categoryId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    match /brands/{brandId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    match /menus/{menuId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    match /banners/{bannerId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    match /homepageSections/{sectionId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    // General/shipping/payment/email settings - all non-secret, admin-managed.
-    match /siteSettings/{settingId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    // CMS pages (About/Contact/Privacy/Terms/FAQ) and homepage testimonials -
-    // public content, admin-managed.
-    match /pages/{pageId} {
-      allow read: if true;
-      allow write: if isAdmin();
-
-      match /sections/{sectionId} {
-        allow read: if true;
-        allow write: if isAdmin();
-      }
-    }
-
-    match /testimonials/{testimonialId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    match /faqs/{faqId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    match /announcementBars/{announcementBarId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    // Read-only in Phase 2: only approved reviews are publicly readable.
-    // Customer submission (auth-gated, verified-purchase) arrives once
-    // customer accounts + orders exist.
     match /reviews/{reviewId} {
       allow read: if resource.data.status == 'approved';
-      allow write: if isAdmin();
+      allow write: if isAdmin() || isSuperAdmin();
     }
 
-    // Orders/customers: admin-only for now - there's no customer-facing
-    // checkout or account area reading/writing these yet, so a customer
-    // "owner" clause is intentionally not added until that exists (adding it
-    // early, untested, would be a false sense of security).
-    match /orders/{orderId} {
-      allow read: if isAdmin();
-      allow write: if isAdmin();
+    // Abuse-guard counters for the app-layer rate limiter (src/lib/firebase/rate-limit.ts) -
+    // Admin SDK only, never touched by any client, denied here for an explicit deny-by-default.
+    match /rateLimits/{id} {
+      allow read, write: if false;
     }
 
+    // Super Admin audit trail (src/lib/firebase/repositories/store-activity-logs.ts) -
+    // Admin SDK only, same posture as rateLimits above.
+    match /storeActivityLogs/{id} {
+      allow read, write: if false;
+    }
+
+    // Payout Architecture (src/lib/firebase/repositories/payouts.ts) - platform-wide,
+    // not tenant-scoped (Super Admin manages payouts across every store), same posture
+    // as storeActivityLogs above: Admin SDK / Server Action only, never client-reachable.
+    match /payouts/{id} {
+      allow read, write: if false;
+    }
+
+    // Public SaaS marketing site's Book a Demo inquiries (src/lib/firebase/repositories/book-demo-requests.ts) -
+    // genuinely tenant-independent (about prospective platform customers, not any
+    // existing store), same posture as storeActivityLogs/payouts above: Admin SDK /
+    // Server Action only, never client-reachable.
+    match /bookDemoRequests/{id} {
+      allow read, write: if false;
+    }
+
+    // Legacy pre-migration collections (kept locked down, not publicly
+    // reachable - the app no longer reads/writes these paths, retained only
+    // so nothing 404s if a stale reference somehow still points here).
     match /users/{userId} {
-      allow read: if isAdmin();
-      allow write: if isAdmin();
+      allow read: if isAdmin() || isSuperAdmin();
+      allow write: if isAdmin() || isSuperAdmin();
 
       match /addresses/{addressId} {
-        allow read: if isAdmin();
-        allow write: if isAdmin();
+        allow read: if isAdmin() || isSuperAdmin();
+        allow write: if isAdmin() || isSuperAdmin();
       }
     }
 
-    // Everything else is schema reserved for later phases (cart/wishlist) -
-    // locked down to admin-only / owner-only now so no collection is ever
-    // writable by an unauthenticated client by default.
+    // Everything else is schema reserved for later phases - locked down to
+    // admin-only / owner-only now so no collection is ever writable by an
+    // unauthenticated client by default.
     match /{document=**} {
       allow read: if false;
-      allow write: if isAdmin();
+      allow write: if isSuperAdmin();
     }
   }
 }

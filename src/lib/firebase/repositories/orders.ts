@@ -1,14 +1,25 @@
 import "server-only";
+import { Timestamp } from "firebase-admin/firestore";
 import { adminDb, serverTimestamp } from "../admin";
+import { tenantCollection } from "@/lib/firebase/tenant-scope";
 import { docData, stripUndefined } from "./utils";
+import { safeQuery } from "./safe-query";
 import { computeOrderTotals } from "@/lib/checkout/totals";
 import { getShippingSettings, getGeneralSettings, getPaymentSettings } from "./site-settings";
-import type { Order, OrderItem, OrderAddress, OrderStatus, PaymentMethod } from "@/types/order";
+import type { Order, OrderItem, OrderAddress, OrderStatus, PaymentMethod, PaymentStatus, ReturnStatus } from "@/types/order";
 
 const COLLECTION = "orders";
 
+// Advanced Filters - status/paymentStatus/returnStatus stay mutually exclusive
+// equality filters (each paired with the existing orderStatus+createdAt-shaped
+// composite index) rather than combining, which would need its own new index.
 export interface AdminOrderSearchParams {
   status?: OrderStatus;
+  paymentStatus?: PaymentStatus;
+  returnStatus?: ReturnStatus;
+  dateFrom?: number;
+  dateTo?: number;
+  search?: string;
   page?: number;
   pageSize?: number;
 }
@@ -25,36 +36,58 @@ export async function searchAdminOrders(
   const pageSize = params.pageSize ?? 20;
   const page = Math.max(1, params.page ?? 1);
 
-  let query: FirebaseFirestore.Query = adminDb().collection(COLLECTION);
-  if (params.status) {
-    query = query.where("orderStatus", "==", params.status);
+  const ordersCol = await tenantCollection(COLLECTION);
+  let query: FirebaseFirestore.Query = ordersCol;
+
+  if (params.search) {
+    // Order-number prefix match - the range field and orderBy field are the
+    // same, so this needs no new composite index.
+    const q = params.search.trim();
+    query = query.where("orderNumber", ">=", q).where("orderNumber", "<=", q + "").orderBy("orderNumber");
+  } else {
+    if (params.status) {
+      query = query.where("orderStatus", "==", params.status);
+    } else if (params.paymentStatus) {
+      query = query.where("paymentStatus", "==", params.paymentStatus);
+    } else if (params.returnStatus) {
+      query = query.where("returnStatus", "==", params.returnStatus);
+    }
+    if (params.dateFrom) {
+      query = query.where("createdAt", ">=", Timestamp.fromMillis(params.dateFrom));
+    }
+    if (params.dateTo) {
+      query = query.where("createdAt", "<=", Timestamp.fromMillis(params.dateTo));
+    }
+    query = query.orderBy("createdAt", "desc");
   }
-  query = query.orderBy("createdAt", "desc");
 
-  const countSnap = await query.count().get();
-  const total = countSnap.data().count;
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  return safeQuery("searchAdminOrders", { orders: [], total: 0, totalPages: 1 }, async () => {
+    const countSnap = await query.count().get();
+    const total = countSnap.data().count;
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
-  const snap = await query
-    .offset((page - 1) * pageSize)
-    .limit(pageSize)
-    .get();
+    const snap = await query
+      .offset((page - 1) * pageSize)
+      .limit(pageSize)
+      .get();
 
-  const orders = snap.docs
-    .map((doc) => docData<Order>(doc))
-    .filter((o): o is Order => o !== null);
+    const orders = snap.docs
+      .map((doc) => docData<Order>(doc))
+      .filter((o): o is Order => o !== null);
 
-  return { orders, total, totalPages };
+    return { orders, total, totalPages };
+  });
 }
 
 export async function getOrderById(id: string): Promise<Order | null> {
-  const doc = await adminDb().collection(COLLECTION).doc(id).get();
+  const col = await tenantCollection(COLLECTION);
+  const doc = await col.doc(id).get();
   return docData<Order>(doc);
 }
 
 export async function getOrderByOrderNumber(orderNumber: string): Promise<Order | null> {
-  const snap = await adminDb()
-    .collection(COLLECTION)
+  const col = await tenantCollection(COLLECTION);
+  const snap = await col
     .where("orderNumber", "==", orderNumber)
     .limit(1)
     .get();
@@ -63,14 +96,31 @@ export async function getOrderByOrderNumber(orderNumber: string): Promise<Order 
 }
 
 export async function getOrdersByUserId(userId: string): Promise<Order[]> {
-  const snap = await adminDb()
-    .collection(COLLECTION)
-    .where("userId", "==", userId)
-    .orderBy("createdAt", "desc")
-    .get();
-  return snap.docs
-    .map((doc) => docData<Order>(doc))
-    .filter((o): o is Order => o !== null);
+  return safeQuery("getOrdersByUserId", [], async () => {
+    const col = await tenantCollection(COLLECTION);
+    const snap = await col
+      .where("userId", "==", userId)
+      .orderBy("createdAt", "desc")
+      .get();
+    return snap.docs
+      .map((doc) => docData<Order>(doc))
+      .filter((o): o is Order => o !== null);
+  });
+}
+
+/** Read-only - for the Customer CRM to attribute guest-checkout orders to a
+ * virtual customer row. Not part of the order lifecycle/workflow. */
+export async function getOrdersByGuestEmail(email: string): Promise<Order[]> {
+  return safeQuery("getOrdersByGuestEmail", [], async () => {
+    const col = await tenantCollection(COLLECTION);
+    const snap = await col
+      .where("guestEmail", "==", email)
+      .orderBy("createdAt", "desc")
+      .get();
+    return snap.docs
+      .map((doc) => docData<Order>(doc))
+      .filter((o): o is Order => o !== null);
+  });
 }
 
 export interface CreateGuestOrderInput {
@@ -107,8 +157,11 @@ export async function createGuestOrder(input: CreateGuestOrderInput): Promise<Cr
   const db = adminDb();
   const orderNumber = `ORD-${Date.now().toString(36).toUpperCase()}`;
 
+  const ordersCol = await tenantCollection(COLLECTION);
+  const productsCol = await tenantCollection("products");
+
   const result = await db.runTransaction(async (tx) => {
-    const productRefs = input.items.map((i) => db.collection("products").doc(i.productId));
+    const productRefs = input.items.map((i) => productsCol.doc(i.productId));
     const variantRefs = input.items.map((item, idx) =>
       item.variantId ? productRefs[idx].collection("variants").doc(item.variantId) : null
     );
@@ -124,6 +177,9 @@ export async function createGuestOrder(input: CreateGuestOrderInput): Promise<Cr
 
     for (let idx = 0; idx < input.items.length; idx++) {
       const reqItem = input.items[idx];
+      if (!Number.isInteger(reqItem.quantity) || reqItem.quantity < 1) {
+        throw new Error("Item quantity must be a positive whole number.");
+      }
       const doc = productDocs[idx];
       if (!doc.exists) throw new Error("One of the items in your cart is no longer available.");
       const product = doc.data()!;
@@ -177,7 +233,7 @@ export async function createGuestOrder(input: CreateGuestOrderInput): Promise<Cr
       taxInclusive: general.taxInclusive,
     });
 
-    const orderRef = db.collection(COLLECTION).doc();
+    const orderRef = ordersCol.doc();
     const now = Date.now();
 
     stockUpdates.forEach(({ ref, newStock }) => tx.update(ref, { stock: newStock }));
@@ -213,7 +269,8 @@ export async function getOrderStats(): Promise<{
   totalRevenue: number;
   pendingOrders: number;
 }> {
-  const snap = await adminDb().collection(COLLECTION).get();
+  const col = await tenantCollection(COLLECTION);
+  const snap = await col.get();
   let totalRevenue = 0;
   let pendingOrders = 0;
   snap.docs.forEach((doc) => {
@@ -239,7 +296,8 @@ export interface TopSellingProduct {
  * denormalized rollup doc if the orders collection grows very large.
  */
 export async function getTopSellingProducts(limit = 5): Promise<TopSellingProduct[]> {
-  const snap = await adminDb().collection(COLLECTION).get();
+  const col = await tenantCollection(COLLECTION);
+  const snap = await col.get();
   const byProduct = new Map<string, TopSellingProduct>();
 
   snap.docs.forEach((doc) => {
@@ -273,8 +331,8 @@ export interface RevenueTrendPoint {
 
 export async function getRevenueTrend(days = 14): Promise<RevenueTrendPoint[]> {
   const since = Date.now() - days * 24 * 60 * 60 * 1000;
-  const snap = await adminDb()
-    .collection(COLLECTION)
+  const col = await tenantCollection(COLLECTION);
+  const snap = await col
     .where("paymentStatus", "==", "paid")
     .get();
 

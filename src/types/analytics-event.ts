@@ -41,6 +41,9 @@ export interface AnalyticsEventGeo {
 
 export interface AnalyticsEvent {
   id: string;
+  // Root-level collection (not tenant-scoped by path) - storeId is the tenant-isolation
+  // boundary, filtered on every read. See src/lib/firebase/repositories/analytics.ts.
+  storeId?: string;
   type: AnalyticsEventType;
   sessionId: string;
   visitorId: string;
@@ -61,6 +64,7 @@ export interface AnalyticsEvent {
 export interface ActiveSession {
   sessionId: string;
   visitorId: string;
+  storeId?: string;
   path: string;
   device: AnalyticsEventDevice;
   geo: AnalyticsEventGeo;
@@ -70,6 +74,7 @@ export interface ActiveSession {
 
 export interface Visitor {
   visitorId: string;
+  storeId?: string;
   firstSeenAt: number;
   lastSeenAt: number;
 }

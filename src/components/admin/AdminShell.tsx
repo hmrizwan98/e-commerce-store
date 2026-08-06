@@ -9,6 +9,8 @@ import {
   TagIcon,
   BuildingStorefrontIcon,
   ArchiveBoxIcon,
+  TruckIcon,
+  RectangleStackIcon,
   Bars3BottomLeftIcon,
   RectangleGroupIcon,
   PhotoIcon,
@@ -21,6 +23,7 @@ import {
   NewspaperIcon,
   ShoppingCartIcon,
   UsersIcon,
+  BanknotesIcon,
   ChartBarIcon,
   Cog6ToothIcon,
   PaintBrushIcon,
@@ -41,6 +44,8 @@ const NAV_GROUPS: { title: string; items: { href: string; label: string; icon: R
       { href: "/admin/products", label: "Products", icon: ShoppingBagIcon },
       { href: "/admin/categories", label: "Categories", icon: TagIcon },
       { href: "/admin/brands", label: "Brands", icon: BuildingStorefrontIcon },
+      { href: "/admin/suppliers", label: "Suppliers", icon: TruckIcon },
+      { href: "/admin/collections", label: "Collections", icon: RectangleStackIcon },
       { href: "/admin/inventory", label: "Inventory", icon: ArchiveBoxIcon },
     ],
   },
@@ -64,6 +69,7 @@ const NAV_GROUPS: { title: string; items: { href: string; label: string; icon: R
     items: [
       { href: "/admin/orders", label: "Orders", icon: ShoppingCartIcon },
       { href: "/admin/customers", label: "Customers", icon: UsersIcon },
+      { href: "/admin/finance", label: "Finance", icon: BanknotesIcon },
     ],
   },
   {

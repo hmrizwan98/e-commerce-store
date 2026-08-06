@@ -4,6 +4,9 @@ import ProductForm from "../../ProductForm";
 import { getProductById, getProductVariants, searchAdminProducts } from "@/lib/firebase/repositories/products";
 import { getAllCategoriesForAdmin } from "@/lib/firebase/repositories/categories";
 import { getAllBrandsForAdmin } from "@/lib/firebase/repositories/brands";
+import { getAllSuppliersForAdmin } from "@/lib/firebase/repositories/suppliers";
+import { getAllCollectionsForAdmin } from "@/lib/firebase/repositories/collections";
+import { getRecentProductActivity } from "@/lib/firebase/repositories/product-activity-logs";
 
 export const dynamic = "force-dynamic";
 
@@ -11,10 +14,13 @@ export default async function EditProductPage({ params }: { params: { id: string
   const product = await getProductById(params.id);
   if (!product) notFound();
 
-  const [variants, categories, brands, { products }] = await Promise.all([
+  const [variants, categories, brands, suppliers, collections, activity, { products }] = await Promise.all([
     getProductVariants(product.id),
     getAllCategoriesForAdmin(),
     getAllBrandsForAdmin(),
+    getAllSuppliersForAdmin(),
+    getAllCollectionsForAdmin(),
+    getRecentProductActivity(product.id),
     searchAdminProducts({ pageSize: 100 }),
   ]);
 
@@ -27,6 +33,9 @@ export default async function EditProductPage({ params }: { params: { id: string
         variants={variants}
         categories={categories}
         brands={brands}
+        suppliers={suppliers}
+        collections={collections}
+        activity={activity}
         relatedOptions={products.map((p) => ({ id: p.id, name: p.name }))}
       />
     </div>

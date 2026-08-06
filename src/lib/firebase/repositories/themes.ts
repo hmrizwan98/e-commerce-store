@@ -1,5 +1,5 @@
 import "server-only";
-import { adminDb } from "../admin";
+import { tenantCollection } from "@/lib/firebase/tenant-scope";
 import { docData } from "./utils";
 import type { Theme } from "@/types/theme";
 
@@ -123,7 +123,8 @@ export const DEFAULT_THEME: Theme = {
 };
 
 export async function getActiveTheme(): Promise<Theme> {
-  const snap = await adminDb().collection(COLLECTION).where("isActive", "==", true).limit(1).get();
+  const col = await tenantCollection(COLLECTION);
+  const snap = await col.where("isActive", "==", true).limit(1).get();
   if (snap.empty) return DEFAULT_THEME;
   const theme = docData<Theme>(snap.docs[0]);
   return theme ?? DEFAULT_THEME;
@@ -131,12 +132,14 @@ export async function getActiveTheme(): Promise<Theme> {
 
 export async function getThemeById(id: string): Promise<Theme | null> {
   if (id === DEFAULT_THEME.id) return DEFAULT_THEME;
-  const doc = await adminDb().collection(COLLECTION).doc(id).get();
+  const col = await tenantCollection(COLLECTION);
+  const doc = await col.doc(id).get();
   return docData<Theme>(doc);
 }
 
 export async function getAllThemesForAdmin(): Promise<Theme[]> {
-  const snap = await adminDb().collection(COLLECTION).orderBy("createdAt", "asc").get();
+  const col = await tenantCollection(COLLECTION);
+  const snap = await col.orderBy("createdAt", "asc").get();
   const themes = snap.docs.map((doc) => docData<Theme>(doc)).filter((t): t is Theme => t !== null);
   if (!themes.some((t) => t.isActive)) return [DEFAULT_THEME, ...themes];
   return themes;

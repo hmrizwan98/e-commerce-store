@@ -1,7 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { adminDb, serverTimestamp } from "@/lib/firebase/admin";
+import { serverTimestamp } from "@/lib/firebase/admin";
+import { tenantCollection } from "@/lib/firebase/tenant-scope";
 import { requireAdmin } from "@/lib/firebase/require-admin";
 import { stripUndefined, docData } from "@/lib/firebase/repositories/utils";
 import { getThemeById, DEFAULT_THEME } from "@/lib/firebase/repositories/themes";
@@ -22,7 +23,8 @@ function logoUrls(logos: Theme["logos"] | undefined): (string | undefined)[] {
 
 export async function createTheme(input: ThemeInput): Promise<string> {
   await requireAdmin();
-  const ref = adminDb().collection(COLLECTION).doc();
+  const col = await tenantCollection(COLLECTION);
+  const ref = col.doc();
   await ref.set({
     ...stripUndefined(input),
     isActive: false,
@@ -37,10 +39,8 @@ export async function updateTheme(id: string, input: ThemeInput): Promise<void> 
   await requireAdmin();
   const before = await getThemeById(id);
 
-  await adminDb()
-    .collection(COLLECTION)
-    .doc(id)
-    .update({ ...stripUndefined(input), updatedAt: serverTimestamp() });
+  const col = await tenantCollection(COLLECTION);
+  await col.doc(id).update({ ...stripUndefined(input), updatedAt: serverTimestamp() });
   revalidateStorefront();
 
   await deleteImagesByUrls(diffRemovedImages(logoUrls(before?.logos), logoUrls(input.logos)));
@@ -51,7 +51,8 @@ export async function deleteTheme(id: string): Promise<void> {
   const theme = await getThemeById(id);
   if (!theme) return;
   if (theme.isActive) throw new Error("Cannot delete the active theme - publish a different theme first.");
-  await adminDb().collection(COLLECTION).doc(id).delete();
+  const col = await tenantCollection(COLLECTION);
+  await col.doc(id).delete();
   revalidateStorefront();
   await deleteImagesByUrls(logoUrls(theme.logos));
 }
@@ -61,7 +62,8 @@ export async function duplicateTheme(id: string): Promise<string> {
   const theme = await getThemeById(id);
   if (!theme) throw new Error("Theme not found");
   const { id: _id, createdAt: _createdAt, updatedAt: _updatedAt, ...rest } = theme;
-  const ref = adminDb().collection(COLLECTION).doc();
+  const col = await tenantCollection(COLLECTION);
+  const ref = col.doc();
   await ref.set({
     ...stripUndefined({ ...rest, name: `${theme.name} (copy)`, isActive: false }),
     createdAt: serverTimestamp(),
@@ -74,8 +76,9 @@ export async function duplicateTheme(id: string): Promise<string> {
 /** Flips isActive off on every other theme and on for the target - only one theme is ever active. */
 export async function setActiveTheme(id: string): Promise<void> {
   await requireAdmin();
-  const snap = await adminDb().collection(COLLECTION).get();
-  const batch = adminDb().batch();
+  const col = await tenantCollection(COLLECTION);
+  const snap = await col.get();
+  const batch = col.firestore.batch();
 
   let targetExists = false;
   snap.docs.forEach((doc) => {
@@ -85,7 +88,7 @@ export async function setActiveTheme(id: string): Promise<void> {
   });
 
   if (!targetExists && id === DEFAULT_THEME.id) {
-    const ref = adminDb().collection(COLLECTION).doc();
+    const ref = col.doc();
     const { id: _id, ...rest } = DEFAULT_THEME;
     batch.set(ref, { ...stripUndefined(rest), isActive: true, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
   } else if (!targetExists) {

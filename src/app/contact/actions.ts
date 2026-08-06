@@ -1,6 +1,7 @@
 "use server";
 
 import { adminDb, serverTimestamp } from "@/lib/firebase/admin";
+import { getCurrentTenant } from "@/lib/tenant/current";
 
 export interface ContactFormInput {
   name: string;
@@ -19,7 +20,10 @@ export async function submitContactForm(
     return { ok: false, message: "Please fill in your name, a valid email, and a message." };
   }
 
+  const tenant = await getCurrentTenant();
+
   await adminDb().collection("contactSubmissions").add({
+    ...(tenant ? { storeId: tenant.id } : {}),
     name,
     email,
     message,

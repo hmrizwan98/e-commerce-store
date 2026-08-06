@@ -1,23 +1,26 @@
 import "server-only";
-import { adminDb } from "../admin";
+import { tenantCollection } from "../tenant-scope";
 import { docData } from "./utils";
+import { safeQuery } from "./safe-query";
 import type { PageSection } from "@/types/page-section";
 
-function collection(pageId: string) {
-  return adminDb().collection("pages").doc(pageId).collection("sections");
+async function collection(pageId: string) {
+  return (await tenantCollection("pages")).doc(pageId).collection("sections");
 }
 
 export async function getActivePageSections(pageId: string): Promise<PageSection[]> {
-  const snap = await collection(pageId).where("isActive", "==", true).orderBy("order", "asc").get();
-  return snap.docs
-    .map((doc) => docData<PageSection>(doc))
-    .filter((s): s is PageSection => s !== null);
+  return safeQuery("getActivePageSections", [], async () => {
+    const snap = await (await collection(pageId)).where("isActive", "==", true).orderBy("order", "asc").get();
+    return snap.docs
+      .map((doc) => docData<PageSection>(doc))
+      .filter((s): s is PageSection => s !== null);
+  });
 }
 
 // --- Admin ---
 
 export async function getAllPageSectionsForAdmin(pageId: string): Promise<PageSection[]> {
-  const snap = await collection(pageId).orderBy("order", "asc").get();
+  const snap = await (await collection(pageId)).orderBy("order", "asc").get();
   return snap.docs
     .map((doc) => docData<PageSection>(doc))
     .filter((s): s is PageSection => s !== null);

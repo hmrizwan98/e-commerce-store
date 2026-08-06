@@ -1,7 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { adminDb, serverTimestamp } from "@/lib/firebase/admin";
+import { serverTimestamp } from "@/lib/firebase/admin";
+import { tenantCollection } from "@/lib/firebase/tenant-scope";
 import { requireAdmin } from "@/lib/firebase/require-admin";
 import { stripUndefined } from "@/lib/firebase/repositories/utils";
 
@@ -30,7 +31,7 @@ function revalidateStorefront() {
 
 export async function createAnnouncementBar(input: AnnouncementBarFormInput): Promise<string> {
   await requireAdmin();
-  const ref = adminDb().collection("announcementBars").doc();
+  const ref = (await tenantCollection("announcementBars")).doc();
   await ref.set({ ...stripUndefined(input), createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
   revalidateStorefront();
   return ref.id;
@@ -38,8 +39,7 @@ export async function createAnnouncementBar(input: AnnouncementBarFormInput): Pr
 
 export async function updateAnnouncementBar(id: string, input: AnnouncementBarFormInput): Promise<void> {
   await requireAdmin();
-  await adminDb()
-    .collection("announcementBars")
+  await (await tenantCollection("announcementBars"))
     .doc(id)
     .update({ ...stripUndefined(input), updatedAt: serverTimestamp() });
   revalidateStorefront();
@@ -47,6 +47,6 @@ export async function updateAnnouncementBar(id: string, input: AnnouncementBarFo
 
 export async function deleteAnnouncementBar(id: string): Promise<void> {
   await requireAdmin();
-  await adminDb().collection("announcementBars").doc(id).delete();
+  await (await tenantCollection("announcementBars")).doc(id).delete();
   revalidateStorefront();
 }

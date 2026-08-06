@@ -17,6 +17,7 @@ export async function verifySessionCookie(sessionCookie: string) {
   }
 }
 
+/** Store admins carry { role: "admin", tenantId: "<storeId>" }; super admins carry { role: "superadmin" } (see require-super-admin.ts). */
 export function isAdminClaim(claims: Record<string, unknown> | null | undefined) {
   return claims?.role === "admin";
 }
