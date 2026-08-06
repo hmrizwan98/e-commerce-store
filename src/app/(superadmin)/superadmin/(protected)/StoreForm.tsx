@@ -5,9 +5,14 @@ import { useRouter } from "next/navigation";
 import ButtonPrimary from "@/shared/Button/ButtonPrimary";
 import { createStore, updateStore, type StoreFormInput } from "./actions";
 import { slugify } from "@/lib/utils/slugify";
+import { buildTenantUrl } from "@/lib/platform/tenant-url";
 import type { Store } from "@/types/store";
 
-const StoreForm: React.FC<{ mode: "create" | "edit"; store?: Store }> = ({ mode, store }) => {
+const StoreForm: React.FC<{ mode: "create" | "edit"; store?: Store; platformBaseUrl: string }> = ({
+  mode,
+  store,
+  platformBaseUrl,
+}) => {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -170,7 +175,11 @@ const StoreForm: React.FC<{ mode: "create" | "edit"; store?: Store }> = ({ mode,
             }}
             required
           />
-          {slug && <p className="text-xs text-neutral-500 mt-1">{slug}.yourdomain.com</p>}
+          {slug && (
+            <p className="text-xs text-neutral-500 mt-1">
+              {store?.websiteUrl ?? buildTenantUrl(platformBaseUrl, slug)}
+            </p>
+          )}
         </div>
         <div>
           <label className={labelClass}>Email {mode === "create" && "(used to create the store's admin login)"}</label>

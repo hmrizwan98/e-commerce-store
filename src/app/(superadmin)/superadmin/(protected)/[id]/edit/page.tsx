@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getStoreById } from "@/lib/firebase/repositories/stores";
 import { getRecentActivity } from "@/lib/firebase/repositories/store-activity-logs";
 import { getDeploymentMetadataByStoreId } from "@/lib/firebase/repositories/deployment-metadata";
+import { getPlatformBaseUrl } from "@/lib/platform/base-url";
 import StoreDetailsTabs from "../../StoreDetailsTabs";
 
 export const dynamic = "force-dynamic";
@@ -18,7 +19,12 @@ export default async function EditStorePage({ params }: { params: { id: string }
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold">{store.name}</h1>
-      <StoreDetailsTabs store={store} activity={activity} deployment={deployment} />
+      <StoreDetailsTabs
+        store={store}
+        activity={activity}
+        deployment={deployment}
+        platformBaseUrl={getPlatformBaseUrl()}
+      />
     </div>
   );
 }

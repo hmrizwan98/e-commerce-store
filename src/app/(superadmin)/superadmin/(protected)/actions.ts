@@ -15,6 +15,8 @@ import { installDefaultTheme } from "@/lib/firebase/services/theme-installer";
 import { provisionCloudinaryMetadata } from "@/lib/firebase/services/cloudinary-provisioner";
 import { provisionDeploymentMetadata } from "@/lib/firebase/services/deployment-provisioner";
 import { syncDomainSettings } from "@/lib/superadmin/domain-settings";
+import { getPlatformBaseUrl } from "@/lib/platform/base-url";
+import { buildTenantUrl } from "@/lib/platform/tenant-url";
 import type { ThemePresetKey } from "@/lib/themes/theme-presets";
 import type { StoreStatus, StoreTemplate } from "@/types/store";
 
@@ -43,7 +45,6 @@ async function revokeStoreAdminSessions(storeId: string) {
 }
 
 const COLLECTION = "stores";
-const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "yourdomain.com";
 
 export interface StoreFormInput {
   name: string;
@@ -179,8 +180,8 @@ async function provisionStoreShell(input: ProvisionShellInput): Promise<Provisio
       nameLower: input.name.trim().toLowerCase(),
       domains,
       domainSettings: syncDomainSettings(undefined, domains),
-      websiteUrl: `https://${slug}.${ROOT_DOMAIN}`,
-      adminUrl: `https://${slug}.${ROOT_DOMAIN}/admin`,
+      websiteUrl: buildTenantUrl(getPlatformBaseUrl(), slug),
+      adminUrl: buildTenantUrl(getPlatformBaseUrl(), slug, "/admin"),
       cloudinaryFolder: slug,
       themeId: input.themeId ?? DEFAULT_THEME.id,
       status: input.status ?? ("active" satisfies StoreStatus),
@@ -215,6 +216,7 @@ export async function createStore(input: StoreFormInput): Promise<CreateStoreRes
   await enforceRateLimit(decoded.uid);
   if (!input.email) throw new Error("Email is required to create the store's admin user.");
   const themeKey: ThemePresetKey = input.themeKey ?? "universal-premium";
+  const platformBaseUrl = getPlatformBaseUrl();
 
   const { storeId, ref, storeDocRef, userRecord, adminTempPassword, slug } = await provisionStoreShell({
     name: input.name,
@@ -257,7 +259,11 @@ export async function createStore(input: StoreFormInput): Promise<CreateStoreRes
 
     await installDefaultTheme(storeDocRef, { template: input.template ?? "empty", themeKey });
     await provisionCloudinaryMetadata(storeDocRef, slug);
-    await provisionDeploymentMetadata(storeDocRef, { websiteUrl: `https://${slug}.${ROOT_DOMAIN}`, slug, rootDomain: ROOT_DOMAIN });
+    await provisionDeploymentMetadata(storeDocRef, {
+      websiteUrl: buildTenantUrl(platformBaseUrl, slug),
+      slug,
+      rootDomain: new URL(platformBaseUrl).host,
+    });
 
     await adminAuth().setCustomUserClaims(userRecord.uid, { role: "admin", tenantId: storeId });
   } catch (err) {
@@ -272,8 +278,8 @@ export async function createStore(input: StoreFormInput): Promise<CreateStoreRes
   await getWelcomeEmailService()
     .sendWelcomeEmail({
       storeName: input.brandName?.trim() || input.name,
-      storeUrl: `https://${slug}.${ROOT_DOMAIN}`,
-      adminUrl: `https://${slug}.${ROOT_DOMAIN}/admin`,
+      storeUrl: buildTenantUrl(platformBaseUrl, slug),
+      adminUrl: buildTenantUrl(platformBaseUrl, slug, "/admin"),
       email: input.email,
       temporaryPassword: adminTempPassword,
     })
@@ -299,6 +305,7 @@ export async function cloneStore(sourceStoreId: string, input: CloneStoreInput):
   const decoded = await requireSuperAdmin();
   await enforceRateLimit(decoded.uid);
   if (!input.email) throw new Error("Email is required to create the cloned store's admin user.");
+  const platformBaseUrl = getPlatformBaseUrl();
 
   const source = await getStoreById(sourceStoreId);
   if (!source) throw new Error("Source store not found.");
@@ -366,7 +373,11 @@ export async function cloneStore(sourceStoreId: string, input: CloneStoreInput):
     // New store, new infra - Cloudinary folders and deployment status are per-store
     // provisioning concerns, not content, so they're freshly provisioned rather than copied.
     await provisionCloudinaryMetadata(storeDocRef, slug);
-    await provisionDeploymentMetadata(storeDocRef, { websiteUrl: `https://${slug}.${ROOT_DOMAIN}`, slug, rootDomain: ROOT_DOMAIN });
+    await provisionDeploymentMetadata(storeDocRef, {
+      websiteUrl: buildTenantUrl(platformBaseUrl, slug),
+      slug,
+      rootDomain: new URL(platformBaseUrl).host,
+    });
 
     await adminAuth().setCustomUserClaims(userRecord.uid, { role: "admin", tenantId: storeId });
   } catch (err) {
@@ -380,8 +391,8 @@ export async function cloneStore(sourceStoreId: string, input: CloneStoreInput):
   await getWelcomeEmailService()
     .sendWelcomeEmail({
       storeName: input.name,
-      storeUrl: `https://${slug}.${ROOT_DOMAIN}`,
-      adminUrl: `https://${slug}.${ROOT_DOMAIN}/admin`,
+      storeUrl: buildTenantUrl(platformBaseUrl, slug),
+      adminUrl: buildTenantUrl(platformBaseUrl, slug, "/admin"),
       email: input.email,
       temporaryPassword: adminTempPassword,
     })
@@ -528,11 +539,12 @@ export async function resendWelcomeEmail(storeId: string): Promise<ResetAdminPas
   const newPassword = generateTempPassword();
   await adminAuth().updateUser(userRecord.uid, { password: newPassword });
 
+  const platformBaseUrl = getPlatformBaseUrl();
   await getWelcomeEmailService()
     .sendWelcomeEmail({
       storeName: store.brandName?.trim() || store.name,
-      storeUrl: store.websiteUrl ?? `https://${store.slug}.${ROOT_DOMAIN}`,
-      adminUrl: store.adminUrl ?? `https://${store.slug}.${ROOT_DOMAIN}/admin`,
+      storeUrl: store.websiteUrl ?? buildTenantUrl(platformBaseUrl, store.slug),
+      adminUrl: store.adminUrl ?? buildTenantUrl(platformBaseUrl, store.slug, "/admin"),
       email: store.email,
       temporaryPassword: newPassword,
     })

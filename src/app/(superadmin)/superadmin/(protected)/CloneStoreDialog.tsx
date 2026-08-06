@@ -6,12 +6,16 @@ import toast from "react-hot-toast";
 import ButtonPrimary from "@/shared/Button/ButtonPrimary";
 import { slugify } from "@/lib/utils/slugify";
 import { cloneStore } from "./actions";
+import { buildTenantUrl } from "@/lib/platform/tenant-url";
 
 const inputClass =
   "w-full px-3 py-2 text-sm rounded-lg border border-neutral-300 dark:border-neutral-700 bg-transparent";
 const labelClass = "block text-sm font-medium mb-1";
 
-const CloneStoreDialog: React.FC<{ sourceStoreId: string }> = ({ sourceStoreId }) => {
+const CloneStoreDialog: React.FC<{ sourceStoreId: string; platformBaseUrl: string }> = ({
+  sourceStoreId,
+  platformBaseUrl,
+}) => {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -96,7 +100,7 @@ const CloneStoreDialog: React.FC<{ sourceStoreId: string }> = ({ sourceStoreId }
           }}
           required
         />
-        {slug && <p className="text-xs text-neutral-500 mt-1">{slug}.yourdomain.com</p>}
+        {slug && <p className="text-xs text-neutral-500 mt-1">{buildTenantUrl(platformBaseUrl, slug)}</p>}
       </div>
       <div>
         <label className={labelClass}>Owner name</label>

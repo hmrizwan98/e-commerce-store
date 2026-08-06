@@ -4,6 +4,8 @@ import { adminDb } from "@/lib/firebase/admin";
 import { getInventoryProducts } from "@/lib/firebase/repositories/products";
 import { getOrderStats, getTopSellingProducts, getRevenueTrend } from "@/lib/firebase/repositories/orders";
 import { getCustomerCount } from "@/lib/firebase/repositories/customers";
+import { getOnboardingProgress } from "@/lib/firebase/repositories/onboarding";
+import OnboardingWelcomeCard from "@/components/admin/OnboardingWelcomeCard";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +27,7 @@ function StatCard({ label, value, href }: { label: string; value: string | numbe
 }
 
 export default async function AdminDashboardPage() {
-  const [productCount, categoryCount, brandCount, orderStats, customerCount, inventory, topSelling, revenueTrend] =
+  const [productCount, categoryCount, brandCount, orderStats, customerCount, inventory, topSelling, revenueTrend, onboardingProgress] =
     await Promise.all([
       countCollection("products", ["isDeleted", "==", false]),
       countCollection("categories", ["isDeleted", "==", false]),
@@ -35,6 +37,7 @@ export default async function AdminDashboardPage() {
       getInventoryProducts(),
       getTopSellingProducts(5),
       getRevenueTrend(14),
+      getOnboardingProgress(),
     ]);
 
   const lowStock = inventory.filter((p) => p.stock <= (p.lowStockThreshold ?? 5)).slice(0, 8);
@@ -43,6 +46,8 @@ export default async function AdminDashboardPage() {
   return (
     <div className="space-y-8">
       <h1 className="text-2xl font-semibold">Dashboard</h1>
+
+      <OnboardingWelcomeCard progress={onboardingProgress} />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard label="Revenue (paid orders)" value={`$${orderStats.totalRevenue.toFixed(2)}`} href="/admin/orders" />

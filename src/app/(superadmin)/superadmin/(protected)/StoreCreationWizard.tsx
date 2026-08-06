@@ -6,6 +6,7 @@ import ButtonPrimary from "@/shared/Button/ButtonPrimary";
 import { createStore, type StoreFormInput } from "./actions";
 import { slugify } from "@/lib/utils/slugify";
 import { THEME_PRESETS, type ThemePresetKey } from "@/lib/themes/theme-presets";
+import { buildTenantUrl } from "@/lib/platform/tenant-url";
 import type { StoreStatus, StoreTemplate } from "@/types/store";
 
 const STEPS = ["Store Details", "Owner Account", "Review & Create"] as const;
@@ -19,7 +20,7 @@ const cardClass =
 /** Create-only, multi-step version of store provisioning - StoreForm.tsx keeps handling
  * edit mode unchanged. Reuses the same createStore() action, slugify() convention, and
  * error/loading/credential-reveal patterns already established there. */
-const StoreCreationWizard: React.FC = () => {
+const StoreCreationWizard: React.FC<{ platformBaseUrl: string }> = ({ platformBaseUrl }) => {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
@@ -162,7 +163,7 @@ const StoreCreationWizard: React.FC = () => {
               }}
               required
             />
-            {slug && <p className="text-xs text-neutral-500 mt-1">{slug}.yourdomain.com</p>}
+            {slug && <p className="text-xs text-neutral-500 mt-1">{buildTenantUrl(platformBaseUrl, slug)}</p>}
           </div>
           <div>
             <label className={labelClass}>Brand name (optional)</label>
@@ -251,7 +252,7 @@ const StoreCreationWizard: React.FC = () => {
             </div>
             <div>
               <span className="block text-neutral-500">Subdomain</span>
-              {slug ? `${slug}.yourdomain.com` : "—"}
+              {slug ? buildTenantUrl(platformBaseUrl, slug) : "—"}
             </div>
             <div>
               <span className="block text-neutral-500">Status</span>

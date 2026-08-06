@@ -1848,3 +1848,72 @@ no new `firestore.indexes.json` entry was needed here.
 - Consider per-page dynamic OG images (currently one shared image across
   all platform pages) if per-page social preview differentiation becomes
   a priority.
+
+## Store Launch Experience (First-Time Onboarding)
+
+A first-run onboarding wizard for new Store Admins, built entirely as a new,
+additive layer - no existing settings data model, business logic, or
+admin/tenant architecture was changed. A Store Admin previously landed on
+`/admin` right after login with no guidance; there is now a dedicated setup
+wizard plus a dashboard prompt pointing to it until the store is launched.
+
+### What it does
+
+- **Welcome screen** → **Business Setup Wizard** (Brand Information, Logo/
+  Favicon, Store Contact Information, Currency & Timezone, Shipping
+  Configuration, Payment Configuration, Social Links, SEO Basics) →
+  **Launch Checklist** with a computed **Store Health Status** panel and a
+  **Launch Store** action. A **Dashboard Welcome Card** links into the
+  wizard until launched, then disappears.
+- Every step **reuses an existing repository/action - none of the settings
+  logic is duplicated**: Brand/Contact/Currency/Social/SEO all call the
+  existing `updateGeneralSettings` (`(admin)/settings/actions.ts`); Shipping
+  calls the existing `updateShippingSettings`; Payment calls the existing
+  `updatePaymentSettings`; Logo/Favicon calls the existing `updateTheme`
+  (`(admin)/theme/actions.ts`) and reuses the existing `ImageUploader`
+  component + Cloudinary upload pipeline unchanged.
+- **Progress persistence & resume later**: a new tenant-scoped subcollection,
+  `stores/{id}/onboarding/state` (one doc), mirrors the exact access pattern
+  already used by `siteSettings` (`tenantCollection()` + `docData()` +
+  `stripUndefined()` + a `DEFAULT_*` fallback constant). It records
+  `completedSteps` and `currentStep`; reopening `/admin/onboarding` resumes
+  exactly where the admin left off, and any completed step can be revisited
+  from the step list.
+- **Launch Store** sets `onboarding.launchedAt` only - it does not touch
+  `Store.status` (already `"active"` from creation) or any tenant/business
+  state, since there is no "unlaunched" state to transition out of.
+- Steps are not sequentially gated - any completed step can be revisited,
+  and "Launch Store" is always clickable regardless of checklist
+  completion, matching common real-world SaaS onboarding UX.
+
+### Files changed
+
+New: `src/types/onboarding.ts`,
+`src/lib/firebase/repositories/onboarding.ts`,
+`src/app/(admin)/admin/(protected)/onboarding/page.tsx`,
+`.../onboarding/OnboardingWizard.tsx`, `.../onboarding/actions.ts`
+(`saveOnboardingStep`, `launchStore` - the only two new mutating
+functions), `.../onboarding/health.ts` (`computeStoreHealth`, a pure,
+storage-free completeness check), `.../onboarding/steps/*.tsx` (10 step
+components + a shared `WizardStepShell`), `src/components/admin/OnboardingWelcomeCard.tsx`.
+
+Modified (additive only): `src/app/(admin)/admin/(protected)/page.tsx` -
+one new fetch (`getOnboardingProgress()`) added to the existing
+`Promise.all`, and one new conditional card rendered above the existing
+stat grid. No other line in that file changed.
+
+Not touched: `Store` type/schema, tenant resolution, authentication,
+`middleware.ts`, Products/Orders/Finance/CMS business logic, the Super
+Admin provisioning flow, or any existing settings/theme repository or
+action (only called, never modified).
+
+### Verification
+
+1. `npx tsc --noEmit` - clean.
+2. `npm run build` - clean; `/admin/onboarding` generated alongside every
+   existing route with no new errors.
+3. Confirmed via diff that `(admin)/(protected)/page.tsx`'s only changes
+   are the one new fetch and one new card - the stat grid, low-stock panel,
+   revenue chart, and top-sellers list are byte-identical to before.
+4. Confirmed no existing settings/theme action or repository file was
+   modified - only imported and called from the new wizard steps.

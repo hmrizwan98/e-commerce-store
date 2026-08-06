@@ -9,6 +9,7 @@ import StoreStatusActions from "./StoreStatusActions";
 import ImpersonateButton from "./ImpersonateButton";
 import CloneStoreDialog from "./CloneStoreDialog";
 import { setPrimaryDomain } from "./actions";
+import { buildTenantUrl } from "@/lib/platform/tenant-url";
 import { STATUS_BADGE_CLASS } from "@/lib/superadmin/status-badge";
 import type { Store } from "@/types/store";
 import type { DeploymentMetadata } from "@/types/deployment";
@@ -50,7 +51,8 @@ const StoreDetailsTabs: React.FC<{
   store: Store;
   activity: StoreActivityLog[];
   deployment: DeploymentMetadata | null;
-}> = ({ store, activity, deployment }) => {
+  platformBaseUrl: string;
+}> = ({ store, activity, deployment, platformBaseUrl }) => {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("General");
   const [isPending, startTransition] = useTransition();
@@ -86,7 +88,7 @@ const StoreDetailsTabs: React.FC<{
         ))}
       </div>
 
-      {tab === "General" && <StoreForm mode="edit" store={store} />}
+      {tab === "General" && <StoreForm mode="edit" store={store} platformBaseUrl={platformBaseUrl} />}
 
       {tab === "Owner" && (
         <div className={cardClass}>
@@ -131,7 +133,7 @@ const StoreDetailsTabs: React.FC<{
           </p>
           <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
             <div className="py-2 text-sm flex items-center justify-between">
-              <span>{store.slug}.yourdomain.com</span>
+              <span>{store.websiteUrl ?? buildTenantUrl(platformBaseUrl, store.slug)}</span>
               <span className="text-xs text-neutral-500">Default subdomain</span>
             </div>
             {(store.domains ?? []).map((hostname) => {
@@ -188,7 +190,7 @@ const StoreDetailsTabs: React.FC<{
             </div>
             <div>
               <span className="block text-neutral-500">Production URL</span>
-              {deployment?.productionUrl || store.websiteUrl || "—"}
+              {deployment?.productionUrl || store.websiteUrl || buildTenantUrl(platformBaseUrl, store.slug)}
             </div>
             <div>
               <span className="block text-neutral-500">Preview URL</span>
@@ -232,7 +234,7 @@ const StoreDetailsTabs: React.FC<{
             <div className="flex flex-wrap gap-3">
               <ImpersonateButton storeId={store.id} />
             </div>
-            <CloneStoreDialog sourceStoreId={store.id} />
+            <CloneStoreDialog sourceStoreId={store.id} platformBaseUrl={platformBaseUrl} />
           </div>
 
           <div className={cardClass}>
