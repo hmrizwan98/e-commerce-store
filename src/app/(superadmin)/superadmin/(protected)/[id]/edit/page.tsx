@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getStoreById } from "@/lib/firebase/repositories/stores";
 import { getRecentActivity } from "@/lib/firebase/repositories/store-activity-logs";
 import { getDeploymentMetadataByStoreId } from "@/lib/firebase/repositories/deployment-metadata";
+import { getDeploymentLogs } from "@/lib/firebase/repositories/deployment-logs";
 import { getPlatformBaseUrl } from "@/lib/platform/base-url";
 import StoreDetailsTabs from "../../StoreDetailsTabs";
 
@@ -11,9 +12,10 @@ export const dynamic = "force-dynamic";
 export default async function EditStorePage({ params }: { params: { id: string } }) {
   const store = await getStoreById(params.id);
   if (!store) notFound();
-  const [activity, deployment] = await Promise.all([
-    getRecentActivity(store.id, 10),
+  const [activity, deployment, deploymentLogs] = await Promise.all([
+    getRecentActivity(store.id, 20),
     getDeploymentMetadataByStoreId(store.id),
+    getDeploymentLogs(store.id, 10),
   ]);
 
   return (
@@ -23,6 +25,7 @@ export default async function EditStorePage({ params }: { params: { id: string }
         store={store}
         activity={activity}
         deployment={deployment}
+        deploymentLogs={deploymentLogs}
         platformBaseUrl={getPlatformBaseUrl()}
       />
     </div>

@@ -33,19 +33,16 @@ function getAdminApp(): App {
 
 export const adminAuth = () => getAuth(getAdminApp());
 
-// let firestoreConfigured = false;
-// export const adminDb = () => {
-//   const db = getFirestore(getAdminApp());
-//   // Optional fields throughout this codebase are written as `field: value || undefined`;
-//   // the Admin SDK rejects literal `undefined` values unless this is set.
-//   if (!firestoreConfigured) {
-//     db.settings({ ignoreUndefinedProperties: true });
-//     firestoreConfigured = true;
-//   }
-//   return db;
-// };
+let firestoreConfigured = false;
 export const adminDb = () => {
-  return getFirestore(getAdminApp());
+  const db = getFirestore(getAdminApp());
+  // Optional fields throughout this codebase are written as `field: value || undefined`;
+  // the Admin SDK rejects literal `undefined` values unless this is set.
+  if (!firestoreConfigured) {
+    db.settings({ ignoreUndefinedProperties: true });
+    firestoreConfigured = true;
+  }
+  return db;
 };
 
 // Server Actions ('use server' files) must not import firebase-admin

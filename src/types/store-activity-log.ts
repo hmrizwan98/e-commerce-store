@@ -10,7 +10,11 @@ export type StoreActivityAction =
   | "password_reset"
   | "welcome_email_resent"
   | "cloned"
-  | "impersonated";
+  | "impersonated"
+  | "domain_removed"
+  | "domain_reverified"
+  | "primary_domain_changed"
+  | "deployment_status_changed";
 
 export interface StoreActivityLog {
   id: string;

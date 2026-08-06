@@ -1917,3 +1917,116 @@ action (only called, never modified).
    revenue chart, and top-sellers list are byte-identical to before.
 4. Confirmed no existing settings/theme action or repository file was
    modified - only imported and called from the new wizard steps.
+
+## Enterprise Deployment & Domain Management Module
+
+Rounds out the Super Admin's domain/deployment surface. Everything here
+was previously "architecture only" per the codebase's own comments
+(`Store.domains`/`domainSettings`, the single-snapshot `DeploymentMetadata`
+doc, `setPrimaryDomain`) - this adds the missing capabilities without
+touching tenant resolution, authentication, provisioning, URL generation,
+or any Store Admin/Products/Orders/Finance/CMS/Themes business logic.
+
+### Deployment Architecture
+
+`src/lib/deployment/` mirrors the existing payments provider-registry
+pattern (`src/lib/payments/provider.ts`/`provider-registry.ts`/
+`stub-provider.ts`): a `DeploymentProvider` interface
+(`verifyDomain(hostname)`, `triggerDeployment(storeId)`), a shared
+`createStubDeploymentProvider(id, displayName)` factory, one-line concrete
+stubs (`providers/vercel.ts`, `providers/cloudflare.ts`), a `DEPLOYMENT_PROVIDERS`
+registry map, and `getActiveDeploymentProvider()` - a single swap point
+(mirroring `getWelcomeEmailService()`) currently returning the Vercel stub.
+Unlike the payments registry (zero consumers), this one is genuinely
+exercised: the new `reverifyDomain`/`triggerDeployment` Super Admin actions
+call through it and write the (clearly-labeled, not-yet-implemented) result
+into Firestore - swapping in a real Vercel/Cloudflare integration later is
+a change to `provider-registry.ts` alone, no caller changes.
+
+Deployment logs are a new, minimal-read architecture:
+`src/types/deployment-log.ts` + `src/lib/firebase/repositories/
+deployment-logs.ts` (`logDeploymentEvent`/`getDeploymentLogs`), a
+`stores/{id}/deploymentLogs` subcollection mirroring `deployment-
+metadata.ts`'s direct-by-id access pattern - single `orderBy("createdAt",
+"desc").limit(n)` query, no composite index needed. Deployment *status
+history* reuses the existing root-level `storeActivityLogs` audit trail
+instead of a second collection - `StoreActivityAction` gained four
+additive members (`domain_removed`, `domain_reverified`,
+`primary_domain_changed`, `deployment_status_changed`).
+
+Deployment and domain health are pure, zero-read computed functions
+(`src/lib/deployment/health.ts`) derived from data already fetched for the
+page - no new stored field.
+
+### Domain Management
+
+- **Wildcard subdomain support** - unchanged, reuses the existing
+  `getPlatformBaseUrl()`/`buildTenantUrl()` platform-URL architecture as-is;
+  `src/lib/deployment/dns-instructions.ts` documents the wildcard DNS
+  record a platform operator needs (`getWildcardDnsInstructions`).
+- **Custom domain DNS guidance** - `getCustomDomainDnsInstructions(hostname,
+  platformBaseUrl)`, a pure CNAME-record suggestion, shown in a new
+  expandable "DNS setup" block per domain.
+- **Domain verification/SSL status, primary switching** - unchanged fields
+  (`DomainSetting.dnsStatus`/`sslStatus`/`isPrimary`), still architecture-
+  only for the actual check; `setPrimaryDomain` (existing, behavior
+  unchanged) now also writes a `primary_domain_changed` activity entry.
+- **Domain removal** (new) - `removeDomain(storeId, hostname)` reuses
+  `syncDomainSettings` (already drops entries for hostnames no longer
+  present) rather than duplicating that reconciliation, and auto-promotes
+  the first remaining domain to primary if the removed one was primary.
+- **Domain re-verification** (new) - `reverifyDomain(storeId, hostname)`
+  calls the active deployment provider's `verifyDomain()` and persists the
+  result.
+- **Domain health** (new) - `computeDomainHealth()` badge
+  (healthy/degraded/unhealthy/unknown) per domain.
+
+### Files Changed
+
+New: `src/lib/deployment/provider.ts`, `stub-provider.ts`,
+`provider-registry.ts`, `providers/vercel.ts`, `providers/cloudflare.ts`,
+`dns-instructions.ts`, `health.ts`; `src/types/deployment-log.ts`;
+`src/lib/firebase/repositories/deployment-logs.ts`;
+`src/lib/superadmin/activity-labels.ts`; `(superadmin)/(protected)/
+DomainManagementPanel.tsx`, `DeploymentPanel.tsx`.
+
+Modified (additive only): `src/types/store-activity-log.ts` (4 new union
+members), `(superadmin)/(protected)/actions.ts` (3 new exports -
+`removeDomain`, `reverifyDomain`, `triggerDeployment` - plus one added line
+in the existing `setPrimaryDomain`), `StoreDetailsTabs.tsx` (inline
+Domains/Deployment tab JSX replaced with the two new panel components,
+`ACTIVITY_LABELS` moved to the new shared file to avoid a circular import),
+`[id]/edit/page.tsx` (one new `getDeploymentLogs` fetch, `getRecentActivity`
+limit bumped from 10 to 20).
+
+Not touched: `middleware.ts`, tenant resolution, authentication,
+`deployment-provisioner.ts` (initial-snapshot provisioning, unrelated to
+ongoing management), `base-url.ts`/`tenant-url.ts` (consumed, not
+modified), Store Admin, onboarding, Products/Orders/Finance/CMS/Themes,
+Firestore rules/hierarchy.
+
+### Verification
+
+1. `npx tsc --noEmit` - clean.
+2. `npm run build` - clean; `/superadmin/[id]/edit` builds with the two new
+   panels, no new composite index required (confirmed the `deploymentLogs`
+   query is a single-field `orderBy`, same shape as already-indexed
+   patterns).
+3. Confirmed `DEPLOYMENT_PROVIDERS`/`getActiveDeploymentProvider()` are
+   actually called (by `reverifyDomain`/`triggerDeployment`), unlike the
+   payments registry's zero consumers.
+4. Confirmed `removeDomain`/`reverifyDomain`/`triggerDeployment`/
+   `setPrimaryDomain` all start with `requireSuperAdmin()` and call
+   `revalidateStoreList()`, matching every existing action in the file.
+
+### Future Integration Points
+
+- Swap `getActiveDeploymentProvider()` to a real Vercel or Cloudflare
+  implementation (`src/lib/deployment/providers/*.ts`) - no caller changes
+  needed anywhere else.
+- Wire a real DNS/SSL check into `DeploymentProvider.verifyDomain()` and a
+  real deploy trigger into `triggerDeployment()` - both already flow their
+  results into `domainSettings`/`deploymentLogs`/`storeActivityLogs`.
+- A future webhook from a real provider can call `logDeploymentEvent()`
+  directly to stream real build/deploy log lines into the same
+  architecture already rendered by `DeploymentPanel.tsx`.

@@ -17,6 +17,8 @@ import { provisionDeploymentMetadata } from "@/lib/firebase/services/deployment-
 import { syncDomainSettings } from "@/lib/superadmin/domain-settings";
 import { getPlatformBaseUrl } from "@/lib/platform/base-url";
 import { buildTenantUrl } from "@/lib/platform/tenant-url";
+import { getActiveDeploymentProvider } from "@/lib/deployment/provider-registry";
+import { logDeploymentEvent } from "@/lib/firebase/repositories/deployment-logs";
 import type { ThemePresetKey } from "@/lib/themes/theme-presets";
 import type { StoreStatus, StoreTemplate } from "@/types/store";
 
@@ -443,7 +445,7 @@ export async function updateStore(id: string, input: StoreFormInput): Promise<vo
  * itself (and tenant resolution) is unaffected, this only marks intent for a future
  * real DNS/redirect setup. */
 export async function setPrimaryDomain(storeId: string, hostname: string): Promise<void> {
-  await requireSuperAdmin();
+  const decoded = await requireSuperAdmin();
   const store = await getStoreById(storeId);
   if (!store) throw new Error("Store not found.");
   if (!store.domainSettings?.[hostname]) throw new Error(`"${hostname}" is not a domain on this store.`);
@@ -457,6 +459,79 @@ export async function setPrimaryDomain(storeId: string, hostname: string): Promi
     .collection(COLLECTION)
     .doc(storeId)
     .update({ domainSettings, updatedAt: FieldValue.serverTimestamp() });
+  await logStoreActivity(storeId, "primary_domain_changed", decoded.uid, { hostname });
+  revalidateStoreList();
+}
+
+/** Removes a single custom domain from a store - previously the only way to remove a
+ * domain was replacing the whole domainsText textarea on the General tab. Reuses
+ * syncDomainSettings() (already drops entries for hostnames no longer present) rather
+ * than duplicating that reconciliation logic. Auto-promotes the first remaining
+ * domain to primary if the removed one was primary, so a store isn't left with no
+ * primary custom domain after a routine removal. */
+export async function removeDomain(storeId: string, hostname: string): Promise<void> {
+  const decoded = await requireSuperAdmin();
+  const store = await getStoreById(storeId);
+  if (!store) throw new Error("Store not found.");
+  if (!store.domains?.includes(hostname)) throw new Error(`"${hostname}" is not a domain on this store.`);
+
+  const wasPrimary = store.domainSettings?.[hostname]?.isPrimary ?? false;
+  const domains = store.domains.filter((d) => d !== hostname);
+  const domainSettings = syncDomainSettings(store.domainSettings, domains);
+  if (wasPrimary && domains.length > 0) {
+    const [firstRemaining] = domains;
+    domainSettings[firstRemaining] = { ...domainSettings[firstRemaining], isPrimary: true };
+  }
+
+  await adminDb()
+    .collection(COLLECTION)
+    .doc(storeId)
+    .update({ domains, domainSettings, updatedAt: FieldValue.serverTimestamp() });
+  await logStoreActivity(storeId, "domain_removed", decoded.uid, { hostname });
+  revalidateStoreList();
+}
+
+/** Re-runs domain verification through the currently-active deployment provider
+ * (architecture-only stub today - see src/lib/deployment/provider-registry.ts). Writes
+ * the result back into domainSettings and records it in both the deployment-logs
+ * architecture and the store's activity log, so this is a real, exercised code path
+ * ready to carry a genuine DNS/SSL check later without any caller changes. */
+export async function reverifyDomain(storeId: string, hostname: string): Promise<void> {
+  const decoded = await requireSuperAdmin();
+  const store = await getStoreById(storeId);
+  if (!store) throw new Error("Store not found.");
+  const setting = store.domainSettings?.[hostname];
+  if (!setting) throw new Error(`"${hostname}" is not a domain on this store.`);
+
+  const provider = getActiveDeploymentProvider();
+  const result = await provider.verifyDomain(hostname);
+  const domainSettings = {
+    ...store.domainSettings,
+    [hostname]: { ...setting, dnsStatus: result.dnsStatus, sslStatus: result.sslStatus },
+  };
+
+  await adminDb()
+    .collection(COLLECTION)
+    .doc(storeId)
+    .update({ domainSettings, updatedAt: FieldValue.serverTimestamp() });
+  await logDeploymentEvent(storeId, result.verified ? "info" : "warning", result.message, provider.id);
+  await logStoreActivity(storeId, "domain_reverified", decoded.uid, { hostname });
+  revalidateStoreList();
+}
+
+/** Triggers a deployment through the currently-active deployment provider
+ * (architecture-only stub today). Rounds out the "ready for future Vercel
+ * integration" requirement with an actual exercised code path rather than
+ * orphaned scaffolding. */
+export async function triggerDeployment(storeId: string): Promise<void> {
+  const decoded = await requireSuperAdmin();
+  const store = await getStoreById(storeId);
+  if (!store) throw new Error("Store not found.");
+
+  const provider = getActiveDeploymentProvider();
+  const result = await provider.triggerDeployment(storeId);
+  await logDeploymentEvent(storeId, result.success ? "info" : "warning", result.message, provider.id);
+  await logStoreActivity(storeId, "deployment_status_changed", decoded.uid, { success: String(result.success) });
   revalidateStoreList();
 }
 
