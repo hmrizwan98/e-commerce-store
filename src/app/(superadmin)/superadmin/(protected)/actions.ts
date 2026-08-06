@@ -169,6 +169,7 @@ async function provisionStoreShell(input: ProvisionShellInput): Promise<Provisio
     password: adminTempPassword,
     displayName: input.ownerName || input.name,
   });
+  console.log("[TRACE] AUTH_CREATED", { uid: userRecord.uid, email: input.email }); // TEMP-TRACE
 
   const ref = adminDb().collection(COLLECTION).doc();
   const storeId = ref.id;
@@ -194,7 +195,15 @@ async function provisionStoreShell(input: ProvisionShellInput): Promise<Provisio
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
     });
+    console.log("[TRACE] STORE_CREATED", { storeId }); // TEMP-TRACE
   } catch (err) {
+    console.error("[TRACE] FAILED at STORE_CREATED", { // TEMP-TRACE
+      file: "actions.ts", // TEMP-TRACE
+      fn: "provisionStoreShell", // TEMP-TRACE
+      storeId, // TEMP-TRACE
+      error: err, // TEMP-TRACE
+      stack: err instanceof Error ? err.stack : undefined, // TEMP-TRACE
+    }); // TEMP-TRACE
     await cleanupPartialStore(ref, userRecord.uid);
     throw err;
   }
@@ -218,6 +227,7 @@ async function provisionStoreShell(input: ProvisionShellInput): Promise<Provisio
  * pages - see theme-installer.ts), and creates the store's first admin user.
  */
 export async function createStore(input: StoreFormInput): Promise<CreateStoreResult> {
+  console.log("[TRACE] START", { name: input.name, slug: input.slug, email: input.email }); // TEMP-TRACE
   const decoded = await requireSuperAdmin();
   await enforceRateLimit(decoded.uid);
   if (!input.email) throw new Error("Email is required to create the store's admin user.");
@@ -246,6 +256,7 @@ export async function createStore(input: StoreFormInput): Promise<CreateStoreRes
     },
   });
 
+  let stage = "SITE_SETTINGS_CREATED"; // TEMP-TRACE
   try {
     const storeName = input.brandName?.trim() || input.name;
 
@@ -262,35 +273,74 @@ export async function createStore(input: StoreFormInput): Promise<CreateStoreRes
         taxRatePercent: 0,
         taxInclusive: false,
       });
+    console.log("[TRACE] SITE_SETTINGS_CREATED", { storeId }); // TEMP-TRACE
 
+    stage = "THEME_INSTALLED"; // TEMP-TRACE
     await installDefaultTheme(storeDocRef, { template: input.template ?? "empty", themeKey });
+    console.log("[TRACE] THEME_INSTALLED", { storeId }); // TEMP-TRACE
+
+    stage = "CLOUDINARY_PROVISIONED"; // TEMP-TRACE
     await provisionCloudinaryMetadata(storeDocRef, slug);
+    console.log("[TRACE] CLOUDINARY_PROVISIONED", { storeId }); // TEMP-TRACE
+
+    stage = "DEPLOYMENT_CREATED"; // TEMP-TRACE
     await provisionDeploymentMetadata(storeDocRef, {
       websiteUrl: buildTenantUrl(platformBaseUrl, slug),
       slug,
       rootDomain: new URL(platformBaseUrl).host,
     });
+    console.log("[TRACE] DEPLOYMENT_CREATED", { storeId }); // TEMP-TRACE
 
+    stage = "OWNER_ASSIGNED"; // TEMP-TRACE
     await adminAuth().setCustomUserClaims(userRecord.uid, { role: "admin", tenantId: storeId });
+    console.log("[TRACE] OWNER_ASSIGNED", { storeId }); // TEMP-TRACE
   } catch (err) {
+    console.error(`[TRACE] FAILED at ${stage}`, { // TEMP-TRACE
+      file: "src/app/(superadmin)/superadmin/(protected)/actions.ts", // TEMP-TRACE
+      fn: "createStore", // TEMP-TRACE
+      storeId, // TEMP-TRACE
+      error: err, // TEMP-TRACE
+      message: err instanceof Error ? err.message : String(err), // TEMP-TRACE
+      stack: err instanceof Error ? err.stack : undefined, // TEMP-TRACE
+    }); // TEMP-TRACE
     await cleanupPartialStore(ref, userRecord.uid);
     throw err;
   }
 
-  revalidateStoreList();
-  await logStoreActivity(storeId, "created", decoded.uid);
+  // No ONBOARDING_CREATED step exists in this pipeline today - the Store
+  // Launch Experience wizard runs lazily on the store owner's first login,
+  // nothing is written for it at provisioning time. Logged here for
+  // visibility rather than fabricating a stage that doesn't exist. // TEMP-TRACE
+  console.log("[TRACE] ONBOARDING_CREATED (not applicable - onboarding runs on first login)", { storeId }); // TEMP-TRACE
 
-  // Best-effort only - never blocks or rolls back store creation.
-  await getWelcomeEmailService()
-    .sendWelcomeEmail({
-      storeName: input.brandName?.trim() || input.name,
-      storeUrl: buildTenantUrl(platformBaseUrl, slug),
-      adminUrl: buildTenantUrl(platformBaseUrl, slug, "/admin"),
-      email: input.email,
-      temporaryPassword: adminTempPassword,
-    })
-    .catch((err) => console.error("[welcome-email] failed to send", err));
+  try { // TEMP-TRACE
+    revalidateStoreList();
+    await logStoreActivity(storeId, "created", decoded.uid);
+    console.log("[TRACE] ACTIVITY_LOGGED", { storeId }); // TEMP-TRACE
 
+    // Best-effort only - never blocks or rolls back store creation.
+    await getWelcomeEmailService()
+      .sendWelcomeEmail({
+        storeName: input.brandName?.trim() || input.name,
+        storeUrl: buildTenantUrl(platformBaseUrl, slug),
+        adminUrl: buildTenantUrl(platformBaseUrl, slug, "/admin"),
+        email: input.email,
+        temporaryPassword: adminTempPassword,
+      })
+      .catch((err) => console.error("[welcome-email] failed to send", err));
+  } catch (err) { // TEMP-TRACE
+    console.error("[TRACE] FAILED after OWNER_ASSIGNED (post-provisioning step - store already exists)", { // TEMP-TRACE
+      file: "src/app/(superadmin)/superadmin/(protected)/actions.ts", // TEMP-TRACE
+      fn: "createStore", // TEMP-TRACE
+      storeId, // TEMP-TRACE
+      error: err, // TEMP-TRACE
+      message: err instanceof Error ? err.message : String(err), // TEMP-TRACE
+      stack: err instanceof Error ? err.stack : undefined, // TEMP-TRACE
+    }); // TEMP-TRACE
+    throw err; // TEMP-TRACE
+  } // TEMP-TRACE
+
+  console.log("[TRACE] SUCCESS", { storeId }); // TEMP-TRACE
   return { storeId, adminEmail: input.email, adminTempPassword };
 }
 
