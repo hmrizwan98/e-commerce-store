@@ -46,4 +46,12 @@ export interface Store {
   expiryDate?: number;
   /** Set when status is transitioned to "archived" (soft delete - subcollections/Cloudinary assets are kept). */
   archivedAt?: number;
+  /** Tracks the non-essential half of provisioning (theme/menu install, deployment
+   * metadata, welcome email), which runs in the background after createStore()
+   * already returned - the store is fully usable (auth + core doc + owner claim)
+   * before this settles. "failed" means the background step errored; see
+   * provisioningError and the store's deployment logs for detail - never retried
+   * automatically. */
+  provisioningStatus?: "provisioning" | "complete" | "failed";
+  provisioningError?: { code: string; step: string; message: string; traceId: string };
 }

@@ -58,7 +58,8 @@ const StoreForm: React.FC<{ mode: "create" | "edit"; store?: Store; platformBase
     try {
       if (mode === "create") {
         const result = await createStore(payload);
-        setCredentials(result);
+        if (result.success) setCredentials(result);
+        else setError(`${result.error.message} (${result.error.code}, trace ${result.error.traceId})`);
       } else if (store) {
         await updateStore(store.id, payload);
         router.refresh();

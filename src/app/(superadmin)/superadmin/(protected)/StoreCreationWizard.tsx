@@ -93,7 +93,8 @@ const StoreCreationWizard: React.FC<{ platformBaseUrl: string }> = ({ platformBa
     setError(null);
     try {
       const result = await createStore(payload);
-      setCredentials(result);
+      if (result.success) setCredentials(result);
+      else setError(`${result.error.message} (${result.error.code}, trace ${result.error.traceId})`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {

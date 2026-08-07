@@ -22,6 +22,7 @@
     "@types/node": "20.9.2",
     "@types/react": "18.2.37",
     "@types/react-dom": "18.2.15",
+    "@vercel/functions": "^3.8.0",
     "browser-image-compression": "^2.0.2",
     "cloudinary": "^2.10.0",
     "eslint": "8.54.0",

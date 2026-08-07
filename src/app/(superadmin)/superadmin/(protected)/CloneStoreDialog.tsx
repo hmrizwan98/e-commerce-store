@@ -74,7 +74,8 @@ const CloneStoreDialog: React.FC<{ sourceStoreId: string; platformBaseUrl: strin
         ownerName: ownerName.trim() || undefined,
         email: email.trim(),
       });
-      setCredentials(result);
+      if (result.success) setCredentials(result);
+      else setError(result.error.message);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to clone store.");
     } finally {

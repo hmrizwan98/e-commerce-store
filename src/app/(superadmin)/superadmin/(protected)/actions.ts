@@ -2,6 +2,7 @@
 
 import { randomBytes } from "node:crypto";
 import { revalidatePath } from "next/cache";
+import { waitUntil } from "@vercel/functions";
 import { FieldValue } from "firebase-admin/firestore";
 import { adminDb, adminAuth } from "@/lib/firebase/admin";
 import { requireSuperAdmin } from "@/lib/firebase/require-super-admin";
@@ -19,6 +20,14 @@ import { getPlatformBaseUrl } from "@/lib/platform/base-url";
 import { buildTenantUrl } from "@/lib/platform/tenant-url";
 import { getActiveDeploymentProvider } from "@/lib/deployment/provider-registry";
 import { logDeploymentEvent } from "@/lib/firebase/repositories/deployment-logs";
+import {
+  generateTraceId,
+  logActionError,
+  toActionError,
+  type ActionError,
+  type ActionErrorCode,
+} from "@/lib/errors/action-error";
+import { createStageTimer } from "@/lib/errors/stage-timer";
 import type { ThemePresetKey } from "@/lib/themes/theme-presets";
 import type { StoreStatus, StoreTemplate } from "@/types/store";
 
@@ -74,11 +83,9 @@ export interface StoreFormInput {
   themeKey?: ThemePresetKey;
 }
 
-export interface CreateStoreResult {
-  storeId: string;
-  adminEmail: string;
-  adminTempPassword: string;
-}
+export type CreateStoreResult =
+  | { success: true; storeId: string; adminEmail: string; adminTempPassword: string }
+  | { success: false; error: ActionError };
 
 export interface ResetAdminPasswordResult {
   adminEmail: string;
@@ -156,7 +163,10 @@ interface ProvisionShellResult {
  * are responsible for seeding subcollections afterward inside their own try/catch that calls
  * cleanupPartialStore() on failure - this function only rolls back its own Store-doc write.
  */
-async function provisionStoreShell(input: ProvisionShellInput): Promise<ProvisionShellResult> {
+async function provisionStoreShell(
+  input: ProvisionShellInput,
+  stage: (name: string, extra?: Record<string, unknown>) => void
+): Promise<ProvisionShellResult> {
   const slug = input.slug.trim().toLowerCase();
   if (!slug) throw new Error("Slug is required.");
   if (await isSlugTaken(slug)) throw new Error(`Slug "${slug}" is already in use.`);
@@ -169,7 +179,7 @@ async function provisionStoreShell(input: ProvisionShellInput): Promise<Provisio
     password: adminTempPassword,
     displayName: input.ownerName || input.name,
   });
-  console.log("[TRACE] AUTH_CREATED", { uid: userRecord.uid, email: input.email }); // TEMP-TRACE
+  stage("AUTH_CREATED", { uid: userRecord.uid });
 
   const ref = adminDb().collection(COLLECTION).doc();
   const storeId = ref.id;
@@ -192,18 +202,12 @@ async function provisionStoreShell(input: ProvisionShellInput): Promise<Provisio
       cloudinaryFolder: slug,
       themeId: input.themeId ?? DEFAULT_THEME.id,
       status: input.status ?? ("active" satisfies StoreStatus),
+      provisioningStatus: "provisioning",
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
     });
-    console.log("[TRACE] STORE_CREATED", { storeId }); // TEMP-TRACE
+    stage("STORE_CREATED", { storeId });
   } catch (err) {
-    console.error("[TRACE] FAILED at STORE_CREATED", { // TEMP-TRACE
-      file: "actions.ts", // TEMP-TRACE
-      fn: "provisionStoreShell", // TEMP-TRACE
-      storeId, // TEMP-TRACE
-      error: err, // TEMP-TRACE
-      stack: err instanceof Error ? err.stack : undefined, // TEMP-TRACE
-    }); // TEMP-TRACE
     await cleanupPartialStore(ref, userRecord.uid);
     throw err;
   }
@@ -219,49 +223,101 @@ async function provisionStoreShell(input: ProvisionShellInput): Promise<Provisio
   };
 }
 
+/** Classifies provisionStoreShell()'s known thrown messages into a stable
+ * error code - the message text itself is unchanged/reused as-is (same
+ * validation, same wording), just no longer relies on Next.js's production
+ * error redaction to reach the client. */
+function classifyShellError(message: string): ActionErrorCode {
+  if (message.includes("Slug") && message.includes("already in use")) return "SLUG_TAKEN";
+  if (message.includes("already in use by another account")) return "EMAIL_TAKEN";
+  if (message.includes("Domain") && message.includes("already in use")) return "DOMAIN_TAKEN";
+  return "UNKNOWN";
+}
+
 /**
- * Provisions a new tenant: writes the Store doc, seeds a store-name-aware
- * general-settings doc (site-settings.ts's DEFAULT_GENERAL_SETTINGS otherwise
- * falls back to this template's own placeholder brand name), installs the chosen
- * default theme preset (real Theme doc + homepage/nav/banners/testimonials/FAQs/CMS
- * pages - see theme-installer.ts), and creates the store's first admin user.
+ * Provisions a new tenant, split into a fast synchronous critical path and a
+ * slow background phase. Synchronous: Auth user, the Store doc, a
+ * store-name-aware general-settings doc (site-settings.ts's
+ * DEFAULT_GENERAL_SETTINGS otherwise falls back to this template's own
+ * placeholder brand name), and the owner's admin/tenantId claim - everything
+ * required for the store to exist and its owner to log in. Background (via
+ * waitUntil): the chosen default theme preset (real Theme doc + homepage/
+ * nav/banners/testimonials/FAQs/CMS pages - see theme-installer.ts),
+ * Cloudinary/deployment metadata, the activity log entry, and the welcome
+ * email - all non-essential for the store to be usable, and slow enough
+ * (Auth user creation alone was observed taking ~9s in production) that
+ * doing them synchronously risked the whole request exceeding the
+ * platform's function timeout.
  */
 export async function createStore(input: StoreFormInput): Promise<CreateStoreResult> {
-  console.log("[TRACE] START", { name: input.name, slug: input.slug, email: input.email }); // TEMP-TRACE
-  const decoded = await requireSuperAdmin();
-  await enforceRateLimit(decoded.uid);
-  if (!input.email) throw new Error("Email is required to create the store's admin user.");
+  const traceId = generateTraceId();
+  const stage = createStageTimer(traceId);
+  stage("START", { name: input.name, slug: input.slug });
+
+  let decoded: Awaited<ReturnType<typeof requireSuperAdmin>>;
+  try {
+    decoded = await requireSuperAdmin();
+    await enforceRateLimit(decoded.uid);
+  } catch (err) {
+    logActionError(traceId, "AUTH_CHECK", err);
+    const message = err instanceof Error ? err.message : "Not authorized to create a store.";
+    const code: ActionErrorCode = message.toLowerCase().includes("too many") ? "RATE_LIMITED" : "UNAUTHORIZED";
+    return { success: false, error: toActionError(traceId, "AUTH_CHECK", code, message) };
+  }
+
+  if (!input.email) {
+    return {
+      success: false,
+      error: toActionError(traceId, "VALIDATION", "VALIDATION_FAILED", "Email is required to create the store's admin user."),
+    };
+  }
   const themeKey: ThemePresetKey = input.themeKey ?? "universal-premium";
   const platformBaseUrl = getPlatformBaseUrl();
 
-  const { storeId, ref, storeDocRef, userRecord, adminTempPassword, slug } = await provisionStoreShell({
-    name: input.name,
-    brandName: input.brandName,
-    slug: input.slug,
-    email: input.email,
-    ownerName: input.ownerName,
-    domains: input.domains,
-    status: input.status,
-    themeId: themeKey,
-    extra: {
-      phone: input.phone,
-      country: input.country,
-      currency: input.currency,
-      timezone: input.timezone,
-      language: input.language,
-      storageLimit: input.storageLimit,
-      firebaseProject: input.firebaseProject,
-      notes: input.notes,
-      expiryDate: input.expiryDate,
-    },
-  });
+  let shell: ProvisionShellResult;
+  try {
+    shell = await provisionStoreShell(
+      {
+        name: input.name,
+        brandName: input.brandName,
+        slug: input.slug,
+        email: input.email,
+        ownerName: input.ownerName,
+        domains: input.domains,
+        status: input.status,
+        themeId: themeKey,
+        extra: {
+          phone: input.phone,
+          country: input.country,
+          currency: input.currency,
+          timezone: input.timezone,
+          language: input.language,
+          storageLimit: input.storageLimit,
+          firebaseProject: input.firebaseProject,
+          notes: input.notes,
+          expiryDate: input.expiryDate,
+        },
+      },
+      stage
+    );
+  } catch (err) {
+    logActionError(traceId, "PROVISION_SHELL", err);
+    const message = err instanceof Error ? err.message : "Could not create the store.";
+    return { success: false, error: toActionError(traceId, "PROVISION_SHELL", classifyShellError(message), message) };
+  }
+  const { storeId, ref, storeDocRef, userRecord, adminTempPassword, slug } = shell;
 
-  let stage = "SITE_SETTINGS_CREATED"; // TEMP-TRACE
+  // --- Synchronous critical path ends here: only what's required for the
+  // store to exist and its owner to be able to log in. Everything below
+  // (theme/menu install, Cloudinary/deployment metadata, activity log,
+  // welcome email) is slow (creating the Auth user alone was observed
+  // taking ~9s in production) and non-essential for that - it runs via
+  // waitUntil() (@vercel/functions) so the HTTP response returns as soon as
+  // the store is usable, instead of the whole request racing the platform's
+  // function timeout. Does not raise that timeout - the background work
+  // still shares the same invocation's remaining time budget.
   try {
     const storeName = input.brandName?.trim() || input.name;
-
-    // Seed a starter general-settings doc so the storefront shows this store's
-    // actual name/email instead of the template's own default placeholder.
     await storeDocRef
       .collection("siteSettings")
       .doc("general")
@@ -273,75 +329,81 @@ export async function createStore(input: StoreFormInput): Promise<CreateStoreRes
         taxRatePercent: 0,
         taxInclusive: false,
       });
-    console.log("[TRACE] SITE_SETTINGS_CREATED", { storeId }); // TEMP-TRACE
+    stage("SITE_SETTINGS_CREATED", { storeId });
 
-    stage = "THEME_INSTALLED"; // TEMP-TRACE
-    await installDefaultTheme(storeDocRef, { template: input.template ?? "empty", themeKey });
-    console.log("[TRACE] THEME_INSTALLED", { storeId }); // TEMP-TRACE
-
-    stage = "CLOUDINARY_PROVISIONED"; // TEMP-TRACE
-    await provisionCloudinaryMetadata(storeDocRef, slug);
-    console.log("[TRACE] CLOUDINARY_PROVISIONED", { storeId }); // TEMP-TRACE
-
-    stage = "DEPLOYMENT_CREATED"; // TEMP-TRACE
-    await provisionDeploymentMetadata(storeDocRef, {
-      websiteUrl: buildTenantUrl(platformBaseUrl, slug),
-      slug,
-      rootDomain: new URL(platformBaseUrl).host,
-    });
-    console.log("[TRACE] DEPLOYMENT_CREATED", { storeId }); // TEMP-TRACE
-
-    stage = "OWNER_ASSIGNED"; // TEMP-TRACE
     await adminAuth().setCustomUserClaims(userRecord.uid, { role: "admin", tenantId: storeId });
-    console.log("[TRACE] OWNER_ASSIGNED", { storeId }); // TEMP-TRACE
+    stage("OWNER_ASSIGNED", { storeId });
   } catch (err) {
-    console.error(`[TRACE] FAILED at ${stage}`, { // TEMP-TRACE
-      file: "src/app/(superadmin)/superadmin/(protected)/actions.ts", // TEMP-TRACE
-      fn: "createStore", // TEMP-TRACE
-      storeId, // TEMP-TRACE
-      error: err, // TEMP-TRACE
-      message: err instanceof Error ? err.message : String(err), // TEMP-TRACE
-      stack: err instanceof Error ? err.stack : undefined, // TEMP-TRACE
-    }); // TEMP-TRACE
+    logActionError(traceId, "OWNER_ASSIGNED", err);
     await cleanupPartialStore(ref, userRecord.uid);
-    throw err;
+    return {
+      success: false,
+      error: toActionError(
+        traceId,
+        "OWNER_ASSIGNED",
+        "PROVISIONING_FAILED",
+        "Could not finish setting up the store owner account. Please try again."
+      ),
+    };
   }
 
-  // No ONBOARDING_CREATED step exists in this pipeline today - the Store
-  // Launch Experience wizard runs lazily on the store owner's first login,
-  // nothing is written for it at provisioning time. Logged here for
-  // visibility rather than fabricating a stage that doesn't exist. // TEMP-TRACE
-  console.log("[TRACE] ONBOARDING_CREATED (not applicable - onboarding runs on first login)", { storeId }); // TEMP-TRACE
+  revalidateStoreList();
 
-  try { // TEMP-TRACE
-    revalidateStoreList();
-    await logStoreActivity(storeId, "created", decoded.uid);
-    console.log("[TRACE] ACTIVITY_LOGGED", { storeId }); // TEMP-TRACE
+  // --- Background provisioning (runs after the response is sent).
+  // Not retried on failure (by design) - on error this records
+  // provisioningStatus/provisioningError on the store doc and a deployment
+  // log entry instead, so the failure is visible rather than silent, without
+  // blocking or re-attempting the request that already succeeded.
+  waitUntil(
+    (async () => {
+    try {
+      await installDefaultTheme(storeDocRef, { template: input.template ?? "empty", themeKey });
+      stage("THEME_INSTALL_FINISHED", { storeId });
 
-    // Best-effort only - never blocks or rolls back store creation.
-    await getWelcomeEmailService()
-      .sendWelcomeEmail({
-        storeName: input.brandName?.trim() || input.name,
-        storeUrl: buildTenantUrl(platformBaseUrl, slug),
-        adminUrl: buildTenantUrl(platformBaseUrl, slug, "/admin"),
-        email: input.email,
-        temporaryPassword: adminTempPassword,
-      })
-      .catch((err) => console.error("[welcome-email] failed to send", err));
-  } catch (err) { // TEMP-TRACE
-    console.error("[TRACE] FAILED after OWNER_ASSIGNED (post-provisioning step - store already exists)", { // TEMP-TRACE
-      file: "src/app/(superadmin)/superadmin/(protected)/actions.ts", // TEMP-TRACE
-      fn: "createStore", // TEMP-TRACE
-      storeId, // TEMP-TRACE
-      error: err, // TEMP-TRACE
-      message: err instanceof Error ? err.message : String(err), // TEMP-TRACE
-      stack: err instanceof Error ? err.stack : undefined, // TEMP-TRACE
-    }); // TEMP-TRACE
-    throw err; // TEMP-TRACE
-  } // TEMP-TRACE
+      await provisionCloudinaryMetadata(storeDocRef, slug);
+      stage("CLOUDINARY_PROVISIONED", { storeId });
 
-  console.log("[TRACE] SUCCESS", { storeId }); // TEMP-TRACE
-  return { storeId, adminEmail: input.email, adminTempPassword };
+      await provisionDeploymentMetadata(storeDocRef, {
+        websiteUrl: buildTenantUrl(platformBaseUrl, slug),
+        slug,
+        rootDomain: new URL(platformBaseUrl).host,
+      });
+      stage("DEPLOYMENT_TRIGGERED", { storeId });
+
+      await logStoreActivity(storeId, "created", decoded.uid);
+      stage("ACTIVITY_LOGGED", { storeId });
+
+      // Best-effort only - never blocks or fails background provisioning.
+      await getWelcomeEmailService()
+        .sendWelcomeEmail({
+          storeName: input.brandName?.trim() || input.name,
+          storeUrl: buildTenantUrl(platformBaseUrl, slug),
+          adminUrl: buildTenantUrl(platformBaseUrl, slug, "/admin"),
+          email: input.email!,
+          temporaryPassword: adminTempPassword,
+        })
+        .catch((err) => console.error("[welcome-email] failed to send", err));
+      stage("WELCOME_EMAIL_SENT", { storeId });
+
+      await ref.update({ provisioningStatus: "complete", updatedAt: FieldValue.serverTimestamp() });
+      stage("SUCCESS", { storeId });
+    } catch (err) {
+      logActionError(traceId, "BACKGROUND_PROVISIONING", err);
+      const actionError = toActionError(
+        traceId,
+        "BACKGROUND_PROVISIONING",
+        "PROVISIONING_FAILED",
+        "Some store setup steps (theme, deployment metadata, or welcome email) did not finish. The store itself is usable - check its Deployment tab for detail."
+      );
+      await ref
+        .update({ provisioningStatus: "failed", provisioningError: actionError, updatedAt: FieldValue.serverTimestamp() })
+        .catch((updateErr) => console.error(`[action:${traceId}] failed to record provisioning failure`, updateErr));
+      await logDeploymentEvent(storeId, "error", actionError.message).catch(() => {});
+    }
+    })()
+  );
+
+  return { success: true, storeId, adminEmail: input.email, adminTempPassword };
 }
 
 export interface CloneStoreInput {
@@ -366,13 +428,16 @@ export async function cloneStore(sourceStoreId: string, input: CloneStoreInput):
   const source = await getStoreById(sourceStoreId);
   if (!source) throw new Error("Source store not found.");
 
-  const { storeId, ref, storeDocRef, userRecord, adminTempPassword, slug } = await provisionStoreShell({
-    name: input.name,
-    slug: input.slug,
-    email: input.email,
-    ownerName: input.ownerName,
-    status: "active",
-  });
+  const { storeId, ref, storeDocRef, userRecord, adminTempPassword, slug } = await provisionStoreShell(
+    {
+      name: input.name,
+      slug: input.slug,
+      email: input.email,
+      ownerName: input.ownerName,
+      status: "active",
+    },
+    () => {}
+  );
 
   try {
     const sourceDocRef = adminDb().collection(COLLECTION).doc(sourceStoreId);
@@ -454,7 +519,7 @@ export async function cloneStore(sourceStoreId: string, input: CloneStoreInput):
     })
     .catch((err) => console.error("[welcome-email] failed to send", err));
 
-  return { storeId, adminEmail: input.email, adminTempPassword };
+  return { success: true, storeId, adminEmail: input.email, adminTempPassword };
 }
 
 export async function updateStore(id: string, input: StoreFormInput): Promise<void> {
