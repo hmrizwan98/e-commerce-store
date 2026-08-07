@@ -21,7 +21,8 @@ import type { StoreTemplate } from "@/types/store";
  */
 export async function installDefaultTheme(
   storeDocRef: FirebaseFirestore.DocumentReference,
-  opts: { template: StoreTemplate; themeKey: ThemePresetKey }
+  opts: { template: StoreTemplate; themeKey: ThemePresetKey },
+  stage: (name: string) => void = () => {}
 ): Promise<void> {
   const preset = getThemePreset(opts.themeKey);
 
@@ -47,6 +48,7 @@ export async function installDefaultTheme(
     .collection("themes")
     .doc(preset.key)
     .set({ ...mergedTheme, createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() });
+  stage("THEME_DOC_WRITTEN");
 
   // Homepage sections (hero is rendered from the "hero"-placement banner below, not a
   // homepageSections doc of its own - matches the existing rendering in src/app/page.tsx).
@@ -66,6 +68,7 @@ export async function installDefaultTheme(
       })
     )
   );
+  stage("HOMEPAGE_SECTIONS_WRITTEN");
 
   // Navigation.
   const menusCol = storeDocRef.collection("menus");
@@ -73,12 +76,14 @@ export async function installDefaultTheme(
     menusCol.doc("header").set({ id: "header", items: preset.navigation.header, updatedAt: FieldValue.serverTimestamp() }),
     menusCol.doc("footer").set({ id: "footer", items: preset.navigation.footer, updatedAt: FieldValue.serverTimestamp() }),
   ]);
+  stage("MENUS_WRITTEN");
 
   // Announcement bar.
   await storeDocRef
     .collection("announcementBars")
     .doc()
     .set({ ...preset.announcementBar, createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() });
+  stage("ANNOUNCEMENT_BAR_WRITTEN");
 
   // Hero + promo banners.
   const bannersCol = storeDocRef.collection("banners");
@@ -87,6 +92,7 @@ export async function installDefaultTheme(
       bannersCol.doc().set({ ...banner, createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() })
     )
   );
+  stage("BANNERS_WRITTEN");
 
   // Testimonials + FAQs (base preset content, plus extra demo-only placeholders).
   const testimonialsCol = storeDocRef.collection("testimonials");
@@ -99,6 +105,7 @@ export async function installDefaultTheme(
   await Promise.all(
     testimonials.map((t) => testimonialsCol.doc().set({ ...t, createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() }))
   );
+  stage("TESTIMONIALS_WRITTEN");
 
   const faqsCol = storeDocRef.collection("faqs");
   const faqs = [
@@ -108,6 +115,7 @@ export async function installDefaultTheme(
       : []),
   ];
   await Promise.all(faqs.map((f) => faqsCol.doc().set({ ...f, createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() })));
+  stage("FAQS_WRITTEN");
 
   // CMS pages: privacy/terms/refund (content blobs, existing pattern) + FAQ (one
   // page-builder section, reusing the existing PageSectionType:"faq" renderer).
@@ -150,4 +158,5 @@ export async function installDefaultTheme(
     createdAt: FieldValue.serverTimestamp(),
     updatedAt: FieldValue.serverTimestamp(),
   });
+  stage("PAGES_WRITTEN");
 }

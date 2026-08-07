@@ -357,7 +357,7 @@ export async function createStore(input: StoreFormInput): Promise<CreateStoreRes
   waitUntil(
     (async () => {
     try {
-      await installDefaultTheme(storeDocRef, { template: input.template ?? "empty", themeKey });
+      await installDefaultTheme(storeDocRef, { template: input.template ?? "empty", themeKey }, stage);
       stage("THEME_INSTALL_FINISHED", { storeId });
 
       await provisionCloudinaryMetadata(storeDocRef, slug);
