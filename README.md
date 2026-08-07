@@ -2030,3 +2030,103 @@ Firestore rules/hierarchy.
 - A future webhook from a real provider can call `logDeploymentEvent()`
   directly to stream real build/deploy log lines into the same
   architecture already rendered by `DeploymentPanel.tsx`.
+
+## Super Admin Store Deletion Lifecycle
+
+Adds a real, permanent hard-delete for a store, alongside the existing
+Active ⇄ Suspended ⇄ Archived lifecycle (which was always reversible and
+never removed data). Gated behind a type-the-exact-slug confirmation - the
+first such gate in this codebase, since every prior destructive action
+used only `window.confirm`.
+
+### Audit
+
+Tenant-scoped data lives two ways: 31 collections (+3 nested) physically
+under `stores/{id}/...` (`products`+`variants`, `categories`, `brands`,
+`collections`, `suppliers`, `themes`, `homepageSections`, `siteSettings`,
+`orders`, `customers`+`addresses`, `customerActivityLogs`,
+`customerExportOperations`, `gdprRequests`, `menus`, `banners`,
+`pages`+`sections`, `testimonials`, `faqs`, `announcementBars`,
+`productActivityLogs`, `productBulkOperations`, `orderActivityLogs`,
+`orderDocuments`, `orderBulkOperations`, `transactions`, `financeReports`,
+`backupHistory`, `onboarding`, `deployment`, `deploymentLogs`,
+`cloudinaryProvisioning`); and 8 root-level collections keyed by a
+`storeId` field (`storeActivityLogs`, `payouts`, `blogPosts`,
+`newsletterSubscribers`, `contactSubmissions`, `analyticsEvents`,
+`activeSessions`, `visitors`). `reviews` is a special case: root-level with
+no `storeId` field at all, only `productId` - cleaned up by capturing this
+store's product IDs before deletion, then querying `reviews` by
+`productId in [...]`. Domains/deployment metadata are fields on the Store
+doc itself, removed automatically with it - no real external deploy
+provider exists to call (`DeploymentProvider` has no teardown method).
+Never touched: `rateLimits`, `bookDemoRequests`, legacy `users`.
+
+### Files Changed
+
+New: `DeleteStoreDialog.tsx`. Modified (additive): `actions.ts` (new
+`deleteStore` export + `deleteWhereStoreId`/`deleteReviewsForProducts`
+private helpers), `StoreDetailsTabs.tsx` (new "Danger zone" card),
+`src/lib/cloudinary/delete.ts` (new `deleteAllByPrefix`),
+`src/lib/firebase/repositories/products.ts` (new `getProductIdsForStore`),
+`src/types/store-activity-log.ts` (`"deleted"` union member),
+`src/lib/errors/action-error.ts` (`"DELETION_FAILED"` error code),
+`src/lib/superadmin/activity-labels.ts` (label for `"deleted"`).
+
+### Delete Flow
+
+Fully synchronous (not a `waitUntil()` background split like
+`createStore()`) - a delete's outcome must be knowable in the same
+response for "never report success if critical cleanup failed" to be
+honest. Order matters for retry-safety: (1) not-found is treated as
+already-deleted success; (2) `confirmSlug` re-validated server-side; (3)
+product IDs captured before anything is touched; (4) **critical, first**:
+the Auth owner is deleted (any other failure aborts here, before anything
+else is touched); (5) **best-effort, parallel** (`Promise.allSettled`):
+the 8 root-level collections, `reviews`, and the Cloudinary prefix delete -
+failures become `warnings`, never abort; (6) **critical, last**:
+`recursiveDelete()` on the store's own doc, which removes it and all 31+
+tenant-scoped subcollections in one call; (7) activity log + revalidation.
+Every step tolerates "already gone," so a retry after a partial failure -
+or after full success - both just report success.
+
+### Cleanup Coverage
+
+| Layer | Mechanism |
+|---|---|
+| Firebase Auth owner | `getUserByEmail` + `deleteUser`, `auth/user-not-found` tolerated |
+| `stores/{id}` + all subcollections | `adminDb().recursiveDelete(ref)` |
+| 8 root-level `storeId`-keyed collections | `deleteWhereStoreId()`, batched ≤500/commit |
+| `reviews` | joined via captured product IDs, chunked ≤30 per Firestore's `in` limit |
+| Cloudinary assets | `deleteAllByPrefix("{cloudinaryFolder}/")` (new Admin API call) |
+| Domains/deployment metadata | Store-doc fields, removed with the doc |
+
+### Test Result
+
+Verified against a disposable store (`delete-lifecycle-test-store`)
+created through the real `createStore()` action, seeded with one product,
+one review, one Cloudinary asset, and one doc in each of the 8 root-level
+collections, then deleted through the real `deleteStore()` action (both
+exercised via a temporary local-only test route under a genuine session
+cookie for a temporary Super Admin test account - both removed after the
+test). Result: `{success:true, warnings:[]}`. Confirmed after deletion:
+Auth user gone (`auth/user-not-found`), `stores/{id}` doc gone, all 20
+sampled subcollections empty, all 7 seeded root-level collections empty,
+`reviews` for the deleted product gone, exactly one `storeActivityLogs`
+entry remains (the `"deleted"` audit record itself), the Cloudinary prefix
+has 0 remaining assets, and the slug now resolves to "Store unavailable"
+instead of the old storefront. Re-running the identical delete call
+returned `{success:true, alreadyDeleted:true, warnings:[]}` - confirmed
+idempotent. No real/existing store was touched.
+
+### Remaining Limitations
+
+- `deleteWhereStoreId()`'s retry loop assumes no concurrent writes into a
+  being-deleted store; a store actively receiving writes mid-delete could
+  race (pre-existing risk, same as `recursiveDelete()` itself).
+- Cloudinary's `delete_resources_by_prefix` only covers the `image`
+  resource type (Admin API default) - non-image uploads under the same
+  prefix, if any are ever added, would need an explicit `resource_type`
+  loop.
+- No confirmation email or cooling-off period before the Auth user is
+  deleted - the type-the-slug gate is the only safeguard, matching the
+  bar set by every other destructive action in this panel.

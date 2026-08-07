@@ -9,6 +9,7 @@ import { requireSuperAdmin } from "@/lib/firebase/require-super-admin";
 import { checkRateLimit } from "@/lib/firebase/rate-limit";
 import { stripUndefined } from "@/lib/firebase/repositories/utils";
 import { isSlugTaken, isDomainTaken, getStoreById } from "@/lib/firebase/repositories/stores";
+import { getProductIdsForStore } from "@/lib/firebase/repositories/products";
 import { DEFAULT_THEME } from "@/lib/firebase/repositories/themes";
 import { getWelcomeEmailService } from "@/lib/email";
 import { logStoreActivity } from "@/lib/firebase/repositories/store-activity-logs";
@@ -20,6 +21,7 @@ import { getPlatformBaseUrl } from "@/lib/platform/base-url";
 import { buildTenantUrl } from "@/lib/platform/tenant-url";
 import { getActiveDeploymentProvider } from "@/lib/deployment/provider-registry";
 import { logDeploymentEvent } from "@/lib/firebase/repositories/deployment-logs";
+import { deleteAllByPrefix } from "@/lib/cloudinary/delete";
 import {
   generateTraceId,
   logActionError,
@@ -814,4 +816,173 @@ export async function transferOwnership(
   await logStoreActivity(storeId, "ownership_changed", decoded.uid, { from: store.email ?? "", to: email });
 
   return { newOwnerEmail: email, newOwnerTempPassword };
+}
+
+/** Root-level collections keyed by a `storeId` FIELD rather than path-scoped under
+ * stores/{id} - see the plan's audit. Every one of these uses "storeId" as the field name. */
+const ROOT_STOREID_COLLECTIONS = [
+  "storeActivityLogs",
+  "payouts",
+  "blogPosts",
+  "newsletterSubscribers",
+  "contactSubmissions",
+  "analyticsEvents",
+  "activeSessions",
+  "visitors",
+] as const;
+
+/** Deletes every doc in `collectionName` matching `storeId`, batched at Firestore's 500-
+ * writes-per-commit limit, looping until none remain - shared by all 8 root-level
+ * storeId-keyed collections deleteStore() cleans up (one function, not eight copies). */
+async function deleteWhereStoreId(collectionName: string, storeId: string): Promise<number> {
+  let deleted = 0;
+  while (true) {
+    const snap = await adminDb().collection(collectionName).where("storeId", "==", storeId).limit(500).get();
+    if (snap.empty) break;
+    const batch = adminDb().batch();
+    snap.docs.forEach((doc) => batch.delete(doc.ref));
+    await batch.commit();
+    deleted += snap.docs.length;
+    if (snap.docs.length < 500) break;
+  }
+  return deleted;
+}
+
+/** `reviews` has no storeId field (only productId) - joins indirectly via this store's own
+ * product IDs, captured by the caller BEFORE anything is deleted. Chunked at 30 per
+ * Firestore's `in`-query limit. */
+async function deleteReviewsForProducts(productIds: string[]): Promise<number> {
+  let deleted = 0;
+  for (let i = 0; i < productIds.length; i += 30) {
+    const chunk = productIds.slice(i, i + 30);
+    const snap = await adminDb().collection("reviews").where("productId", "in", chunk).get();
+    if (snap.empty) continue;
+    const batch = adminDb().batch();
+    snap.docs.forEach((doc) => batch.delete(doc.ref));
+    await batch.commit();
+    deleted += snap.docs.length;
+  }
+  return deleted;
+}
+
+export type DeleteStoreResult =
+  | { success: true; storeId: string; alreadyDeleted?: boolean; warnings: string[] }
+  | { success: false; error: ActionError };
+
+/**
+ * Permanently deletes a store: its Firebase Auth owner, every tenant-scoped Firestore
+ * subcollection under stores/{id} (via recursiveDelete - exhaustive by construction, so
+ * nothing under the store's own doc can be missed), the 8 root-level storeId-keyed
+ * collections, `reviews` (joined via product IDs), and the store's Cloudinary assets.
+ *
+ * Fully synchronous (not a waitUntil() background split like createStore()) - a delete's
+ * outcome must be knowable in the same response for "never report success if critical
+ * cleanup failed" to be honest. Ordering is what makes retries safe: the Auth user is
+ * deleted FIRST (critical - any other failure aborts before anything else is touched), the
+ * store doc itself is deleted LAST via recursiveDelete (critical), and everything in between
+ * is best-effort/parallel (Promise.allSettled) with failures collected as warnings rather
+ * than aborting. Every step already tolerates "already gone," so a retry after a partial
+ * failure - or a retry after full success - both just report success.
+ */
+export async function deleteStore(storeId: string, confirmSlug: string): Promise<DeleteStoreResult> {
+  const traceId = generateTraceId();
+
+  let decoded: Awaited<ReturnType<typeof requireSuperAdmin>>;
+  try {
+    decoded = await requireSuperAdmin();
+    await enforceRateLimit(decoded.uid);
+  } catch (err) {
+    logActionError(traceId, "AUTH_CHECK", err);
+    const message = err instanceof Error ? err.message : "Not authorized to delete a store.";
+    const code: ActionErrorCode = message.toLowerCase().includes("too many") ? "RATE_LIMITED" : "UNAUTHORIZED";
+    return { success: false, error: toActionError(traceId, "AUTH_CHECK", code, message) };
+  }
+
+  const store = await getStoreById(storeId);
+  if (!store) {
+    // Already gone - deleting an already-deleted store is success, not an error (safe to retry).
+    return { success: true, storeId, alreadyDeleted: true, warnings: [] };
+  }
+
+  // Server-side re-validation behind the client's own type-to-confirm gate.
+  if (confirmSlug.trim().toLowerCase() !== store.slug) {
+    return {
+      success: false,
+      error: toActionError(traceId, "VALIDATION", "VALIDATION_FAILED", "Confirmation text didn't match the store's slug."),
+    };
+  }
+
+  const { slug, email, cloudinaryFolder } = store;
+
+  // Captured before anything is deleted - reviews has no storeId field, only productId.
+  const productIds = await getProductIdsForStore(storeId).catch((err) => {
+    logActionError(traceId, "CAPTURE_PRODUCT_IDS", err);
+    return [] as string[];
+  });
+
+  // Critical, first: the Auth owner. Any failure here aborts before anything else is touched.
+  if (email) {
+    try {
+      const userRecord = await adminAuth().getUserByEmail(email);
+      await adminAuth().deleteUser(userRecord.uid);
+    } catch (err) {
+      if ((err as { code?: string }).code !== "auth/user-not-found") {
+        logActionError(traceId, "DELETE_AUTH_USER", err);
+        return {
+          success: false,
+          error: toActionError(
+            traceId,
+            "DELETE_AUTH_USER",
+            "DELETION_FAILED",
+            "Could not delete the store owner's account. Nothing else was deleted - safe to retry."
+          ),
+        };
+      }
+    }
+  }
+
+  // Best-effort, parallel: everything not under stores/{id} itself. Failures are collected
+  // as warnings, never abort - the critical recursiveDelete below still runs regardless.
+  const cleanupLabels = [...ROOT_STOREID_COLLECTIONS, "reviews", "cloudinary assets"];
+  const cleanupResults = await Promise.allSettled([
+    ...ROOT_STOREID_COLLECTIONS.map((name) => deleteWhereStoreId(name, storeId)),
+    deleteReviewsForProducts(productIds),
+    deleteAllByPrefix(`${cloudinaryFolder}/`).then((r) => r.deleted),
+  ]);
+
+  const warnings: string[] = [];
+  cleanupResults.forEach((result, i) => {
+    if (result.status === "rejected") {
+      const label = cleanupLabels[i];
+      logActionError(traceId, `CLEANUP:${label}`, result.reason);
+      warnings.push(`Failed to clean up ${label}: ${result.reason instanceof Error ? result.reason.message : String(result.reason)}`);
+    }
+  });
+
+  // Critical, last: the store doc and everything still under it (its 31 tenant-scoped
+  // subcollections). A retry after this fails will still find the doc present, since
+  // every earlier step above already tolerates "already gone."
+  try {
+    await adminDb().recursiveDelete(adminDb().collection(COLLECTION).doc(storeId));
+  } catch (err) {
+    logActionError(traceId, "RECURSIVE_DELETE", err);
+    return {
+      success: false,
+      error: toActionError(
+        traceId,
+        "RECURSIVE_DELETE",
+        "DELETION_FAILED",
+        "The store's own data could not be fully deleted. Some data may be partially removed - retrying is safe."
+      ),
+    };
+  }
+
+  revalidateStoreList();
+  // Written after the storeActivityLogs sweep above, so this record survives as the
+  // permanent audit trail of the deletion itself.
+  await logStoreActivity(storeId, "deleted", decoded.uid, { slug }).catch((err) =>
+    logActionError(traceId, "ACTIVITY_LOGGED", err)
+  );
+
+  return { success: true, storeId, warnings };
 }

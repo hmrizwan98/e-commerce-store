@@ -1,4 +1,5 @@
 import "server-only";
+import { adminDb } from "@/lib/firebase/admin";
 import { tenantCollection } from "@/lib/firebase/tenant-scope";
 import { docData } from "./utils";
 import { safeQuery } from "./safe-query";
@@ -418,4 +419,13 @@ export async function searchProductsByName(q: string, limit = 24): Promise<Produ
       .map((doc) => docData<Product>(doc))
       .filter((p): p is Product => p !== null);
   });
+}
+
+/** For Super Admin store deletion, which needs an arbitrary store's product IDs (to join
+ * against the storeId-less `reviews` collection) regardless of the current request's own
+ * tenant - mirrors getDeploymentMetadataByStoreId()'s direct-by-id access. `.select()` with
+ * no fields pulls document IDs only, no product data. */
+export async function getProductIdsForStore(storeId: string): Promise<string[]> {
+  const snap = await adminDb().collection("stores").doc(storeId).collection(COLLECTION).select().get();
+  return snap.docs.map((doc) => doc.id);
 }

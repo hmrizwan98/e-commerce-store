@@ -19,4 +19,5 @@ export const ACTIVITY_LABELS: Record<string, string> = {
   domain_reverified: "Domain re-verification requested",
   primary_domain_changed: "Primary domain changed",
   deployment_status_changed: "Deployment requested",
+  deleted: "Store permanently deleted",
 };

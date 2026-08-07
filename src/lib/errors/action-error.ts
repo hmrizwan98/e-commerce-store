@@ -19,6 +19,7 @@ export type ActionErrorCode =
   | "EMAIL_TAKEN"
   | "DOMAIN_TAKEN"
   | "PROVISIONING_FAILED"
+  | "DELETION_FAILED"
   | "UNKNOWN";
 
 export interface ActionError {

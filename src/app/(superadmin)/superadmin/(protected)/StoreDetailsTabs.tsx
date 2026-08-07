@@ -6,6 +6,7 @@ import OwnerActions from "./OwnerActions";
 import StoreStatusActions from "./StoreStatusActions";
 import ImpersonateButton from "./ImpersonateButton";
 import CloneStoreDialog from "./CloneStoreDialog";
+import DeleteStoreDialog from "./DeleteStoreDialog";
 import DomainManagementPanel from "./DomainManagementPanel";
 import DeploymentPanel from "./DeploymentPanel";
 import { STATUS_BADGE_CLASS } from "@/lib/superadmin/status-badge";
@@ -130,6 +131,11 @@ const StoreDetailsTabs: React.FC<{
               <ImpersonateButton storeId={store.id} />
             </div>
             <CloneStoreDialog sourceStoreId={store.id} platformBaseUrl={platformBaseUrl} />
+          </div>
+
+          <div className={cardClass}>
+            <h2 className="text-lg font-semibold text-red-600 dark:text-red-400">Danger zone</h2>
+            <DeleteStoreDialog storeId={store.id} slug={store.slug} />
           </div>
 
           <div className={cardClass}>

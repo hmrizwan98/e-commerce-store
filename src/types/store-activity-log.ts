@@ -14,7 +14,8 @@ export type StoreActivityAction =
   | "domain_removed"
   | "domain_reverified"
   | "primary_domain_changed"
-  | "deployment_status_changed";
+  | "deployment_status_changed"
+  | "deleted";
 
 export interface StoreActivityLog {
   id: string;
