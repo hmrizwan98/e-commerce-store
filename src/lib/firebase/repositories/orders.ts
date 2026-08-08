@@ -1,5 +1,5 @@
 import "server-only";
-import { AggregateField, Timestamp } from "firebase-admin/firestore";
+import { AggregateField, FieldPath, Timestamp } from "firebase-admin/firestore";
 import { adminDb, serverTimestamp } from "../admin";
 import { tenantCollection } from "@/lib/firebase/tenant-scope";
 import { docData, stripUndefined } from "./utils";
@@ -13,6 +13,13 @@ const COLLECTION = "orders";
 // Advanced Filters - status/paymentStatus/returnStatus stay mutually exclusive
 // equality filters (each paired with the existing orderStatus+createdAt-shaped
 // composite index) rather than combining, which would need its own new index.
+export interface AdminOrdersCursor {
+  /** createdAt (millis) for the default/filtered branch, orderNumber for the search
+   * branch - whichever field that branch actually sorts by. */
+  value: number | string;
+  id: string;
+}
+
 export interface AdminOrderSearchParams {
   status?: OrderStatus;
   paymentStatus?: PaymentStatus;
@@ -20,62 +27,83 @@ export interface AdminOrderSearchParams {
   dateFrom?: number;
   dateTo?: number;
   search?: string;
-  page?: number;
   pageSize?: number;
+  startAfter?: AdminOrdersCursor;
 }
 
 export interface AdminOrderSearchResult {
   orders: Order[];
   total: number;
-  totalPages: number;
+  hasMore: boolean;
 }
 
+/**
+ * Cursor-paginated - startAfter(...) + limit(pageSize+1), never offset(). The two
+ * mutually-exclusive branches (search vs filtered/default) sort by different fields
+ * (orderNumber asc vs createdAt desc), so the cursor's `value` means whichever field
+ * that branch actually orders by. Both branches add an explicit document-ID tiebreaker
+ * (matching each branch's own sort direction) since neither orderNumber (timestamp-
+ * derived, ties possible under concurrent checkouts) nor createdAt (a Firestore
+ * Timestamp) is provably unique - Firestore already appends `__name__` as an implicit
+ * final index component to every query, so this doesn't change what the existing
+ * indexes already support (verified empirically). `total` still comes from the same
+ * `.count()` aggregation this function already used - not a new/duplicate query - since
+ * the existing "Orders (N)" heading already displays it.
+ */
 export async function searchAdminOrders(
   params: AdminOrderSearchParams
 ): Promise<AdminOrderSearchResult> {
   const pageSize = params.pageSize ?? 20;
-  const page = Math.max(1, params.page ?? 1);
 
   const ordersCol = await tenantCollection(COLLECTION);
-  let query: FirebaseFirestore.Query = ordersCol;
+  let baseQuery: FirebaseFirestore.Query = ordersCol;
+  const isSearch = !!params.search;
 
   if (params.search) {
     // Order-number prefix match - the range field and orderBy field are the
     // same, so this needs no new composite index.
     const q = params.search.trim();
-    query = query.where("orderNumber", ">=", q).where("orderNumber", "<=", q + "").orderBy("orderNumber");
+    baseQuery = baseQuery
+      .where("orderNumber", ">=", q)
+      .where("orderNumber", "<=", q + "")
+      .orderBy("orderNumber", "asc")
+      .orderBy(FieldPath.documentId(), "asc");
   } else {
     if (params.status) {
-      query = query.where("orderStatus", "==", params.status);
+      baseQuery = baseQuery.where("orderStatus", "==", params.status);
     } else if (params.paymentStatus) {
-      query = query.where("paymentStatus", "==", params.paymentStatus);
+      baseQuery = baseQuery.where("paymentStatus", "==", params.paymentStatus);
     } else if (params.returnStatus) {
-      query = query.where("returnStatus", "==", params.returnStatus);
+      baseQuery = baseQuery.where("returnStatus", "==", params.returnStatus);
     }
     if (params.dateFrom) {
-      query = query.where("createdAt", ">=", Timestamp.fromMillis(params.dateFrom));
+      baseQuery = baseQuery.where("createdAt", ">=", Timestamp.fromMillis(params.dateFrom));
     }
     if (params.dateTo) {
-      query = query.where("createdAt", "<=", Timestamp.fromMillis(params.dateTo));
+      baseQuery = baseQuery.where("createdAt", "<=", Timestamp.fromMillis(params.dateTo));
     }
-    query = query.orderBy("createdAt", "desc");
+    baseQuery = baseQuery.orderBy("createdAt", "desc").orderBy(FieldPath.documentId(), "desc");
   }
 
-  return safeQuery("searchAdminOrders", { orders: [], total: 0, totalPages: 1 }, async () => {
-    const countSnap = await query.count().get();
+  return safeQuery("searchAdminOrders", { orders: [], total: 0, hasMore: false }, async () => {
+    const countSnap = await baseQuery.count().get();
     const total = countSnap.data().count;
-    const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
-    const snap = await query
-      .offset((page - 1) * pageSize)
-      .limit(pageSize)
-      .get();
+    let pageQuery = baseQuery;
+    if (params.startAfter) {
+      const cursorValue = isSearch
+        ? params.startAfter.value
+        : Timestamp.fromMillis(params.startAfter.value as number);
+      pageQuery = pageQuery.startAfter(cursorValue, params.startAfter.id);
+    }
 
+    const snap = await pageQuery.limit(pageSize + 1).get();
     const orders = snap.docs
+      .slice(0, pageSize)
       .map((doc) => docData<Order>(doc))
       .filter((o): o is Order => o !== null);
 
-    return { orders, total, totalPages };
+    return { orders, total, hasMore: snap.docs.length > pageSize };
   });
 }
 

@@ -1,7 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { getStoreFinancialSummary } from "@/lib/firebase/services/finance-service";
-import { getTransactionLedger } from "@/lib/firebase/repositories/transactions";
+import { getTransactionLedgerPage, type TransactionLedgerCursor } from "@/lib/firebase/repositories/transactions";
 import { getFinanceReportHistory } from "@/lib/firebase/repositories/finance-reports";
 import FinanceReportPanel from "./FinanceReportPanel";
 
@@ -14,12 +14,51 @@ function money(n: number): string {
   return `$${n.toFixed(2)}`;
 }
 
-export default async function AdminFinancePage() {
-  const [summary, ledger, reportHistory] = await Promise.all([
+/** Stack of {createdAt,id} cursors, one per page already visited - Next pushes the current
+ * page's last transaction onto it, Previous pops the last entry off. Plain, URL-safe
+ * values, not a serialized DocumentSnapshot. */
+function parseCursorStack(raw?: string): TransactionLedgerCursor[] {
+  if (!raw) return [];
+  return raw
+    .split(",")
+    .map((entry) => {
+      const [createdAtStr, id] = entry.split("_");
+      return { createdAt: Number(createdAtStr), id };
+    })
+    .filter((c): c is TransactionLedgerCursor => Number.isFinite(c.createdAt) && !!c.id);
+}
+
+function serializeCursorStack(stack: TransactionLedgerCursor[]): string {
+  return stack.map((c) => `${c.createdAt}_${c.id}`).join(",");
+}
+
+function financeHref(cursorStack: TransactionLedgerCursor[]) {
+  return cursorStack.length
+    ? ({ pathname: "/admin/finance", query: { cursor: serializeCursorStack(cursorStack) } } as any)
+    : ("/admin/finance" as any);
+}
+
+export default async function AdminFinancePage({
+  searchParams,
+}: {
+  searchParams: { cursor?: string };
+}) {
+  const cursorStack = parseCursorStack(searchParams.cursor);
+  const startAfter = cursorStack.length ? cursorStack[cursorStack.length - 1] : undefined;
+
+  const [summary, ledgerPage, reportHistory] = await Promise.all([
     getStoreFinancialSummary(),
-    getTransactionLedger(),
+    getTransactionLedgerPage({ startAfter }),
     getFinanceReportHistory(),
   ]);
+  const { transactions: ledger, hasMore } = ledgerPage;
+  const lastTxn = ledger.length ? ledger[ledger.length - 1] : undefined;
+
+  const nextHref =
+    hasMore && lastTxn?.createdAt != null
+      ? financeHref([...cursorStack, { createdAt: lastTxn.createdAt, id: lastTxn.id }])
+      : undefined;
+  const prevHref = cursorStack.length ? financeHref(cursorStack.slice(0, -1)) : undefined;
 
   const stats: { label: string; value: number }[] = [
     { label: "Gross Sales", value: summary.grossSales },
@@ -89,6 +128,29 @@ export default async function AdminFinancePage() {
             </tbody>
           </table>
         </div>
+
+        {(nextHref || prevHref) && (
+          <div className="flex items-center justify-end gap-2 pt-4">
+            <Link
+              href={prevHref ?? "#"}
+              aria-disabled={!prevHref}
+              className={`px-3 py-1.5 rounded-lg border border-neutral-300 dark:border-neutral-700 text-xs font-medium ${
+                !prevHref ? "pointer-events-none opacity-40" : "hover:bg-neutral-100 dark:hover:bg-neutral-800"
+              }`}
+            >
+              Previous
+            </Link>
+            <Link
+              href={nextHref ?? "#"}
+              aria-disabled={!nextHref}
+              className={`px-3 py-1.5 rounded-lg border border-neutral-300 dark:border-neutral-700 text-xs font-medium ${
+                !nextHref ? "pointer-events-none opacity-40" : "hover:bg-neutral-100 dark:hover:bg-neutral-800"
+              }`}
+            >
+              Next
+            </Link>
+          </div>
+        )}
       </div>
 
       <FinanceReportPanel history={reportHistory} />

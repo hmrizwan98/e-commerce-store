@@ -1,7 +1,7 @@
 import React from "react";
 import { getPlatformFinancialDashboard } from "@/lib/firebase/services/platform-finance-service";
 import { getStoreIdsAndNames } from "@/lib/firebase/repositories/stores";
-import { getAllPayouts } from "@/lib/firebase/repositories/payouts";
+import { getPayoutsPage } from "@/lib/firebase/repositories/payouts";
 import PayoutManagementPanel from "./PayoutManagementPanel";
 import {
   BanknotesIcon,
@@ -18,12 +18,38 @@ function money(n: number): string {
   return `$${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-export default async function SuperAdminFinancePage() {
-  const [dashboard, stores, payouts] = await Promise.all([
+/** Builds the finance page URL for a given cursor stack - an empty stack is page 1 (no
+ * query param at all), matching this page's un-paginated URL before this feature existed. */
+function financeHref(cursorStack: number[]) {
+  return cursorStack.length
+    ? ({ pathname: "/superadmin/finance", query: { cursor: cursorStack.join(",") } } as any)
+    : ("/superadmin/finance" as any);
+}
+
+export default async function SuperAdminFinancePage({
+  searchParams,
+}: {
+  searchParams: { cursor?: string };
+}) {
+  // Stack of createdAt-millis cursors, one per page already visited - Next pushes the
+  // current page's last item onto it, Previous pops the last entry off. Plain numbers in
+  // the URL, not a serialized DocumentSnapshot (which can't cross a Server Component page
+  // boundary).
+  const cursorStack = searchParams.cursor
+    ? searchParams.cursor.split(",").map(Number).filter((n) => Number.isFinite(n))
+    : [];
+  const startAfterCreatedAt = cursorStack.length ? cursorStack[cursorStack.length - 1] : undefined;
+
+  const [dashboard, stores, payoutsPage] = await Promise.all([
     getPlatformFinancialDashboard(),
     getStoreIdsAndNames(),
-    getAllPayouts(),
+    getPayoutsPage({ startAfterCreatedAt }),
   ]);
+  const { payouts, hasMore } = payoutsPage;
+  const lastCreatedAt = payouts.length ? payouts[payouts.length - 1].createdAt : undefined;
+
+  const nextHref = hasMore && lastCreatedAt != null ? financeHref([...cursorStack, lastCreatedAt]) : undefined;
+  const prevHref = cursorStack.length ? financeHref(cursorStack.slice(0, -1)) : undefined;
 
   const stats = [
     { label: "Platform Revenue", value: money(dashboard.totalRevenue), icon: CurrencyDollarIcon, color: "text-emerald-500 bg-emerald-500/10" },
@@ -81,7 +107,7 @@ export default async function SuperAdminFinancePage() {
       </div>
 
       {/* Payout Management Panel */}
-      <PayoutManagementPanel payouts={payouts} stores={stores} />
+      <PayoutManagementPanel payouts={payouts} stores={stores} nextHref={nextHref} prevHref={prevHref} />
     </div>
   );
 }

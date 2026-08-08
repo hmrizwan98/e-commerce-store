@@ -1,6 +1,12 @@
 import React from "react";
 import Link from "next/link";
-import { getCustomers, getGuestCustomers } from "@/lib/firebase/repositories/customers";
+import {
+  getCustomersPage,
+  getGuestCustomers,
+  getCustomerCount,
+  type CustomersPageCursor,
+  type GuestCustomer,
+} from "@/lib/firebase/repositories/customers";
 
 export const dynamic = "force-dynamic";
 
@@ -11,8 +17,55 @@ const STATUS_BADGE_CLASS: Record<string, string> = {
   guest: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
 };
 
-export default async function AdminCustomersPage() {
-  const [customers, guests] = await Promise.all([getCustomers(), getGuestCustomers()]);
+/** Stack of {createdAt,id} cursors, one per page already visited - Next pushes the current
+ * page's last customer onto it, Previous pops the last entry off. Plain, URL-safe values,
+ * not a serialized DocumentSnapshot. */
+function parseCursorStack(raw?: string): CustomersPageCursor[] {
+  if (!raw) return [];
+  return raw
+    .split(",")
+    .map((entry) => {
+      const [createdAtStr, id] = entry.split("_");
+      return { createdAt: Number(createdAtStr), id };
+    })
+    .filter((c): c is CustomersPageCursor => Number.isFinite(c.createdAt) && !!c.id);
+}
+
+function serializeCursorStack(stack: CustomersPageCursor[]): string {
+  return stack.map((c) => `${c.createdAt}_${c.id}`).join(",");
+}
+
+function customersHref(cursorStack: CustomersPageCursor[]) {
+  return cursorStack.length
+    ? ({ pathname: "/admin/customers", query: { cursor: serializeCursorStack(cursorStack) } } as any)
+    : ("/admin/customers" as any);
+}
+
+export default async function AdminCustomersPage({
+  searchParams,
+}: {
+  searchParams: { cursor?: string };
+}) {
+  const cursorStack = parseCursorStack(searchParams.cursor);
+  const startAfter = cursorStack.length ? cursorStack[cursorStack.length - 1] : undefined;
+  const isFirstPage = cursorStack.length === 0;
+
+  // Guest rows are derived from recent orders, not themselves cursor-paginated - showing
+  // them again on every page would duplicate every guest across the whole list, so they
+  // only appear alongside page 1 (identical to today's behavior, which always showed them
+  // since there was only ever one page).
+  const [{ customers, hasMore }, guests, totalCount] = await Promise.all([
+    getCustomersPage({ startAfter }),
+    isFirstPage ? getGuestCustomers() : Promise.resolve([] as GuestCustomer[]),
+    getCustomerCount(),
+  ]);
+
+  const lastCustomer = customers.length ? customers[customers.length - 1] : undefined;
+  const nextHref =
+    hasMore && lastCustomer?.createdAt != null
+      ? customersHref([...cursorStack, { createdAt: lastCustomer.createdAt, id: lastCustomer.uid }])
+      : undefined;
+  const prevHref = cursorStack.length ? customersHref(cursorStack.slice(0, -1)) : undefined;
 
   const rows = [
     ...customers.map((c) => ({
@@ -38,7 +91,15 @@ export default async function AdminCustomersPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Customers ({rows.length})</h1>
+        <h1 className="text-2xl font-semibold">
+          Customers ({customers.length} of {totalCount})
+          {isFirstPage && guests.length > 0 && (
+            <span className="text-base font-normal text-neutral-500">
+              {" "}
+              + {guests.length} guest checkout{guests.length === 1 ? "" : "s"}
+            </span>
+          )}
+        </h1>
         <Link
           href={"/admin/customers/export" as any}
           className="px-4 py-2 rounded-full border border-neutral-300 dark:border-neutral-700 text-sm font-medium"
@@ -90,6 +151,29 @@ export default async function AdminCustomersPage() {
           </tbody>
         </table>
       </div>
+
+      {(nextHref || prevHref) && (
+        <div className="flex items-center justify-end gap-2 px-4 py-3 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-xs font-mono">
+          <Link
+            href={prevHref ?? "#"}
+            aria-disabled={!prevHref}
+            className={`px-3 py-1.5 rounded-lg border border-neutral-300 dark:border-neutral-700 font-medium ${
+              !prevHref ? "pointer-events-none opacity-40" : "hover:bg-neutral-100 dark:hover:bg-neutral-800"
+            }`}
+          >
+            Previous
+          </Link>
+          <Link
+            href={nextHref ?? "#"}
+            aria-disabled={!nextHref}
+            className={`px-3 py-1.5 rounded-lg border border-neutral-300 dark:border-neutral-700 font-medium ${
+              !nextHref ? "pointer-events-none opacity-40" : "hover:bg-neutral-100 dark:hover:bg-neutral-800"
+            }`}
+          >
+            Next
+          </Link>
+        </div>
+      )}
     </div>
   );
 }

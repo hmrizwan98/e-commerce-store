@@ -1,23 +1,49 @@
 import React from "react";
 import Link from "next/link";
-import { searchAdminProducts } from "@/lib/firebase/repositories/products";
+import { searchAdminProducts, type AdminProductsCursor } from "@/lib/firebase/repositories/products";
 import ProductRowActions from "./ProductRowActions";
 
 export const dynamic = "force-dynamic";
 
+/** Stack of {value,id} cursors, one per page already visited - Next pushes the current
+ * page's last product onto it, Previous pops the last entry off. Plain, URL-safe values,
+ * not a serialized DocumentSnapshot. Cursor `value` may be a number (updatedAt millis) or
+ * a string (nameLower, when searching) - a leading "n:"/"s:" tag disambiguates. */
+function parseCursorStack(raw?: string): AdminProductsCursor[] {
+  if (!raw) return [];
+  return raw
+    .split(",")
+    .map((entry) => {
+      const [tag, ...rest] = entry.split(":");
+      const [value, id] = rest.join(":").split("_");
+      if (!id) return null;
+      return { value: tag === "n" ? Number(value) : value, id };
+    })
+    .filter((c): c is AdminProductsCursor => c !== null && (typeof c.value === "string" || Number.isFinite(c.value)));
+}
+
+function serializeCursorStack(stack: AdminProductsCursor[]): string {
+  return stack.map((c) => `${typeof c.value === "number" ? "n" : "s"}:${c.value}_${c.id}`).join(",");
+}
+
 export default async function AdminProductsPage({
   searchParams,
 }: {
-  searchParams: { q?: string; status?: string; trashed?: string; page?: string };
+  searchParams: { q?: string; status?: string; trashed?: string; cursor?: string };
 }) {
-  const page = Number(searchParams.page) || 1;
   const trashed = searchParams.trashed === "true";
-  const { products, total, totalPages } = await searchAdminProducts({
+  const cursorStack = parseCursorStack(searchParams.cursor);
+  const startAfter = cursorStack.length ? cursorStack[cursorStack.length - 1] : undefined;
+
+  const { products, total, hasMore } = await searchAdminProducts({
     q: searchParams.q,
     status: searchParams.status as any,
     trashed,
-    page,
+    startAfter,
   });
+
+  const lastProduct = products.length ? products[products.length - 1] : undefined;
+  const lastCursorValue: string | number | undefined = searchParams.q ? lastProduct?.nameLower : lastProduct?.updatedAt;
 
   const buildHref = (patch: Record<string, string | undefined>) => {
     const params = new URLSearchParams();
@@ -26,6 +52,14 @@ export default async function AdminProductsPage({
     const qs = params.toString();
     return qs ? `/admin/products?${qs}` : "/admin/products";
   };
+
+  const nextHref =
+    hasMore && lastProduct && lastCursorValue != null
+      ? buildHref({ cursor: serializeCursorStack([...cursorStack, { value: lastCursorValue, id: lastProduct.id }]) })
+      : undefined;
+  const prevHref = cursorStack.length
+    ? buildHref({ cursor: cursorStack.length > 1 ? serializeCursorStack(cursorStack.slice(0, -1)) : undefined })
+    : undefined;
 
   return (
     <div className="space-y-6">
@@ -63,7 +97,7 @@ export default async function AdminProductsPage({
         {["", "draft", "active", "archived"].map((s) => (
           <Link
             key={s}
-            href={buildHref({ status: s || undefined, page: undefined }) as any}
+            href={buildHref({ status: s || undefined, cursor: undefined }) as any}
             className={`px-3 py-1.5 text-sm rounded-full border ${
               (searchParams.status ?? "") === s
                 ? "bg-primary-6000 text-white border-primary-6000"
@@ -74,7 +108,7 @@ export default async function AdminProductsPage({
           </Link>
         ))}
         <Link
-          href={buildHref({ trashed: trashed ? undefined : "true", page: undefined }) as any}
+          href={buildHref({ trashed: trashed ? undefined : "true", cursor: undefined }) as any}
           className={`px-3 py-1.5 text-sm rounded-full border ${
             trashed ? "bg-red-600 text-white border-red-600" : "border-neutral-300 dark:border-neutral-700"
           }`}
@@ -127,19 +161,26 @@ export default async function AdminProductsPage({
         </table>
       </div>
 
-      {totalPages > 1 && (
-        <div className="flex items-center gap-2">
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-            <Link
-              key={p}
-              href={buildHref({ page: String(p) }) as any}
-              className={`w-9 h-9 flex items-center justify-center rounded-full text-sm ${
-                p === page ? "bg-primary-6000 text-white" : "border border-neutral-300 dark:border-neutral-700"
-              }`}
-            >
-              {p}
-            </Link>
-          ))}
+      {(nextHref || prevHref) && (
+        <div className="flex items-center justify-end gap-2">
+          <Link
+            href={(prevHref ?? "#") as any}
+            aria-disabled={!prevHref}
+            className={`px-3 py-1.5 rounded-lg border border-neutral-300 dark:border-neutral-700 text-sm font-medium ${
+              !prevHref ? "pointer-events-none opacity-40" : "hover:bg-neutral-100 dark:hover:bg-neutral-800"
+            }`}
+          >
+            Previous
+          </Link>
+          <Link
+            href={(nextHref ?? "#") as any}
+            aria-disabled={!nextHref}
+            className={`px-3 py-1.5 rounded-lg border border-neutral-300 dark:border-neutral-700 text-sm font-medium ${
+              !nextHref ? "pointer-events-none opacity-40" : "hover:bg-neutral-100 dark:hover:bg-neutral-800"
+            }`}
+          >
+            Next
+          </Link>
         </div>
       )}
     </div>

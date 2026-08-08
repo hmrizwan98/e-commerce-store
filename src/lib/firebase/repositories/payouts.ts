@@ -1,5 +1,5 @@
 import "server-only";
-import { AggregateField } from "firebase-admin/firestore";
+import { AggregateField, Timestamp } from "firebase-admin/firestore";
 import { adminDb, serverTimestamp } from "../admin";
 import { stripUndefined, docData } from "./utils";
 import { safeQuery } from "./safe-query";
@@ -78,6 +78,41 @@ export async function getAllPayouts(opts?: { status?: PayoutStatus; limit?: numb
     return snap.docs
       .map((doc) => docData<Payout>(doc))
       .filter((p): p is Payout => p !== null);
+  });
+}
+
+export interface PayoutsPage {
+  payouts: Payout[];
+  hasMore: boolean;
+}
+
+/**
+ * Cursor-paginated variant of getAllPayouts(), for the Super Admin finance page's payout
+ * list specifically - getAllPayouts() itself is left unchanged since
+ * getPlatformFinancialDashboard() (platform-finance-service.ts) also depends on its
+ * existing signature/return shape.
+ *
+ * Cursors by the `createdAt` VALUE (Timestamp.fromMillis(), the same conversion
+ * searchAdminOrders already uses for its date-range filters in orders.ts) rather than a
+ * Firestore DocumentSnapshot: a snapshot can't be serialized across a Server Component
+ * page's searchParams boundary between one request and the next, but a plain millisecond
+ * number can round-trip safely through the URL. Fetches `limit + 1` docs so `hasMore` is
+ * known from this same single query - no separate count query, no offset(), no
+ * full-collection read.
+ */
+export async function getPayoutsPage(opts?: { limit?: number; startAfterCreatedAt?: number }): Promise<PayoutsPage> {
+  return safeQuery("getPayoutsPage", { payouts: [], hasMore: false }, async () => {
+    const limit = opts?.limit ?? 50;
+    let query: FirebaseFirestore.Query = adminDb().collection(COLLECTION).orderBy("createdAt", "desc");
+    if (opts?.startAfterCreatedAt != null) {
+      query = query.startAfter(Timestamp.fromMillis(opts.startAfterCreatedAt));
+    }
+    const snap = await query.limit(limit + 1).get();
+    const payouts = snap.docs
+      .slice(0, limit)
+      .map((doc) => docData<Payout>(doc))
+      .filter((p): p is Payout => p !== null);
+    return { payouts, hasMore: snap.docs.length > limit };
   });
 }
 

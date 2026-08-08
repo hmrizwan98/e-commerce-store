@@ -6,7 +6,8 @@ import { safeQuery } from "./safe-query";
 import { getProductsByIds } from "./products";
 import { getCategories } from "./categories";
 import { getBrands } from "./brands";
-import { getCurrentTenant } from "@/lib/tenant/current";
+import { getCurrentTenant, requireCurrentTenant } from "@/lib/tenant/current";
+import { requestMemo } from "@/lib/request-cache";
 import type {
   AnalyticsEvent,
   AnalyticsEventType,
@@ -35,15 +36,17 @@ export interface DateRange {
 async function fetchEvents(range: DateRange): Promise<AnalyticsEvent[]> {
   const tenant = await getCurrentTenant();
   if (!tenant) return [];
-  return safeQuery("fetchEvents", [], async () => {
-    const snap = await adminDb()
-      .collection(EVENTS)
-      .where("storeId", "==", tenant.id)
-      .where("createdAt", ">=", range.start)
-      .where("createdAt", "<=", range.end)
-      .get();
-    return snap.docs.map((d) => docData<AnalyticsEvent>(d)).filter((e): e is AnalyticsEvent => e !== null);
-  });
+  return requestMemo(`fetchEvents:${tenant.id}:${range.start}:${range.end}`, () =>
+    safeQuery("fetchEvents", [], async () => {
+      const snap = await adminDb()
+        .collection(EVENTS)
+        .where("storeId", "==", tenant.id)
+        .where("createdAt", ">=", range.start)
+        .where("createdAt", "<=", range.end)
+        .get();
+      return snap.docs.map((d) => docData<AnalyticsEvent>(d)).filter((e): e is AnalyticsEvent => e !== null);
+    })
+  );
 }
 
 /**
@@ -70,14 +73,17 @@ async function fetchAllEventsOfType(type: AnalyticsEventType): Promise<Analytics
  * order read, rather than adminDb().collection(ORDERS) which points at an
  * always-empty root collection no order is ever written to. */
 async function fetchOrders(range: DateRange): Promise<Order[]> {
-  return safeQuery("fetchOrders", [], async () => {
-    const col = await tenantCollection(ORDERS);
-    const snap = await col
-      .where("createdAt", ">=", range.start)
-      .where("createdAt", "<=", range.end)
-      .get();
-    return snap.docs.map((d) => docData<Order>(d)).filter((o): o is Order => o !== null);
-  });
+  const tenant = await requireCurrentTenant();
+  return requestMemo(`fetchOrders:${tenant.id}:${range.start}:${range.end}`, () =>
+    safeQuery("fetchOrders", [], async () => {
+      const col = await tenantCollection(ORDERS);
+      const snap = await col
+        .where("createdAt", ">=", range.start)
+        .where("createdAt", "<=", range.end)
+        .get();
+      return snap.docs.map((d) => docData<Order>(d)).filter((o): o is Order => o !== null);
+    })
+  );
 }
 
 async function fetchAllOrders(): Promise<Order[]> {

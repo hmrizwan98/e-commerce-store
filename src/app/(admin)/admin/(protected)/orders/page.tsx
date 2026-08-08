@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { searchAdminOrders } from "@/lib/firebase/repositories/orders";
+import { searchAdminOrders, type AdminOrdersCursor } from "@/lib/firebase/repositories/orders";
 import type { OrderStatus, PaymentStatus } from "@/types/order";
 
 export const dynamic = "force-dynamic";
@@ -18,6 +18,27 @@ const STATUSES: OrderStatus[] = [
 
 const PAYMENT_STATUSES: PaymentStatus[] = ["unpaid", "proof_submitted", "paid", "failed", "refunded"];
 
+/** Stack of {value,id} cursors, one per page already visited - Next pushes the current
+ * page's last order onto it, Previous pops the last entry off. Plain, URL-safe values,
+ * not a serialized DocumentSnapshot. Cursor `value` may be a number (createdAt millis)
+ * or a string (orderNumber, when searching) - a leading "s:"/"n:" tag disambiguates. */
+function parseCursorStack(raw?: string): AdminOrdersCursor[] {
+  if (!raw) return [];
+  return raw
+    .split(",")
+    .map((entry) => {
+      const [tag, ...rest] = entry.split(":");
+      const [value, id] = rest.join(":").split("_");
+      if (!id) return null;
+      return { value: tag === "n" ? Number(value) : value, id };
+    })
+    .filter((c): c is AdminOrdersCursor => c !== null && (typeof c.value === "string" || Number.isFinite(c.value)));
+}
+
+function serializeCursorStack(stack: AdminOrdersCursor[]): string {
+  return stack.map((c) => `${typeof c.value === "number" ? "n" : "s"}:${c.value}_${c.id}`).join(",");
+}
+
 export default async function AdminOrdersPage({
   searchParams,
 }: {
@@ -27,18 +48,25 @@ export default async function AdminOrdersPage({
     search?: string;
     dateFrom?: string;
     dateTo?: string;
-    page?: string;
+    cursor?: string;
   };
 }) {
-  const page = Number(searchParams.page) || 1;
-  const { orders, total, totalPages } = await searchAdminOrders({
+  const cursorStack = parseCursorStack(searchParams.cursor);
+  const startAfter = cursorStack.length ? cursorStack[cursorStack.length - 1] : undefined;
+
+  const { orders, total, hasMore } = await searchAdminOrders({
     status: searchParams.status as OrderStatus | undefined,
     paymentStatus: searchParams.paymentStatus as PaymentStatus | undefined,
     search: searchParams.search,
     dateFrom: searchParams.dateFrom ? new Date(searchParams.dateFrom).getTime() : undefined,
     dateTo: searchParams.dateTo ? new Date(searchParams.dateTo).getTime() : undefined,
-    page,
+    startAfter,
   });
+
+  const lastOrder = orders.length ? orders[orders.length - 1] : undefined;
+  const lastCursorValue: string | number | undefined = searchParams.search
+    ? lastOrder?.orderNumber
+    : lastOrder?.createdAt;
 
   // Advanced Filters - preserves every active filter when building a new link
   // (status pill, payment pill, or pagination), same pattern as the Products
@@ -58,6 +86,14 @@ export default async function AdminOrdersPage({
     return qs ? `/admin/orders?${qs}` : "/admin/orders";
   };
 
+  const nextHref =
+    hasMore && lastOrder && lastCursorValue != null
+      ? buildHref({ cursor: serializeCursorStack([...cursorStack, { value: lastCursorValue, id: lastOrder.id }]) })
+      : undefined;
+  const prevHref = cursorStack.length
+    ? buildHref({ cursor: cursorStack.length > 1 ? serializeCursorStack(cursorStack.slice(0, -1)) : undefined })
+    : undefined;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -72,7 +108,7 @@ export default async function AdminOrdersPage({
 
       <div className="flex flex-wrap gap-2">
         <Link
-          href={buildHref({ status: undefined, page: undefined }) as any}
+          href={buildHref({ status: undefined, cursor: undefined }) as any}
           className={`px-3 py-1.5 text-sm rounded-full border ${
             !searchParams.status ? "bg-primary-6000 text-white border-primary-6000" : "border-neutral-300 dark:border-neutral-700"
           }`}
@@ -82,7 +118,7 @@ export default async function AdminOrdersPage({
         {STATUSES.map((s) => (
           <Link
             key={s}
-            href={buildHref({ status: s, page: undefined }) as any}
+            href={buildHref({ status: s, cursor: undefined }) as any}
             className={`px-3 py-1.5 text-sm rounded-full border capitalize ${
               searchParams.status === s
                 ? "bg-primary-6000 text-white border-primary-6000"
@@ -96,7 +132,7 @@ export default async function AdminOrdersPage({
 
       <div className="flex flex-wrap gap-2">
         <Link
-          href={buildHref({ paymentStatus: undefined, page: undefined }) as any}
+          href={buildHref({ paymentStatus: undefined, cursor: undefined }) as any}
           className={`px-3 py-1.5 text-sm rounded-full border ${
             !searchParams.paymentStatus ? "bg-primary-6000 text-white border-primary-6000" : "border-neutral-300 dark:border-neutral-700"
           }`}
@@ -106,7 +142,7 @@ export default async function AdminOrdersPage({
         {PAYMENT_STATUSES.map((s) => (
           <Link
             key={s}
-            href={buildHref({ paymentStatus: s, page: undefined }) as any}
+            href={buildHref({ paymentStatus: s, cursor: undefined }) as any}
             className={`px-3 py-1.5 text-sm rounded-full border capitalize ${
               searchParams.paymentStatus === s
                 ? "bg-primary-6000 text-white border-primary-6000"
@@ -187,19 +223,26 @@ export default async function AdminOrdersPage({
         </table>
       </div>
 
-      {totalPages > 1 && (
-        <div className="flex items-center gap-2">
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-            <Link
-              key={p}
-              href={buildHref({ page: String(p) }) as any}
-              className={`w-9 h-9 flex items-center justify-center rounded-full text-sm ${
-                p === page ? "bg-primary-6000 text-white" : "border border-neutral-300 dark:border-neutral-700"
-              }`}
-            >
-              {p}
-            </Link>
-          ))}
+      {(nextHref || prevHref) && (
+        <div className="flex items-center justify-end gap-2">
+          <Link
+            href={(prevHref ?? "#") as any}
+            aria-disabled={!prevHref}
+            className={`px-3 py-1.5 rounded-lg border border-neutral-300 dark:border-neutral-700 text-sm font-medium ${
+              !prevHref ? "pointer-events-none opacity-40" : "hover:bg-neutral-100 dark:hover:bg-neutral-800"
+            }`}
+          >
+            Previous
+          </Link>
+          <Link
+            href={(nextHref ?? "#") as any}
+            aria-disabled={!nextHref}
+            className={`px-3 py-1.5 rounded-lg border border-neutral-300 dark:border-neutral-700 text-sm font-medium ${
+              !nextHref ? "pointer-events-none opacity-40" : "hover:bg-neutral-100 dark:hover:bg-neutral-800"
+            }`}
+          >
+            Next
+          </Link>
         </div>
       )}
     </div>

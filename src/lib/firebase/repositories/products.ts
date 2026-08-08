@@ -1,4 +1,5 @@
 import "server-only";
+import { FieldPath, Timestamp } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase/admin";
 import { tenantCollection } from "@/lib/firebase/tenant-scope";
 import { docData } from "./utils";
@@ -322,61 +323,92 @@ export async function getProductById(id: string): Promise<Product | null> {
   return docData<Product>(doc);
 }
 
+export interface AdminProductsCursor {
+  /** nameLower (string) for the search branch, updatedAt millis (number) for the
+   * default branch - whichever field that branch actually sorts by. */
+  value: number | string;
+  id: string;
+}
+
 export interface AdminProductSearchParams {
   q?: string;
   status?: "draft" | "active" | "archived";
   categoryId?: string;
   brandId?: string;
   trashed?: boolean; // true = only isDeleted docs, false/undefined = only non-deleted
-  page?: number;
   pageSize?: number;
+  startAfter?: AdminProductsCursor;
 }
 
+export interface AdminProductSearchResult {
+  products: Product[];
+  total: number;
+  hasMore: boolean;
+}
+
+/**
+ * Cursor-paginated - startAfter(...) + limit(pageSize+1), never offset(). The two
+ * mutually-exclusive branches (search vs default) sort by different fields (nameLower
+ * asc vs updatedAt desc); neither is provably unique (many products can share a name or
+ * be updated in the same instant), so both add an explicit document-ID tiebreaker
+ * matching each branch's own sort direction - Firestore already appends `__name__` as an
+ * implicit final index component to every query, so this doesn't change what the
+ * existing indexes already support (verified empirically). Note: the `term + ""` range
+ * upper-bound below is the pre-existing behavior (exact-match only, not a "starts with"
+ * prefix search like this codebase's other search fields use) - preserved exactly as-is,
+ * not fixed here, since that's a pre-existing correctness question unrelated to this
+ * offset-to-cursor pagination change.
+ */
 export async function searchAdminProducts(
   params: AdminProductSearchParams
-): Promise<SearchProductsResult> {
+): Promise<AdminProductSearchResult> {
   const pageSize = params.pageSize ?? 20;
-  const page = Math.max(1, params.page ?? 1);
 
   const col = await tenantCollection(COLLECTION);
-  let query: FirebaseFirestore.Query = col
+  let baseQuery: FirebaseFirestore.Query = col
     .where("isDeleted", "==", Boolean(params.trashed));
 
   if (params.status) {
-    query = query.where("status", "==", params.status);
+    baseQuery = baseQuery.where("status", "==", params.status);
   }
   if (params.categoryId) {
-    query = query.where("categoryIds", "array-contains", params.categoryId);
+    baseQuery = baseQuery.where("categoryIds", "array-contains", params.categoryId);
   }
   if (params.brandId) {
-    query = query.where("brandId", "==", params.brandId);
+    baseQuery = baseQuery.where("brandId", "==", params.brandId);
   }
 
   const term = params.q?.trim().toLowerCase();
+  const isSearch = !!term;
   if (term) {
-    query = query
+    baseQuery = baseQuery
       .where("nameLower", ">=", term)
       .where("nameLower", "<=", term + "")
-      .orderBy("nameLower", "asc");
+      .orderBy("nameLower", "asc")
+      .orderBy(FieldPath.documentId(), "asc");
   } else {
-    query = query.orderBy("updatedAt", "desc");
+    baseQuery = baseQuery.orderBy("updatedAt", "desc").orderBy(FieldPath.documentId(), "desc");
   }
 
-  return safeQuery("searchAdminProducts", { products: [], total: 0, totalPages: 1 }, async () => {
-    const countSnap = await query.count().get();
+  return safeQuery("searchAdminProducts", { products: [], total: 0, hasMore: false }, async () => {
+    const countSnap = await baseQuery.count().get();
     const total = countSnap.data().count;
-    const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
-    const snap = await query
-      .offset((page - 1) * pageSize)
-      .limit(pageSize)
-      .get();
+    let pageQuery = baseQuery;
+    if (params.startAfter) {
+      const cursorValue = isSearch
+        ? params.startAfter.value
+        : Timestamp.fromMillis(params.startAfter.value as number);
+      pageQuery = pageQuery.startAfter(cursorValue, params.startAfter.id);
+    }
 
+    const snap = await pageQuery.limit(pageSize + 1).get();
     const products = snap.docs
+      .slice(0, pageSize)
       .map((doc) => docData<Product>(doc))
       .filter((p): p is Product => p !== null);
 
-    return { products, total, totalPages };
+    return { products, total, hasMore: snap.docs.length > pageSize };
   });
 }
 
@@ -386,6 +418,7 @@ export async function getInventoryProducts(): Promise<Product[]> {
     const snap = await col
       .where("isDeleted", "==", false)
       .where("trackInventory", "==", true)
+      .select("name", "sku", "stock", "lowStockThreshold")
       .get();
 
     return snap.docs

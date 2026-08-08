@@ -1,10 +1,13 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createPayoutRequest, updatePayoutStatusAction } from "./actions";
 import type { Payout, PayoutStatus } from "@/types/payout";
 import { PlusIcon, BanknotesIcon, CheckCircleIcon, XCircleIcon } from "@heroicons/react/24/outline";
+
+type FinanceHref = string | { pathname: string; query: Record<string, string> };
 
 const inputClass =
   "px-3.5 py-2 text-sm rounded-xl border border-neutral-300 dark:border-neutral-700 bg-neutral-50/50 dark:bg-neutral-950/50 text-neutral-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-6000/50 transition-all";
@@ -19,7 +22,9 @@ const NEXT_STATUS: Record<PayoutStatus, PayoutStatus | null> = {
 const PayoutManagementPanel: React.FC<{
   payouts: Payout[];
   stores: { id: string; name: string }[];
-}> = ({ payouts, stores }) => {
+  nextHref?: FinanceHref;
+  prevHref?: FinanceHref;
+}> = ({ payouts, stores, nextHref, prevHref }) => {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [storeId, setStoreId] = useState(stores[0]?.id ?? "");
@@ -127,6 +132,29 @@ const PayoutManagementPanel: React.FC<{
         })}
         {!payouts.length && <p className="text-xs text-neutral-500 py-4 text-center">No payout records found.</p>}
       </div>
+
+      {(nextHref || prevHref) && (
+        <div className="flex items-center justify-end gap-2 pt-2">
+          <Link
+            href={(prevHref ?? "#") as any}
+            aria-disabled={!prevHref}
+            className={`px-3 py-1.5 rounded-lg border border-neutral-300 dark:border-neutral-700 text-xs font-medium ${
+              !prevHref ? "pointer-events-none opacity-40" : "hover:bg-neutral-100 dark:hover:bg-neutral-800"
+            }`}
+          >
+            Previous
+          </Link>
+          <Link
+            href={(nextHref ?? "#") as any}
+            aria-disabled={!nextHref}
+            className={`px-3 py-1.5 rounded-lg border border-neutral-300 dark:border-neutral-700 text-xs font-medium ${
+              !nextHref ? "pointer-events-none opacity-40" : "hover:bg-neutral-100 dark:hover:bg-neutral-800"
+            }`}
+          >
+            Next
+          </Link>
+        </div>
+      )}
     </div>
   );
 };
