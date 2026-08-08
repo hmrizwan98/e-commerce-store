@@ -1,6 +1,6 @@
 import React from "react";
 import { getPlatformFinancialDashboard } from "@/lib/firebase/services/platform-finance-service";
-import { getStores } from "@/lib/firebase/repositories/stores";
+import { getStoreIdsAndNames } from "@/lib/firebase/repositories/stores";
 import { getAllPayouts } from "@/lib/firebase/repositories/payouts";
 import PayoutManagementPanel from "./PayoutManagementPanel";
 import {
@@ -21,7 +21,7 @@ function money(n: number): string {
 export default async function SuperAdminFinancePage() {
   const [dashboard, stores, payouts] = await Promise.all([
     getPlatformFinancialDashboard(),
-    getStores({ includeArchived: true }),
+    getStoreIdsAndNames(),
     getAllPayouts(),
   ]);
 
@@ -81,10 +81,7 @@ export default async function SuperAdminFinancePage() {
       </div>
 
       {/* Payout Management Panel */}
-      <PayoutManagementPanel
-        payouts={payouts}
-        stores={stores.map((s) => ({ id: s.id, name: s.name }))}
-      />
+      <PayoutManagementPanel payouts={payouts} stores={stores} />
     </div>
   );
 }

@@ -411,7 +411,11 @@ export async function getMostComparedProducts(range: DateRange, limit = 10) {
   return topProductsByEventType("compare_add", range, limit);
 }
 
-export async function getMostPurchasedProducts(range: DateRange, limit = 10): Promise<ProductStat[]> {
+/** Shared by getMostPurchasedProducts/getHighestRevenueProducts - returns every
+ * product sold in range, unranked and unsliced, so each caller can sort by its
+ * own metric (quantity vs revenue) without one caller's ranking truncating the
+ * set before the other ever sees it. */
+async function aggregateProductStats(range: DateRange): Promise<ProductStat[]> {
   const orders = await fetchOrders(range);
   const counts = new Map<string, { count: number; revenue: number; name: string }>();
   orders.forEach((o) =>
@@ -425,15 +429,22 @@ export async function getMostPurchasedProducts(range: DateRange, limit = 10): Pr
       }
     })
   );
-  return Array.from(counts.entries())
-    .map(([productId, v]) => ({ productId, name: v.name, count: v.count, revenue: v.revenue }))
-    .sort((a, b) => b.count - a.count)
-    .slice(0, limit);
+  return Array.from(counts.entries()).map(([productId, v]) => ({
+    productId,
+    name: v.name,
+    count: v.count,
+    revenue: v.revenue,
+  }));
+}
+
+export async function getMostPurchasedProducts(range: DateRange, limit = 10): Promise<ProductStat[]> {
+  const stats = await aggregateProductStats(range);
+  return stats.sort((a, b) => b.count - a.count).slice(0, limit);
 }
 
 export async function getHighestRevenueProducts(range: DateRange, limit = 10): Promise<ProductStat[]> {
-  const all = await getMostPurchasedProducts(range, 1000);
-  return all.sort((a, b) => (b.revenue ?? 0) - (a.revenue ?? 0)).slice(0, limit);
+  const stats = await aggregateProductStats(range);
+  return stats.sort((a, b) => (b.revenue ?? 0) - (a.revenue ?? 0)).slice(0, limit);
 }
 
 export interface CatalogHealth {

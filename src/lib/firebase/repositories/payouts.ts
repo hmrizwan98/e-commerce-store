@@ -1,4 +1,5 @@
 import "server-only";
+import { AggregateField } from "firebase-admin/firestore";
 import { adminDb, serverTimestamp } from "../admin";
 import { stripUndefined, docData } from "./utils";
 import { safeQuery } from "./safe-query";
@@ -34,6 +35,38 @@ export async function getPayoutsByStore(storeId: string, limit = 20): Promise<Pa
       .map((doc) => docData<Payout>(doc))
       .filter((p): p is Payout => p !== null);
   });
+}
+
+export interface PayoutTotals {
+  totalPaidOut: number;
+  pendingBalance: number;
+}
+
+/**
+ * Used only by getStoreFinancialSummary() (finance-service.ts), which previously derived
+ * these same two numbers by summing getPayoutsByStore()'s capped 20-most-recent list -
+ * correct only for a store with 20 or fewer payouts ever, silently wrong (understated
+ * totalPaidOut, therefore overstated availableBalance) the moment a store crosses 20
+ * payouts. Computed here via Firestore's native sum() aggregation across ALL of this
+ * store's payouts instead - identical totals, without capping which payouts are counted
+ * or reading any payout's actual field data.
+ */
+export async function getPayoutTotals(storeId: string): Promise<PayoutTotals> {
+  const col = adminDb().collection(COLLECTION).where("storeId", "==", storeId);
+  const [paidAgg, pendingAgg] = await Promise.all([
+    col
+      .where("status", "==", "paid" satisfies PayoutStatus)
+      .aggregate({ totalPaidOut: AggregateField.sum("amount") })
+      .get(),
+    col
+      .where("status", "in", ["pending", "processing"] satisfies PayoutStatus[])
+      .aggregate({ pendingBalance: AggregateField.sum("amount") })
+      .get(),
+  ]);
+  return {
+    totalPaidOut: paidAgg.data().totalPaidOut,
+    pendingBalance: pendingAgg.data().pendingBalance,
+  };
 }
 
 export async function getAllPayouts(opts?: { status?: PayoutStatus; limit?: number }): Promise<Payout[]> {

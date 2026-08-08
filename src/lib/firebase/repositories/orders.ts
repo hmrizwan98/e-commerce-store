@@ -1,5 +1,5 @@
 import "server-only";
-import { Timestamp } from "firebase-admin/firestore";
+import { AggregateField, Timestamp } from "firebase-admin/firestore";
 import { adminDb, serverTimestamp } from "../admin";
 import { tenantCollection } from "@/lib/firebase/tenant-scope";
 import { docData, stripUndefined } from "./utils";
@@ -264,22 +264,33 @@ export async function createGuestOrder(input: CreateGuestOrderInput): Promise<Cr
   return result;
 }
 
+/**
+ * Computed entirely via Firestore's native count()/sum() aggregation queries instead
+ * of transferring and reducing every order document - each of the three numbers below
+ * is the exact same value the old full-scan-then-reduce implementation produced
+ * (totalOrders = count of all order docs, totalRevenue = sum of `total` where
+ * paymentStatus=="paid", pendingOrders = count where orderStatus=="pending"), just
+ * computed server-side instead of document-by-document in memory.
+ */
 export async function getOrderStats(): Promise<{
   totalOrders: number;
   totalRevenue: number;
   pendingOrders: number;
 }> {
   const col = await tenantCollection(COLLECTION);
-  const snap = await col.get();
-  let totalRevenue = 0;
-  let pendingOrders = 0;
-  snap.docs.forEach((doc) => {
-    const order = docData<Order>(doc);
-    if (!order) return;
-    if (order.paymentStatus === "paid") totalRevenue += order.total;
-    if (order.orderStatus === "pending") pendingOrders += 1;
-  });
-  return { totalOrders: snap.size, totalRevenue, pendingOrders };
+  const [totalSnap, revenueSnap, pendingSnap] = await Promise.all([
+    col.count().get(),
+    col
+      .where("paymentStatus", "==", "paid")
+      .aggregate({ totalRevenue: AggregateField.sum("total") })
+      .get(),
+    col.where("orderStatus", "==", "pending").count().get(),
+  ]);
+  return {
+    totalOrders: totalSnap.data().count,
+    totalRevenue: revenueSnap.data().totalRevenue,
+    pendingOrders: pendingSnap.data().count,
+  };
 }
 
 export interface TopSellingProduct {
@@ -290,14 +301,18 @@ export interface TopSellingProduct {
 }
 
 /**
- * No aggregate query exists for "sum of items across order docs" in
- * Firestore, so this tallies in memory - acceptable at this store's order
- * volume (same trade-off as getOrderStats above); revisit with a
- * denormalized rollup doc if the orders collection grows very large.
+ * Firestore aggregation queries (count()/sum()/average()) have no "group by" -
+ * they can only reduce a whole query result to a single scalar, not a per-product
+ * breakdown - so a per-product tally still requires reading order documents (unlike
+ * getOrderStats above, which was converted to pure aggregation). `.select()` limits
+ * each transferred document to only the two fields actually read below
+ * (orderStatus, items), cutting payload/deserialization cost without changing which
+ * orders are read or how they're reduced - a genuine per-product rollup would need a
+ * denormalized aggregate doc, which is a schema change out of this phase's scope.
  */
 export async function getTopSellingProducts(limit = 5): Promise<TopSellingProduct[]> {
   const col = await tenantCollection(COLLECTION);
-  const snap = await col.get();
+  const snap = await col.select("orderStatus", "items").get();
   const byProduct = new Map<string, TopSellingProduct>();
 
   snap.docs.forEach((doc) => {
@@ -334,6 +349,7 @@ export async function getRevenueTrend(days = 14): Promise<RevenueTrendPoint[]> {
   const col = await tenantCollection(COLLECTION);
   const snap = await col
     .where("paymentStatus", "==", "paid")
+    .where("createdAt", ">=", since)
     .get();
 
   const byDay = new Map<string, number>();
@@ -344,7 +360,7 @@ export async function getRevenueTrend(days = 14): Promise<RevenueTrendPoint[]> {
 
   snap.docs.forEach((doc) => {
     const order = docData<Order>(doc);
-    if (!order?.createdAt || order.createdAt < since) return;
+    if (!order?.createdAt) return;
     const key = new Date(order.createdAt).toISOString().slice(0, 10);
     if (byDay.has(key)) byDay.set(key, (byDay.get(key) ?? 0) + order.total);
   });

@@ -1,5 +1,5 @@
 import "server-only";
-import { FieldValue } from "firebase-admin/firestore";
+import { AggregateField, FieldValue } from "firebase-admin/firestore";
 import { tenantCollection } from "@/lib/firebase/tenant-scope";
 import { stripUndefined, docData } from "./utils";
 import { safeQuery } from "./safe-query";
@@ -56,12 +56,39 @@ export async function getTransactionLedger(limit = 50): Promise<Transaction[]> {
     .filter((t): t is Transaction => t !== null);
 }
 
-/** Unbounded read used only for summing totals (Store Financial Summary) - deliberately
- * not limited like getTransactionLedger's display list above. */
-export async function getAllTransactionsForSummary(): Promise<Transaction[]> {
+export interface TransactionTotals {
+  grossSales: number;
+  refunds: number;
+  commission: number;
+}
+
+/**
+ * Used only by getStoreFinancialSummary() (finance-service.ts), which previously
+ * derived these same three numbers by transferring every transaction document and
+ * reducing them in memory (grossSales/commission summed over type=="payment",
+ * refunds summed over type=="refund"). Computed here via Firestore's native sum()
+ * aggregation instead - identical totals, without reading any transaction's actual
+ * field data. sum() skips documents where the summed field is missing/non-numeric,
+ * matching the old code's `t.commissionAmount ?? 0` treatment of optional fields.
+ */
+export async function getTransactionTotals(): Promise<TransactionTotals> {
   const col = await tenantCollection(COLLECTION);
-  const snap = await col.get();
-  return snap.docs
-    .map((doc) => docData<Transaction>(doc))
-    .filter((t): t is Transaction => t !== null);
+  const [paymentAgg, refundAgg] = await Promise.all([
+    col
+      .where("type", "==", "payment")
+      .aggregate({
+        grossSales: AggregateField.sum("amount"),
+        commission: AggregateField.sum("commissionAmount"),
+      })
+      .get(),
+    col
+      .where("type", "==", "refund")
+      .aggregate({ refunds: AggregateField.sum("amount") })
+      .get(),
+  ]);
+  return {
+    grossSales: paymentAgg.data().grossSales,
+    commission: paymentAgg.data().commission,
+    refunds: refundAgg.data().refunds,
+  };
 }

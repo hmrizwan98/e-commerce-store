@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { getStores } from "@/lib/firebase/repositories/stores";
+import { getStoreStatusCounts, getRecentStores } from "@/lib/firebase/repositories/stores";
 import { STATUS_BADGE_CLASS } from "@/lib/superadmin/status-badge";
 import {
   BuildingStorefrontIcon,
@@ -14,13 +14,10 @@ import {
 export const dynamic = "force-dynamic";
 
 export default async function SuperAdminDashboardPage() {
-  const allStores = await getStores({ includeArchived: true });
-  const liveStores = allStores.filter((s) => s.status !== "archived");
-  const activeCount = liveStores.filter((s) => s.status === "active").length;
-  const disabledCount = liveStores.filter((s) => s.status === "suspended").length;
-  const recentStores = liveStores.slice(0, 5);
+  const [{ total: totalLiveStores, active: activeCount, suspended: disabledCount }, recentStores] =
+    await Promise.all([getStoreStatusCounts(), getRecentStores(5)]);
 
-  const activePct = liveStores.length ? Math.round((activeCount / liveStores.length) * 100) : 0;
+  const activePct = totalLiveStores ? Math.round((activeCount / totalLiveStores) * 100) : 0;
 
   return (
     <div className="space-y-8">
@@ -62,7 +59,7 @@ export default async function SuperAdminDashboardPage() {
           </div>
           <div className="mt-3 flex items-baseline gap-2">
             <span className="text-3xl font-extrabold text-neutral-900 dark:text-white tracking-tight">
-              {liveStores.length}
+              {totalLiveStores}
             </span>
             <span className="text-xs font-mono text-neutral-400">stores provisioned</span>
           </div>
