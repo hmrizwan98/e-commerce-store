@@ -1,5 +1,6 @@
 import React from "react";
 import type { Metadata } from "next";
+import { SparklesIcon } from "@heroicons/react/24/outline";
 import BookDemoForm from "./BookDemoForm";
 
 export const metadata: Metadata = {
@@ -22,15 +23,22 @@ export const metadata: Metadata = {
 
 export default function BookDemoPage() {
   return (
-    <div className="container py-16 lg:py-24 max-w-xl mx-auto">
-      <h1 className="text-3xl sm:text-4xl font-semibold text-center">Book a demo</h1>
-      <p className="mt-4 text-center text-neutral-500 dark:text-neutral-400">
-        Tell us a bit about your business and we&apos;ll set up a walkthrough of Store Admin, Super Admin, and
-        everything in between.
-      </p>
-      <div className="mt-10">
-        <BookDemoForm />
+    <div className="container py-16 lg:py-24 max-w-2xl mx-auto space-y-10">
+      <div className="text-center space-y-3">
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-primary-6000/20 bg-primary-6000/10 text-primary-700 dark:text-primary-300 text-xs font-semibold">
+          <SparklesIcon className="w-4 h-4 text-primary-6000" />
+          <span>Live 1-on-1 Engineering Walkthrough</span>
+        </div>
+        <h1 className="text-4xl sm:text-5xl font-extrabold text-neutral-900 dark:text-white tracking-tight leading-tight">
+          Book a personalized demo
+        </h1>
+        <p className="text-base sm:text-lg text-neutral-600 dark:text-neutral-400 max-w-xl mx-auto leading-relaxed">
+          Tell us about your business and we&apos;ll set up a live walkthrough of Store Admin, Super Admin, themes, and commission structure.
+        </p>
       </div>
+
+      <BookDemoForm />
     </div>
   );
 }
+

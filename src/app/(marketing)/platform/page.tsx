@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { ArrowRightIcon, SparklesIcon } from "@heroicons/react/24/outline";
 import HeroSection from "@/components/marketing/HeroSection";
 import FeatureGrid from "@/components/marketing/FeatureGrid";
 import StatsBand from "@/components/marketing/StatsBand";
@@ -34,7 +35,7 @@ export const metadata: Metadata = {
 
 export default function PlatformHomePage() {
   return (
-    <div>
+    <div className="space-y-4">
       <HeroSection />
       <FeatureGrid />
       <StatsBand />
@@ -46,16 +47,31 @@ export default function PlatformHomePage() {
       <PricingTeaser />
       <CallSchedulingSection />
 
-      <section className="border-t border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950">
-        <div className="container py-20 lg:py-28 text-center max-w-2xl mx-auto">
-          <h2 className="text-2xl sm:text-3xl font-semibold">Ready to see it in action?</h2>
-          <p className="mt-4 text-neutral-500 dark:text-neutral-400">
-            Book a personalized demo and we&apos;ll walk you through Store Admin, Super Admin, and everything in
-            between.
+      {/* Bottom Conversion Hero Banner */}
+      <section className="relative overflow-hidden border-t border-neutral-200/80 dark:border-neutral-800/80 bg-neutral-900 text-white">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,_var(--tw-gradient-stops))] from-primary-6000/30 via-indigo-600/10 to-transparent pointer-events-none" />
+
+        <div className="container relative py-20 lg:py-28 text-center max-w-3xl mx-auto space-y-6">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-white border border-white/20">
+            <SparklesIcon className="w-4 h-4 text-amber-400" />
+            <span>Ready to transform your retail experience?</span>
+          </div>
+
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white leading-tight">
+            Ready to see the platform in action?
+          </h2>
+
+          <p className="text-base sm:text-lg text-neutral-300 max-w-xl mx-auto leading-relaxed">
+            Book a personalized 1-on-1 demo and we&apos;ll walk you through Store Admin, Super Admin, and everything in between.
           </p>
-          <div className="mt-8">
-            <Link href={"/book-demo" as any} className="px-6 py-3 rounded-full bg-primary-6000 text-white font-medium">
-              Book a Demo
+
+          <div className="pt-4">
+            <Link
+              href={"/book-demo" as any}
+              className="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-white text-neutral-900 font-extrabold text-base shadow-xl hover:bg-neutral-100 hover:-translate-y-0.5 transition-all"
+            >
+              <span>Book a Demo Now</span>
+              <ArrowRightIcon className="w-5 h-5" />
             </Link>
           </div>
         </div>
@@ -63,3 +79,4 @@ export default function PlatformHomePage() {
     </div>
   );
 }
+

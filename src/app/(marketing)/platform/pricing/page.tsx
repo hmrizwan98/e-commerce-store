@@ -1,7 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { CheckIcon } from "@heroicons/react/24/outline";
+import { CheckIcon, ArrowRightIcon, BanknotesIcon, ShieldCheckIcon } from "@heroicons/react/24/outline";
 
 export const metadata: Metadata = {
   title: "Pricing — Tradez Glint Platform",
@@ -22,69 +22,86 @@ export const metadata: Metadata = {
 };
 
 const INCLUDED = [
-  "Full Store Admin panel - products, orders, customers, finance, CMS",
+  "Full Store Admin panel — products, inventory, orders, CRM, finance & CMS",
   "Theme Builder with 4 production-ready starter themes",
-  "Homepage Builder and full CMS",
-  "Cloudinary-backed media pipeline for every image",
-  "Tenant-isolated data with enterprise security and audit logs",
-  "Fast, server-rendered hosting - no infrastructure to manage",
+  "Drag-and-configure Homepage Builder and full custom page builder",
+  "Cloudinary-backed media pipeline for every product & banner asset",
+  "Tenant-isolated Firestore data with role-based access & audit logs",
+  "Fast, server-rendered Next.js hosting — zero servers to configure",
 ];
 
-const NO_FEES = ["No setup fee", "No monthly fee", "No hidden charges"];
+const NO_FEES = ["Zero Setup Fee", "Zero Monthly Base Fee", "Zero Hidden Charges", "Zero Infrastructure Overhead"];
 
 export default function PricingPage() {
   return (
-    <div className="container py-16 lg:py-24">
-      <h1 className="text-3xl sm:text-4xl font-semibold text-center">Simple, commission-based pricing</h1>
-      <p className="mt-4 text-center text-neutral-500 dark:text-neutral-400 max-w-2xl mx-auto">
-        We don&apos;t charge a flat license fee to run your store. Instead, each store configures a commission rate
-        with us (percentage, fixed per order, or none) - so we only grow when your sales do. Final rates are
-        confirmed when you book a demo.
-      </p>
+    <div className="container py-16 lg:py-24 space-y-16 max-w-4xl mx-auto">
+      <div className="text-center space-y-4">
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 text-xs font-semibold">
+          <BanknotesIcon className="w-4 h-4 text-emerald-500" />
+          <span>Growth-Aligned Revenue Model</span>
+        </div>
+        <h1 className="text-4xl sm:text-5xl font-extrabold text-neutral-900 dark:text-white tracking-tight leading-tight">
+          Simple, commission-based pricing
+        </h1>
+        <p className="text-base sm:text-lg text-neutral-600 dark:text-neutral-400 max-w-2xl mx-auto leading-relaxed">
+          We don&apos;t charge a flat monthly license fee to run your store. Each store configures a commission model with us (percentage, fixed per order, or custom) — so we only succeed when your store sells.
+        </p>
+      </div>
 
-      <div className="mt-16 max-w-xl mx-auto rounded-2xl border border-neutral-200 dark:border-neutral-800 overflow-hidden">
-        <div className="p-8">
-          <h2 className="font-semibold text-lg mb-1">Everything, one plan</h2>
-          <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-6">
-            No feature-gated tiers. Every store gets the full platform.
-          </p>
+      <div className="relative rounded-3xl border border-neutral-200/80 dark:border-neutral-800/80 bg-white dark:bg-neutral-900 shadow-2xl overflow-hidden p-8 sm:p-12 space-y-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 pb-8 border-b border-neutral-200/60 dark:border-neutral-800/60">
+          <div>
+            <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-primary-6000/10 text-primary-6000 border border-primary-6000/20">
+              Complete Platform Plan
+            </span>
+            <h2 className="font-extrabold text-2xl text-neutral-900 dark:text-white mt-2 tracking-tight">Everything Included</h2>
+            <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">No feature-gated tiers or hidden add-ons.</p>
+          </div>
 
-          <div className="p-5 rounded-xl bg-primary-6000/5 border border-primary-6000/20 mb-6">
-            <div className="text-xl font-semibold text-primary-6000">Commission-based</div>
-            <div className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
-              Rate confirmed on your demo call
+          <div className="p-6 rounded-2xl bg-gradient-to-br from-primary-6000/10 via-indigo-500/10 to-transparent border border-primary-6000/20 text-center sm:text-right shrink-0">
+            <div className="text-2xl sm:text-3xl font-extrabold text-primary-6000 tracking-tight">Commission Model</div>
+            <div className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 mt-1">Tailored on your demo call</div>
+          </div>
+        </div>
+
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {NO_FEES.map((item) => (
+            <div key={item} className="px-3.5 py-2.5 rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-200/60 dark:border-neutral-800/60 flex items-center gap-2 text-xs font-bold text-neutral-800 dark:text-neutral-200">
+              <CheckIcon className="w-4 h-4 text-emerald-500 shrink-0" />
+              <span>{item}</span>
             </div>
-          </div>
+          ))}
+        </div>
 
-          <div className="flex flex-wrap gap-x-5 gap-y-2 mb-6 text-xs text-neutral-500 dark:text-neutral-400">
-            {NO_FEES.map((item) => (
-              <span key={item} className="flex items-center gap-1.5">
-                <CheckIcon className="w-3.5 h-3.5 text-primary-6000" />
-                {item}
-              </span>
-            ))}
-          </div>
-
-          <ul className="space-y-3 text-sm mb-8">
+        <div className="space-y-4">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 font-mono">
+            Included with every tenant
+          </h3>
+          <ul className="grid sm:grid-cols-2 gap-4 text-sm text-neutral-700 dark:text-neutral-300">
             {INCLUDED.map((item) => (
-              <li key={item} className="flex gap-2">
-                <CheckIcon className="w-5 h-5 text-primary-6000 flex-shrink-0" />
-                <span>{item}</span>
+              <li key={item} className="flex items-start gap-3">
+                <ShieldCheckIcon className="w-5 h-5 text-primary-6000 shrink-0 mt-0.5" />
+                <span className="leading-snug">{item}</span>
               </li>
             ))}
           </ul>
+        </div>
+
+        <div className="pt-4">
           <Link
             href={"/book-demo" as any}
-            className="block text-center px-6 py-3 rounded-full bg-primary-6000 text-white font-medium"
+            className="inline-flex items-center justify-center gap-2 w-full px-8 py-4 rounded-full bg-gradient-to-r from-primary-6000 via-indigo-600 to-indigo-700 text-white font-bold text-base shadow-xl shadow-primary-6000/25 hover:shadow-primary-6000/40 hover:-translate-y-0.5 transition-all"
           >
-            Book a Demo to Discuss Rates
+            <span>Book a Demo to Discuss Tailored Rates</span>
+            <ArrowRightIcon className="w-5 h-5" />
           </Link>
         </div>
       </div>
 
-      <p className="mt-10 text-center text-xs text-neutral-400">
-        This page describes our pricing model only - no billing or payment is collected here.
+      <p className="text-center text-xs text-neutral-400 font-medium">
+        This page describes our platform pricing model. Specific commercial terms are finalized during onboarding.
       </p>
     </div>
   );
 }
+

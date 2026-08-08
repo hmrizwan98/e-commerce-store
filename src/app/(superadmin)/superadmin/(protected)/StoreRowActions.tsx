@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { setStoreStatus, archiveStore, restoreStore, resetStoreAdminPassword } from "./actions";
 import type { StoreStatus } from "@/types/store";
+import { ArrowPathIcon, KeyIcon, LockClosedIcon, CheckBadgeIcon, ArchiveBoxIcon } from "@heroicons/react/24/outline";
 
 const StoreRowActions: React.FC<{ id: string; status: StoreStatus }> = ({ id, status }) => {
   const router = useRouter();
@@ -66,13 +67,19 @@ const StoreRowActions: React.FC<{ id: string; status: StoreStatus }> = ({ id, st
 
   if (resetResult) {
     return (
-      <div className="text-right text-xs space-y-1">
-        <div className="text-neutral-500">{resetResult.adminEmail}</div>
+      <div className="text-right text-xs space-y-1 bg-amber-500/10 p-2.5 rounded-xl border border-amber-500/30">
+        <div className="text-neutral-500 font-mono">{resetResult.adminEmail}</div>
         <div>
-          New password:{" "}
-          <code className="px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800">{resetResult.newPassword}</code>
+          Temp password:{" "}
+          <code className="px-1.5 py-0.5 rounded bg-amber-200 dark:bg-amber-900/60 font-mono font-bold text-amber-900 dark:text-amber-100">
+            {resetResult.newPassword}
+          </code>
         </div>
-        <button type="button" className="text-neutral-500 hover:underline" onClick={() => setResetResult(null)}>
+        <button
+          type="button"
+          className="text-amber-700 dark:text-amber-300 font-bold hover:underline"
+          onClick={() => setResetResult(null)}
+        >
           Done
         </button>
       </div>
@@ -81,49 +88,68 @@ const StoreRowActions: React.FC<{ id: string; status: StoreStatus }> = ({ id, st
 
   if (current === "archived") {
     return (
-      <div className="flex items-center justify-end gap-3">
+      <div className="flex items-center justify-end gap-2">
         <button
           type="button"
           disabled={isPending}
           onClick={handleRestore}
-          className="text-sm font-medium text-green-600 hover:underline disabled:opacity-50"
+          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-600 text-white font-bold text-xs hover:bg-emerald-700 disabled:opacity-50 transition-colors"
         >
-          Restore
+          <ArrowPathIcon className="w-3.5 h-3.5" />
+          <span>Restore</span>
         </button>
       </div>
     );
   }
 
   return (
-    <div className="flex items-center justify-end gap-3">
+    <div className="flex items-center justify-end gap-2">
       <button
         type="button"
         disabled={isPending}
         onClick={toggle}
-        className={`text-sm font-medium hover:underline disabled:opacity-50 ${
-          current === "active" ? "text-red-600" : "text-green-600"
+        className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold transition-all disabled:opacity-50 ${
+          current === "active"
+            ? "border border-amber-500/40 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10"
+            : "bg-emerald-600 text-white hover:bg-emerald-700"
         }`}
       >
-        {current === "active" ? "Suspend" : "Activate"}
+        {current === "active" ? (
+          <>
+            <LockClosedIcon className="w-3.5 h-3.5" />
+            <span>Suspend</span>
+          </>
+        ) : (
+          <>
+            <CheckBadgeIcon className="w-3.5 h-3.5" />
+            <span>Activate</span>
+          </>
+        )}
       </button>
+
       <button
         type="button"
         disabled={isPending}
         onClick={handleResetPassword}
-        className="text-sm font-medium hover:underline disabled:opacity-50"
+        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-neutral-300 dark:border-neutral-700 text-xs font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 disabled:opacity-50 transition-colors"
+        title="Reset Admin Password"
       >
-        Reset password
+        <KeyIcon className="w-3.5 h-3.5 text-neutral-400" />
+        <span className="hidden xl:inline">Reset Pass</span>
       </button>
+
       <button
         type="button"
         disabled={isPending}
         onClick={handleArchive}
-        className="text-sm font-medium text-red-600 hover:underline disabled:opacity-50"
+        className="p-1.5 rounded-lg text-neutral-400 hover:text-red-600 hover:bg-red-500/10 disabled:opacity-50 transition-colors"
+        title="Archive Store"
       >
-        Archive
+        <ArchiveBoxIcon className="w-4 h-4" />
       </button>
     </div>
   );
 };
 
 export default StoreRowActions;
+

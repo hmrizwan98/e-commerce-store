@@ -1,32 +1,31 @@
-"use client";
-
-import { motion } from "framer-motion";
+import React from "react";
 import { THEME_PRESETS } from "@/lib/themes/theme-presets";
 
-const STATS: { value: string; label: string }[] = [
-  { value: "Multi-tenant", label: "Full data isolation, one platform" },
-  { value: String(Object.keys(THEME_PRESETS).length), label: "Production-ready starter themes" },
-  { value: "2", label: "Dedicated admin panels: Store Admin & Super Admin" },
-  { value: "Commission-based", label: "No flat license fee" },
+const STATS: { value: string; label: string; sub?: string }[] = [
+  { value: "Multi-tenant", label: "Architecture", sub: "Full data isolation, per store" },
+  { value: String(Object.keys(THEME_PRESETS).length), label: "Production Themes", sub: "Included day one" },
+  { value: "2 Panels", label: "Admin Control", sub: "Dedicated Store & Super Admin" },
+  { value: "0 Flat Fees", label: "Growth Aligned", sub: "Pure commission model" },
 ];
 
 export default function StatsBand() {
   return (
-    <section className="border-y border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950">
-      <motion.div
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true, amount: 0.3 }}
-        transition={{ duration: 0.5 }}
-        className="container py-14 lg:py-16 grid grid-cols-2 lg:grid-cols-4 gap-8 text-center"
-      >
+    <section className="relative border-y border-neutral-200/80 dark:border-neutral-800/80 bg-neutral-900 text-white overflow-hidden">
+      {/* Background radial gradient */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary-6000/20 via-neutral-900 to-neutral-950 pointer-events-none" />
+
+      <div className="container relative py-14 lg:py-18 grid grid-cols-2 lg:grid-cols-4 gap-8 text-center divide-x-0 lg:divide-x divide-neutral-800">
         {STATS.map((stat) => (
-          <div key={stat.label}>
-            <div className="text-xl sm:text-2xl font-semibold text-primary-6000">{stat.value}</div>
-            <div className="mt-2 text-sm text-neutral-500 dark:text-neutral-400">{stat.label}</div>
+          <div key={stat.label} className="px-4 space-y-1.5">
+            <div className="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white via-neutral-100 to-neutral-300 font-mono tracking-tight">
+              {stat.value}
+            </div>
+            <div className="text-sm font-bold text-primary-400 tracking-wide">{stat.label}</div>
+            <div className="text-xs text-neutral-400 font-medium">{stat.sub}</div>
           </div>
         ))}
-      </motion.div>
+      </div>
     </section>
   );
 }
+

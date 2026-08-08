@@ -1,7 +1,4 @@
-"use client";
-
 import React from "react";
-import { motion } from "framer-motion";
 import {
   BuildingStorefrontIcon,
   ShieldCheckIcon,
@@ -72,32 +69,35 @@ const HIGHLIGHTS: Highlight[] = [
 
 function FeatureGrid() {
   return (
-    <section className="container pb-20 lg:pb-28">
-      <div className="text-center max-w-2xl mx-auto mb-12">
-        <h2 className="text-2xl sm:text-3xl font-semibold">Everything you need to run a store</h2>
+    <section className="container py-20 lg:py-28">
+      <div className="text-center max-w-2xl mx-auto mb-16 space-y-4">
+        <h2 className="text-3xl sm:text-4xl font-extrabold text-neutral-900 dark:text-white tracking-tight">
+          Everything you need to run a serious store
+        </h2>
+        <p className="text-base sm:text-lg text-neutral-600 dark:text-neutral-400">
+          Built from the ground up to give store owners full operational autonomy and platform operators total control.
+        </p>
       </div>
-      <motion.div
-        initial="hidden"
-        whileInView="show"
-        viewport={{ once: true, amount: 0.2 }}
-        variants={{ hidden: {}, show: { transition: { staggerChildren: 0.05 } } }}
-        className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6"
-      >
+
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {HIGHLIGHTS.map(({ icon: Icon, title, description }) => (
-          <motion.div
+          <div
             key={title}
-            variants={{ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0 } }}
-            transition={{ duration: 0.4 }}
-            className="p-6 rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900"
+            className="group relative p-6 sm:p-7 rounded-2xl border border-neutral-200/80 dark:border-neutral-800/80 bg-white/70 dark:bg-neutral-900/70 backdrop-blur-sm hover:border-primary-6000/40 hover:shadow-xl hover:shadow-primary-6000/5 hover:-translate-y-1 transition-all duration-200 flex flex-col justify-between"
           >
-            <Icon className="w-8 h-8 text-primary-6000 mb-4" />
-            <h3 className="font-semibold mb-2">{title}</h3>
-            <p className="text-sm text-neutral-500 dark:text-neutral-400">{description}</p>
-          </motion.div>
+            <div>
+              <div className="w-12 h-12 rounded-xl bg-primary-6000/10 dark:bg-primary-6000/20 text-primary-6000 flex items-center justify-center mb-5 group-hover:scale-110 group-hover:bg-primary-6000 group-hover:text-white transition-all">
+                <Icon className="w-6 h-6" />
+              </div>
+              <h3 className="font-bold text-lg text-neutral-900 dark:text-white mb-2 tracking-tight">{title}</h3>
+              <p className="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed">{description}</p>
+            </div>
+          </div>
         ))}
-      </motion.div>
+      </div>
     </section>
   );
 }
 
 export default React.memo(FeatureGrid);
+
