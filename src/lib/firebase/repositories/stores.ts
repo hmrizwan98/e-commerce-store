@@ -1,6 +1,8 @@
 import "server-only";
+import { FieldPath, Timestamp } from "firebase-admin/firestore";
 import { adminDb } from "../admin";
 import { docData } from "./utils";
+import { safeQuery } from "./safe-query";
 import type { Store, StoreStatus } from "@/types/store";
 
 /**
@@ -105,3 +107,76 @@ export async function searchStores(term: string): Promise<Store[]> {
     .map((doc) => docData<Store>(doc))
     .filter((s): s is Store => s !== null && s.status !== "archived");
 }
+
+export interface AdminStoresCursor {
+  /** createdAt millis (number) for default branch, nameLower (string) for search branch */
+  value: number | string;
+  id: string;
+}
+
+export interface AdminStoreSearchParams {
+  q?: string;
+  status?: StoreStatus | "all";
+  pageSize?: number;
+  startAfter?: AdminStoresCursor;
+}
+
+export interface AdminStoreSearchResult {
+  stores: Store[];
+  total: number;
+  hasMore: boolean;
+}
+
+/**
+ * Cursor-paginated variant for the Super Admin Stores Directory page.
+ * Avoids full-collection scans by pushing status filters into Firestore, counting total
+ * via count() aggregation, and fetching only `pageSize + 1` documents per page using cursors.
+ */
+export async function searchAdminStores(
+  params: AdminStoreSearchParams
+): Promise<AdminStoreSearchResult> {
+  const pageSize = params.pageSize ?? 20;
+
+  const col = adminDb().collection(COLLECTION);
+  let baseQuery: FirebaseFirestore.Query = col;
+
+  const term = params.q?.trim().toLowerCase();
+  const isSearch = !!term;
+
+  if (term) {
+    baseQuery = baseQuery
+      .where("nameLower", ">=", term)
+      .where("nameLower", "<=", term + "")
+      .orderBy("nameLower", "asc")
+      .orderBy(FieldPath.documentId(), "asc");
+  } else {
+    if (params.status && params.status !== "all") {
+      baseQuery = baseQuery.where("status", "==", params.status);
+    } else if (!params.status) {
+      baseQuery = baseQuery.where("status", "in", LIVE_STATUSES);
+    }
+    baseQuery = baseQuery.orderBy("createdAt", "desc").orderBy(FieldPath.documentId(), "desc");
+  }
+
+  return safeQuery("searchAdminStores", { stores: [], total: 0, hasMore: false }, async () => {
+    const countSnap = await baseQuery.count().get();
+    const total = countSnap.data().count;
+
+    let pageQuery = baseQuery;
+    if (params.startAfter) {
+      const cursorValue = isSearch
+        ? params.startAfter.value
+        : Timestamp.fromMillis(params.startAfter.value as number);
+      pageQuery = pageQuery.startAfter(cursorValue, params.startAfter.id);
+    }
+
+    const snap = await pageQuery.limit(pageSize + 1).get();
+    const stores = snap.docs
+      .slice(0, pageSize)
+      .map((doc) => docData<Store>(doc))
+      .filter((s): s is Store => s !== null);
+
+    return { stores, total, hasMore: snap.docs.length > pageSize };
+  });
+}
+

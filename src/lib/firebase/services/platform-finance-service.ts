@@ -2,7 +2,7 @@ import "server-only";
 import { AggregateField } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase/admin";
 import { docData } from "@/lib/firebase/repositories/utils";
-import { getStores } from "@/lib/firebase/repositories/stores";
+import { getStoreIdsAndNames, getStoreStatusCounts } from "@/lib/firebase/repositories/stores";
 import { getAllPayouts } from "@/lib/firebase/repositories/payouts";
 import type { Transaction } from "@/types/transaction";
 
@@ -38,15 +38,16 @@ const MONTH_START = () => {
  * queries have no "group by", so ranking stores by revenue still requires reading each payment
  * transaction's own storeId/amount. `.select("storeId","amount")` keeps that read to only the
  * two fields actually used here (excluding orderId/commissionAmount/method/status/note/
- * actorUid/createdAt from the transfer) - this part is intentionally left as a real document
- * read, not aggregation, because the grouping logic can't be expressed any other way without
- * a denormalized per-store rollup doc (a schema change outside this fix's scope).
+ * actorUid/createdAt from the transfer).
+ *
+ * Store names are fetched via getStoreIdsAndNames() (.select("name")), and active store count
+ * is fetched via getStoreStatusCounts() (.count() aggregation) - zero full store documents read.
  */
 export async function getPlatformFinancialDashboard(): Promise<PlatformFinancialDashboard> {
   const monthStart = MONTH_START();
   const paymentTransactions = adminDb().collectionGroup("transactions").where("type", "==", "payment");
 
-  const [totalsSnap, monthlySnap, paymentDocsSnap, stores, payouts] = await Promise.all([
+  const [totalsSnap, monthlySnap, paymentDocsSnap, storeIdsAndNames, statusCounts, payouts] = await Promise.all([
     paymentTransactions
       .aggregate({
         totalRevenue: AggregateField.sum("amount"),
@@ -58,11 +59,12 @@ export async function getPlatformFinancialDashboard(): Promise<PlatformFinancial
       .aggregate({ monthlyRevenue: AggregateField.sum("amount") })
       .get(),
     paymentTransactions.select("storeId", "amount").get(),
-    getStores({ includeArchived: true }),
+    getStoreIdsAndNames(),
+    getStoreStatusCounts(),
     getAllPayouts(),
   ]);
 
-  const storeNameById = new Map(stores.map((s) => [s.id, s.name]));
+  const storeNameById = new Map(storeIdsAndNames.map((s) => [s.id, s.name]));
   const revenueByStore = new Map<string, number>();
   paymentDocsSnap.docs.forEach((doc) => {
     const t = docData<Transaction>(doc);
@@ -70,10 +72,11 @@ export async function getPlatformFinancialDashboard(): Promise<PlatformFinancial
     revenueByStore.set(t.storeId, (revenueByStore.get(t.storeId) ?? 0) + t.amount);
   });
 
-  const activeStores = stores.filter((s) => s.status === "active").length;
+  const activeStores = statusCounts.active;
   const pendingPayouts = payouts
     .filter((p) => p.status === "pending" || p.status === "processing")
     .reduce((s, p) => s + p.amount, 0);
+
 
   const topStores: TopStore[] = Array.from(revenueByStore.entries())
     .map(([storeId, revenue]) => ({ storeId, storeName: storeNameById.get(storeId) ?? storeId, revenue }))

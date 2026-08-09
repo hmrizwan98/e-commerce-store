@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { getStores, searchStores } from "@/lib/firebase/repositories/stores";
+import { searchAdminStores, type AdminStoresCursor } from "@/lib/firebase/repositories/stores";
 import { DEFAULT_THEME } from "@/lib/firebase/repositories/themes";
 import { STATUS_BADGE_CLASS } from "@/lib/superadmin/status-badge";
 import StoreRowActions from "../StoreRowActions";
@@ -12,10 +12,27 @@ export const dynamic = "force-dynamic";
 const PAGE_SIZE = 20;
 type StatusFilter = StoreStatus | "all";
 
+function parseCursorStack(raw?: string): AdminStoresCursor[] {
+  if (!raw) return [];
+  return raw
+    .split(",")
+    .map((entry) => {
+      const [tag, ...rest] = entry.split(":");
+      const [value, id] = rest.join(":").split("_");
+      if (!id) return null;
+      return { value: tag === "n" ? Number(value) : value, id };
+    })
+    .filter((c): c is AdminStoresCursor => c !== null && (typeof c.value === "string" || Number.isFinite(c.value)));
+}
+
+function serializeCursorStack(stack: AdminStoresCursor[]): string {
+  return stack.map((c) => `${typeof c.value === "number" ? "n" : "s"}:${c.value}_${c.id}`).join(",");
+}
+
 export default async function SuperAdminStoresPage({
   searchParams,
 }: {
-  searchParams: { q?: string; status?: string; page?: string };
+  searchParams: { q?: string; status?: string; cursor?: string };
 }) {
   const q = searchParams.q?.trim() ?? "";
   const statusFilter = (["active", "suspended", "archived", "all"] as const).includes(
@@ -23,17 +40,36 @@ export default async function SuperAdminStoresPage({
   )
     ? (searchParams.status as StatusFilter)
     : undefined;
-  const page = Math.max(1, Number(searchParams.page) || 1);
 
-  const allStores = q ? await searchStores(q) : await getStores({ includeArchived: true });
-  const stores = allStores.filter((s) => {
-    if (statusFilter === "all") return true;
-    if (statusFilter) return s.status === statusFilter;
-    return s.status !== "archived";
+  const cursorStack = parseCursorStack(searchParams.cursor);
+  const startAfter = cursorStack.length ? cursorStack[cursorStack.length - 1] : undefined;
+
+  const { stores, total, hasMore } = await searchAdminStores({
+    q,
+    status: statusFilter,
+    startAfter,
+    pageSize: PAGE_SIZE,
   });
 
-  const totalPages = Math.max(1, Math.ceil(stores.length / PAGE_SIZE));
-  const pageStores = stores.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const lastStore = stores.length ? stores[stores.length - 1] : undefined;
+  const lastCursorValue: string | number | undefined = q ? lastStore?.nameLower : lastStore?.createdAt;
+
+  const buildHref = (patch: Record<string, string | undefined>) => {
+    const params = new URLSearchParams();
+    const merged = { q: searchParams.q, status: searchParams.status, ...patch };
+    Object.entries(merged).forEach(([k, v]) => v && params.set(k, v));
+    const qs = params.toString();
+    return qs ? `/superadmin/stores?${qs}` : "/superadmin/stores";
+  };
+
+  const nextHref =
+    hasMore && lastStore && lastCursorValue != null
+      ? buildHref({ cursor: serializeCursorStack([...cursorStack, { value: lastCursorValue, id: lastStore.id }]) })
+      : undefined;
+
+  const prevHref = cursorStack.length
+    ? buildHref({ cursor: serializeCursorStack(cursorStack.slice(0, -1)) || undefined })
+    : undefined;
 
   return (
     <div className="space-y-6">
@@ -41,7 +77,7 @@ export default async function SuperAdminStoresPage({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-extrabold text-neutral-900 dark:text-white tracking-tight">
-            Store Directory <span className="text-sm font-mono text-neutral-500 font-normal">({stores.length})</span>
+            Store Directory <span className="text-sm font-mono text-neutral-500 font-normal">({total})</span>
           </h1>
           <p className="text-xs text-neutral-500">Manage tenant storefronts, access levels, and domain settings</p>
         </div>
@@ -109,7 +145,7 @@ export default async function SuperAdminStoresPage({
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800/80">
-              {pageStores.map((store) => (
+              {stores.map((store) => (
                 <tr key={store.id} className="hover:bg-neutral-50/60 dark:hover:bg-neutral-900/60 transition-colors">
                   <td className="p-4 pl-6">
                     <Link
@@ -142,7 +178,7 @@ export default async function SuperAdminStoresPage({
                   </td>
                 </tr>
               ))}
-              {!pageStores.length && (
+              {!stores.length && (
                 <tr>
                   <td colSpan={8} className="p-12 text-center text-neutral-500 space-y-2">
                     <p className="font-semibold text-base text-neutral-700 dark:text-neutral-300">No stores found</p>
@@ -158,26 +194,26 @@ export default async function SuperAdminStoresPage({
       </div>
 
       {/* Pagination Footer */}
-      {totalPages > 1 && (
+      {(hasMore || cursorStack.length > 0) && (
         <div className="flex items-center justify-between px-4 py-3 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800/80 text-xs font-mono">
           <span className="text-neutral-500">
-            Page {page} of {totalPages}
+            Page {cursorStack.length + 1} ({total} total)
           </span>
           <div className="flex items-center gap-2">
             <Link
-              href={{ pathname: "/superadmin/stores", query: { q, status: statusFilter, page: page - 1 } } as any}
-              aria-disabled={page <= 1}
+              href={(prevHref ?? "#") as any}
+              aria-disabled={!prevHref}
               className={`px-3 py-1.5 rounded-lg border border-neutral-300 dark:border-neutral-700 font-medium ${
-                page <= 1 ? "pointer-events-none opacity-40" : "hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                !prevHref ? "pointer-events-none opacity-40" : "hover:bg-neutral-100 dark:hover:bg-neutral-800"
               }`}
             >
               Previous
             </Link>
             <Link
-              href={{ pathname: "/superadmin/stores", query: { q, status: statusFilter, page: page + 1 } } as any}
-              aria-disabled={page >= totalPages}
+              href={(nextHref ?? "#") as any}
+              aria-disabled={!nextHref}
               className={`px-3 py-1.5 rounded-lg border border-neutral-300 dark:border-neutral-700 font-medium ${
-                page >= totalPages ? "pointer-events-none opacity-40" : "hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                !nextHref ? "pointer-events-none opacity-40" : "hover:bg-neutral-100 dark:hover:bg-neutral-800"
               }`}
             >
               Next
@@ -188,4 +224,5 @@ export default async function SuperAdminStoresPage({
     </div>
   );
 }
+
 

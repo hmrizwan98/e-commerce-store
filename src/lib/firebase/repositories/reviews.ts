@@ -44,15 +44,57 @@ export async function getReviewsByUserId(userId: string, limit = 50): Promise<Re
   });
 }
 
-// --- Admin ---
+/** K-way merge helper to combine sorted chunk arrays into top `limit` items (newest-first, stable tiebreaker). */
+function kWayMergeReviews(chunkResults: Review[][], limit = 100): Review[] {
+
+  const pointers = new Array(chunkResults.length).fill(0);
+  const result: Review[] = [];
+
+  while (result.length < limit) {
+    let bestChunkIndex = -1;
+    let bestReview: Review | null = null;
+
+    for (let i = 0; i < chunkResults.length; i++) {
+      const pointer = pointers[i];
+      if (pointer < chunkResults[i].length) {
+        const candidate = chunkResults[i][pointer];
+        if (!bestReview) {
+          bestReview = candidate;
+          bestChunkIndex = i;
+        } else {
+          const candidateTime = candidate.createdAt ?? 0;
+          const bestTime = bestReview.createdAt ?? 0;
+          if (candidateTime > bestTime) {
+            bestReview = candidate;
+            bestChunkIndex = i;
+          } else if (candidateTime === bestTime && candidate.id.localeCompare(bestReview.id) > 0) {
+            bestReview = candidate;
+            bestChunkIndex = i;
+          }
+        }
+      }
+    }
+
+    if (bestChunkIndex === -1 || !bestReview) {
+      break; // All chunks exhausted
+    }
+
+    result.push(bestReview);
+    pointers[bestChunkIndex]++;
+  }
+
+  return result;
+}
 
 /**
  * `reviews` is root-level with no `storeId` field, so the only way to scope it to the
  * current tenant is the same indirect productId join `deleteReviewsForProducts()`
  * (superadmin actions.ts) already uses for store deletion: resolve this tenant's own
  * product IDs (a `.select()`-only query, no product data pulled), then query reviews by
- * `productId in [...]` in chunks of <=30 (Firestore's `in` limit). Without this, every
- * store's reviews were mixed together - see the fixed cross-tenant leak this replaces.
+ * `productId in [...]` in chunks of <=30 (Firestore's `in` limit).
+ *
+ * Optimized to limit each chunk query to 100 newest items and k-way merge results,
+ * avoiding over-reading thousands of historical reviews when only top 100 are returned.
  */
 export async function getAllReviewsForAdmin(status?: ReviewStatus): Promise<Review[]> {
   return safeQuery("getAllReviewsForAdmin", [], async () => {
@@ -68,20 +110,39 @@ export async function getAllReviewsForAdmin(status?: ReviewStatus): Promise<Revi
     }
 
     const snapshots = await Promise.all(
-      chunks.map((chunk) => {
-        let query: FirebaseFirestore.Query = adminDb().collection(COLLECTION).where("productId", "in", chunk);
+      chunks.map(async (chunk) => {
+        let query: FirebaseFirestore.Query = adminDb()
+          .collection(COLLECTION)
+          .where("productId", "in", chunk);
+
         if (status) {
-          query = query.where("status", "==", status);
+          query = query.where("status", "==", status).orderBy("createdAt", "desc").limit(100);
         }
-        return query.get();
+
+        try {
+          if (!status) {
+            query = query.orderBy("createdAt", "desc").limit(100);
+          }
+          return await query.get();
+        } catch (err: any) {
+          if (!status && err?.code === 9) {
+            // Fallback if (productId, createdAt) index is missing in local environment
+            const fallbackQuery = adminDb().collection(COLLECTION).where("productId", "in", chunk);
+            return await fallbackQuery.get();
+          }
+          throw err;
+        }
       })
     );
 
-    return snapshots
-      .flatMap((snap) => snap.docs)
-      .map((doc) => docData<Review>(doc))
-      .filter((r): r is Review => r !== null)
-      .sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0))
-      .slice(0, 100);
+    const chunkReviews = snapshots.map((snap) =>
+      snap.docs
+        .map((doc) => docData<Review>(doc))
+        .filter((r): r is Review => r !== null)
+        .sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0) || b.id.localeCompare(a.id))
+    );
+
+    return kWayMergeReviews(chunkReviews, 100);
   });
 }
+

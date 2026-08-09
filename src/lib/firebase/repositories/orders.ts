@@ -378,7 +378,10 @@ export async function getRevenueTrend(days = 14): Promise<RevenueTrendPoint[]> {
   const snap = await col
     .where("paymentStatus", "==", "paid")
     .where("createdAt", ">=", since)
+    .orderBy("createdAt", "desc")
+    .select("createdAt", "total")
     .get();
+
 
   const byDay = new Map<string, number>();
   for (let i = 0; i < days; i++) {
