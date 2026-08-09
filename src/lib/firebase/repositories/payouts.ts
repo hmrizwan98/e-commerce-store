@@ -81,6 +81,39 @@ export async function getAllPayouts(opts?: { status?: PayoutStatus; limit?: numb
   });
 }
 
+/**
+ * Used by getPlatformFinancialDashboard() (platform-finance-service.ts), which previously
+ * derived this same number by summing getAllPayouts()'s capped-at-50, platform-wide list -
+ * correct only while the platform has 50 or fewer payouts ever, silently wrong (understated)
+ * the moment it crosses 50, the exact same class of bug getPayoutTotals() above already
+ * fixed for the per-store case. Computed here via Firestore's native sum() aggregation
+ * across ALL matching payouts instead - no cap, no document data transferred.
+ *
+ * Needs a new composite index ({status, amount}, no storeId) not yet deployed as of this
+ * change - falls back to the previous capped-list computation on a missing-index error
+ * (same fallback-on-FAILED_PRECONDITION shape getAllReviewsForAdmin() already uses in
+ * reviews.ts), so this doesn't regress from "wrong beyond 50" to "broken" in the meantime,
+ * and self-upgrades to the correct value the moment the index finishes deploying.
+ */
+export async function getPendingPayoutsTotal(): Promise<number> {
+  const col = adminDb().collection(COLLECTION).where("status", "in", ["pending", "processing"] satisfies PayoutStatus[]);
+  try {
+    const snap = await col.aggregate({ pendingPayouts: AggregateField.sum("amount") }).get();
+    return snap.data().pendingPayouts;
+  } catch (err: any) {
+    if (err?.code !== 9) throw err;
+    console.error(
+      "[getPendingPayoutsTotal] aggregation index missing/building, falling back to capped computation",
+      err
+    );
+    const fallbackSnap = await adminDb().collection(COLLECTION).orderBy("createdAt", "desc").limit(50).get();
+    return fallbackSnap.docs.reduce((sum, doc) => {
+      const data = doc.data();
+      return data.status === "pending" || data.status === "processing" ? sum + (data.amount ?? 0) : sum;
+    }, 0);
+  }
+}
+
 export interface PayoutsPage {
   payouts: Payout[];
   hasMore: boolean;

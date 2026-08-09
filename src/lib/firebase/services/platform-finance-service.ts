@@ -3,7 +3,7 @@ import { AggregateField } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase/admin";
 import { docData } from "@/lib/firebase/repositories/utils";
 import { getStoreIdsAndNames, getStoreStatusCounts } from "@/lib/firebase/repositories/stores";
-import { getAllPayouts } from "@/lib/firebase/repositories/payouts";
+import { getPendingPayoutsTotal } from "@/lib/firebase/repositories/payouts";
 import type { Transaction } from "@/types/transaction";
 
 export interface TopStore {
@@ -47,7 +47,7 @@ export async function getPlatformFinancialDashboard(): Promise<PlatformFinancial
   const monthStart = MONTH_START();
   const paymentTransactions = adminDb().collectionGroup("transactions").where("type", "==", "payment");
 
-  const [totalsSnap, monthlySnap, paymentDocsSnap, storeIdsAndNames, statusCounts, payouts] = await Promise.all([
+  const [totalsSnap, monthlySnap, paymentDocsSnap, storeIdsAndNames, statusCounts, pendingPayouts] = await Promise.all([
     paymentTransactions
       .aggregate({
         totalRevenue: AggregateField.sum("amount"),
@@ -61,7 +61,7 @@ export async function getPlatformFinancialDashboard(): Promise<PlatformFinancial
     paymentTransactions.select("storeId", "amount").get(),
     getStoreIdsAndNames(),
     getStoreStatusCounts(),
-    getAllPayouts(),
+    getPendingPayoutsTotal(),
   ]);
 
   const storeNameById = new Map(storeIdsAndNames.map((s) => [s.id, s.name]));
@@ -73,10 +73,6 @@ export async function getPlatformFinancialDashboard(): Promise<PlatformFinancial
   });
 
   const activeStores = statusCounts.active;
-  const pendingPayouts = payouts
-    .filter((p) => p.status === "pending" || p.status === "processing")
-    .reduce((s, p) => s + p.amount, 0);
-
 
   const topStores: TopStore[] = Array.from(revenueByStore.entries())
     .map(([storeId, revenue]) => ({ storeId, storeName: storeNameById.get(storeId) ?? storeId, revenue }))

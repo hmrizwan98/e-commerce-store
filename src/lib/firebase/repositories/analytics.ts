@@ -63,6 +63,7 @@ async function fetchAllEventsOfType(type: AnalyticsEventType): Promise<Analytics
       .collection(EVENTS)
       .where("storeId", "==", tenant.id)
       .where("type", "==", type)
+      .select("productId")
       .get();
     return snap.docs.map((d) => docData<AnalyticsEvent>(d)).filter((e): e is AnalyticsEvent => e !== null);
   });
@@ -89,7 +90,9 @@ async function fetchOrders(range: DateRange): Promise<Order[]> {
 async function fetchAllOrders(): Promise<Order[]> {
   return safeQuery("fetchAllOrders", [], async () => {
     const col = await tenantCollection(ORDERS);
-    const snap = await col.get();
+    const snap = await col
+      .select("guestEmail", "userId", "total", "createdAt", "guestName", "items")
+      .get();
     return snap.docs.map((d) => docData<Order>(d)).filter((o): o is Order => o !== null);
   });
 }
@@ -470,6 +473,7 @@ export async function getCatalogHealth(): Promise<CatalogHealth> {
       const snap = await col
         .where("isDeleted", "==", false)
         .where("status", "==", "active")
+        .select("name")
         .get();
       return snap.docs.map((d) => ({ productId: d.id, name: (d.data().name as string) ?? "(unnamed)" }));
     }),
