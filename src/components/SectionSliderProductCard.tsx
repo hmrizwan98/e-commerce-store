@@ -4,10 +4,11 @@ import React, { FC, useEffect, useId, useRef, useState } from "react";
 import Heading from "@/components/Heading/Heading";
 // @ts-ignore
 import Glide from "@glidejs/glide/dist/glide.esm";
-import ProductCard from "./ProductCard";
+import ThemeProductCardAdapter from "./theme/ThemeProductCardAdapter";
 import ButtonSecondary from "@/shared/Button/ButtonSecondary";
 import type { Route } from "@/routers/types";
 import type { Product } from "@/types/product";
+import type { ProductCardThemeConfig } from "@/lib/theme/theme-types";
 
 export interface SectionSliderProductCardProps {
   className?: string;
@@ -19,6 +20,7 @@ export interface SectionSliderProductCardProps {
   data?: Product[];
   viewAllText?: string;
   viewAllHref?: string;
+  productCardSettings?: ProductCardThemeConfig;
 }
 
 const SectionSliderProductCard: FC<SectionSliderProductCardProps> = ({
@@ -31,6 +33,7 @@ const SectionSliderProductCard: FC<SectionSliderProductCardProps> = ({
   data = [],
   viewAllText,
   viewAllHref,
+  productCardSettings,
 }) => {
   const sliderRef = useRef(null);
 
@@ -90,7 +93,7 @@ const SectionSliderProductCard: FC<SectionSliderProductCardProps> = ({
           <ul className="glide__slides">
             {data.map((item, index) => (
               <li key={index} className={`glide__slide ${itemClassName}`}>
-                <ProductCard data={item} />
+                <ThemeProductCardAdapter data={item} productCardSettings={productCardSettings} />
               </li>
             ))}
           </ul>

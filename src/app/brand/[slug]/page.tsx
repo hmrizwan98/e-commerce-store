@@ -3,9 +3,10 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Pagination from "@/shared/Pagination/Pagination";
-import ProductCard from "@/components/ProductCard";
+import ThemeProductCardAdapter from "@/components/theme/ThemeProductCardAdapter";
 import { getBrandBySlug } from "@/lib/firebase/repositories/brands";
 import { searchProducts } from "@/lib/firebase/repositories/products";
+import { getActiveThemeConfig } from "@/lib/theme/theme-repository";
 import {
   parseProductSearchParams,
   buildPageHref,
@@ -42,10 +43,10 @@ const PageBrand = async ({
   }
 
   const filterParams = parseProductSearchParams(searchParams);
-  const { products, totalPages } = await searchProducts({
-    ...filterParams,
-    brand: brand.id,
-  });
+  const [{ products, totalPages }, theme] = await Promise.all([
+    searchProducts({ ...filterParams, brand: brand.id }),
+    getActiveThemeConfig(),
+  ]);
 
   return (
     <div className="nc-PageBrand">
@@ -85,7 +86,7 @@ const PageBrand = async ({
           <main>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-8 gap-y-10 mt-8 lg:mt-10">
               {products.map((item) => (
-                <ProductCard data={item} key={item.id} />
+                <ThemeProductCardAdapter data={item} productCardSettings={theme.productCard} key={item.id} />
               ))}
             </div>
             {!products.length && (

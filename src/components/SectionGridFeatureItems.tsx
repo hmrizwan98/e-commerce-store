@@ -1,6 +1,7 @@
-import React, { FC } from "react";
+import React from "react";
 import HeaderFilterSection from "@/components/HeaderFilterSection";
-import ProductCard from "@/components/ProductCard";
+import ThemeProductCardAdapter from "@/components/theme/ThemeProductCardAdapter";
+import { getActiveThemeConfig } from "@/lib/theme/theme-repository";
 import type { Product } from "@/types/product";
 
 //
@@ -8,9 +9,11 @@ export interface SectionGridFeatureItemsProps {
   data?: Product[];
 }
 
-const SectionGridFeatureItems: FC<SectionGridFeatureItemsProps> = ({
+async function SectionGridFeatureItems({
   data = [],
-}) => {
+}: SectionGridFeatureItemsProps) {
+  const theme = await getActiveThemeConfig();
+
   return (
     <div className="nc-SectionGridFeatureItems relative">
       <HeaderFilterSection />
@@ -18,7 +21,7 @@ const SectionGridFeatureItems: FC<SectionGridFeatureItemsProps> = ({
         className={`grid gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 `}
       >
         {data.map((item) => (
-          <ProductCard data={item} key={item.id} />
+          <ThemeProductCardAdapter data={item} productCardSettings={theme.productCard} key={item.id} />
         ))}
       </div>
     </div>

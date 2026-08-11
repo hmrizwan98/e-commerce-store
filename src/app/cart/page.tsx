@@ -1,17 +1,19 @@
 import { getShippingSettings, getGeneralSettings } from "@/lib/firebase/repositories/site-settings";
-import CartClient from "./CartClient";
+import { getActiveThemeConfig } from "@/lib/theme/theme-repository";
+import ThemeCartAdapter from "@/components/theme/ThemeCartAdapter";
 
 export const dynamic = "force-dynamic";
 
 const CartPage = async () => {
-  const [shipping, general] = await Promise.all([getShippingSettings(), getGeneralSettings()]);
+  const [shipping, general, theme] = await Promise.all([getShippingSettings(), getGeneralSettings(), getActiveThemeConfig()]);
 
   return (
-    <CartClient
+    <ThemeCartAdapter
       shippingFlatRate={shipping.flatRate}
       freeShippingThreshold={shipping.freeShippingThreshold}
       taxRatePercent={general.taxRatePercent}
       taxInclusive={general.taxInclusive}
+      cartSettings={theme.cart}
     />
   );
 };

@@ -119,6 +119,9 @@ export default async function RootLayout({
           footerSettings={theme.footer}
           storeName={general.storeName}
           tenantId={tenantId ?? ""}
+          popupConfig={(theme as any).popup}
+          themePresetId={(theme as any).presetId}
+          cartSettings={(theme as any).cart}
         >
           {suspended ? (
             <div className="flex min-h-[60vh] flex-col items-center justify-center gap-2 px-6 text-center">

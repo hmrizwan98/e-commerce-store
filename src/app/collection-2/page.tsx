@@ -1,10 +1,11 @@
 import React from "react";
 import SectionSliderCollections from "@/components/SectionSliderLargeProduct";
 import SectionPromo1 from "@/components/SectionPromo1";
-import ProductCard from "@/components/ProductCard";
+import ThemeProductCardAdapter from "@/components/theme/ThemeProductCardAdapter";
 import Pagination from "@/shared/Pagination/Pagination";
 import { searchProducts } from "@/lib/firebase/repositories/products";
 import { getCategories } from "@/lib/firebase/repositories/categories";
+import { getActiveThemeConfig } from "@/lib/theme/theme-repository";
 import {
   parseProductSearchParams,
   buildPageHref,
@@ -20,9 +21,10 @@ const PageCollection2 = async ({
   searchParams: RawSearchParams;
 }) => {
   const params = parseProductSearchParams(searchParams);
-  const [{ products, totalPages }, categories] = await Promise.all([
+  const [{ products, totalPages }, categories, theme] = await Promise.all([
     searchProducts(params),
     getCategories(),
+    getActiveThemeConfig(),
   ]);
 
   return (
@@ -51,7 +53,7 @@ const PageCollection2 = async ({
               <div className="flex-1 ">
                 <div className="flex-1 grid sm:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-10 ">
                   {products.map((item) => (
-                    <ProductCard data={item} key={item.id} />
+                    <ThemeProductCardAdapter data={item} productCardSettings={theme.productCard} key={item.id} />
                   ))}
                 </div>
                 {!products.length && (

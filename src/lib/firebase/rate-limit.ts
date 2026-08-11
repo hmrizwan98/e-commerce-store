@@ -6,6 +6,8 @@ const WINDOW_MS = 15 * 60 * 1000; // 15 minutes
 const MAX_ATTEMPTS: Record<string, number> = {
   login: 10,
   "superadmin-sensitive": 20,
+  checkout: 10,
+  tracking: 15,
 };
 
 export interface RateLimitResult {

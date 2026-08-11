@@ -1,12 +1,41 @@
 import "server-only";
+import { cookies, headers } from "next/headers";
 import { AggregateField, FieldPath, Timestamp } from "firebase-admin/firestore";
-import { adminDb, serverTimestamp } from "../admin";
+import { adminDb, adminAuth, serverTimestamp } from "../admin";
 import { tenantCollection } from "@/lib/firebase/tenant-scope";
 import { docData, stripUndefined } from "./utils";
 import { safeQuery } from "./safe-query";
 import { computeOrderTotals } from "@/lib/checkout/totals";
 import { getShippingSettings, getGeneralSettings, getPaymentSettings } from "./site-settings";
 import type { Order, OrderItem, OrderAddress, OrderStatus, PaymentMethod, PaymentStatus, ReturnStatus } from "@/types/order";
+
+/**
+ * Derives and verifies the authenticated customer's UID from the server context
+ * (session cookies or Bearer auth header). Returns verified string UID, or undefined for guest checkouts.
+ */
+async function getAuthenticatedUserId(): Promise<string | undefined> {
+  try {
+    const sessionCookie =
+      cookies().get("session")?.value ||
+      cookies().get("user_session")?.value ||
+      cookies().get("customer_session")?.value;
+    if (sessionCookie) {
+      const decoded = await adminAuth().verifySessionCookie(sessionCookie, true);
+      if (decoded?.uid) return decoded.uid;
+    }
+    const authHeader = headers().get("authorization");
+    if (authHeader?.startsWith("Bearer ")) {
+      const idToken = authHeader.split("Bearer ")[1]?.trim();
+      if (idToken) {
+        const decoded = await adminAuth().verifyIdToken(idToken);
+        if (decoded?.uid) return decoded.uid;
+      }
+    }
+  } catch {
+    // Guest checkout fallback
+  }
+  return undefined;
+}
 
 const COLLECTION = "orders";
 
@@ -158,6 +187,8 @@ export interface CreateGuestOrderInput {
   shippingAddress: OrderAddress;
   paymentMethod: PaymentMethod;
   paymentTransactionRef?: string;
+  userId?: string;
+  idempotencyKey?: string;
 }
 
 export interface CreateGuestOrderResult {
@@ -165,13 +196,33 @@ export interface CreateGuestOrderResult {
   orderNumber: string;
 }
 
+import { checkRateLimit } from "@/lib/firebase/rate-limit";
+import { getCurrentTenant } from "@/lib/tenant/current";
+
 /**
  * Re-validates price/stock server-side from Firestore (never trusts the
  * client-submitted cart) and atomically decrements stock alongside creating
  * the order, so a race between two checkouts can't oversell inventory.
+ *
+ * Atomically checks `idempotencyKey` inside the transaction to ensure concurrent
+ * identical checkout attempts return the exact same created order result without
+ * creating duplicate orders or double-decrementing stock.
+ *
+ * If an authenticated customer context exists, their verified UID is automatically
+ * associated with the created order document (userId).
  */
 export async function createGuestOrder(input: CreateGuestOrderInput): Promise<CreateGuestOrderResult> {
   if (!input.items.length) throw new Error("Your cart is empty.");
+
+  const verifiedUserId = await getAuthenticatedUserId();
+  const reqHeaders = headers();
+  const ip = reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || reqHeaders.get("x-real-ip") || "anonymous";
+  const tenant = await getCurrentTenant();
+  const rateLimitKey = `${tenant?.id || "default"}:${verifiedUserId || ip}`;
+  const rateCheck = await checkRateLimit("checkout", rateLimitKey);
+  if (!rateCheck.allowed) {
+    throw new Error("Too many checkout attempts. Please try again in a few minutes.");
+  }
 
   const paymentSettings = await getPaymentSettings();
   const methodEnabled =
@@ -188,7 +239,21 @@ export async function createGuestOrder(input: CreateGuestOrderInput): Promise<Cr
   const ordersCol = await tenantCollection(COLLECTION);
   const productsCol = await tenantCollection("products");
 
+  const idempotencyKey = input.idempotencyKey?.trim();
+  const idempotencyCol = await tenantCollection("idempotencyKeys");
+  const idempotencyRef = idempotencyKey ? idempotencyCol.doc(idempotencyKey) : null;
+
   const result = await db.runTransaction(async (tx) => {
+    if (idempotencyRef) {
+      const idempotencyDoc = await tx.get(idempotencyRef);
+      if (idempotencyDoc.exists) {
+        const data = idempotencyDoc.data();
+        if (data?.orderId && data?.orderNumber) {
+          return { orderId: data.orderId as string, orderNumber: data.orderNumber as string };
+        }
+      }
+    }
+
     const productRefs = input.items.map((i) => productsCol.doc(i.productId));
     const variantRefs = input.items.map((item, idx) =>
       item.variantId ? productRefs[idx].collection("variants").doc(item.variantId) : null
@@ -268,6 +333,7 @@ export async function createGuestOrder(input: CreateGuestOrderInput): Promise<Cr
     tx.set(orderRef, {
       ...stripUndefined({
         orderNumber,
+        userId: verifiedUserId,
         guestEmail: input.guestEmail.trim(),
         guestName: input.guestName.trim(),
         items: orderItems,
@@ -285,6 +351,14 @@ export async function createGuestOrder(input: CreateGuestOrderInput): Promise<Cr
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
+
+    if (idempotencyRef) {
+      tx.set(idempotencyRef, {
+        orderId: orderRef.id,
+        orderNumber,
+        createdAt: serverTimestamp(),
+      });
+    }
 
     return { orderId: orderRef.id, orderNumber };
   });

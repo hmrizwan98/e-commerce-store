@@ -10,6 +10,7 @@ import IconDiscount from "./IconDiscount";
 interface Props {
   status: ProductBadge | undefined;
   className?: string;
+  position?: "top-left" | "top-right";
 }
 
 const BADGE_LABEL: Record<Exclude<ProductBadge, null | undefined>, string> = {
@@ -27,12 +28,13 @@ const STATUS_BG: Record<Exclude<ProductBadge, null | undefined>, string> = {
     "bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300",
 };
 
-const ProductStatus: FC<Props> = ({ status, className }) => {
+const ProductStatus: FC<Props> = ({ status, className, position = "top-left" }) => {
   const renderStatus = () => {
     if (!status) {
       return null;
     }
-    const CLASSES = `nc-shadow-lg rounded-full flex items-center justify-center absolute top-3 start-3 px-2.5 py-1.5 text-xs ${
+    const positionClass = position === "top-right" ? "top-3 end-3" : "top-3 start-3";
+    const CLASSES = `nc-shadow-lg rounded-full flex items-center justify-center absolute ${positionClass} px-2.5 py-1.5 text-xs ${
       className ?? STATUS_BG[status]
     }`;
     const label = BADGE_LABEL[status];

@@ -16,8 +16,32 @@ import { requireCurrentTenant } from "@/lib/tenant/current";
 import type { OrderStatus, PaymentStatus, ReturnStatus } from "@/types/order";
 import type { OrderDocumentType } from "@/types/order-document";
 
+const ALLOWED_ORDER_STATUS_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
+  pending: ["confirmed", "cancelled"],
+  confirmed: ["processing", "cancelled"],
+  processing: ["packed", "cancelled"],
+  packed: ["shipped", "cancelled"],
+  shipped: ["delivered", "cancelled"],
+  delivered: [],
+  cancelled: [],
+  refunded: [],
+};
+
 export async function updateOrderStatus(id: string, status: OrderStatus, note?: string): Promise<void> {
   const decoded = await requireAdmin();
+  const order = await getOrderById(id);
+  if (!order) throw new Error("Order not found.");
+
+  const currentStatus = order.orderStatus;
+  if (currentStatus === status) {
+    return;
+  }
+
+  const allowedNext = ALLOWED_ORDER_STATUS_TRANSITIONS[currentStatus] || [];
+  if (!allowedNext.includes(status)) {
+    throw new Error(`Cannot transition order status from "${currentStatus}" to "${status}".`);
+  }
+
   const col = await tenantCollection("orders");
   await col
     .doc(id)
@@ -33,30 +57,32 @@ export async function updateOrderStatus(id: string, status: OrderStatus, note?: 
 
 export async function updatePaymentStatus(id: string, status: PaymentStatus, note?: string): Promise<void> {
   const decoded = await requireAdmin();
+  const order = await getOrderById(id);
+  if (!order) throw new Error("Order not found.");
+
+  if (order.paymentStatus === status) {
+    return;
+  }
+
   const col = await tenantCollection("orders");
+  const now = Date.now();
   await col
     .doc(id)
     .update({
       paymentStatus: status,
-      paymentStatusHistory: FieldValue.arrayUnion({ status, at: Date.now(), note: note ?? null }),
+      paymentStatusHistory: FieldValue.arrayUnion({ status, at: now, note: note ?? null }),
       updatedAt: FieldValue.serverTimestamp(),
     });
   await logOrderActivity(id, "payment_status_changed", decoded.uid, { status });
 
-  // Transaction Ledger: a "payment" record is only created when an admin confirms
-  // payment as received - this is the one Orders-owned integration point that can
-  // capture a payment event without touching Checkout's createGuestOrder.
   if (status === "paid") {
-    const order = await getOrderById(id);
-    if (order) {
-      const tenant = await requireCurrentTenant();
-      const commissionSettings = await getCommissionSettings();
-      const commissionAmount = calculateCommission(order.total, commissionSettings);
-      await logTransaction(tenant.id, id, "payment", order.total, order.paymentMethod, {
-        commissionAmount,
-        actorUid: decoded.uid,
-      });
-    }
+    const tenant = await requireCurrentTenant();
+    const commissionSettings = await getCommissionSettings();
+    const commissionAmount = calculateCommission(order.total, commissionSettings);
+    await logTransaction(tenant.id, id, "payment", order.total, order.paymentMethod, {
+      commissionAmount,
+      actorUid: decoded.uid,
+    });
   }
 
   revalidatePath("/admin/orders");

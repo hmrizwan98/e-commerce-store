@@ -3,6 +3,8 @@
 import React, { useEffect, useState } from "react";
 import ButtonPrimary from "@/shared/Button/ButtonPrimary";
 import LikeButton from "@/components/LikeButton";
+import CompareButton from "@/components/CompareButton";
+import ProductGallery from "@/components/theme/variants/product-detail/ProductGallery";
 import { StarIcon } from "@heroicons/react/24/solid";
 import BagIcon from "@/components/BagIcon";
 import NcInputNumber from "@/components/NcInputNumber";
@@ -23,9 +25,9 @@ import RecentlyViewedSection from "@/components/RecentlyViewedSection";
 import { useAppDispatch } from "@/utils/hooks/store";
 import { addItem } from "@/store/slices/cartSlice";
 import { trackEvent } from "@/lib/analytics/track";
-import Image from "next/image";
 import type { Product, ProductVariant } from "@/types/product";
 import type { Review } from "@/types/review";
+import type { ProductCardThemeConfig } from "@/lib/theme/theme-types";
 
 export interface ProductDetailClientProps {
   product: Product;
@@ -34,6 +36,7 @@ export interface ProductDetailClientProps {
   reviews: Review[];
   crossSellProducts?: Product[];
   upsellProducts?: Product[];
+  productCardSettings?: ProductCardThemeConfig;
 }
 
 const ProductDetailClient: React.FC<ProductDetailClientProps> = ({
@@ -43,6 +46,7 @@ const ProductDetailClient: React.FC<ProductDetailClientProps> = ({
   reviews,
   crossSellProducts = [],
   upsellProducts = [],
+  productCardSettings,
 }) => {
   const {
     selections,
@@ -332,36 +336,11 @@ const ProductDetailClient: React.FC<ProductDetailClientProps> = ({
         <div className="lg:flex">
           <div className="w-full lg:w-[55%] ">
             <div className="relative">
-              <div className="aspect-w-16 aspect-h-16 relative">
-                <Image
-                  fill
-                  sizes="(max-width: 640px) 100vw, 33vw"
-                  src={activeImage}
-                  className="w-full rounded-2xl object-cover"
-                  alt={product.name}
-                />
-              </div>
+              <ProductGallery activeImage={activeImage} thumbnails={thumbnails} alt={product.name} />
               <ProductStatus status={product.badge} />
               <LikeButton productId={product.id} className="absolute right-3 top-3 " />
+              <CompareButton productId={product.id} className="absolute right-3 top-16" />
             </div>
-            {thumbnails.length > 0 && (
-              <div className="grid grid-cols-2 gap-3 mt-3 sm:gap-6 sm:mt-6 xl:gap-8 xl:mt-8">
-                {thumbnails.map((item, index) => (
-                  <div
-                    key={index}
-                    className="aspect-w-11 xl:aspect-w-10 2xl:aspect-w-11 aspect-h-16 relative"
-                  >
-                    <Image
-                      sizes="(max-width: 640px) 100vw, 33vw"
-                      fill
-                      src={item}
-                      className="w-full rounded-2xl object-cover"
-                      alt={product.name}
-                    />
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
 
           <div className="w-full lg:w-[45%] pt-10 lg:pt-0 lg:pl-7 xl:pl-9 2xl:pl-10">
@@ -386,6 +365,7 @@ const ProductDetailClient: React.FC<ProductDetailClientProps> = ({
             headingFontClassName="text-2xl font-semibold"
             headingClassName="mb-10 text-neutral-900 dark:text-neutral-50"
             data={relatedProducts.length ? relatedProducts : undefined}
+            productCardSettings={productCardSettings}
           />
 
           {crossSellProducts.length > 0 && (
@@ -395,6 +375,7 @@ const ProductDetailClient: React.FC<ProductDetailClientProps> = ({
               headingFontClassName="text-2xl font-semibold"
               headingClassName="mb-10 text-neutral-900 dark:text-neutral-50"
               data={crossSellProducts}
+              productCardSettings={productCardSettings}
             />
           )}
 
@@ -405,10 +386,11 @@ const ProductDetailClient: React.FC<ProductDetailClientProps> = ({
               headingFontClassName="text-2xl font-semibold"
               headingClassName="mb-10 text-neutral-900 dark:text-neutral-50"
               data={upsellProducts}
+              productCardSettings={productCardSettings}
             />
           )}
 
-          <RecentlyViewedSection excludeProductId={product.id} />
+          <RecentlyViewedSection excludeProductId={product.id} productCardSettings={productCardSettings} />
 
           <div className="pb-20 xl:pb-28 lg:pt-14">
             <SectionPromo2 />

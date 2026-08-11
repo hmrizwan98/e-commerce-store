@@ -9,13 +9,15 @@ import CartDropdown from "./CartDropdown";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
 import type { ThemeHeader } from "@/types/theme";
+import type { CartThemeConfig } from "@/lib/theme/theme-types";
 
 export interface MainNav2LoggedProps {
   headerSettings?: ThemeHeader;
+  cartSettings?: CartThemeConfig;
   transparentActive?: boolean;
 }
 
-const MainNav2Logged: FC<MainNav2LoggedProps> = ({ headerSettings, transparentActive }) => {
+const MainNav2Logged: FC<MainNav2LoggedProps> = ({ headerSettings, cartSettings, transparentActive }) => {
   const inputRef = createRef<HTMLInputElement>();
   const [showSearchForm, setShowSearchForm] = useState(false);
   const router = useRouter();
@@ -108,7 +110,7 @@ const MainNav2Logged: FC<MainNav2LoggedProps> = ({ headerSettings, transparentAc
             </button>
           )}
           {showAccount && <AvatarDropdown />}
-          {showCart && <CartDropdown />}
+          {showCart && <CartDropdown cartSettings={cartSettings} />}
         </div>
       </div>
     );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Prices from "@/components/Prices";
 import ButtonPrimary from "@/shared/Button/ButtonPrimary";
 import Image from "next/image";
@@ -60,6 +60,17 @@ const CheckoutClient: React.FC<CheckoutClientProps> = ({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmedOrder, setConfirmedOrder] = useState<{ orderNumber: string } | null>(null);
+  const [idempotencyKey, setIdempotencyKey] = useState(() => "chk_" + Date.now().toString(36) + "_" + Math.random().toString(36).substring(2, 9));
+
+  const cartFingerprint = items.map((i) => `${i.productId}:${i.variantId || ""}:${i.quantity}`).join("|");
+  const prevFingerprintRef = useRef(cartFingerprint);
+
+  useEffect(() => {
+    if (prevFingerprintRef.current !== cartFingerprint) {
+      prevFingerprintRef.current = cartFingerprint;
+      setIdempotencyKey("chk_" + Date.now().toString(36) + "_" + Math.random().toString(36).substring(2, 9));
+    }
+  }, [cartFingerprint]);
 
   const handleScrollToEl = (id: string) => {
     const element = document.getElementById(id);
@@ -123,6 +134,7 @@ const CheckoutClient: React.FC<CheckoutClientProps> = ({
         },
         paymentMethod,
         paymentTransactionRef: transactionRef || undefined,
+        idempotencyKey,
       });
       dispatch(clearCart());
       trackEvent("payment_success", { value: totals.total });

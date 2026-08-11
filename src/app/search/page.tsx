@@ -3,13 +3,14 @@ import Pagination from "@/shared/Pagination/Pagination";
 import SectionSliderCollections from "@/components/SectionSliderLargeProduct";
 import SectionPromo1 from "@/components/SectionPromo1";
 import HeaderFilterSearchPage from "@/components/HeaderFilterSearchPage";
-import ProductCard from "@/components/ProductCard";
+import ThemeProductCardAdapter from "@/components/theme/ThemeProductCardAdapter";
 import SearchForm from "./SearchForm";
 import {
   searchProducts,
   searchProductsByName,
 } from "@/lib/firebase/repositories/products";
 import { getCategories } from "@/lib/firebase/repositories/categories";
+import { getActiveThemeConfig } from "@/lib/theme/theme-repository";
 import {
   parseProductSearchParams,
   buildPageHref,
@@ -22,9 +23,10 @@ const PageSearch = async ({ searchParams }: { searchParams: RawSearchParams }) =
   const q = typeof searchParams.q === "string" ? searchParams.q : undefined;
   const params = parseProductSearchParams(searchParams);
 
-  const [result, categories] = await Promise.all([
+  const [result, categories, theme] = await Promise.all([
     q ? searchProductsByName(q, params.pageSize) : searchProducts(params),
     getCategories(),
+    getActiveThemeConfig(),
   ]);
   const products = Array.isArray(result) ? result : result.products;
   const totalPages = Array.isArray(result) ? 1 : result.totalPages;
@@ -55,7 +57,7 @@ const PageSearch = async ({ searchParams }: { searchParams: RawSearchParams }) =
           {/* LOOP ITEMS */}
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-8 gap-y-10 mt-8 lg:mt-10">
             {products.map((item) => (
-              <ProductCard data={item} key={item.id} />
+              <ThemeProductCardAdapter data={item} productCardSettings={theme.productCard} key={item.id} />
             ))}
           </div>
           {!products.length && (

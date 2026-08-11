@@ -5,6 +5,8 @@ import { tenantCollection } from "@/lib/firebase/tenant-scope";
 import { docData } from "./utils";
 import { safeQuery } from "./safe-query";
 import { getCategories } from "./categories";
+import { getCurrentTenant } from "@/lib/tenant/current";
+import { requestMemo } from "@/lib/request-cache";
 import type { Product, ProductVariant } from "@/types/product";
 
 const COLLECTION = "products";
@@ -206,112 +208,117 @@ export interface SearchProductsResult {
 export async function searchProducts(
   params: SearchProductsParams
 ): Promise<SearchProductsResult> {
-  const pageSize = params.pageSize ?? 24;
-  const page = Math.max(1, params.page ?? 1);
+  const tenant = await getCurrentTenant();
+  const cacheKey = `searchProducts:${tenant?.id ?? "default"}:${JSON.stringify(params)}`;
 
-  const col = await tenantCollection(COLLECTION);
-  let query: FirebaseFirestore.Query = col
-    .where("status", "==", "active")
-    .where("isDeleted", "==", false);
+  return requestMemo(cacheKey, async () => {
+    const pageSize = params.pageSize ?? 24;
+    const safePage = Math.min(20, Math.max(1, Number(params.page) || 1));
 
-  let categoryId: string | undefined = params.categoryId;
-  if (!categoryId && params.category) {
-    const categories = await getCategories();
-    const match = categories.find(
-      (c) => c.name.toLowerCase() === params.category!.toLowerCase()
-    );
-    if (!match) {
-      return { products: [], total: 0, totalPages: 1 };
-    }
-    categoryId = match.id;
-  }
+    const col = await tenantCollection(COLLECTION);
+    let query: FirebaseFirestore.Query = col
+      .where("status", "==", "active")
+      .where("isDeleted", "==", false);
 
-  const colorValues = params.color?.length ? params.color.map((c) => c.toLowerCase()).slice(0, 10) : undefined;
-  const sizeValues = params.size?.length ? params.size.map((s) => s.toLowerCase()).slice(0, 10) : undefined;
-
-  // At most one array-type facet becomes a real Firestore filter; any others
-  // are refined in-memory below (same shape as the minRating refinement).
-  let inMemoryColor: string[] | undefined;
-  let inMemorySize: string[] | undefined;
-
-  if (categoryId) {
-    query = query.where("categoryIds", "array-contains", categoryId);
-    inMemoryColor = colorValues;
-    inMemorySize = sizeValues;
-  } else if (colorValues) {
-    query = query.where("colorFacets", "array-contains-any", colorValues);
-    inMemorySize = sizeValues;
-  } else if (sizeValues) {
-    query = query.where("sizeFacets", "array-contains-any", sizeValues);
-  }
-
-  if (params.brand) {
-    query = query.where("brandId", "==", params.brand);
-  }
-
-  if (params.inStock) {
-    // NOTE: this is itself a range filter on `stock` - combining inStock with
-    // a price range simultaneously would ask Firestore for two different
-    // inequality fields in one query, which it rejects. Not reachable today
-    // (no UI sets both at once yet); if inStock gets its own filter control,
-    // pick one field as the "true" range filter and refine the other in
-    // memory, same as minRating below.
-    query = query.where("stock", ">", 0);
-  }
-
-  if (params.sale) {
-    query = query.where("badge", "==", "sale");
-  }
-
-  const hasPriceRange = params.minPrice != null || params.maxPrice != null;
-  if (hasPriceRange) {
-    if (params.minPrice != null) query = query.where("price", ">=", params.minPrice);
-    if (params.maxPrice != null) query = query.where("price", "<=", params.maxPrice);
-    query = query.orderBy("price", params.sort === "price-desc" ? "desc" : "asc");
-  } else {
-    switch (params.sort) {
-      case "price-asc":
-        query = query.orderBy("price", "asc");
-        break;
-      case "price-desc":
-        query = query.orderBy("price", "desc");
-        break;
-      case "newest":
-        query = query.orderBy("createdAt", "desc");
-        break;
-      case "rating":
-        query = query.orderBy("rating", "desc");
-        break;
-      default:
-        query = query.orderBy("isFeatured", "desc").orderBy("order", "asc");
-    }
-  }
-
-  return safeQuery("searchProducts", { products: [], total: 0, totalPages: 1 }, async () => {
-    const countSnap = await query.count().get();
-    const total = countSnap.data().count;
-    const totalPages = Math.max(1, Math.ceil(total / pageSize));
-
-    const snap = await query
-      .offset((page - 1) * pageSize)
-      .limit(pageSize)
-      .get();
-
-    let products = snap.docs
-      .map((doc) => docData<Product>(doc))
-      .filter((p): p is Product => p !== null);
-
-    if (inMemoryColor) {
-      products = products.filter((p) => p.colorFacets?.some((c) => inMemoryColor!.includes(c.toLowerCase())));
-    }
-    if (inMemorySize) {
-      products = products.filter((p) => p.sizeFacets?.some((s) => inMemorySize!.includes(s.toLowerCase())));
-    }
-    if (params.minRating != null) {
-      products = products.filter((p) => (p.rating ?? 0) >= params.minRating!);
+    let categoryId: string | undefined = params.categoryId;
+    if (!categoryId && params.category) {
+      const categories = await getCategories();
+      const match = categories.find(
+        (c) => c.name.toLowerCase() === params.category!.toLowerCase()
+      );
+      if (!match) {
+        return { products: [], total: 0, totalPages: 1 };
+      }
+      categoryId = match.id;
     }
 
-    return { products, total, totalPages };
+    const colorValues = params.color?.length ? params.color.map((c) => c.toLowerCase()).slice(0, 10) : undefined;
+    const sizeValues = params.size?.length ? params.size.map((s) => s.toLowerCase()).slice(0, 10) : undefined;
+
+    // At most one array-type facet becomes a real Firestore filter; any others
+    // are refined in-memory below (same shape as the minRating refinement).
+    let inMemoryColor: string[] | undefined;
+    let inMemorySize: string[] | undefined;
+
+    if (categoryId) {
+      query = query.where("categoryIds", "array-contains", categoryId);
+      inMemoryColor = colorValues;
+      inMemorySize = sizeValues;
+    } else if (colorValues) {
+      query = query.where("colorFacets", "array-contains-any", colorValues);
+      inMemorySize = sizeValues;
+    } else if (sizeValues) {
+      query = query.where("sizeFacets", "array-contains-any", sizeValues);
+    }
+
+    if (params.brand) {
+      query = query.where("brandId", "==", params.brand);
+    }
+
+    if (params.inStock) {
+      // NOTE: this is itself a range filter on `stock` - combining inStock with
+      // a price range simultaneously would ask Firestore for two different
+      // inequality fields in one query, which it rejects. Not reachable today
+      // (no UI sets both at once yet); if inStock gets its own filter control,
+      // pick one field as the "true" range filter and refine the other in
+      // memory, same as minRating below.
+      query = query.where("stock", ">", 0);
+    }
+
+    if (params.sale) {
+      query = query.where("badge", "==", "sale");
+    }
+
+    const hasPriceRange = params.minPrice != null || params.maxPrice != null;
+    if (hasPriceRange) {
+      if (params.minPrice != null) query = query.where("price", ">=", params.minPrice);
+      if (params.maxPrice != null) query = query.where("price", "<=", params.maxPrice);
+      query = query.orderBy("price", params.sort === "price-desc" ? "desc" : "asc");
+    } else {
+      switch (params.sort) {
+        case "price-asc":
+          query = query.orderBy("price", "asc");
+          break;
+        case "price-desc":
+          query = query.orderBy("price", "desc");
+          break;
+        case "newest":
+          query = query.orderBy("createdAt", "desc");
+          break;
+        case "rating":
+          query = query.orderBy("rating", "desc");
+          break;
+        default:
+          query = query.orderBy("isFeatured", "desc").orderBy("order", "asc");
+      }
+    }
+
+    return safeQuery("searchProducts", { products: [], total: 0, totalPages: 1 }, async () => {
+      const countSnap = await query.count().get();
+      const total = countSnap.data().count;
+      const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+      const snap = await query
+        .offset((safePage - 1) * pageSize)
+        .limit(pageSize)
+        .get();
+
+      let products = snap.docs
+        .map((doc) => docData<Product>(doc))
+        .filter((p): p is Product => p !== null);
+
+      if (inMemoryColor) {
+        products = products.filter((p) => p.colorFacets?.some((c) => inMemoryColor!.includes(c.toLowerCase())));
+      }
+      if (inMemorySize) {
+        products = products.filter((p) => p.sizeFacets?.some((s) => inMemorySize!.includes(s.toLowerCase())));
+      }
+      if (params.minRating != null) {
+        products = products.filter((p) => (p.rating ?? 0) >= params.minRating!);
+      }
+
+      return { products, total, totalPages };
+    });
   });
 }
 
@@ -444,7 +451,7 @@ export async function searchProductsByName(q: string, limit = 24): Promise<Produ
       .where("status", "==", "active")
       .where("isDeleted", "==", false)
       .where("nameLower", ">=", term)
-      .where("nameLower", "<=", term + "")
+      .where("nameLower", "<=", term + "\uf8ff")
       .limit(limit)
       .get();
 

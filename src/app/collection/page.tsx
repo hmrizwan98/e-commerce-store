@@ -2,9 +2,10 @@ import React from "react";
 import Pagination from "@/shared/Pagination/Pagination";
 import SectionSliderCollections from "@/components/SectionSliderLargeProduct";
 import SectionPromo1 from "@/components/SectionPromo1";
-import ProductCard from "@/components/ProductCard";
+import ThemeProductCardAdapter from "@/components/theme/ThemeProductCardAdapter";
 import { searchProducts } from "@/lib/firebase/repositories/products";
 import { getCategories } from "@/lib/firebase/repositories/categories";
+import { getActiveThemeConfig } from "@/lib/theme/theme-repository";
 import {
   parseProductSearchParams,
   buildPageHref,
@@ -22,9 +23,10 @@ const PageCollection = async ({
   searchParams: RawSearchParams;
 }) => {
   const params = parseProductSearchParams(searchParams);
-  const [{ products, totalPages }, categories] = await Promise.all([
+  const [{ products, totalPages }, categories, theme] = await Promise.all([
     searchProducts(params),
     getCategories(),
+    getActiveThemeConfig(),
   ]);
 
   return (
@@ -50,7 +52,7 @@ const PageCollection = async ({
             {/* LOOP ITEMS */}
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-8 gap-y-10 mt-8 lg:mt-10">
               {products.map((item) => (
-                <ProductCard data={item} key={item.id} />
+                <ThemeProductCardAdapter data={item} productCardSettings={theme.productCard} key={item.id} />
               ))}
             </div>
             {!products.length && (

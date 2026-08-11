@@ -6,7 +6,8 @@ import {
   getProductsByIds,
 } from "@/lib/firebase/repositories/products";
 import { getApprovedReviewsByProduct } from "@/lib/firebase/repositories/reviews";
-import ProductDetailClient from "./ProductDetailClient";
+import { getActiveThemeConfig } from "@/lib/theme/theme-repository";
+import ThemeProductDetailAdapter from "@/components/theme/ThemeProductDetailAdapter";
 
 // Firestore is read at request time (Admin SDK) rather than at build time -
 // see src/app/page.tsx for the same pattern established in Phase 1.
@@ -22,22 +23,25 @@ export default async function ProductDetailPage({
     notFound();
   }
 
-  const [variants, relatedProducts, reviews, crossSellProducts, upsellProducts] = await Promise.all([
+  const [variants, relatedProducts, reviews, crossSellProducts, upsellProducts, theme] = await Promise.all([
     getProductVariants(product.id),
     getRelatedProducts(product),
     getApprovedReviewsByProduct(product.id, 6),
     getProductsByIds(product.crossSellProductIds ?? []),
     getProductsByIds(product.upsellProductIds ?? []),
+    getActiveThemeConfig(),
   ]);
 
   return (
-    <ProductDetailClient
+    <ThemeProductDetailAdapter
       product={product}
       variants={variants}
       relatedProducts={relatedProducts}
       reviews={reviews}
       crossSellProducts={crossSellProducts}
       upsellProducts={upsellProducts}
+      productCardSettings={theme.productCard}
+      productDetailSettings={theme.productDetail}
     />
   );
 }

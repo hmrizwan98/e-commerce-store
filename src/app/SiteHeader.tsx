@@ -6,23 +6,27 @@ import HeaderLogged from "@/components/Header/HeaderLogged";
 import Header from "@/components/Header/Header";
 import { useThemeMode } from "@/hooks/useThemeMode";
 import { useChromeSuppressed } from "@/lib/tenant/useChromeSuppressed";
-import type { ThemeHeader } from "@/types/theme";
+import ThemeHeaderAdapter from "@/components/theme/ThemeHeaderAdapter";
+import type { HeaderThemeConfig } from "@/lib/theme/theme-types";
+import type { CartThemeConfig } from "@/lib/theme/theme-types";
 
 export interface SiteHeaderProps {
-  headerSettings?: ThemeHeader;
+  headerSettings?: HeaderThemeConfig;
+  cartSettings?: CartThemeConfig;
 }
 
-const SiteHeader: React.FC<SiteHeaderProps> = ({ headerSettings }) => {
+const SiteHeader: React.FC<SiteHeaderProps> = ({ headerSettings, cartSettings }) => {
   useThemeMode();
 
   let pathname = usePathname();
-  // This intentionally does not add a new /admin check - SiteHeader never
-  // suppressed itself there before this change either, and that's out of
-  // scope here.
   const isSuppressed = useChromeSuppressed();
   if (isSuppressed) return null;
 
-  return pathname === "/home-2" ? <Header /> : <HeaderLogged headerSettings={headerSettings} />;
+  if (headerSettings?.variant) {
+    return <ThemeHeaderAdapter headerSettings={headerSettings} cartSettings={cartSettings} />;
+  }
+
+  return pathname === "/home-2" ? <Header /> : <HeaderLogged headerSettings={headerSettings} cartSettings={cartSettings} />;
 };
 
 export default SiteHeader;

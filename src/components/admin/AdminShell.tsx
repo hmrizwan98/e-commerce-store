@@ -77,8 +77,11 @@ const NAV_GROUPS: { title: string; items: { href: string; label: string; icon: R
     items: [{ href: "/admin/analytics", label: "Analytics", icon: ChartBarIcon }],
   },
   {
-    title: "",
-    items: [{ href: "/admin/theme", label: "Theme", icon: PaintBrushIcon }],
+    title: "Appearance",
+    items: [
+      { href: "/admin/appearance/customize", label: "Customize Storefront", icon: PaintBrushIcon },
+      { href: "/admin/appearance/popups", label: "Popups & Modals", icon: MegaphoneIcon },
+    ],
   },
   {
     title: "",

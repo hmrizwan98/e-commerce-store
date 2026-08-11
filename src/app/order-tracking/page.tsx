@@ -1,8 +1,12 @@
 import Link from "next/link";
+import { headers } from "next/headers";
 import Label from "@/components/Label/Label";
 import Input from "@/shared/Input/Input";
 import ButtonPrimary from "@/shared/Button/ButtonPrimary";
 import { getOrderByOrderNumber } from "@/lib/firebase/repositories/orders";
+import { checkRateLimit } from "@/lib/firebase/rate-limit";
+import { getCurrentTenant } from "@/lib/tenant/current";
+import type { Order } from "@/types/order";
 
 export const dynamic = "force-dynamic";
 
@@ -26,10 +30,23 @@ const OrderTrackingPage = async ({
   const email = searchParams.email?.trim();
   const searched = Boolean(orderNumber && email);
 
-  const order =
-    searched && orderNumber
-      ? await getOrderByOrderNumber(orderNumber)
-      : null;
+  let isRateLimited = false;
+  let order: Order | null = null;
+
+  if (searched && orderNumber && email) {
+    const reqHeaders = headers();
+    const ip = reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || reqHeaders.get("x-real-ip") || "anonymous";
+    const tenant = await getCurrentTenant();
+    const rateLimitKey = `${tenant?.id || "default"}:${ip}`;
+    const rateCheck = await checkRateLimit("tracking", rateLimitKey);
+
+    if (!rateCheck.allowed) {
+      isRateLimited = true;
+    } else {
+      order = await getOrderByOrderNumber(orderNumber);
+    }
+  }
+
   const matched =
     order && order.guestEmail?.toLowerCase() === email?.toLowerCase() ? order : null;
 
@@ -63,7 +80,13 @@ const OrderTrackingPage = async ({
         <ButtonPrimary type="submit">Track order</ButtonPrimary>
       </form>
 
-      {searched && !matched && (
+      {searched && isRateLimited && (
+        <p className="mt-8 text-sm text-red-600 font-medium">
+          Too many tracking attempts. Please try again in a few minutes.
+        </p>
+      )}
+
+      {searched && !isRateLimited && !matched && (
         <p className="mt-8 text-sm text-red-600">
           We couldn&apos;t find an order matching that order number and email.
         </p>

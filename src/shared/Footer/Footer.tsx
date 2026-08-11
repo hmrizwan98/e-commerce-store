@@ -10,7 +10,8 @@ import Input from "@/shared/Input/Input";
 import ButtonPrimary from "@/shared/Button/ButtonPrimary";
 import { subscribeToNewsletter } from "@/lib/newsletter/actions";
 import toast from "react-hot-toast";
-import type { ThemeFooter } from "@/types/theme";
+import ThemeFooterAdapter from "@/components/theme/ThemeFooterAdapter";
+import type { FooterThemeConfig } from "@/lib/theme/theme-types";
 
 export interface WidgetFooterMenuLink {
   href: string;
@@ -24,7 +25,7 @@ export interface WidgetFooterMenu {
 }
 
 export interface FooterProps {
-  footerSettings?: ThemeFooter;
+  footerSettings?: FooterThemeConfig;
   storeName?: string;
 }
 
@@ -62,10 +63,11 @@ const Footer: React.FC<FooterProps> = ({ footerSettings, storeName = "Tradz Glin
     setSubmitting(false);
   };
 
-  // This intentionally does not add a new /admin check - Footer never
-  // suppressed itself there before this change either, and that's out of
-  // scope here.
   if (isSuppressed) return null;
+
+  if (footerSettings?.variant) {
+    return <ThemeFooterAdapter footerSettings={footerSettings} storeName={storeName} />;
+  }
 
   const renderWidgetMenuItem = (menu: WidgetFooterMenu, index: number) => {
     return (

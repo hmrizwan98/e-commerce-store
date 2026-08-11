@@ -13,7 +13,9 @@ import SiteHeader from "@/app/SiteHeader";
 import CommonClient from "./CommonClient";
 import Footer from "@/shared/Footer/Footer";
 import { TenantProvider } from "@/lib/tenant/TenantContext";
+import ThemePopupModal from "@/components/theme/ThemePopupModal";
 import type { ThemeHeader, ThemeFooter } from "@/types/theme";
+import type { PopupThemeConfig, CartThemeConfig } from "@/lib/theme/theme-types";
 
 export interface ClientProvidersProps {
   children: React.ReactNode;
@@ -21,6 +23,9 @@ export interface ClientProvidersProps {
   footerSettings: ThemeFooter;
   storeName: string;
   tenantId: string;
+  popupConfig?: PopupThemeConfig;
+  themePresetId?: string;
+  cartSettings?: CartThemeConfig;
 }
 
 /**
@@ -34,6 +39,9 @@ const ClientProviders: React.FC<ClientProvidersProps> = ({
   footerSettings,
   storeName,
   tenantId,
+  popupConfig,
+  themePresetId,
+  cartSettings,
 }) => {
   return (
     <TenantProvider tenantId={tenantId}>
@@ -43,11 +51,12 @@ const ClientProviders: React.FC<ClientProvidersProps> = ({
         <MarketingPixels />
         <AnnouncementBar />
         <TopBar topBar={headerSettings.topBar} />
-        <SiteHeader headerSettings={headerSettings} />
+        <SiteHeader headerSettings={headerSettings} cartSettings={cartSettings} />
         {children}
         <CommonClient />
         <Footer footerSettings={footerSettings} storeName={storeName} />
         <WhatsAppButton />
+        <ThemePopupModal popupConfig={popupConfig} tenantId={tenantId} themePresetId={themePresetId} />
       </Provider>
     </TenantProvider>
   );

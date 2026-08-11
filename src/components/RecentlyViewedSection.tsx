@@ -6,9 +6,11 @@ import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import { fetchProductsByIds } from "@/lib/firebase/client-data/products";
 import { useTenantId } from "@/lib/tenant/TenantContext";
 import type { Product } from "@/types/product";
+import type { ProductCardThemeConfig } from "@/lib/theme/theme-types";
 
-const RecentlyViewedSection: React.FC<{ excludeProductId?: string }> = ({
+const RecentlyViewedSection: React.FC<{ excludeProductId?: string; productCardSettings?: ProductCardThemeConfig }> = ({
   excludeProductId,
+  productCardSettings,
 }) => {
   const { ids } = useRecentlyViewed();
   const tenantId = useTenantId();
@@ -38,6 +40,7 @@ const RecentlyViewedSection: React.FC<{ excludeProductId?: string }> = ({
       headingFontClassName="text-2xl font-semibold"
       headingClassName="mb-10 text-neutral-900 dark:text-neutral-50"
       data={products}
+      productCardSettings={productCardSettings}
     />
   );
 };
