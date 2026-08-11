@@ -155,39 +155,51 @@ export default function SuperAdminShell({
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 bg-neutral-100 dark:bg-neutral-950">
-        {/* Top Navigation Bar */}
-        <header className="sticky top-0 z-30 h-16 border-b border-neutral-200 dark:border-neutral-800 bg-white/80 dark:bg-neutral-950/80 backdrop-blur-md px-4 sm:px-8 flex items-center justify-between">
+      <div className="flex-1 flex flex-col min-w-0 bg-[#f0f4fa] dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100">
+        {/* Top Header Bar matching input_file_1.png */}
+        <header className="sticky top-0 z-30 h-16 bg-gradient-to-r from-indigo-500 via-sky-400 to-cyan-400 text-white shadow-md px-4 sm:px-8 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={() => setMobileOpen(true)}
-              className="lg:hidden p-2 rounded-xl text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-900"
+              className="lg:hidden p-2 rounded-xl text-white hover:bg-white/10"
             >
               <Bars3Icon className="w-6 h-6" />
             </button>
-            <div className="flex items-center gap-2 text-xs font-medium text-neutral-500 font-mono">
-              <span>Super Admin</span>
+            <div className="flex items-center gap-2 text-xs font-semibold text-white/90">
+              <span className="bg-white/15 px-2.5 py-1 rounded-md">Super Admin</span>
               <span>/</span>
-              <span className="text-neutral-900 dark:text-white capitalize">
+              <span className="capitalize font-bold text-white">
                 {pathname.split("/").pop() || "Dashboard"}
               </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-mono font-medium">
-              <span className="w-2 h-2 rounded-full bg-emerald-500" />
-              <span>Multi-Tenant Engine Online</span>
+          <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto">
+            <div className="hidden lg:flex items-center gap-2 text-xs text-white/95 font-medium bg-white/15 px-3 py-1.5 rounded-full">
+              <span>⚠️ Your SMS Credit is 0</span>
+              <button className="bg-emerald-500 hover:bg-emerald-600 text-white text-[11px] font-bold px-2 py-0.5 rounded-full transition-colors">
+                + Add SMS Credits
+              </button>
             </div>
-            {email && <span className="hidden md:inline text-xs font-medium text-neutral-400">{email}</span>}
+
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-extrabold tracking-wider bg-emerald-600 text-white shadow-xs uppercase">
+              ACCEPTING ORDERS
+            </span>
+
+            <span className="hidden sm:inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-extrabold bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-xs">
+              🎀 Premium Plus Package
+            </span>
+
+            {email && <span className="hidden md:inline text-xs font-semibold text-white/90 bg-white/15 px-3 py-1.5 rounded-lg">{email}</span>}
           </div>
         </header>
 
         {/* Canvas Body */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">{children}</main>
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto relative">{children}</main>
       </div>
     </div>
   );
 }
+
 

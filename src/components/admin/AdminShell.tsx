@@ -130,24 +130,39 @@ export default function AdminShell({
 
   const sidebarContent = (
     <>
-      <div className={`h-16 flex items-center border-b border-neutral-200 dark:border-neutral-800 ${collapsed ? "justify-center px-0" : "justify-between px-6"}`}>
-        {!collapsed && <span className="font-semibold text-lg">Admin Panel</span>}
-        <button
-          onClick={toggleCollapsed}
-          className="hidden md:flex p-1.5 rounded-lg text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 dark:hover:text-neutral-200"
-          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-        >
-          {collapsed ? <ChevronDoubleRightIcon className="w-4 h-4" /> : <ChevronDoubleLeftIcon className="w-4 h-4" />}
-        </button>
-        <button onClick={() => setMobileOpen(false)} className="md:hidden p-1.5 text-neutral-400">
-          <XMarkIcon className="w-5 h-5" />
-        </button>
+      <div className={`py-5 flex flex-col border-b border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 ${collapsed ? "items-center px-2" : "px-6 space-y-3"}`}>
+        <div className="flex items-center justify-between w-full">
+          {!collapsed && (
+            <div className="flex items-center gap-2">
+              <span className="font-extrabold text-xl tracking-tight text-slate-900 dark:text-white">Ginyaki</span>
+            </div>
+          )}
+          <button
+            onClick={toggleCollapsed}
+            className="hidden md:flex p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition-colors"
+            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {collapsed ? <ChevronDoubleRightIcon className="w-4 h-4" /> : <ChevronDoubleLeftIcon className="w-4 h-4" />}
+          </button>
+          <button onClick={() => setMobileOpen(false)} className="md:hidden p-1.5 text-slate-400">
+            <XMarkIcon className="w-5 h-5" />
+          </button>
+        </div>
+        {!collapsed && (
+          <button
+            type="button"
+            className="w-fit px-3 py-1 text-xs font-semibold rounded-md border border-indigo-500/40 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 transition-colors"
+          >
+            Flush Cache
+          </button>
+        )}
       </div>
-      <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-6">
+
+      <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-6 bg-white dark:bg-slate-900">
         {NAV_GROUPS.map((group, i) => (
           <div key={i}>
             {group.title && !collapsed && (
-              <div className="px-3 mb-1 text-xs font-semibold uppercase text-neutral-400">
+              <div className="px-3 mb-1.5 text-[11px] font-bold uppercase tracking-wider font-mono text-slate-400">
                 {group.title}
               </div>
             )}
@@ -159,15 +174,15 @@ export default function AdminShell({
                     key={item.href}
                     href={item.href as any}
                     title={collapsed ? item.label : undefined}
-                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${
                       collapsed ? "justify-center" : ""
                     } ${
                       isActive(item.href)
-                        ? "bg-primary-6000 text-white"
-                        : "text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                        ? "bg-slate-100 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 font-bold shadow-xs"
+                        : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white"
                     }`}
                   >
-                    <Icon className="w-5 h-5 flex-shrink-0" />
+                    <Icon className={`w-5 h-5 flex-shrink-0 ${isActive(item.href) ? "text-indigo-600 dark:text-indigo-400" : "text-slate-400"}`} />
                     {!collapsed && <span className="truncate">{item.label}</span>}
                   </Link>
                 );
@@ -180,10 +195,10 @@ export default function AdminShell({
   );
 
   return (
-    <div className="min-h-screen flex bg-neutral-50 dark:bg-neutral-950">
+    <div className="min-h-screen flex bg-[#f0f4fa] dark:bg-slate-950 font-sans antialiased text-slate-900 dark:text-slate-100">
       {/* Desktop sidebar */}
       <aside
-        className={`flex-shrink-0 hidden md:flex flex-col border-r border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 transition-all duration-200 ${
+        className={`flex-shrink-0 hidden md:flex flex-col border-r border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 transition-all duration-200 ${
           collapsed ? "w-20" : "w-64"
         }`}
       >
@@ -193,39 +208,87 @@ export default function AdminShell({
       {/* Mobile drawer */}
       {mobileOpen && (
         <div className="fixed inset-0 z-50 md:hidden">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setMobileOpen(false)} />
-          <aside className="absolute inset-y-0 left-0 w-64 flex flex-col bg-white dark:bg-neutral-900 shadow-xl">
+          <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-xs" onClick={() => setMobileOpen(false)} />
+          <aside className="absolute inset-y-0 left-0 w-64 flex flex-col bg-white dark:bg-slate-900 shadow-xl">
             {sidebarContent}
           </aside>
         </div>
       )}
 
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-16 flex items-center justify-between px-4 md:px-8 border-b border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
+        {/* Top Header Bar with Blue Gradient matching input_file_1.png */}
+        <header className="h-16 flex items-center justify-between px-4 md:px-8 bg-gradient-to-r from-indigo-500 via-sky-400 to-cyan-400 text-white shadow-md z-20 shrink-0">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setMobileOpen(true)}
-              className="md:hidden p-1.5 -ml-1.5 text-neutral-500"
+              className="md:hidden p-1.5 -ml-1.5 text-white hover:bg-white/10 rounded-lg"
               aria-label="Open menu"
             >
               <Bars3Icon className="w-6 h-6" />
             </button>
-            <Link href={"/" as any} className="text-sm text-neutral-500 hover:underline">
-              ← View storefront
-            </Link>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={toggleCollapsed}
+                className="hidden md:flex p-1.5 rounded-lg text-white hover:bg-white/10"
+              >
+                <Bars3Icon className="w-5 h-5" />
+              </button>
+              <Link href={"/" as any} className="text-xs font-semibold text-white/90 hover:text-white bg-white/15 px-3 py-1.5 rounded-lg transition-colors">
+                ← Storefront
+              </Link>
+            </div>
           </div>
-          <div className="flex items-center gap-4">
-            {email && <span className="hidden sm:inline text-sm text-neutral-500">{email}</span>}
+
+          {/* Status Badges & Controls in Header matching input_file_1.png */}
+          <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto">
+            <div className="hidden lg:flex items-center gap-2 text-xs text-white/95 font-medium bg-white/15 px-3 py-1.5 rounded-full">
+              <span>⚠️ Your SMS Credit is 0</span>
+              <button className="bg-emerald-500 hover:bg-emerald-600 text-white text-[11px] font-bold px-2.5 py-0.5 rounded-full transition-colors">
+                + Add SMS Credits
+              </button>
+            </div>
+
+            <button className="hidden sm:inline-flex text-xs font-semibold bg-white/20 hover:bg-white/30 text-white px-3 py-1.5 rounded-lg transition-colors">
+              ↗ View
+            </button>
+
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-extrabold tracking-wider bg-emerald-600 text-white shadow-xs uppercase">
+              ACCEPTING ORDERS
+            </span>
+
+            <span className="hidden sm:inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-extrabold bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-xs">
+              🎀 Premium Plus Package
+            </span>
+
+            <div className="w-9 h-9 rounded-full bg-white/20 border border-white/30 flex items-center justify-center text-white font-bold text-sm shrink-0">
+              {email ? email[0].toUpperCase() : "A"}
+            </div>
+
             <button
               onClick={handleLogout}
-              className="text-sm font-medium text-red-600 hover:underline"
+              className="text-xs font-semibold text-white/80 hover:text-white hover:underline ml-1"
             >
               Log out
             </button>
           </div>
         </header>
-        <main className="flex-1 p-4 md:p-8 overflow-x-hidden">{children}</main>
+
+        {/* Dashboard Main View Area */}
+        <main className="flex-1 p-4 md:p-8 overflow-x-hidden relative">{children}</main>
+
+        {/* Floating Chat/Support Action Button matching input_file_1.png */}
+        <div className="fixed bottom-6 right-6 z-40">
+          <button
+            type="button"
+            className="w-14 h-14 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white flex items-center justify-center shadow-xl shadow-indigo-600/30 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+            title="Open Live Assistant"
+          >
+            <ChatBubbleLeftRightIcon className="w-7 h-7" />
+          </button>
+        </div>
       </div>
     </div>
   );
 }
+
