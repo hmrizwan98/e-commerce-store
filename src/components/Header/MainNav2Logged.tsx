@@ -8,16 +8,18 @@ import Navigation from "@/shared/Navigation/Navigation";
 import CartDropdown from "./CartDropdown";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
-import type { ThemeHeader } from "@/types/theme";
+import type { ThemeHeader, ThemeLogos } from "@/types/theme";
 import type { CartThemeConfig } from "@/lib/theme/theme-types";
 
 export interface MainNav2LoggedProps {
   headerSettings?: ThemeHeader;
   cartSettings?: CartThemeConfig;
   transparentActive?: boolean;
+  logos?: ThemeLogos;
+  storeName?: string;
 }
 
-const MainNav2Logged: FC<MainNav2LoggedProps> = ({ headerSettings, cartSettings, transparentActive }) => {
+const MainNav2Logged: FC<MainNav2LoggedProps> = ({ headerSettings, cartSettings, transparentActive, logos, storeName }) => {
   const inputRef = createRef<HTMLInputElement>();
   const [showSearchForm, setShowSearchForm] = useState(false);
   const router = useRouter();
@@ -25,6 +27,13 @@ const MainNav2Logged: FC<MainNav2LoggedProps> = ({ headerSettings, cartSettings,
   const showSearch = headerSettings?.showSearch ?? true;
   const showAccount = headerSettings?.showAccount ?? true;
   const showCart = headerSettings?.showCart ?? true;
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (inputRef.current?.value) {
+      router.push(`/search?q=${encodeURIComponent(inputRef.current.value)}`);
+    }
+  };
 
   const renderMagnifyingGlassIcon = () => {
     return (
@@ -56,20 +65,16 @@ const MainNav2Logged: FC<MainNav2LoggedProps> = ({ headerSettings, cartSettings,
   const renderSearchForm = () => {
     return (
       <form
+        onSubmit={handleSearchSubmit}
         className="flex-1 py-2 text-slate-900 dark:text-slate-100"
-        onSubmit={(e) => {
-          e.preventDefault();
-          router.push("/search");
-          inputRef.current?.blur();
-        }}
       >
-        <div className="bg-slate-50 dark:bg-slate-800 flex items-center space-x-1.5 px-5 h-full rounded">
+        <div className="bg-slate-50 dark:bg-slate-800 flex items-center space-x-1.5 px-5 h-full rounded-full flex-1 border border-slate-200 dark:border-slate-700">
           {renderMagnifyingGlassIcon()}
           <input
             ref={inputRef}
             type="text"
             placeholder="Type and press enter"
-            className="border-none bg-transparent focus:outline-none focus:ring-0 w-full text-base"
+            className="border-none bg-transparent focus:outline-none focus:ring-0 w-full text-sm "
             autoFocus
           />
           <button type="button" onClick={() => setShowSearchForm(false)}>
@@ -82,14 +87,18 @@ const MainNav2Logged: FC<MainNav2LoggedProps> = ({ headerSettings, cartSettings,
   };
 
   const renderContent = () => {
+    const customHeight = headerSettings?.heightPx ? `${headerSettings.heightPx}px` : undefined;
     return (
-      <div className="h-20 flex justify-between">
+      <div
+        className={`flex justify-between items-center w-full ${customHeight ? "" : "min-h-[50px] py-1.5"}`}
+        style={customHeight ? { height: customHeight } : undefined}
+      >
         <div className="flex items-center lg:hidden flex-1">
           <MenuBar />
         </div>
 
         <div className="lg:flex-1 flex items-center">
-          <Logo className="flex-shrink-0" />
+          <Logo className="flex-shrink-0" img={logos?.logoLight} imgLight={logos?.logoDark} storeName={storeName} logoHeightPx={headerSettings?.logoHeightPx} />
         </div>
 
         <div className="flex-[2] hidden lg:flex justify-center mx-4">

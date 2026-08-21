@@ -123,7 +123,7 @@ const EXTERNAL_SECTIONS = [
   },
 ];
 
-const AddSectionModal: React.FC<{
+export const AddSectionModal: React.FC<{
   open: boolean;
   onClose: () => void;
   onAdd: (type: HomepageSectionType) => void;
@@ -198,6 +198,8 @@ const SectionCard: React.FC<{
   onDelete: () => void;
   categoryOptions: PickerOption[];
   productOptions: PickerOption[];
+  brandOptions?: PickerOption[];
+  testimonialOptions?: PickerOption[];
   dragHandleProps: {
     draggable: boolean;
     onDragStart: () => void;
@@ -216,6 +218,8 @@ const SectionCard: React.FC<{
   onDelete,
   categoryOptions,
   productOptions,
+  brandOptions = [],
+  testimonialOptions = [],
   dragHandleProps,
   isDragging,
 }) => {
@@ -250,7 +254,7 @@ const SectionCard: React.FC<{
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <input
-              className="flex-1 min-w-[160px] px-2 py-1 text-sm font-semibold rounded-md border border-transparent hover:border-neutral-300 dark:hover:border-neutral-700 focus:border-neutral-300 dark:focus:border-neutral-700 bg-transparent"
+              className="flex-1 min-w-[120px] max-w-full px-2 py-1 text-sm font-semibold rounded-md border border-transparent hover:border-neutral-300 dark:hover:border-neutral-700 focus:border-neutral-300 dark:focus:border-neutral-700 bg-transparent"
               value={section.title}
               onChange={(e) => onChange({ title: e.target.value })}
             />
@@ -261,9 +265,9 @@ const SectionCard: React.FC<{
               </span>
             )}
           </div>
-          <p className="text-xs text-neutral-500 mt-0.5">{meta.description}</p>
+          <p className="text-xs text-neutral-500 mt-0.5 break-words">{meta.description}</p>
           {!!meta.contains.length && (
-            <p className="text-xs text-neutral-400 mt-1">Contains: {meta.contains.join(" • ")}</p>
+            <p className="text-xs text-neutral-400 mt-1 break-words">Contains: {meta.contains.join(" • ")}</p>
           )}
         </div>
 
@@ -347,7 +351,7 @@ const SectionCard: React.FC<{
             </select>
           )}
 
-          {(isProductMode || isCategoryMode) && (
+          {(isProductMode || isCategoryMode || section.type === "brands" || section.type === "testimonials") && (
             <div className="space-y-3">
               <div className="flex items-center gap-4 text-sm">
                 <label className="flex items-center gap-1.5">
@@ -380,6 +384,20 @@ const SectionCard: React.FC<{
                   options={categoryOptions}
                   selectedIds={config.categoryIds ?? []}
                   onToggle={(id) => setConfig({ categoryIds: toggleId(config.categoryIds, id) })}
+                />
+              )}
+              {mode === "manual" && section.type === "brands" && (
+                <PickerList
+                  options={brandOptions}
+                  selectedIds={config.brandIds ?? []}
+                  onToggle={(id) => setConfig({ brandIds: toggleId(config.brandIds, id) })}
+                />
+              )}
+              {mode === "manual" && section.type === "testimonials" && (
+                <PickerList
+                  options={testimonialOptions}
+                  selectedIds={config.testimonialIds ?? []}
+                  onToggle={(id) => setConfig({ testimonialIds: toggleId(config.testimonialIds, id) })}
                 />
               )}
 
@@ -449,7 +467,10 @@ const HomepageSections: React.FC<{
   sections: HomepageSection[];
   categoryOptions: PickerOption[];
   productOptions: PickerOption[];
-}> = ({ sections: initial, categoryOptions, productOptions }) => {
+  brandOptions?: PickerOption[];
+  testimonialOptions?: PickerOption[];
+  onSectionsChange?: (sections: HomepageSection[]) => void;
+}> = ({ sections: initial, categoryOptions, productOptions, brandOptions = [], testimonialOptions = [], onSectionsChange }) => {
   const router = useRouter();
   const [sections, setSections] = useState(initial);
   const [savedSections, setSavedSections] = useState(initial);
@@ -571,6 +592,18 @@ const HomepageSections: React.FC<{
     setDragId(null);
   };
 
+  const handleResetToDefault = async () => {
+    if (!window.confirm("Reset homepage sections to the default screenshot template?")) return;
+    setBusy(true);
+    try {
+      const { resetHomepageSectionsToDefault } = await import("./actions");
+      await resetHomepageSectionsToDefault();
+      refresh();
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <div className="space-y-6 pb-20">
       <div className="flex items-center justify-between flex-wrap gap-3">
@@ -582,12 +615,21 @@ const HomepageSections: React.FC<{
         >
           <EyeIcon className="w-4 h-4" /> Preview storefront
         </a>
-        <button
-          onClick={() => setModalOpen(true)}
-          className="px-4 py-2 text-sm rounded-full bg-primary-6000 text-white font-medium"
-        >
-          + Add section
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleResetToDefault}
+            disabled={busy}
+            className="px-3.5 py-2 text-xs rounded-full border border-neutral-300 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 font-medium"
+          >
+            Reset to Default Template
+          </button>
+          <button
+            onClick={() => setModalOpen(true)}
+            className="px-4 py-2 text-sm rounded-full bg-primary-6000 text-white font-medium"
+          >
+            + Add section
+          </button>
+        </div>
       </div>
 
       <div className="space-y-3">
@@ -603,6 +645,8 @@ const HomepageSections: React.FC<{
             onDelete={() => handleDelete(section.id)}
             categoryOptions={categoryOptions}
             productOptions={productOptions}
+            brandOptions={brandOptions}
+            testimonialOptions={testimonialOptions}
             isDragging={dragId === section.id}
             dragHandleProps={{
               draggable: true,

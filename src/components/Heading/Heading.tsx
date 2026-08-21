@@ -47,19 +47,16 @@ const Heading: React.FC<HeadingProps> = ({
             : ""
         }
       >
+        {rightDescText && (
+          <span className="block text-xs font-extrabold uppercase tracking-[0.2em] text-slate-500 dark:text-neutral-400 mb-1.5 font-mono">
+            {rightDescText}
+          </span>
+        )}
         <h2
           className={`${isCenter ? "justify-center" : ""} ${fontClass}`}
           {...args}
         >
           {children || `Section Heading`}
-          {rightDescText && (
-            <>
-              <span className="">{`. `}</span>
-              <span className="text-neutral-500 dark:text-neutral-400">
-                {rightDescText}
-              </span>
-            </>
-          )}
         </h2>
         {!!desc && (
           <span className="mt-2 md:mt-3 font-normal block text-base sm:text-xl text-neutral-500 dark:text-neutral-400">

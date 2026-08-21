@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 import {
   HomeIcon,
   ShoppingBagIcon,
@@ -53,14 +54,9 @@ const NAV_GROUPS: { title: string; items: { href: string; label: string; icon: R
     title: "Content",
     items: [
       { href: "/admin/menus", label: "Menus", icon: Bars3BottomLeftIcon },
-      { href: "/admin/homepage", label: "Homepage", icon: RectangleGroupIcon },
-      { href: "/admin/hero-slides", label: "Hero Slides", icon: PhotoIcon },
-      { href: "/admin/promo-banners", label: "Promo Banners", icon: GiftIcon },
-      { href: "/admin/announcements", label: "Announcements", icon: MegaphoneIcon },
-      { href: "/admin/reviews", label: "Reviews", icon: StarIcon },
       { href: "/admin/pages", label: "Pages", icon: DocumentTextIcon },
       { href: "/admin/faqs", label: "FAQs", icon: QuestionMarkCircleIcon },
-      { href: "/admin/testimonials", label: "Testimonials", icon: ChatBubbleLeftRightIcon },
+      { href: "/admin/reviews", label: "Reviews", icon: StarIcon },
       { href: "/admin/blog-posts", label: "Blog Posts", icon: NewspaperIcon },
     ],
   },
@@ -79,6 +75,7 @@ const NAV_GROUPS: { title: string; items: { href: string; label: string; icon: R
   {
     title: "Appearance",
     items: [
+      { href: "/admin/appearance/themes", label: "Theme Catalog", icon: BuildingStorefrontIcon },
       { href: "/admin/appearance/customize", label: "Customize Storefront", icon: PaintBrushIcon },
       { href: "/admin/appearance/popups", label: "Popups & Modals", icon: MegaphoneIcon },
     ],
@@ -134,7 +131,7 @@ export default function AdminShell({
         <div className="flex items-center justify-between w-full">
           {!collapsed && (
             <div className="flex items-center gap-2">
-              <span className="font-extrabold text-xl tracking-tight text-slate-900 dark:text-white">Ginyaki</span>
+              <span className="font-extrabold text-xl tracking-tight text-slate-900 dark:text-white">Store Admin</span>
             </div>
           )}
           <button
@@ -148,14 +145,6 @@ export default function AdminShell({
             <XMarkIcon className="w-5 h-5" />
           </button>
         </div>
-        {!collapsed && (
-          <button
-            type="button"
-            className="w-fit px-3 py-1 text-xs font-semibold rounded-md border border-indigo-500/40 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 transition-colors"
-          >
-            Flush Cache
-          </button>
-        )}
       </div>
 
       <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-6 bg-white dark:bg-slate-900">
@@ -234,33 +223,20 @@ export default function AdminShell({
               >
                 <Bars3Icon className="w-5 h-5" />
               </button>
-              <Link href={"/" as any} className="text-xs font-semibold text-white/90 hover:text-white bg-white/15 px-3 py-1.5 rounded-lg transition-colors">
-                ← Storefront
-              </Link>
+              {(() => {
+                const tenantSlugMatch = pathname?.match(/\/store\/([^\/]+)/);
+                const storefrontUrl = tenantSlugMatch ? `/store/${tenantSlugMatch[1]}` : "/";
+                return (
+                  <Link href={storefrontUrl as any} className="text-xs font-semibold text-white/90 hover:text-white bg-white/15 px-3 py-1.5 rounded-lg transition-colors">
+                    ← Storefront
+                  </Link>
+                );
+              })()}
             </div>
           </div>
 
-          {/* Status Badges & Controls in Header matching input_file_1.png */}
-          <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto">
-            <div className="hidden lg:flex items-center gap-2 text-xs text-white/95 font-medium bg-white/15 px-3 py-1.5 rounded-full">
-              <span>⚠️ Your SMS Credit is 0</span>
-              <button className="bg-emerald-500 hover:bg-emerald-600 text-white text-[11px] font-bold px-2.5 py-0.5 rounded-full transition-colors">
-                + Add SMS Credits
-              </button>
-            </div>
-
-            <button className="hidden sm:inline-flex text-xs font-semibold bg-white/20 hover:bg-white/30 text-white px-3 py-1.5 rounded-lg transition-colors">
-              ↗ View
-            </button>
-
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-extrabold tracking-wider bg-emerald-600 text-white shadow-xs uppercase">
-              ACCEPTING ORDERS
-            </span>
-
-            <span className="hidden sm:inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-extrabold bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-xs">
-              🎀 Premium Plus Package
-            </span>
-
+          {/* User Controls & Logout in Header */}
+          <div className="flex items-center gap-2 sm:gap-3">
             <div className="w-9 h-9 rounded-full bg-white/20 border border-white/30 flex items-center justify-center text-white font-bold text-sm shrink-0">
               {email ? email[0].toUpperCase() : "A"}
             </div>

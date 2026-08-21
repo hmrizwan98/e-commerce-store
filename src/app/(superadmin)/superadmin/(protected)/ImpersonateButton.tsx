@@ -8,7 +8,7 @@ import toast from "react-hot-toast";
 /** Mirrors LoginForm.tsx's own sign-in -> ID token -> POST /api/admin/session flow exactly,
  * just obtaining the ID token via a custom token (see /api/admin/impersonate/start) instead
  * of a password. */
-const ImpersonateButton: React.FC<{ storeId: string }> = ({ storeId }) => {
+const ImpersonateButton: React.FC<{ storeId: string; slug: string }> = ({ storeId, slug }) => {
   const [loading, setLoading] = useState(false);
 
   const handleClick = async () => {
@@ -35,7 +35,13 @@ const ImpersonateButton: React.FC<{ storeId: string }> = ({ storeId }) => {
       });
       if (!sessionRes.ok) throw new Error("Failed to establish session");
 
-      window.location.href = "/admin";
+      // TEMPORARY (Phase 8A) - on the single Vercel domain in use today (no
+      // wildcard subdomain DNS yet), a bare "/admin" resolves whichever
+      // tenant the host happens to resolve to, not necessarily the store
+      // just impersonated - the /frontstore/{slug}/admin preview path
+      // resolves tenant from the URL instead, so this always lands on the
+      // right store's admin regardless of host-based resolution.
+      window.location.href = `/store/${slug}/admin`;
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to log in as store owner");
       setLoading(false);

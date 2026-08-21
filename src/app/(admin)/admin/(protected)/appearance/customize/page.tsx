@@ -6,6 +6,8 @@ import { getAllBrandsForAdmin } from "@/lib/firebase/repositories/brands";
 import { getAllPagesForAdmin } from "@/lib/firebase/repositories/pages";
 import { getProducts, searchAdminProducts } from "@/lib/firebase/repositories/products";
 import { getMenu } from "@/lib/firebase/repositories/menus";
+import { getBlogPostsPageForAdmin } from "@/lib/firebase/repositories/blog-posts";
+import { getAllTestimonialsForAdmin } from "@/lib/firebase/repositories/testimonials";
 import CustomizeShell from "./CustomizeShell";
 
 export const dynamic = "force-dynamic";
@@ -21,6 +23,8 @@ export default async function AdminCustomizePage() {
     pages,
     brands,
     menuProducts,
+    { posts: blogPosts },
+    testimonials,
   ] = await Promise.all([
     getDraftThemeConfig(),
     getAllHomepageSectionsForAdmin(),
@@ -31,19 +35,29 @@ export default async function AdminCustomizePage() {
     getAllPagesForAdmin(),
     getAllBrandsForAdmin(),
     getProducts(200),
+    getBlogPostsPageForAdmin({ limit: 100 }),
+    getAllTestimonialsForAdmin(),
   ]);
+
+  const cleanDraftTheme = JSON.parse(JSON.stringify(draftTheme));
+  const cleanSections = JSON.parse(JSON.stringify(homepageSections));
+  const cleanHeaderMenu = JSON.parse(JSON.stringify(headerMenuItems));
+  const cleanFooterMenu = JSON.parse(JSON.stringify(footerMenuItems));
 
   return (
     <CustomizeShell
-      initialDraft={draftTheme}
+      initialDraft={cleanDraftTheme}
       homepage={{
-        sections: homepageSections,
+        sections: cleanSections,
         categoryOptions: categories.map((c) => ({ id: c.id, name: c.name })),
         productOptions: featuredProductOptions.map((p) => ({ id: p.id, name: p.name })),
+        blogOptions: blogPosts.map((b) => ({ id: b.id, name: b.title })),
+        brandOptions: brands.filter((b) => !b.isDeleted).map((b) => ({ id: b.id, name: b.name })),
+        testimonialOptions: testimonials.map((t) => ({ id: t.id, name: `${t.clientName} (${t.rating ?? 5}★) - "${t.content.substring(0, 30)}..."` })),
       }}
       navigation={{
-        headerItems: headerMenuItems,
-        footerItems: footerMenuItems,
+        headerItems: cleanHeaderMenu,
+        footerItems: cleanFooterMenu,
         options: {
           pages: pages.filter((p) => p.isActive).map((p) => ({ slug: p.slug, title: p.title })),
           categories: categories.filter((c) => !c.isDeleted).map((c) => ({ slug: c.slug, name: c.name })),

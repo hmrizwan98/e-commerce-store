@@ -16,6 +16,8 @@ export interface DiscoverMoreSliderProps {
     featuredImage: string;
     color?: string;
     href?: string;
+    btnText?: string;
+    showBtn?: boolean;
   }[];
 }
 
@@ -92,6 +94,8 @@ const DiscoverMoreSlider: React.FC<DiscoverMoreSliderProps> = ({
                 featuredImage={item.featuredImage}
                 color={item.color}
                 href={item.href}
+                btnText={item.btnText}
+                showBtn={item.showBtn}
               />
             </li>
           ))}

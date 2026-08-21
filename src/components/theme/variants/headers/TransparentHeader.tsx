@@ -8,13 +8,16 @@ import CartDropdown from "@/components/Header/CartDropdown";
 import AvatarDropdown from "@/components/Header/AvatarDropdown";
 import MenuBar from "@/shared/MenuBar/MenuBar";
 import type { HeaderThemeConfig, CartThemeConfig } from "@/lib/theme/theme-types";
+import type { ThemeLogos } from "@/types/theme";
 
 export interface HeaderVariantProps {
   headerSettings?: HeaderThemeConfig;
   cartSettings?: CartThemeConfig;
+  logos?: ThemeLogos;
+  storeName?: string;
 }
 
-export default function TransparentHeader({ headerSettings, cartSettings }: HeaderVariantProps) {
+export default function TransparentHeader({ headerSettings, cartSettings, logos, storeName }: HeaderVariantProps) {
   const showSearch = headerSettings?.showSearch ?? true;
   const showAccount = headerSettings?.showAccount ?? true;
   const showCart = headerSettings?.showCart ?? true;
@@ -31,7 +34,7 @@ export default function TransparentHeader({ headerSettings, cartSettings }: Head
         </div>
         
         <div className="flex items-center justify-center">
-          <Logo />
+          <Logo img={logos?.logoLight} imgLight={logos?.logoDark} storeName={storeName} logoHeightPx={headerSettings?.logoHeightPx} />
         </div>
 
         <div className="flex items-center justify-end gap-5 flex-1">

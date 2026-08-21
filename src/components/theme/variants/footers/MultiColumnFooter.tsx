@@ -19,7 +19,7 @@ export default function MultiColumnFooter({ footerSettings, storeName = "Tradz G
   const copyrightText = footerSettings?.copyrightText || `© ${new Date().getFullYear()} ${storeName}. All rights reserved.`;
 
   return (
-    <footer className="relative py-16 lg:py-20 border-t border-[var(--border)] bg-[var(--footer-bg)] text-[var(--text)]">
+    <footer className="relative py-16 lg:py-20 border-t border-[var(--border,#e5e7eb)] dark:border-slate-800 bg-[var(--footer-bg,white)] dark:bg-slate-950 text-[var(--text,#111827)] dark:text-slate-100">
       <div className="container grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-10">
         <div className="md:col-span-2 lg:col-span-2 space-y-4">
           <Logo />

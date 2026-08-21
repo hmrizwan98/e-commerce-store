@@ -175,23 +175,8 @@ export default function SuperAdminShell({
             </div>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto">
-            <div className="hidden lg:flex items-center gap-2 text-xs text-white/95 font-medium bg-white/15 px-3 py-1.5 rounded-full">
-              <span>⚠️ Your SMS Credit is 0</span>
-              <button className="bg-emerald-500 hover:bg-emerald-600 text-white text-[11px] font-bold px-2 py-0.5 rounded-full transition-colors">
-                + Add SMS Credits
-              </button>
-            </div>
-
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-extrabold tracking-wider bg-emerald-600 text-white shadow-xs uppercase">
-              ACCEPTING ORDERS
-            </span>
-
-            <span className="hidden sm:inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-extrabold bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-xs">
-              🎀 Premium Plus Package
-            </span>
-
-            {email && <span className="hidden md:inline text-xs font-semibold text-white/90 bg-white/15 px-3 py-1.5 rounded-lg">{email}</span>}
+          <div className="flex items-center gap-2 sm:gap-3">
+            {email && <span className="text-xs font-semibold text-white/90 bg-white/15 px-3 py-1.5 rounded-lg">{email}</span>}
           </div>
         </header>
 

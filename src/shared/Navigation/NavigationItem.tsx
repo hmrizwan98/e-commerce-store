@@ -1,7 +1,7 @@
 'use client';
 
 import { Popover, Transition } from '@/app/headlessui';
-import { ChevronDownIcon } from '@heroicons/react/24/solid';
+import { ChevronDownIcon, ChevronUpIcon, ChevronRightIcon } from '@heroicons/react/24/solid';
 import React, { FC, Fragment, useState } from 'react';
 import { Route } from '@/routers/types';
 import Link from 'next/link';
@@ -40,48 +40,70 @@ const NavigationItem: FC<NavigationItemProps> = ({ menuItem }) => {
     if (!menu.children) {
       return null;
     }
-    return (
-      <li
-        className={`menu-item flex-shrink-0 menu-megamenu menu-megamenu--large`}>
-        {renderMainItem(menu)}
+    const isHover = menuCurrentHovers.includes(menu.id);
+    
+    // Flatten menu children for vertical list rendering in compact dropdown card
+    const flatItems: NavItemType[] = [];
+    menu.children.forEach((group) => {
+      if (group.children && group.children.length > 0) {
+        flatItems.push(...group.children);
+      } else {
+        flatItems.push(group);
+      }
+    });
 
-        <div className="absolute inset-x-0 z-50 invisible transform sub-menu top-full">
-          <div className="bg-white shadow-lg dark:bg-neutral-900">
-            <div className="container">
-              <div className="grid grid-cols-4 gap-x-8 gap-y-10 text-sm border-t border-slate-200 dark:border-slate-700 py-10">
-                {menu.children.map((item: any, index: number) => (
-                  <div key={index}>
-                    <p className="font-semibold text-base text-slate-900 dark:text-neutral-100">
-                      {item.name}
-                    </p>
-                    <ul className="grid mt-5 space-y-1">
-                      {item.children?.map(renderMegaMenuNavlink)}
-                    </ul>
+    return (
+      <Popover
+        as="li"
+        className="relative menu-item menu-dropdown"
+        onMouseEnter={() => onMouseEnterMenu(menu.id)}
+        onMouseLeave={() => onMouseLeaveMenu(menu.id)}>
+        {() => (
+          <>
+            <Popover.Button as={Fragment}>
+              {renderMainItem(menu, isHover)}
+            </Popover.Button>
+            <Transition
+              as={Fragment}
+              show={isHover}
+              enter="transition ease-out duration-150"
+              enterFrom="opacity-0 translate-y-1 scale-95"
+              enterTo="opacity-100 translate-y-0 scale-100"
+              leave="transition ease-in duration-150"
+              leaveFrom="opacity-100 translate-y-0 scale-100"
+              leaveTo="opacity-0 translate-y-1 scale-95">
+              <Popover.Panel
+                className="absolute left-1/2 -translate-x-1/2 z-50 w-64 sm:w-72 pt-3 transform sub-menu top-full">
+                {/* Pointer Caret */}
+                <div className="absolute top-1.5 left-1/2 -translate-x-1/2 w-3.5 h-3.5 rotate-45 bg-white dark:bg-neutral-900 border-t border-l border-neutral-200/80 dark:border-neutral-800 z-10" />
+
+                <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800 shadow-xl shadow-neutral-900/10 dark:shadow-black/40 p-2.5 z-20">
+                  {/* ALL CATEGORIES HEADER */}
+                  <div className="px-3.5 pt-2 pb-2 text-[11px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+                    ALL CATEGORIES
                   </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </li>
+
+                  {/* CATEGORIES / ITEMS LIST */}
+                  <ul className="space-y-0.5">
+                    {flatItems.map((item, index) => {
+                      const isSelected = index === 0;
+                      return (
+                        <li key={item.id || index}>
+                          {renderDropdownMenuNavlink(item, isSelected)}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              </Popover.Panel>
+            </Transition>
+          </>
+        )}
+      </Popover>
     );
   };
 
-  const renderMegaMenuNavlink = (item: NavItemType) => {
-    return (
-      <li key={item.id} className={`${item.isNew ? 'menuIsNew' : ''}`}>
-        <Link
-          className="block font-normal text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-neutral-800 rounded-lg -mx-2 px-2 py-1.5 transition-colors"
-          href={{
-            pathname: item.href || undefined,
-          }}>
-          {item.name}
-        </Link>
-      </li>
-    );
-  };
-
-  // ===================== MENU DROPDOW =====================
+  // ===================== MENU DROPDOWN =====================
   const renderDropdownMenu = (menuDropdown: NavItemType) => {
     const isHover = menuCurrentHovers.includes(menuDropdown.id);
     return (
@@ -93,33 +115,43 @@ const NavigationItem: FC<NavigationItemProps> = ({ menuItem }) => {
         {() => (
           <>
             <Popover.Button as={Fragment}>
-              {renderMainItem(menuDropdown)}
+              {renderMainItem(menuDropdown, isHover)}
             </Popover.Button>
             <Transition
               as={Fragment}
               show={isHover}
               enter="transition ease-out duration-150"
-              enterFrom="opacity-0 translate-y-1"
-              enterTo="opacity-100 translate-y-0"
+              enterFrom="opacity-0 translate-y-1 scale-95"
+              enterTo="opacity-100 translate-y-0 scale-100"
               leave="transition ease-in duration-150"
-              leaveFrom="opacity-100 translate-y-0"
-              leaveTo="opacity-0 translate-y-1">
+              leaveFrom="opacity-100 translate-y-0 scale-100"
+              leaveTo="opacity-0 translate-y-1 scale-95">
               <Popover.Panel
-                static
-                className="absolute left-0 z-10 w-56 transform sub-menu top-full">
-                <ul className="relative grid py-4 space-y-1 text-sm bg-white rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 dark:ring-white dark:ring-opacity-10 dark:bg-neutral-900">
-                  {menuDropdown.children?.map((i) => {
-                    if (i.type) {
-                      return renderDropdownMenuNavlinkHasChild(i);
-                    } else {
-                      return (
-                        <li key={i.id} className="px-2">
-                          {renderDropdownMenuNavlink(i)}
-                        </li>
-                      );
-                    }
-                  })}
-                </ul>
+                className="absolute left-1/2 -translate-x-1/2 z-50 w-64 sm:w-72 pt-3 transform sub-menu top-full">
+                {/* Pointer Caret */}
+                <div className="absolute top-1.5 left-1/2 -translate-x-1/2 w-3.5 h-3.5 rotate-45 bg-white dark:bg-neutral-900 border-t border-l border-neutral-200/80 dark:border-neutral-800 z-10" />
+
+                <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800 shadow-xl shadow-neutral-900/10 dark:shadow-black/40 p-2.5 z-20">
+                  {/* ALL CATEGORIES HEADER */}
+                  <div className="px-3.5 pt-2 pb-2 text-[11px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+                    ALL CATEGORIES
+                  </div>
+
+                  <ul className="space-y-0.5 text-sm">
+                    {menuDropdown.children?.map((i, index) => {
+                      const isSelected = index === 0;
+                      if (i.type) {
+                        return renderDropdownMenuNavlinkHasChild(i);
+                      } else {
+                        return (
+                          <li key={i.id}>
+                            {renderDropdownMenuNavlink(i, isSelected)}
+                          </li>
+                        );
+                      }
+                    })}
+                  </ul>
+                </div>
               </Popover.Panel>
             </Transition>
           </>
@@ -134,7 +166,7 @@ const NavigationItem: FC<NavigationItemProps> = ({ menuItem }) => {
       <Popover
         as="li"
         key={item.id}
-        className="relative px-2 menu-item menu-dropdown"
+        className="relative menu-item menu-dropdown"
         onMouseEnter={() => onMouseEnterMenu(item.id)}
         onMouseLeave={() => onMouseLeaveMenu(item.id)}>
         {() => (
@@ -152,15 +184,14 @@ const NavigationItem: FC<NavigationItemProps> = ({ menuItem }) => {
               leaveFrom="opacity-100 translate-y-0"
               leaveTo="opacity-0 translate-y-1">
               <Popover.Panel
-                static
-                className="absolute top-0 z-10 w-56 pl-2 sub-menu left-full">
-                <ul className="relative grid py-4 space-y-1 text-sm bg-white rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 dark:ring-white dark:ring-opacity-10 dark:bg-neutral-900">
+                className="absolute top-0 z-50 w-56 pl-2 sub-menu left-full">
+                <ul className="relative grid p-2 space-y-1 text-sm bg-white dark:bg-slate-900 rounded-2xl shadow-xl ring-1 ring-black/5 dark:ring-white/10 border border-slate-100 dark:border-slate-800">
                   {item.children?.map((i) => {
                     if (i.type) {
                       return renderDropdownMenuNavlinkHasChild(i);
                     } else {
                       return (
-                        <li key={i.id} className="px-2">
+                        <li key={i.id}>
                           {renderDropdownMenuNavlink(i)}
                         </li>
                       );
@@ -175,18 +206,30 @@ const NavigationItem: FC<NavigationItemProps> = ({ menuItem }) => {
     );
   };
 
-  const renderDropdownMenuNavlink = (item: NavItemType) => {
+  const renderDropdownMenuNavlink = (item: NavItemType, isSelected = false) => {
     return (
       <Link
-        className="flex items-center px-4 py-2 font-normal rounded-md text-neutral-6000 dark:text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 dark:hover:text-neutral-200"
+        className={`group flex items-center justify-between px-3.5 py-2.5 text-sm rounded-xl transition-all duration-150 ${
+          isSelected
+            ? "bg-[#FAF5F5] dark:bg-neutral-800/90 font-bold text-neutral-900 dark:text-white"
+            : "font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100/60 dark:hover:bg-neutral-800/60 hover:text-neutral-900 dark:hover:text-white"
+        }`}
         href={{
           pathname: item.href || undefined,
         }}>
-        {item.name}
-        {item.type && (
+        <span className="truncate">{item.name}</span>
+        {item.type ? (
           <ChevronDownIcon
-            className="w-4 h-4 ml-2 text-neutral-500"
+            className="w-4 h-4 ml-2 text-neutral-400 -rotate-90"
             aria-hidden="true"
+          />
+        ) : (
+          <ChevronRightIcon
+            className={`h-4 w-4 flex-shrink-0 transition-opacity ${
+              isSelected
+                ? "text-neutral-500 dark:text-neutral-400"
+                : "text-neutral-400 opacity-0 group-hover:opacity-100"
+            }`}
           />
         )}
       </Link>
@@ -194,20 +237,31 @@ const NavigationItem: FC<NavigationItemProps> = ({ menuItem }) => {
   };
 
   // ===================== MENU MAIN MENU =====================
-  const renderMainItem = (item: NavItemType) => {
+  const renderMainItem = (item: NavItemType, isHover = false) => {
     return (
-      <div className="flex items-center flex-shrink-0 h-20">
+      <div className="flex items-center flex-shrink-0 h-full min-h-[44px]">
         <Link
-          className="inline-flex items-center text-sm lg:text-[15px] font-medium text-slate-700 dark:text-slate-300 py-2.5 px-4 xl:px-5 rounded-full hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+          className={`inline-flex items-center text-sm lg:text-[15px] font-semibold text-neutral-900 dark:text-slate-100 py-2 px-3 focus:outline-none transition-all ${
+            isHover
+              ? "border-b-2 border-neutral-900 dark:border-white pb-0.5"
+              : "border-b-2 border-transparent opacity-90 hover:opacity-100"
+          }`}
           href={{
             pathname: item.href || undefined,
           }}>
           {item.name}
           {item.type && (
-            <ChevronDownIcon
-              className="w-4 h-4 ml-1 -mr-1 text-slate-400"
-              aria-hidden="true"
-            />
+            isHover ? (
+              <ChevronUpIcon
+                className="w-4 h-4 ml-1 text-neutral-900 dark:text-white"
+                aria-hidden="true"
+              />
+            ) : (
+              <ChevronDownIcon
+                className="w-4 h-4 ml-1 text-neutral-500"
+                aria-hidden="true"
+              />
+            )
           )}
         </Link>
       </div>

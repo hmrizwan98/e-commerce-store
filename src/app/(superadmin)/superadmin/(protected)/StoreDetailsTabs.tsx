@@ -165,7 +165,7 @@ const StoreDetailsTabs: React.FC<{
           <div className={cardClass}>
             <h2 className="text-base font-bold text-neutral-900 dark:text-white">Store Operations & Impersonation</h2>
             <div className="flex flex-wrap gap-3">
-              <ImpersonateButton storeId={store.id} />
+              <ImpersonateButton storeId={store.id} slug={store.slug} />
             </div>
             <div className="pt-2 border-t border-neutral-100 dark:border-neutral-800">
               <CloneStoreDialog sourceStoreId={store.id} platformBaseUrl={platformBaseUrl} />

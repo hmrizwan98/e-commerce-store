@@ -9,6 +9,8 @@ export interface TabProps {
 }
 
 const VARIANTS: { value: NonNullable<ProductCardThemeConfig["variant"]>; label: string; description: string }[] = [
+  { value: "trend-glass", label: "Trend Glass (2026 Modern)", description: "Gradient discount badge, frosted glass buttons, savings pill." },
+  { value: "deal-card", label: "Deal Card (SS3 Style)", description: "Top original price, red discount badge, pill Buy Now button." },
   { value: "minimal", label: "Minimal", description: "Clean rounded cards, soft hover reveal." },
   { value: "bold-grid", label: "Bold grid", description: "Sharp corners, high contrast, dense grid." },
   { value: "editorial", label: "Editorial", description: "Serif type, 3:4 imagery, understated actions." },
@@ -71,6 +73,7 @@ export default function ProductCardTab({ draft, onChange }: TabProps) {
             className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-transparent"
           >
             <option value="1:1">Square (1:1)</option>
+            <option value="4:3">Landscape (4:3)</option>
             <option value="3:4">Portrait (3:4)</option>
             <option value="4:5">Portrait (4:5)</option>
           </select>

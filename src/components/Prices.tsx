@@ -9,22 +9,18 @@ export interface PricesProps {
 
 const Prices: FC<PricesProps> = ({
   className = "",
-  price = 33,
+  price = 0,
   compareAtPrice,
-  contentClass = "py-1 px-2 md:py-1.5 md:px-2.5 text-sm font-medium",
+  contentClass = "text-base font-bold text-[var(--heading,#0f172a)] dark:text-white",
 }) => {
   return (
-    <div className={`${className}`}>
-      <div
-        className={`flex items-center border-2 border-green-500 rounded-lg ${contentClass}`}
-      >
-        <span className="text-green-500 !leading-none">${String(price)}</span>
-        {compareAtPrice && compareAtPrice > price && (
-          <span className="ml-2 text-sm text-neutral-400 line-through">
-            ${String(compareAtPrice)}
-          </span>
-        )}
-      </div>
+    <div className={`flex items-baseline gap-2 ${className}`}>
+      <span className={contentClass}>${String(price)}</span>
+      {compareAtPrice && compareAtPrice > price && (
+        <span className="text-xs text-slate-400 dark:text-neutral-500 line-through font-normal">
+          ${String(compareAtPrice)}
+        </span>
+      )}
     </div>
   );
 };

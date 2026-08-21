@@ -15,60 +15,69 @@ export interface SectionPromo1Props {
 }
 
 const SectionPromo1: FC<SectionPromo1Props> = ({ className = "", banner }) => {
-  const heading = banner?.title ?? (
-    <>
-      Earn free money <br /> with Ciseco
-    </>
-  );
-  const subHeading = banner?.subtitle ?? banner?.description ?? "With Ciseco you will get freeship & savings combo...";
-  const ctaText = banner?.ctaText ?? "Savings combo";
+  const heading = banner?.title ?? "New Arrivals in Jewelry";
+  const subHeading = banner?.subtitle ?? banner?.description ?? "Discover our latest handcrafted collection with free shipping & savings combo...";
+  const ctaText = banner?.ctaText ?? "Shop Collection";
   const ctaHref = banner?.ctaHref ?? "/collection";
   const ctaText2 = banner?.ctaText2 ?? "Discover more";
   const ctaHref2 = banner?.ctaHref2 ?? "/search";
+  const badgeText = banner?.subtitle || "STORE";
+
+  const bannerImg = (banner as any)?.imageDesktop || (banner as any)?.image ? safeImageSrc((banner as any).imageDesktop || (banner as any).image) : null;
 
   return (
     <div
-      className={`nc-SectionPromo1 relative flex flex-col lg:flex-row items-center ${className}`}
+      className={`nc-SectionPromo1 relative flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-12 my-8 ${className}`}
     >
-      <div className="relative flex-shrink-0 mb-16 lg:mb-0 lg:mr-10 lg:w-2/5">
+      <div className="w-full lg:w-1/2 space-y-4">
+        {badgeText && badgeText !== "STORE" && (
+          <span className="text-xs font-bold tracking-widest text-sky-600 dark:text-sky-400 uppercase block">
+            {badgeText}
+          </span>
+        )}
         <Logo className="w-28" />
-        <h2 className="font-semibold text-3xl sm:text-4xl xl:text-5xl 2xl:text-6xl mt-6 sm:mt-10 !leading-[1.2] tracking-tight">
+        <h2 className="font-bold text-3xl sm:text-4xl xl:text-5xl !leading-[1.2] tracking-tight text-slate-900 dark:text-white">
           {heading}
         </h2>
-        <span className="block mt-6 text-slate-500 dark:text-slate-400 ">
+        <p className="text-slate-500 dark:text-slate-400 text-sm sm:text-base leading-relaxed">
           {subHeading}
-        </span>
-        <div className="flex space-x-2 sm:space-x-5 mt-6 sm:mt-12">
-          <ButtonPrimary href={ctaHref as Route} className="">
+        </p>
+        <div className="flex items-center space-x-3 sm:space-x-4 pt-4">
+          <ButtonPrimary href={ctaHref as Route}>
             {ctaText}
           </ButtonPrimary>
-          <ButtonSecondary
-            href={ctaHref2 as Route}
-            className="border border-slate-100 dark:border-slate-700"
-          >
-            {ctaText2}
-          </ButtonSecondary>
+          {ctaText2 && (
+            <ButtonSecondary
+              href={ctaHref2 as Route}
+              className="border border-slate-200 dark:border-slate-700"
+            >
+              {ctaText2}
+            </ButtonSecondary>
+          )}
         </div>
       </div>
-      <div className="relative flex-1 max-w-xl lg:max-w-none">
-        {banner?.imageDesktop ? (
+
+      <div className="w-full lg:w-1/2 relative rounded-3xl overflow-hidden shadow-sm">
+        {bannerImg ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={safeImageSrc(banner.imageDesktop)} alt={banner.title} className="w-full" />
+          <img
+            src={bannerImg}
+            alt={banner?.title || "Promo"}
+            className="w-full max-h-[460px] object-cover rounded-3xl shadow-md"
+          />
         ) : (
           <>
             <NcImage
               alt=""
-              containerClassName="block dark:hidden"
+              containerClassName="block dark:hidden w-full max-h-[460px] rounded-3xl overflow-hidden"
               src={rightImgDemo}
               sizes="(max-width: 768px) 100vw, 50vw"
-              className=""
             />
             <NcImage
               alt=""
-              containerClassName="hidden dark:block"
+              containerClassName="hidden dark:block w-full max-h-[460px] rounded-3xl overflow-hidden"
               src={rightLargeImgDark}
               sizes="(max-width: 768px) 100vw, 50vw"
-              className=""
             />
           </>
         )}

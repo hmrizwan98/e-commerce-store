@@ -45,7 +45,7 @@ export default function SectionRegistry({ sections, products = [], categories = 
               <div key={section.id} className="container">
                 <SectionSliderProductCard
                   heading={section.heading || "Featured Products"}
-                  subHeading={section.subHeading || "Selected items from our store"}
+                  subHeading={section.subHeading || ""}
                   data={products}
                 />
               </div>
@@ -57,6 +57,17 @@ export default function SectionRegistry({ sections, products = [], categories = 
                 <SectionSliderCategories
                   heading={section.heading || "Shop by Category"}
                   subHeading={section.subHeading || "Browse our top collections"}
+                />
+              </div>
+            );
+          case "featureItemsGrid":
+            return (
+              <div key={section.id} className="container">
+                <SectionGridFeatureItems
+                  heading={section.heading || "What's trending now"}
+                  subHeading={section.subHeading || "Discover our top featured collection"}
+                  data={products}
+                  categories={categories}
                 />
               </div>
             );
@@ -75,7 +86,12 @@ export default function SectionRegistry({ sections, products = [], categories = 
           case "newsletter":
             return (
               <div key={section.id} className="container">
-                <SectionNewsletter />
+                <SectionNewsletter
+                  heading={section.heading}
+                  subHeading={section.subHeading}
+                  buttonText={section.buttonText}
+                  placeholderText={section.placeholderText}
+                />
               </div>
             );
           case "socialGallery":

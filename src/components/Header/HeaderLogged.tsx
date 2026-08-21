@@ -4,15 +4,17 @@ import React, { FC } from "react";
 import { usePathname } from "next/navigation";
 import MainNav2Logged from "./MainNav2Logged";
 import useHeaderScrollState from "@/hooks/useHeaderScrollState";
-import type { ThemeHeader } from "@/types/theme";
+import type { ThemeHeader, ThemeLogos } from "@/types/theme";
 import type { CartThemeConfig } from "@/lib/theme/theme-types";
 
 export interface HeaderLoggedProps {
   headerSettings?: ThemeHeader;
   cartSettings?: CartThemeConfig;
+  logos?: ThemeLogos;
+  storeName?: string;
 }
 
-const HeaderLogged: FC<HeaderLoggedProps> = ({ headerSettings, cartSettings }) => {
+const HeaderLogged: FC<HeaderLoggedProps> = ({ headerSettings, cartSettings, logos, storeName }) => {
   const pathname = usePathname();
   const { scrolledPastHero } = useHeaderScrollState();
 
@@ -26,7 +28,7 @@ const HeaderLogged: FC<HeaderLoggedProps> = ({ headerSettings, cartSettings }) =
         transparentActive ? "bg-transparent" : ""
       }`}
     >
-      <MainNav2Logged headerSettings={headerSettings} cartSettings={cartSettings} transparentActive={transparentActive} />
+      <MainNav2Logged headerSettings={headerSettings} cartSettings={cartSettings} transparentActive={transparentActive} logos={logos} storeName={storeName} />
     </div>
   );
 };

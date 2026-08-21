@@ -3,17 +3,22 @@ import "./globals.css";
 import "@/fonts/line-awesome-1.3.0/css/line-awesome.css";
 import "@/styles/index.scss";
 import "rc-slider/assets/index.css";
+import { headers } from "next/headers";
+import { notFound } from "next/navigation";
 import ClientProviders from "./ClientProviders";
 import { getActiveTheme, DEFAULT_THEME } from "@/lib/firebase/repositories/themes";
 import { getGeneralSettings, DEFAULT_GENERAL_SETTINGS } from "@/lib/firebase/repositories/site-settings";
+import { getMenu } from "@/lib/firebase/repositories/menus";
 import { themeToCssText } from "@/lib/theme/css-variables";
 import { FONT_PRESETS, ALL_FONT_VARIABLES } from "@/lib/theme/fonts";
 import { getCurrentTenant } from "@/lib/tenant/current";
 import { isPlatformDomainRequest } from "@/lib/tenant/platform-domain";
+import { FRONTSTORE_PREVIEW_HEADER } from "@/lib/tenant/constants";
 import { requestMemo } from "@/lib/request-cache";
 import { PLATFORM_SITE_URL } from "@/lib/marketing/site-url";
 import type { Theme } from "@/types/theme";
 import type { GeneralSettings } from "@/types/site-settings";
+import type { NavItem } from "@/types/nav";
 
 /**
  * Reserved subdomains (e.g. Super Admin) have no tenant to load a theme for -
@@ -40,6 +45,8 @@ async function resolveThemeAndSettings(): Promise<{
   theme: Theme;
   general: GeneralSettings;
   suspended: boolean;
+  headerMenu: NavItem[];
+  footerMenu: NavItem[];
 }> {
   return requestMemo("theme-and-settings", () => computeThemeAndSettings());
 }
@@ -49,6 +56,8 @@ async function computeThemeAndSettings(): Promise<{
   theme: Theme;
   general: GeneralSettings;
   suspended: boolean;
+  headerMenu: NavItem[];
+  footerMenu: NavItem[];
 }> {
   // Checked BEFORE calling getCurrentTenant() - that function has a
   // local-dev-only "no slug matched -> fall back to the first available
@@ -58,17 +67,30 @@ async function computeThemeAndSettings(): Promise<{
   // downstream chrome-suppression check. isPlatformDomainRequest() makes
   // "platform domain -> no tenant" a guarantee, not a hope.
   if (isPlatformDomainRequest()) {
-    return { tenantId: null, theme: DEFAULT_THEME, general: DEFAULT_GENERAL_SETTINGS, suspended: false };
+    return { tenantId: null, theme: DEFAULT_THEME, general: DEFAULT_GENERAL_SETTINGS, suspended: false, headerMenu: [], footerMenu: [] };
   }
   const tenant = await getCurrentTenant();
   if (!tenant) {
-    return { tenantId: null, theme: DEFAULT_THEME, general: DEFAULT_GENERAL_SETTINGS, suspended: false };
+    // TEMPORARY (Phase 8A) - a /frontstore/{slug} request names a specific
+    // store; if that slug doesn't resolve to a real tenant it must 404, not
+    // silently fall through to the "no tenant -> platform marketing site"
+    // behavior below (which is correct and must stay unchanged for real
+    // platform-domain requests, which never carry this header).
+    if (headers().get(FRONTSTORE_PREVIEW_HEADER)) {
+      notFound();
+    }
+    return { tenantId: null, theme: DEFAULT_THEME, general: DEFAULT_GENERAL_SETTINGS, suspended: false, headerMenu: [], footerMenu: [] };
   }
   if (tenant.status !== "active") {
-    return { tenantId: tenant.id, theme: DEFAULT_THEME, general: DEFAULT_GENERAL_SETTINGS, suspended: true };
+    return { tenantId: tenant.id, theme: DEFAULT_THEME, general: DEFAULT_GENERAL_SETTINGS, suspended: true, headerMenu: [], footerMenu: [] };
   }
-  const [theme, general] = await Promise.all([getActiveTheme(), getGeneralSettings()]);
-  return { tenantId: tenant.id, theme, general, suspended: false };
+  const [theme, general, headerMenu, footerMenu] = await Promise.all([
+    getActiveTheme(),
+    getGeneralSettings(),
+    getMenu("header"),
+    getMenu("footer"),
+  ]);
+  return { tenantId: tenant.id, theme, general, suspended: false, headerMenu, footerMenu };
 }
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -94,7 +116,7 @@ export default async function RootLayout({
   children: React.ReactNode;
   params: any;
 }) {
-  const { tenantId, theme, general, suspended } = await resolveThemeAndSettings();
+  const { tenantId, theme, general, suspended, headerMenu, footerMenu } = await resolveThemeAndSettings();
   const cssText = themeToCssText(theme);
   const bodyFont = FONT_PRESETS[theme.typography.bodyFont ?? "poppins"];
   const headingFont = FONT_PRESETS[theme.typography.headingFont ?? "poppins"];
@@ -122,6 +144,10 @@ export default async function RootLayout({
           popupConfig={(theme as any).popup}
           themePresetId={(theme as any).presetId}
           cartSettings={(theme as any).cart}
+          announcementBarSettings={(theme as any).announcementBar}
+          headerMenu={headerMenu as any}
+          footerMenu={footerMenu as any}
+          logos={theme.logos}
         >
           {suspended ? (
             <div className="flex min-h-[60vh] flex-col items-center justify-center gap-2 px-6 text-center">

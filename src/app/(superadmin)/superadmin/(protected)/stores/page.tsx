@@ -155,7 +155,19 @@ export default async function SuperAdminStoresPage({
                       {store.name}
                     </Link>
                   </td>
-                  <td className="p-4 font-mono text-xs text-neutral-500">{store.slug}</td>
+                  <td className="p-4 font-mono text-xs text-neutral-500">
+                    <div>{store.slug}</div>
+                    {/* TEMPORARY (Phase 8A) - preview this store's storefront/admin by
+                       path on the single current Vercel domain, no subdomain DNS needed. */}
+                    <div className="mt-1 flex gap-2 font-sans">
+                      <Link href={`/store/${store.slug}` as any} target="_blank" className="text-primary-6000 hover:underline">
+                        View storefront
+                      </Link>
+                      <Link href={`/store/${store.slug}/admin` as any} target="_blank" className="text-primary-6000 hover:underline">
+                        Manage store
+                      </Link>
+                    </div>
+                  </td>
                   <td className="p-4 text-neutral-600 dark:text-neutral-300 font-medium">{store.ownerName || "—"}</td>
                   <td className="p-4">
                     <span className="px-2.5 py-1 rounded-md text-xs font-mono font-medium bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">

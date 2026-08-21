@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { TENANT_SLUG_HEADER } from "@/lib/tenant/constants";
+import { TENANT_SLUG_HEADER, FRONTSTORE_PREVIEW_HEADER, FRONTSTORE_COOKIE } from "@/lib/tenant/constants";
 
 /**
  * Reserved subdomains that are never a tenant - the Super Admin app lives on
@@ -51,6 +51,43 @@ export function middleware(req: NextRequest) {
     return NextResponse.next({ request: { headers: requestHeaders } });
   }
 
+  // Path-based tenant preview: /store/{slug} (or legacy /frontstore/{slug})
+  // Lets a tester preview/test any tenant's storefront AND admin panel by URL path,
+  // resolving tenant via TENANT_SLUG_HEADER without requiring wildcard DNS.
+  const isStorePath = req.nextUrl.pathname.startsWith("/store/") || req.nextUrl.pathname === "/store";
+  const isFrontstorePath = req.nextUrl.pathname.startsWith("/frontstore/") || req.nextUrl.pathname === "/frontstore";
+
+  if (isStorePath || isFrontstorePath) {
+    const basePath = isStorePath ? "/store" : "/frontstore";
+    if (req.nextUrl.pathname === basePath) {
+      const url = req.nextUrl.clone();
+      url.pathname = "/";
+      const res = NextResponse.redirect(url);
+      res.cookies.delete(FRONTSTORE_COOKIE);
+      return res;
+    }
+
+    const segments = req.nextUrl.pathname.split("/").filter(Boolean); // ["store", "<slug>", ...rest]
+    const tenantSlug = segments[1];
+    const rest = "/" + segments.slice(2).join("/");
+
+    requestHeaders.set(TENANT_SLUG_HEADER, tenantSlug);
+    requestHeaders.set(FRONTSTORE_PREVIEW_HEADER, "1");
+
+    const url = req.nextUrl.clone();
+    url.pathname = rest;
+    const res = NextResponse.rewrite(url, { request: { headers: requestHeaders } });
+    res.cookies.set(FRONTSTORE_COOKIE, tenantSlug, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 60 * 60 * 6,
+      path: "/",
+    });
+    res.headers.set("X-Robots-Tag", "noindex");
+    return res;
+  }
+
   const hostHeader = req.headers.get("x-forwarded-host") || req.headers.get("host") || "";
   const hostname = hostHeader.split(":")[0].toLowerCase();
   const parts = hostname.split(".");
@@ -58,10 +95,27 @@ export function middleware(req: NextRequest) {
   let slug: string | null = null;
   if (hostname === "localhost" || hostname === "127.0.0.1") {
     slug = process.env.DEV_TENANT_SLUG?.trim() || null;
-  } else if (parts.length > 2) {
-    const subdomain = parts[0];
-    if (!RESERVED_SUBDOMAINS.has(subdomain)) {
-      slug = subdomain;
+  } else {
+    const isLocalhostSubdomain = parts.length === 2 && parts[1] === "localhost";
+    if (parts.length > 2 || isLocalhostSubdomain) {
+      const subdomain = parts[0];
+      if (!RESERVED_SUBDOMAINS.has(subdomain)) {
+        slug = subdomain;
+      }
+    }
+  }
+
+  // When request did NOT resolve a tenant by subdomain, and a path preview cookie is present,
+  // transparently bounce plain internal relative links back under /store/{slug}/ prefix.
+  if (!slug) {
+    const previewSlug = req.cookies.get(FRONTSTORE_COOKIE)?.value;
+    if (previewSlug) {
+      requestHeaders.set(TENANT_SLUG_HEADER, previewSlug);
+      if (!req.nextUrl.pathname.startsWith("/api") && !req.nextUrl.pathname.startsWith("/superadmin")) {
+        const url = req.nextUrl.clone();
+        url.pathname = `/store/${previewSlug}${req.nextUrl.pathname}`;
+        return NextResponse.redirect(url);
+      }
     }
   }
 

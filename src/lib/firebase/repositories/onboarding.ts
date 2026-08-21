@@ -1,5 +1,6 @@
 import "server-only";
 import { tenantCollection } from "@/lib/firebase/tenant-scope";
+import { toMillis } from "@/lib/firebase/repositories/utils";
 import type { OnboardingProgress } from "@/types/onboarding";
 
 const COLLECTION = "onboarding";
@@ -15,7 +16,18 @@ export const DEFAULT_ONBOARDING_PROGRESS: OnboardingProgress = {
 export async function getOnboardingProgress(): Promise<OnboardingProgress> {
   const col = await tenantCollection(COLLECTION);
   const doc = await col.doc(DOC_ID).get();
-  return doc.exists
-    ? ({ ...DEFAULT_ONBOARDING_PROGRESS, ...doc.data() } as OnboardingProgress)
-    : DEFAULT_ONBOARDING_PROGRESS;
+  if (!doc.exists) return DEFAULT_ONBOARDING_PROGRESS;
+
+  // launchedAt/updatedAt come back as Firestore Timestamp instances (from
+  // serverTimestamp() writes in onboarding/actions.ts), not the plain
+  // numbers this type promises - converting here (not just at the page/prop
+  // boundary) is what actually fixes the "Only plain objects... Classes...
+  // not supported" Server->Client Component crash at the root cause.
+  const data = doc.data() as Record<string, unknown>;
+  return {
+    ...DEFAULT_ONBOARDING_PROGRESS,
+    ...data,
+    launchedAt: toMillis(data.launchedAt),
+    updatedAt: toMillis(data.updatedAt),
+  } as OnboardingProgress;
 }

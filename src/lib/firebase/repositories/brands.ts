@@ -21,6 +21,25 @@ export async function getBrands(): Promise<Brand[]> {
   });
 }
 
+export async function getBrandsByIds(ids: string[]): Promise<Brand[]> {
+  if (!ids || !ids.length) return [];
+  return safeQuery("getBrandsByIds", [], async () => {
+    const col = await tenantCollection(COLLECTION);
+    const snap = await col
+      .where("isActive", "==", true)
+      .where("isDeleted", "==", false)
+      .get();
+
+    const all = snap.docs
+      .map((doc) => docData<Brand>(doc))
+      .filter((b): b is Brand => b !== null);
+
+    return ids
+      .map((id) => all.find((b) => b.id === id))
+      .filter((b): b is Brand => b !== undefined);
+  });
+}
+
 export async function getBrandBySlug(slug: string): Promise<Brand | null> {
   const col = await tenantCollection(COLLECTION);
   const snap = await col

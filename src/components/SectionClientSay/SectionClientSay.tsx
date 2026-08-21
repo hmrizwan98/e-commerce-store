@@ -3,8 +3,7 @@
 // @ts-ignore
 import Glide from "@glidejs/glide/dist/glide.esm";
 import Heading from "@/components/Heading/Heading";
-import React, { FC, useId, useRef, useState } from "react";
-import { useEffect } from "react";
+import React, { FC, useRef, useState, useEffect } from "react";
 import clientSayMain from "@/images/clientSayMain.png";
 import clientSay1 from "@/images/clientSay1.png";
 import clientSay2 from "@/images/clientSay2.png";
@@ -32,14 +31,22 @@ export interface SectionClientSayItem {
 
 export interface SectionClientSayProps {
   className?: string;
+  heading?: string;
+  subHeading?: string;
   data?: SectionClientSayItem[];
 }
 
-const SectionClientSay: FC<SectionClientSayProps> = ({ className = "", data }) => {
+const SectionClientSay: FC<SectionClientSayProps> = ({
+  className = "",
+  heading,
+  subHeading,
+  data,
+}) => {
   const testimonials = data?.length ? data : DEMO_DATA;
   const sliderRef = useRef(null);
 
   const [isShow, setIsShow] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {
     const OPTIONS: Partial<Glide.Options> = {
@@ -49,52 +56,57 @@ const SectionClientSay: FC<SectionClientSayProps> = ({ className = "", data }) =
     if (!sliderRef.current) return;
 
     let slider = new Glide(sliderRef.current, OPTIONS);
+    
+    const updateIndex = () => {
+      if (typeof slider.index === "number") {
+        setActiveIndex(slider.index);
+      }
+    };
+
+    slider.on("run.after", updateIndex);
+    slider.on("move", updateIndex);
     slider.mount();
     setIsShow(true);
+
     return () => {
       slider.destroy();
     };
   }, [sliderRef]);
 
+  const currentItem = testimonials[activeIndex] || testimonials[0];
+  const currentAvatarSrc = currentItem?.image ? safeImageSrc(currentItem.image) : null;
+
+  // Extract uploaded satellite images from list for surrounding circles
+  const customerAvatars = testimonials.map((t) => (t.image ? safeImageSrc(t.image) : null)).filter(Boolean);
+
   const renderBg = () => {
+    const staticSatellites = [clientSay1, clientSay2, clientSay3, clientSay4, clientSay5, clientSay6];
+    
     return (
       <div className="hidden md:block">
-        <Image
-          sizes="100px"
-          className="absolute top-9 -left-20"
-          src={clientSay1}
-          alt=""
-        />
-        <Image
-          sizes="100px"
-          className="absolute bottom-[100px] right-full mr-40"
-          src={clientSay2}
-          alt=""
-        />
-        <Image
-          sizes="100px"
-          className="absolute top-full left-[140px]"
-          src={clientSay3}
-          alt=""
-        />
-        <Image
-          sizes="100px"
-          className="absolute -bottom-10 right-[140px]"
-          src={clientSay4}
-          alt=""
-        />
-        <Image
-          sizes="100px"
-          className="absolute left-full ml-32 bottom-[80px]"
-          src={clientSay5}
-          alt=""
-        />
-        <Image
-          sizes="100px"
-          className="absolute -right-10 top-10 "
-          src={clientSay6}
-          alt=""
-        />
+        {[
+          { posClass: "top-9 -left-20", defaultImg: clientSay1, idx: 0 },
+          { posClass: "bottom-[100px] right-full mr-40", defaultImg: clientSay2, idx: 1 },
+          { posClass: "top-full left-[140px]", defaultImg: clientSay3, idx: 2 },
+          { posClass: "-bottom-10 right-[140px]", defaultImg: clientSay4, idx: 3 },
+          { posClass: "left-full ml-32 bottom-[80px]", defaultImg: clientSay5, idx: 4 },
+          { posClass: "-right-10 top-10", defaultImg: clientSay6, idx: 5 },
+        ].map((sat, i) => {
+          const customSrc = customerAvatars[i];
+          return (
+            <div
+              key={i}
+              className={`absolute ${sat.posClass} w-12 h-12 rounded-full overflow-hidden border-2 border-white dark:border-neutral-800 shadow-md transition-all duration-300 hover:scale-110`}
+            >
+              {customSrc ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={customSrc} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <Image sizes="100px" src={sat.defaultImg} alt="" className="w-full h-full object-cover" />
+              )}
+            </div>
+          );
+        })}
       </div>
     );
   };
@@ -104,16 +116,37 @@ const SectionClientSay: FC<SectionClientSayProps> = ({ className = "", data }) =
       className={`nc-SectionClientSay relative flow-root ${className} `}
       data-nc-id="SectionClientSay"
     >
-      <Heading desc="Let's see what people think of Ciseco" isCenter>
-        Good news from far away 🥇
+      <Heading rightDescText={subHeading ?? "HAPPY CUSTOMERS"} isCenter>
+        {heading ?? "What People Are Saying"}
       </Heading>
       <div className="relative md:mb-16 max-w-2xl mx-auto">
         {renderBg()}
 
-        <Image className="mx-auto" src={clientSayMain} alt="" />
+        {/* Hero Main Center Avatar */}
+        <div className="relative w-28 h-28 sm:w-36 sm:h-36 mx-auto mb-4 flex items-center justify-center">
+          <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-sky-400 via-indigo-500 to-purple-500 p-1 shadow-xl animate-pulse opacity-80" />
+          <div className="relative w-full h-full rounded-full overflow-hidden border-4 border-white dark:border-neutral-900 bg-neutral-100 dark:bg-neutral-800 shadow-lg">
+            {currentAvatarSrc ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                key={currentAvatarSrc}
+                src={currentAvatarSrc}
+                alt={currentItem?.clientName || "Customer"}
+                className="w-full h-full object-cover transition-all duration-500 ease-out"
+              />
+            ) : (
+              <Image
+                src={clientSayMain}
+                alt="Customer"
+                className="w-full h-full object-cover"
+              />
+            )}
+          </div>
+        </div>
+
         <div
           ref={sliderRef}
-          className={`mt-12 lg:mt-16 relative ${isShow ? "" : "invisible"}`}
+          className={`mt-8 relative ${isShow ? "" : "invisible"}`}
         >
           <Image
             className="opacity-50 md:opacity-100 absolute -mr-16 lg:mr-3 right-full top-1"
@@ -135,26 +168,20 @@ const SectionClientSay: FC<SectionClientSayProps> = ({ className = "", data }) =
                     key={item.id}
                     className="glide__slide flex flex-col items-center text-center"
                   >
-                    {item.image && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={safeImageSrc(item.image)}
-                        alt={item.clientName}
-                        className="w-16 h-16 rounded-full object-cover mb-5 border-2 border-white dark:border-neutral-800 shadow-sm"
-                      />
-                    )}
-                    <span className="block text-2xl">{item.content}</span>
-                    <span className="block mt-8 text-2xl font-semibold">
+                    <span className="block text-xl sm:text-2xl font-medium leading-relaxed max-w-xl mx-auto">
+                      &ldquo;{item.content}&rdquo;
+                    </span>
+                    <span className="block mt-6 text-xl sm:text-2xl font-bold">
                       {item.clientName}
                     </span>
                     {meta && (
-                      <span className="block mt-1 text-sm text-neutral-500">{meta}</span>
+                      <span className="block mt-1 text-sm font-medium text-neutral-500 dark:text-neutral-400">{meta}</span>
                     )}
-                    <div className="flex items-center space-x-0.5 mt-3.5 text-yellow-500">
+                    <div className="flex items-center space-x-1 mt-3 text-amber-400">
                       {[1, 2, 3, 4, 5].map((star) => (
                         <StarIcon
                           key={star}
-                          className={`w-6 h-6 ${star > rating ? "text-neutral-300 dark:text-neutral-700" : ""}`}
+                          className={`w-5 h-5 ${star > rating ? "text-neutral-300 dark:text-neutral-700" : ""}`}
                         />
                       ))}
                     </div>
@@ -164,13 +191,17 @@ const SectionClientSay: FC<SectionClientSayProps> = ({ className = "", data }) =
             </ul>
           </div>
           <div
-            className="mt-10 glide__bullets flex items-center justify-center"
+            className="mt-8 glide__bullets flex items-center justify-center"
             data-glide-el="controls[nav]"
           >
             {testimonials.map((item, index) => (
               <button
                 key={item.id}
-                className="glide__bullet w-2 h-2 rounded-full bg-neutral-300 mx-1 focus:outline-none"
+                className={`glide__bullet w-2.5 h-2.5 rounded-full mx-1 focus:outline-none transition-all ${
+                  index === activeIndex
+                    ? "bg-indigo-600 w-6"
+                    : "bg-neutral-300 dark:bg-neutral-700 hover:bg-neutral-400"
+                }`}
                 data-glide-dir={`=${index}`}
               ></button>
             ))}

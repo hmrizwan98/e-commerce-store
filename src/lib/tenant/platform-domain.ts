@@ -1,5 +1,6 @@
 import "server-only";
 import { headers } from "next/headers";
+import { TENANT_SLUG_HEADER } from "./constants";
 
 /**
  * Independently answers "is this a request to the Platform's own domain" from
@@ -22,6 +23,16 @@ import { headers } from "next/headers";
  */
 export function isPlatformDomainRequest(): boolean {
   const hdrs = headers();
+
+  // TEMPORARY (Phase 8A) - a /frontstore/{slug} preview request always sets
+  // TENANT_SLUG_HEADER from the path (see middleware.ts), even on the
+  // platform's own bare/www domain where this function would otherwise
+  // unconditionally return true and short-circuit tenant resolution before
+  // the header is ever read. Safe: middleware.ts unconditionally deletes any
+  // client-forged copy of this header before setting its own, so a truthy
+  // value here can only have been set by middleware.ts itself.
+  if (hdrs.get(TENANT_SLUG_HEADER)) return false;
+
   const hostHeader = hdrs.get("x-forwarded-host") || hdrs.get("host") || "";
   const hostname = hostHeader.split(":")[0].toLowerCase();
 
@@ -33,7 +44,8 @@ export function isPlatformDomainRequest(): boolean {
   }
 
   const parts = hostname.split(".");
-  if (parts.length > 2) return false; // {slug}.ROOT_DOMAIN subdomain - always a tenant (or reserved) request
+  const isLocalhostSubdomain = parts.length === 2 && parts[1] === "localhost";
+  if (parts.length > 2 || isLocalhostSubdomain) return false; // {slug}.ROOT_DOMAIN or {slug}.localhost subdomain
 
   const rootDomain = (process.env.NEXT_PUBLIC_ROOT_DOMAIN || "").trim().toLowerCase();
   return !!rootDomain && (hostname === rootDomain || hostname === `www.${rootDomain}`);

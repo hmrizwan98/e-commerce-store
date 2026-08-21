@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { getFirebaseAuth } from "@/lib/firebase/client";
+import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 import Input from "@/shared/Input/Input";
 import ButtonPrimary from "@/shared/Button/ButtonPrimary";
 import Label from "@/components/Label/Label";
@@ -23,10 +24,14 @@ const LoginForm = ({
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  const [targetStoreInfo, setTargetStoreInfo] = useState<{ slug: string; name: string } | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setTargetStoreInfo(null);
     setLoading(true);
     try {
       const attemptCheck = await fetch("/api/admin/login-attempt", {
@@ -51,11 +56,17 @@ const LoginForm = ({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ idToken }),
       });
-      if (!res.ok) throw new Error("session-failed");
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        if (data.targetSlug) {
+          setTargetStoreInfo({ slug: data.targetSlug, name: data.targetName || data.targetSlug });
+        }
+        throw new Error(data.error || errorMessage);
+      }
       router.push(redirectTo as any);
       router.refresh();
-    } catch {
-      setError(errorMessage);
+    } catch (err: any) {
+      setError(err?.message || errorMessage);
       setLoading(false);
     }
   };
@@ -64,8 +75,14 @@ const LoginForm = ({
     ? "block text-xs font-bold uppercase tracking-wider font-mono text-slate-200 mb-1.5"
     : undefined;
 
+  // Input's own base classes (bg-white, text-neutral-900, etc.) are plain
+  // utility classes with no higher specificity than these overrides, so
+  // Tailwind's internal stylesheet ordering - not the order classes are
+  // written here - decides which one wins; that silently made this dark
+  // card's email/password text invisible (white-on-white). The `!` modifier
+  // forces these specific overrides to always win, regardless of ordering.
   const inputClass = isDarkCard
-    ? "mt-1 bg-slate-800/90 border-slate-700 text-white placeholder-slate-400 focus:border-cyan-400 focus:ring-cyan-400/20 rounded-xl px-4 py-3 text-sm font-medium transition-all"
+    ? "mt-1 !bg-slate-800/90 !border-slate-700 !text-white placeholder-slate-400 focus:!border-cyan-400 focus:!ring-cyan-400/20 rounded-xl px-4 py-3 text-sm font-medium transition-all"
     : "mt-1";
 
   return (
@@ -92,16 +109,40 @@ const LoginForm = ({
         ) : (
           <Label>Password</Label>
         )}
-        <Input
-          type="password"
-          className={inputClass}
-          placeholder="••••••••••••"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
+        <div className="relative">
+          <Input
+            type={showPassword ? "text" : "password"}
+            className={`${inputClass} !pr-11`}
+            placeholder="••••••••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword((v) => !v)}
+            aria-label={showPassword ? "Hide password" : "Show password"}
+            className={`absolute inset-y-0 right-0 flex items-center px-3.5 ${
+              isDarkCard ? "text-slate-400 hover:text-slate-200" : "text-neutral-400 hover:text-neutral-600"
+            }`}
+          >
+            {showPassword ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
+          </button>
+        </div>
       </div>
-      {error && <p className="text-xs font-bold text-rose-400 bg-rose-500/10 p-3 rounded-xl border border-rose-500/20">{error}</p>}
+      {error && (
+        <div className="space-y-2">
+          <p className="text-xs font-bold text-rose-400 bg-rose-500/10 p-3 rounded-xl border border-rose-500/20">{error}</p>
+          {targetStoreInfo && (
+            <a
+              href={`/store/${targetStoreInfo.slug}/admin/login`}
+              className="block text-center text-xs font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/50 p-3 rounded-xl border border-indigo-200 dark:border-indigo-800 hover:underline transition-all"
+            >
+              👉 Click here to sign in to {targetStoreInfo.name} Login (/store/{targetStoreInfo.slug}/admin/login)
+            </a>
+          )}
+        </div>
+      )}
       
       {isDarkCard ? (
         <button

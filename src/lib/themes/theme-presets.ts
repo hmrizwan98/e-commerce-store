@@ -81,21 +81,52 @@ const LEGAL_PAGE_BOILERPLATE = {
  * products, on-sale, promo, brands, testimonials, newsletter, social gallery) - only the
  * copy/config differs per preset, never the section types themselves. */
 function standardHomepageSections(opts: {
-  featuredCategoriesHeading: string;
-  featuredProductsHeading: string;
-  onSaleHeading: string;
-  socialGalleryHeading: string;
+  featuredCategoriesHeading?: string;
+  featuredProductsHeading?: string;
+  onSaleHeading?: string;
+  socialGalleryHeading?: string;
 }): ThemePresetHomepageSection[] {
   return [
-    { type: "collections", title: opts.featuredCategoriesHeading, order: 1, config: { heading: opts.featuredCategoriesHeading, mode: "auto", limit: 6 } },
-    { type: "featuredProducts", title: opts.featuredProductsHeading, order: 2, config: { heading: opts.featuredProductsHeading, mode: "auto", limit: 8 } },
-    { type: "onSale", title: opts.onSaleHeading, order: 3, config: { heading: opts.onSaleHeading, mode: "auto", limit: 8 } },
-    { type: "promo", title: "Promo 1", order: 4, config: { variant: 1 } },
-    { type: "brands", title: "Our Brands", order: 5, config: { heading: "Our Brands" } },
-    { type: "promo", title: "Promo 2", order: 6, config: { variant: 2 } },
-    { type: "testimonials", title: "What Our Customers Say", order: 7, config: { heading: "What Our Customers Say" } },
-    { type: "socialGallery", title: opts.socialGalleryHeading, order: 8, config: { heading: opts.socialGalleryHeading } },
-    { type: "newsletter", title: "Newsletter", order: 9, config: {} },
+    { type: "hero", title: "Hero", order: 0, config: {} },
+    {
+      type: "discoverMore",
+      title: "Discover More",
+      order: 1,
+      config: {
+        heading: "Discover more",
+        subHeading: "Good things are waiting for you",
+        items: [
+          { id: "1", title: "Explore new arrivals", subtitle: "Give the gift of choice", image: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=600&q=80", href: "/collection" },
+          { id: "2", title: "Digital gift cards", subtitle: "Give the gift of choice", image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=600&q=80", href: "/collection-2" },
+          { id: "3", title: "Sale collection", subtitle: "Up to 80% off", image: "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&w=600&q=80", href: "/search" },
+        ],
+      },
+    },
+    { type: "newArrivals", title: "New Arrivals", order: 2, config: { heading: opts.featuredProductsHeading || "New Arrivals", subHeading: "REY BUY WITH ALL DISCOUNT COUPON", mode: "auto", limit: 8 } },
+    {
+      type: "howItWork",
+      title: "How It Works",
+      order: 3,
+      config: {
+        items: [
+          { id: "1", icon: "🔍", title: "Filter & Discover", subtitle: "Smart filtering and search" },
+          { id: "2", icon: "🛍️", title: "Add to bag", subtitle: "Easily select and add items" },
+          { id: "3", icon: "📦", title: "Fast shipping", subtitle: "Worldwide delivery options" },
+          { id: "4", icon: "✨", title: "Enjoy the product", subtitle: "Quality guaranteed" },
+        ],
+      },
+    },
+    { type: "promo", title: "Earn Free Money", order: 4, config: { variant: 1 } },
+    { type: "exploreGrid", title: "Start Exploring", order: 5, config: { heading: "Start exploring", mode: "auto", limit: 6 } },
+    { type: "bestSellers", title: "Best Sellers", order: 6, config: { heading: "Best Sellers", subHeading: "BEST SELLERS OF THE MONTH", mode: "auto", limit: 8 } },
+    { type: "promo", title: "Special Offer", order: 7, config: { variant: 2 } },
+    { type: "largeProductSlider", title: "Chosen by Our Experts", order: 8, config: { heading: "CHOSEN BY OUR EXPERTS", mode: "auto", limit: 3 } },
+    { type: "collections", title: "Shop by Department", order: 9, config: { heading: opts.featuredCategoriesHeading || "Shop by department", mode: "auto" } },
+    { type: "promo", title: "Don't Miss Out", order: 10, config: { variant: 3 } },
+    { type: "featureItemsGrid", title: "What's Trending Now", order: 11, config: { heading: "What's trending now", subHeading: "DISCOVER MORE PRODUCTS", mode: "auto", limit: 8 } },
+    { type: "blog", title: "The Latest News", order: 12, config: { heading: "The latest news", subHeading: "FROM THE CISECO BLOG", limit: 4 } },
+    { type: "testimonials", title: "What People Are Saying", order: 13, config: { heading: "What People Are Saying", subHeading: "HAPPY CUSTOMERS" } },
+    { type: "newsletter", title: "Join our newsletter 📦", order: 14, config: { heading: "Join our newsletter 📦" } },
   ];
 }
 
@@ -407,8 +438,31 @@ const UNIVERSAL_PREMIUM: ThemePreset = {
     onSaleHeading: "Special Offers",
     socialGalleryHeading: "Follow Us",
   }),
-  heroBanner: heroSlide({ title: "Everything you need, in one store.", subtitle: "Quality products, great prices.", ctaText: "Shop Now", ctaHref: "/search" }),
-  promoBanners: [promoSlide("promo1", { title: "New Arrivals", ctaText: "Shop Now", ctaHref: "/collection" })],
+  heroBanner: heroSlide({
+    title: "Timeless style, redefined.",
+    subtitle: "In this season, find the best 🔥",
+    description: "For men, women & kids. Exclusive items crafted for everyday elegance.",
+    ctaText: "Shop Now",
+    ctaHref: "/search",
+    offerText: "Limited-time offers available",
+    discountText: "Up to 50% Off",
+  }),
+  promoBanners: [
+    promoSlide("promo1", {
+      title: "New Arrivals in Jewelry",
+      subtitle: "EXCLUSIVELY FOR YOU",
+      description: "Discover handcrafted statement pieces designed for timeless elegance.",
+      ctaText: "EXPLORE COLLECTION",
+      ctaHref: "/collection",
+    }),
+    promoSlide("promo2", {
+      title: "Beauty Essentials",
+      subtitle: "LIMITED STOCK",
+      description: "Curated skincare and beauty products selected by industry experts.",
+      ctaText: "SHOP CATEGORY",
+      ctaHref: "/collection-2",
+    }),
+  ],
   testimonials: [
     { clientName: "Jordan Smith", content: "Great products and excellent customer service.", rating: 5, order: 0, isActive: true },
   ],

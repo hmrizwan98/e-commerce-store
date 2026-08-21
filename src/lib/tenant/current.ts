@@ -1,9 +1,9 @@
 import "server-only";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { adminDb } from "@/lib/firebase/admin";
 import { docData } from "@/lib/firebase/repositories/utils";
 import { requestMemo } from "@/lib/request-cache";
-import { TENANT_SLUG_HEADER } from "./constants";
+import { TENANT_SLUG_HEADER, FRONTSTORE_COOKIE } from "./constants";
 import type { Store } from "@/types/store";
 
 /**
@@ -50,37 +50,42 @@ export async function getCurrentTenant(): Promise<Store | null> {
 async function resolveCurrentTenant(): Promise<Store | null> {
   const hdrs = headers();
   const headerSlug = hdrs.get(TENANT_SLUG_HEADER)?.trim() || null;
+  const cookieSlug = cookies().get(FRONTSTORE_COOKIE)?.value?.trim() || null;
+  const slugToResolve = headerSlug || cookieSlug;
 
-  // Only try the domains[] lookup when this host wasn't already recognized as
-  // one of our own {slug}.ROOT_DOMAIN subdomains - a store's own generated
-  // subdomain is never listed in some OTHER store's domains[], so this skips
-  // a wasted query on the common/default request path.
-  if (!headerSlug) {
-    const rawHost = (hdrs.get("x-forwarded-host") || hdrs.get("host") || "").split(":")[0].toLowerCase();
-    if (rawHost && rawHost !== "localhost" && rawHost !== "127.0.0.1") {
-      const byDomain = await adminDb().collection("stores").where("domains", "array-contains", rawHost).limit(1).get();
-      if (!byDomain.empty) {
-        const store = docData<Store>(byDomain.docs[0]);
-        if (store && store.status !== "archived") return store;
-      }
+  // 1. If an explicit tenant slug header or preview cookie is present, resolve by slug.
+  if (slugToResolve) {
+    const snap = await adminDb().collection("stores").where("slug", "==", slugToResolve).limit(1).get();
+    if (!snap.empty) {
+      const store = docData<Store>(snap.docs[0]);
+      if (store && store.status !== "archived") return store;
+    }
+    // An explicit tenant slug was requested, but no matching active/suspended store exists.
+    return null;
+  }
+
+  // 2. Custom domain lookup (e.g. merchantdomain.com).
+  const rawHost = (hdrs.get("x-forwarded-host") || hdrs.get("host") || "").split(":")[0].toLowerCase();
+  if (rawHost && rawHost !== "localhost" && rawHost !== "127.0.0.1") {
+    const byDomain = await adminDb().collection("stores").where("domains", "array-contains", rawHost).limit(1).get();
+    if (!byDomain.empty) {
+      const store = docData<Store>(byDomain.docs[0]);
+      if (store && store.status !== "archived") return store;
     }
   }
 
-  const slug = headerSlug || (process.env.NODE_ENV !== "production" ? process.env.DEV_TENANT_SLUG?.trim() || null : null);
-
-  if (slug) {
-    const snap = await adminDb().collection("stores").where("slug", "==", slug).limit(1).get();
+  // 3. Dev environment explicit DEV_TENANT_SLUG override.
+  const devSlug = process.env.NODE_ENV !== "production" ? process.env.DEV_TENANT_SLUG?.trim() || null : null;
+  if (devSlug) {
+    const snap = await adminDb().collection("stores").where("slug", "==", devSlug).limit(1).get();
     if (!snap.empty) {
       const store = docData<Store>(snap.docs[0]);
       if (store && store.status !== "archived") return store;
     }
   }
 
-  // Local-dev convenience only: if DEV_TENANT_SLUG isn't set (or doesn't match a store) and
-  // nothing else resolved, fall back to the first available store so `npm run dev` works
-  // without requiring exact env configuration. Never applies in production, where a request
-  // must resolve via its own domain/subdomain.
-  if (!slug && process.env.NODE_ENV !== "production") {
+  // 4. Local-dev convenience fallback: first available store (only when no slug or host matched).
+  if (process.env.NODE_ENV !== "production") {
     const fallbackSnap = await adminDb().collection("stores").orderBy("createdAt", "asc").limit(1).get();
     if (!fallbackSnap.empty) {
       const store = docData<Store>(fallbackSnap.docs[0]);

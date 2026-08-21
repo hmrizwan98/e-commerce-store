@@ -14,18 +14,17 @@ interface Props {
 }
 
 const BADGE_LABEL: Record<Exclude<ProductBadge, null | undefined>, string> = {
-  new: "New in",
-  sale: "50% Discount",
+  new: "NEW",
+  sale: "SALE",
   sold_out: "Sold Out",
-  limited_edition: "limited edition",
+  limited_edition: "Limited",
 };
 
 const STATUS_BG: Record<Exclude<ProductBadge, null | undefined>, string> = {
-  sale: "bg-[var(--badge-sale)] text-white",
-  new: "bg-[var(--badge-new)] text-white",
-  sold_out: "bg-[var(--badge-out-of-stock)] text-white",
-  limited_edition:
-    "bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300",
+  sale: "bg-red-600 text-white font-extrabold shadow-sm",
+  new: "bg-emerald-600 text-white font-extrabold shadow-sm",
+  sold_out: "bg-slate-700 text-white font-medium shadow-sm",
+  limited_edition: "bg-amber-500 text-white font-bold shadow-sm",
 };
 
 const ProductStatus: FC<Props> = ({ status, className, position = "top-left" }) => {

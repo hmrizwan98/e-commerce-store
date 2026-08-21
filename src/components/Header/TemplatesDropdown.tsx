@@ -1,9 +1,8 @@
 "use client";
 
 import { Popover, Transition } from "@/app/headlessui";
-import { ChevronDownIcon } from "@heroicons/react/24/solid";
+import { ChevronDownIcon, ChevronUpIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
 import { Fragment } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { useMenu } from "@/hooks/useMenu";
 import { useCategories } from "@/hooks/useCategories";
@@ -16,75 +15,70 @@ export default function TemplatesDropdown() {
   if (!categories.length) return null;
 
   return (
-    <div className="TemplatesDropdown hidden lg:block">
-      <Popover className="">
+    <div className="TemplatesDropdown hidden lg:block relative">
+      <Popover className="relative">
         {({ open, close }) => (
           <>
             <Popover.Button
-              className={`
-                ${open ? "" : "text-opacity-80"}
-                group h-10 sm:h-12 px-3 py-1.5 inline-flex items-center text-sm text-gray-800 dark:text-slate-300 font-medium hover:text-opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-opacity-75`}
+              className={`group py-2 h-10 sm:h-12 flex items-center gap-1.5 text-sm sm:text-base font-semibold text-neutral-900 dark:text-white focus:outline-none transition-all ${
+                open ? "border-b-2 border-neutral-900 dark:border-white pb-0.5" : "border-b-2 border-transparent opacity-90 hover:opacity-100"
+              }`}
             >
-              <span className="">{megaMenuItem?.name ?? "Category"}</span>
-              <ChevronDownIcon
-                className={`${open ? "-rotate-180" : ""}
-                  ml-1 h-4 w-4 transition ease-in-out duration-150 `}
-                aria-hidden="true"
-              />
+              <span>{megaMenuItem?.name ?? "Shop"}</span>
+              {open ? (
+                <ChevronUpIcon className="h-4 w-4 text-neutral-800 dark:text-neutral-200" aria-hidden="true" />
+              ) : (
+                <ChevronDownIcon
+                  className="h-4 w-4 text-neutral-600 dark:text-neutral-400 group-hover:text-neutral-900 dark:group-hover:text-neutral-100 transition-transform duration-150"
+                  aria-hidden="true"
+                />
+              )}
             </Popover.Button>
             <Transition
               as={Fragment}
               enter="transition ease-out duration-200"
-              enterFrom="opacity-0 translate-y-1"
-              enterTo="opacity-100 translate-y-0"
+              enterFrom="opacity-0 translate-y-1 scale-95"
+              enterTo="opacity-100 translate-y-0 scale-100"
               leave="transition ease-in duration-150"
-              leaveFrom="opacity-100 translate-y-0"
-              leaveTo="opacity-0 translate-y-1"
+              leaveFrom="opacity-100 translate-y-0 scale-100"
+              leaveTo="opacity-0 translate-y-1 scale-95"
             >
-              <Popover.Panel className="absolute z-20 w-full mt-3.5 inset-x-0">
-                <div className="bg-white dark:bg-neutral-900 shadow-lg">
-                  <div className="container">
-                    <div className="border-t border-slate-200 dark:border-slate-700 py-10">
-                      <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-6 xl:gap-8">
-                        {categories.slice(0, 12).map((category) => (
-                          <Link
-                            key={category.id}
-                            href={`/category/${category.slug}` as any}
-                            onClick={() => close()}
-                            className="group/cat flex flex-col items-center gap-3 text-center"
-                          >
-                            <div className="relative w-full aspect-square rounded-2xl overflow-hidden bg-neutral-100 dark:bg-neutral-800 ring-1 ring-black/5 dark:ring-white/10 group-hover/cat:ring-primary-500 transition-all">
-                              {category.image ? (
-                                <Image
-                                  src={category.image}
-                                  alt={category.name}
-                                  fill
-                                  sizes="140px"
-                                  className="object-cover group-hover/cat:scale-105 transition-transform duration-300"
-                                />
-                              ) : category.icon ? (
-                                <div
-                                  dangerouslySetInnerHTML={{ __html: category.icon }}
-                                  className="w-full h-full flex items-center justify-center text-primary-500 [&_svg]:w-8 [&_svg]:h-8"
-                                />
-                              ) : null}
-                            </div>
-                            <span className="text-sm font-medium text-slate-700 dark:text-slate-200 group-hover/cat:text-primary-600 dark:group-hover/cat:text-primary-400 transition-colors line-clamp-1">
-                              {category.name}
-                            </span>
-                          </Link>
-                        ))}
-                      </div>
-                      <div className="mt-10 text-center">
+              <Popover.Panel className="absolute z-50 w-64 sm:w-72 mt-3 transform -translate-x-1/2 left-1/2">
+                {/* Pointer Caret */}
+                <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3.5 h-3.5 rotate-45 bg-white dark:bg-neutral-900 border-t border-l border-neutral-200/80 dark:border-neutral-800 z-10" />
+
+                <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800 shadow-xl shadow-neutral-900/10 dark:shadow-black/40 p-2.5 z-20">
+                  {/* ALL CATEGORIES HEADER */}
+                  <div className="px-3.5 pt-2 pb-2 text-[11px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+                    ALL CATEGORIES
+                  </div>
+
+                  {/* CATEGORIES LIST */}
+                  <div className="space-y-0.5">
+                    {categories.slice(0, 12).map((category, index) => {
+                      const isSelected = index === 0;
+                      return (
                         <Link
-                          href="/collection"
+                          key={category.id}
+                          href={`/category/${category.slug}` as any}
                           onClick={() => close()}
-                          className="inline-flex items-center text-sm font-semibold text-primary-600 dark:text-primary-400 hover:underline"
+                          className={`group flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm transition-all duration-150 ${
+                            isSelected
+                              ? "bg-[#FAF5F5] dark:bg-neutral-800/90 font-bold text-neutral-900 dark:text-white"
+                              : "font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100/60 dark:hover:bg-neutral-800/60 hover:text-neutral-900 dark:hover:text-white"
+                          }`}
                         >
-                          View all categories →
+                          <span className="truncate">{category.name}</span>
+                          <ChevronRightIcon
+                            className={`h-4 w-4 flex-shrink-0 transition-opacity ${
+                              isSelected
+                                ? "text-neutral-500 dark:text-neutral-400"
+                                : "text-neutral-400 opacity-0 group-hover:opacity-100"
+                            }`}
+                          />
                         </Link>
-                      </div>
-                    </div>
+                      );
+                    })}
                   </div>
                 </div>
               </Popover.Panel>

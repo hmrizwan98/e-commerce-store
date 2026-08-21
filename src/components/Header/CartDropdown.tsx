@@ -6,9 +6,7 @@ import Link from "next/link";
 import { useAppDispatch, useAppSelector } from "@/utils/hooks/store";
 import { removeItem, type CartItem } from "@/store/slices/cartSlice";
 import { trackEvent } from "@/lib/analytics/track";
-import StandardCartDrawer from "@/components/theme/variants/cart-drawer/StandardCartDrawer";
-import CompactCartDrawer from "@/components/theme/variants/cart-drawer/CompactCartDrawer";
-import MinimalCartDrawer from "@/components/theme/variants/cart-drawer/MinimalCartDrawer";
+import ThemeCartDrawerAdapter from "@/components/theme/ThemeCartDrawerAdapter";
 import type { CartThemeConfig } from "@/lib/theme/theme-types";
 
 export interface CartDropdownProps {
@@ -26,16 +24,9 @@ export default function CartDropdown({ cartSettings }: CartDropdownProps) {
     trackEvent("remove_from_cart", { productId: item.productId, value: item.price * item.quantity });
   };
 
-  const renderPanel = (close: () => void) => {
-    switch (cartSettings?.drawerStyle) {
-      case "compact":
-        return <CompactCartDrawer items={items} subtotal={subtotal} onRemove={handleRemove} close={close} />;
-      case "minimal":
-        return <MinimalCartDrawer items={items} subtotal={subtotal} onRemove={handleRemove} close={close} />;
-      default:
-        return <StandardCartDrawer items={items} subtotal={subtotal} onRemove={handleRemove} close={close} />;
-    }
-  };
+  const renderPanel = (close: () => void) => (
+    <ThemeCartDrawerAdapter cartSettings={cartSettings} items={items} subtotal={subtotal} onRemove={handleRemove} close={close} />
+  );
 
   return (
     <Popover className="relative">

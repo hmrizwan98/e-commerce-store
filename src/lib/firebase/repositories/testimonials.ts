@@ -18,6 +18,23 @@ export async function getActiveTestimonials(): Promise<Testimonial[]> {
   });
 }
 
+export async function getTestimonialsByIds(ids: string[]): Promise<Testimonial[]> {
+  if (!ids || !ids.length) return [];
+  return safeQuery("getTestimonialsByIds", [], async () => {
+    const snap = await (await tenantCollection(COLLECTION))
+      .where("isActive", "==", true)
+      .get();
+
+    const all = snap.docs
+      .map((doc) => docData<Testimonial>(doc))
+      .filter((t): t is Testimonial => t !== null);
+
+    return ids
+      .map((id) => all.find((t) => t.id === id))
+      .filter((t): t is Testimonial => t !== undefined);
+  });
+}
+
 // --- Admin ---
 
 export async function getTestimonialById(id: string): Promise<Testimonial | null> {

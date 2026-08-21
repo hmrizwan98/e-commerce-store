@@ -20,6 +20,7 @@ export async function getActiveHomepageSections(): Promise<HomepageSection[]> {
 export async function getAllHomepageSectionsForAdmin(): Promise<HomepageSection[]> {
   const col = await tenantCollection(COLLECTION);
   const snap = await col.orderBy("order", "asc").get();
+
   return snap.docs
     .map((doc) => docData<HomepageSection>(doc))
     .filter((s): s is HomepageSection => s !== null);

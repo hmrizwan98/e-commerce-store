@@ -105,6 +105,7 @@ export interface ThemeHeader {
   sticky?: boolean;
   transparent?: boolean;
   heightPx?: number;
+  logoHeightPx?: number;
   shadow?: ShadowLevel;
   showSearch?: boolean;
   showWishlist?: boolean;

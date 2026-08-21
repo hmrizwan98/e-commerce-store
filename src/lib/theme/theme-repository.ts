@@ -27,6 +27,11 @@ function deepMergeTheme(preset: SystemThemeConfig, override: Partial<SystemTheme
     layout: { ...preset.layout, ...(override.layout ?? {}) },
     darkMode: { ...preset.darkMode, ...(override.darkMode ?? {}) },
     popup: { ...(preset.popup ?? {}), ...(override.popup ?? {}) },
+    hero: { ...(preset.hero ?? {}), ...(override.hero ?? {}) },
+    categories: { ...(preset.categories ?? {}), ...(override.categories ?? {}) },
+    promo: { ...(preset.promo ?? {}), ...(override.promo ?? {}) },
+    announcementBar: { ...(preset.announcementBar ?? {}), ...(override.announcementBar ?? {}) },
+    homepageSections: override.homepageSections !== undefined ? override.homepageSections : preset.homepageSections,
   };
 }
 

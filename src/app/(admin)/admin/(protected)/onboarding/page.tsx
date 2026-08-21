@@ -15,6 +15,12 @@ export default async function OnboardingPage() {
     getActiveTheme(),
   ]);
 
+  const cleanProgress = JSON.parse(JSON.stringify(progress));
+  const cleanGeneral = JSON.parse(JSON.stringify(general));
+  const cleanShipping = JSON.parse(JSON.stringify(shipping));
+  const cleanPayments = JSON.parse(JSON.stringify(payments));
+  const cleanTheme = JSON.parse(JSON.stringify(theme));
+
   return (
     <div className="space-y-6">
       <div>
@@ -24,11 +30,11 @@ export default async function OnboardingPage() {
         </p>
       </div>
       <OnboardingWizard
-        initialProgress={progress}
-        initialGeneral={general}
-        initialShipping={shipping}
-        initialPayments={payments}
-        initialTheme={theme}
+        initialProgress={cleanProgress}
+        initialGeneral={cleanGeneral}
+        initialShipping={cleanShipping}
+        initialPayments={cleanPayments}
+        initialTheme={cleanTheme}
       />
     </div>
   );

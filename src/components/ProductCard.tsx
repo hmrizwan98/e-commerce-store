@@ -148,50 +148,63 @@ const ProductCard: FC<ProductCardProps> = ({
   return (
     <>
       <div
-        className={`nc-ProductCard relative flex flex-col bg-transparent rounded-[var(--product-card-radius)] ${className}`}
+        className={`nc-ProductCard group relative flex flex-col bg-white dark:bg-slate-900/90 rounded-2xl lg:rounded-3xl border border-slate-100 dark:border-slate-800/80 p-3 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${className}`}
       >
         <Link
           href={`/product/${slug}`}
-          className="absolute inset-0"
+          className="absolute inset-0 z-10"
           onClick={() => trackEvent("product_click", { productId: data.id })}
         ></Link>
 
-        <div className="relative flex-shrink-0 bg-slate-50 dark:bg-slate-300 rounded-[var(--product-image-radius)] overflow-hidden z-1 group">
+        <div className="relative flex-shrink-0 bg-slate-50 dark:bg-slate-800/50 rounded-xl lg:rounded-2xl overflow-hidden z-0">
           <Link href={`/product/${slug}`} className="block">
             <NcImage
-              containerClassName="flex aspect-w-11 aspect-h-12 w-full h-0"
+              containerClassName="flex aspect-w-11 aspect-h-12 w-full h-0 transition-transform duration-500 ease-out group-hover:scale-105"
               src={image}
-              className="object-cover w-full h-full drop-shadow-xl"
+              className="object-cover w-full h-full"
               fill
               sizes="(max-width: 640px) 100vw, (max-width: 1200px) 50vw, 40vw"
               alt={name}
             />
           </Link>
           <ProductStatus status={badge} />
-          <LikeButton liked={isLiked} productId={data.id} className="absolute top-3 end-3 z-10" />
-          <CompareButton productId={data.id} className="absolute top-14 end-3 z-10" />
+          <LikeButton liked={isLiked} productId={data.id} className="absolute top-3 end-3 z-20 backdrop-blur-md bg-white/80 dark:bg-slate-900/80 rounded-full p-0.5 shadow-md" />
+          <CompareButton productId={data.id} className="absolute top-14 end-3 z-20 backdrop-blur-md bg-white/80 dark:bg-slate-900/80 rounded-full p-0.5 shadow-md" />
           {sizeHints.length ? renderSizeList() : renderGroupButtons()}
         </div>
 
-        <div className="space-y-4 px-2.5 pt-5 pb-2.5">
-          {renderVariants()}
+        <div className="space-y-3 px-1 pt-4 pb-1 flex flex-col flex-1 justify-between">
           <div>
-            <h2 className="nc-ProductCard__title text-base font-semibold transition-colors">
+            {renderVariants()}
+            <h2 className="nc-ProductCard__title text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100 group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors line-clamp-1">
               {name}
             </h2>
-            <p className={`text-sm text-slate-500 dark:text-slate-400 mt-1 `}>
-              {shortDescription || description}
-            </p>
+            {(shortDescription || description) && (
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-1">
+                {shortDescription || description}
+              </p>
+            )}
           </div>
 
-          <div className="flex justify-between items-end ">
-            <Prices price={price} compareAtPrice={compareAtPrice} />
-            <div className="flex items-center mb-0.5">
-              <StarIcon className="w-5 h-5 pb-[1px] text-amber-400" />
-              <span className="text-sm ms-1 text-slate-500 dark:text-slate-400">
-                {rating || ""} ({numberOfReviews || 0} reviews)
-              </span>
+          <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <Prices price={price} compareAtPrice={compareAtPrice} />
+              {(rating || numberOfReviews) ? (
+                <div className="flex items-center gap-1 bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-300 font-bold text-xs px-2 py-0.5 rounded-lg border border-amber-200/50 dark:border-amber-900/30">
+                  <StarIcon className="w-3.5 h-3.5 text-amber-400" />
+                  <span>{rating || "4.8"}</span>
+                  {numberOfReviews ? <span className="text-[10px] text-amber-600/70 font-normal">({numberOfReviews})</span> : null}
+                </div>
+              ) : null}
             </div>
+
+            <button
+              onClick={() => notifyAddTocart({})}
+              className="relative z-20 w-full py-2.5 px-4 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-sky-600 dark:hover:bg-sky-500 hover:text-white font-semibold text-xs transition-all shadow-sm active:scale-95 flex items-center justify-center gap-2 group/btn"
+            >
+              <BagIcon className="w-4 h-4 transition-transform group-hover/btn:scale-110" />
+              <span>Add to Bag</span>
+            </button>
           </div>
         </div>
       </div>

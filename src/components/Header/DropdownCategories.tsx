@@ -1,7 +1,7 @@
 "use client";
 
 import { Popover, Transition } from "@/app/headlessui";
-import { ChevronDownIcon } from "@heroicons/react/24/solid";
+import { ChevronDownIcon, ChevronUpIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { Fragment } from "react";
 import { useCategories } from "@/hooks/useCategories";
@@ -10,73 +10,76 @@ export default function DropdownCategories() {
   const categories = useCategories();
 
   return (
-    <div className="DropdownCategories">
+    <div className="DropdownCategories relative">
       <Popover className="relative">
         {({ open, close }) => (
           <>
             <Popover.Button
-              className={`${open ? "" : "text-opacity-90"}
-                group py-2 h-10 sm:h-12 flex items-center rounded-md text-sm sm:text-base font-medium hover:text-opacity-100 focus:outline-none focus-visible:ring-0 `}
+              className={`group py-2 h-10 sm:h-12 flex items-center gap-1.5 text-sm sm:text-base font-semibold text-neutral-900 dark:text-white focus:outline-none transition-all ${
+                open ? "border-b-2 border-neutral-900 dark:border-white pb-0.5" : "border-b-2 border-transparent opacity-90 hover:opacity-100"
+              }`}
             >
-              <span>Shops</span>
-              <ChevronDownIcon
-                className={`${open ? "-rotate-180" : "text-opacity-70 "}
-                  ml-2 h-5 w-5 text-neutral-700 group-hover:text-opacity-80 transition ease-in-out duration-150 `}
-                aria-hidden="true"
-              />
+              <span>Categories</span>
+              {open ? (
+                <ChevronUpIcon className="h-4 w-4 text-neutral-800 dark:text-neutral-200" aria-hidden="true" />
+              ) : (
+                <ChevronDownIcon
+                  className="h-4 w-4 text-neutral-600 dark:text-neutral-400 group-hover:text-neutral-900 dark:group-hover:text-neutral-100 transition-transform duration-150"
+                  aria-hidden="true"
+                />
+              )}
             </Popover.Button>
             <Transition
               as={Fragment}
               enter="transition ease-out duration-200"
-              enterFrom="opacity-0 translate-y-1"
-              enterTo="opacity-100 translate-y-0"
+              enterFrom="opacity-0 translate-y-1 scale-95"
+              enterTo="opacity-100 translate-y-0 scale-100"
               leave="transition ease-in duration-150"
-              leaveFrom="opacity-100 translate-y-0"
-              leaveTo="opacity-0 translate-y-1"
+              leaveFrom="opacity-100 translate-y-0 scale-100"
+              leaveTo="opacity-0 translate-y-1 scale-95"
             >
-              <Popover.Panel className="absolute z-40 w-80 mt-3.5 transform -translate-x-1/2 left-1/2 sm:px-0">
-                <div className="overflow-hidden rounded-2xl shadow-lg ring-1 ring-black ring-opacity-5">
-                  <div className="relative grid grid-cols-1 gap-5 bg-white dark:bg-neutral-800 p-7 ">
-                    {categories.map((item) => (
-                      <Link
-                        key={item.id}
-                        href={`/category/${item.slug}` as any}
-                        onClick={() => close()}
-                        className="flex items-center focus:outline-none focus-visible:ring-0"
-                      >
-                        {item.icon && (
-                          <div
-                            dangerouslySetInnerHTML={{ __html: item.icon }}
-                            className="flex items-center justify-center flex-shrink-0 w-10 h-10 bg-primary-50 rounded-md text-primary-500 sm:h-12 sm:w-12"
-                          ></div>
-                        )}
-                        <div className="ml-4 space-y-0.5">
-                          <p className="text-sm font-medium ">{item.name}</p>
-                          <p className="text-xs text-neutral-500 dark:text-neutral-300">
-                            {item.description}
-                          </p>
-                        </div>
-                      </Link>
-                    ))}
-                    {!categories.length && (
-                      <p className="text-sm text-neutral-500">Loading categories…</p>
-                    )}
+              <Popover.Panel className="absolute z-50 w-64 sm:w-72 mt-3 transform -translate-x-1/2 left-1/2">
+                {/* Pointer Caret */}
+                <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3.5 h-3.5 rotate-45 bg-white dark:bg-neutral-900 border-t border-l border-neutral-200/80 dark:border-neutral-800 z-10" />
+
+                <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800 shadow-xl shadow-neutral-900/10 dark:shadow-black/40 p-2.5 z-20">
+                  {/* ALL CATEGORIES HEADER */}
+                  <div className="px-3.5 pt-2 pb-2 text-[11px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+                    ALL CATEGORIES
                   </div>
-                  {/* FOOTER */}
-                  <div className="p-4 bg-neutral-50 dark:bg-neutral-700">
-                    <Link
-                      href="/collection-2"
-                      className="flow-root px-2 py-2 space-y-0.5 transition duration-150 ease-in-out rounded-md focus:outline-none focus-visible:ring focus-visible:ring-orange-500 focus-visible:ring-opacity-50"
-                    >
-                      <div className="flex items-center">
-                        <span className="text-sm font-medium ">
-                          Go to our shop
-                        </span>
+
+                  {/* CATEGORIES LIST */}
+                  <div className="space-y-0.5">
+                    {categories.map((item, index) => {
+                      const isSelected = index === 0;
+                      return (
+                        <Link
+                          key={item.id}
+                          href={`/category/${item.slug}` as any}
+                          onClick={() => close()}
+                          className={`group flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm transition-all duration-150 ${
+                            isSelected
+                              ? "bg-[#FAF5F5] dark:bg-neutral-800/90 font-bold text-neutral-900 dark:text-white"
+                              : "font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100/60 dark:hover:bg-neutral-800/60 hover:text-neutral-900 dark:hover:text-white"
+                          }`}
+                        >
+                          <span className="truncate">{item.name}</span>
+                          <ChevronRightIcon
+                            className={`h-4 w-4 flex-shrink-0 transition-opacity ${
+                              isSelected
+                                ? "text-neutral-500 dark:text-neutral-400"
+                                : "text-neutral-400 opacity-0 group-hover:opacity-100"
+                            }`}
+                          />
+                        </Link>
+                      );
+                    })}
+
+                    {!categories.length && (
+                      <div className="px-3.5 py-3 text-sm text-neutral-400 animate-pulse">
+                        Loading categories...
                       </div>
-                      <span className="block text-sm text-slate-500 dark:text-neutral-400">
-                        Look for what you need and love.
-                      </span>
-                    </Link>
+                    )}
                   </div>
                 </div>
               </Popover.Panel>
@@ -87,3 +90,4 @@ export default function DropdownCategories() {
     </div>
   );
 }
+

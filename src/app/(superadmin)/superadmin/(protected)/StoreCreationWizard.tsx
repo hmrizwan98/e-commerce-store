@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 import ButtonPrimary from "@/shared/Button/ButtonPrimary";
 import { createStore, type StoreFormInput } from "./actions";
 import { slugify } from "@/lib/utils/slugify";
-import { THEME_PRESETS, type ThemePresetKey } from "@/lib/themes/theme-presets";
-import { buildTenantUrl } from "@/lib/platform/tenant-url";
-import type { StoreStatus, StoreTemplate } from "@/types/store";
+import { getTenantStorefrontUrl, getTenantAdminUrl, buildTenantUrl } from "@/lib/platform/tenant-url";
+import Link from "next/link";
+import type { StoreStatus } from "@/types/store";
 
 const STEPS = ["Store Details", "Owner Account", "Review & Create"] as const;
 
@@ -34,12 +34,13 @@ const StoreCreationWizard: React.FC<{ platformBaseUrl: string }> = ({ platformBa
   const [country, setCountry] = useState("");
   const [timezone, setTimezone] = useState("");
   const [status, setStatus] = useState<StoreStatus>("active");
-  const [template, setTemplate] = useState<StoreTemplate>("empty");
-  const [themeKey, setThemeKey] = useState<ThemePresetKey>("universal-premium");
 
   const [ownerName, setOwnerName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+
+  const storefrontUrl = slug ? getTenantStorefrontUrl(platformBaseUrl, slug) : "";
+  const adminUrl = slug ? getTenantAdminUrl(platformBaseUrl, slug) : "";
 
   function validateStep(currentStep: number): string | null {
     if (currentStep === 0) {
@@ -86,8 +87,6 @@ const StoreCreationWizard: React.FC<{ platformBaseUrl: string }> = ({ platformBa
       currency: currency.trim() || undefined,
       timezone: timezone.trim() || undefined,
       status,
-      template,
-      themeKey,
     };
     setSubmitting(true);
     setError(null);
@@ -105,24 +104,63 @@ const StoreCreationWizard: React.FC<{ platformBaseUrl: string }> = ({ platformBa
   if (credentials) {
     return (
       <div className={cardClass}>
-        <h2 className="text-lg font-semibold">Store created</h2>
+        <div className="flex items-center gap-2 text-emerald-600">
+          <span className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse" />
+          <h2 className="text-lg font-bold">Store Provisioned Successfully</h2>
+        </div>
         <p className="text-sm text-neutral-500">
-          Share these one-time credentials with the store owner so they can sign in to their Admin Panel.
-          This password will not be shown again.
+          Your new tenant store is created. Share these one-time admin credentials with the store owner.
+          Password will not be displayed again.
         </p>
-        <div className="space-y-2 text-sm">
+        <div className="p-4 rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 space-y-3 text-sm">
           <div>
-            <span className="font-medium">Admin email: </span>
-            {credentials.adminEmail}
+            <span className="font-semibold text-neutral-600 dark:text-neutral-400">Admin Email: </span>
+            <span className="font-mono text-neutral-900 dark:text-white font-medium">{credentials.adminEmail}</span>
           </div>
           <div>
-            <span className="font-medium">Temporary password: </span>
-            <code className="px-2 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800">
+            <span className="font-semibold text-neutral-600 dark:text-neutral-400">Temporary Password: </span>
+            <code className="px-2 py-0.5 rounded bg-neutral-200 dark:bg-neutral-800 font-mono font-bold text-neutral-900 dark:text-white">
               {credentials.adminTempPassword}
             </code>
           </div>
         </div>
-        <ButtonPrimary onClick={() => router.push("/superadmin/stores" as any)}>Back to stores</ButtonPrimary>
+
+        <div className="space-y-2 pt-2 border-t border-neutral-200 dark:border-neutral-800">
+          <h3 className="text-xs font-bold uppercase tracking-wider font-mono text-neutral-500">Tenant Access URLs</h3>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center justify-between p-3 rounded-xl bg-primary-50/50 dark:bg-primary-950/20 border border-primary-100 dark:border-primary-900/30">
+            <div>
+              <span className="text-xs font-bold text-primary-900 dark:text-primary-200 block">Public Storefront</span>
+              <span className="text-xs font-mono text-neutral-600 dark:text-neutral-400">{storefrontUrl}</span>
+            </div>
+            <a
+              href={storefrontUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-3.5 py-1.5 rounded-lg bg-primary-6000 text-white font-bold text-xs hover:bg-primary-700 transition-colors inline-flex items-center justify-center gap-1"
+            >
+              Open Storefront ↗
+            </a>
+          </div>
+
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center justify-between p-3 rounded-xl bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/30">
+            <div>
+              <span className="text-xs font-bold text-indigo-900 dark:text-indigo-200 block">Store Admin Dashboard</span>
+              <span className="text-xs font-mono text-neutral-600 dark:text-neutral-400">{adminUrl}</span>
+            </div>
+            <a
+              href={adminUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-3.5 py-1.5 rounded-lg bg-indigo-600 text-white font-bold text-xs hover:bg-indigo-700 transition-colors inline-flex items-center justify-center gap-1"
+            >
+              Open Store Admin ↗
+            </a>
+          </div>
+        </div>
+
+        <div className="pt-2">
+          <ButtonPrimary onClick={() => router.push("/superadmin/stores" as any)}>Back to Store Directory</ButtonPrimary>
+        </div>
       </div>
     );
   }
@@ -164,7 +202,18 @@ const StoreCreationWizard: React.FC<{ platformBaseUrl: string }> = ({ platformBa
               }}
               required
             />
-            {slug && <p className="text-xs text-neutral-500 mt-1">{buildTenantUrl(platformBaseUrl, slug)}</p>}
+            {slug && (
+              <div className="mt-2 p-2.5 rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 space-y-1 text-xs font-mono">
+                <div>
+                  <span className="text-neutral-500">Public Storefront: </span>
+                  <span className="font-semibold text-primary-6000">{storefrontUrl}</span>
+                </div>
+                <div>
+                  <span className="text-neutral-500">Store Admin: </span>
+                  <span className="font-semibold text-indigo-600">{adminUrl}</span>
+                </div>
+              </div>
+            )}
           </div>
           <div>
             <label className={labelClass}>Brand name (optional)</label>
@@ -185,34 +234,16 @@ const StoreCreationWizard: React.FC<{ platformBaseUrl: string }> = ({ platformBa
             </div>
           </div>
           <div>
-            <label className={labelClass}>Theme</label>
-            <select className={inputClass} value={themeKey} onChange={(e) => setThemeKey(e.target.value as ThemePresetKey)}>
-              {Object.values(THEME_PRESETS).map((preset) => (
-                <option key={preset.key} value={preset.key}>
-                  {preset.name} — {preset.suitableFor.join(", ")}
-                </option>
-              ))}
-            </select>
-            <p className="text-xs text-neutral-500 mt-1">{THEME_PRESETS[themeKey].description}</p>
-          </div>
-          <div>
             <label className={labelClass}>Status</label>
             <select className={inputClass} value={status} onChange={(e) => setStatus(e.target.value as StoreStatus)}>
               <option value="active">Active</option>
               <option value="suspended">Suspended</option>
             </select>
           </div>
-          <div>
-            <label className={labelClass}>Template</label>
-            <select
-              className={inputClass}
-              value={template}
-              onChange={(e) => setTemplate(e.target.value as StoreTemplate)}
-            >
-              <option value="empty">Empty Store — blank homepage/CMS, no placeholder content</option>
-              <option value="demo">Demo Store — placeholder testimonials/FAQs (no sample products)</option>
-            </select>
-          </div>
+          <p className="text-xs text-neutral-500">
+            Every new store is automatically set up with the platform&apos;s default theme, a complete homepage, and a
+            small set of demo products/categories/brands to customize or remove.
+          </p>
         </div>
       )}
 
@@ -251,21 +282,21 @@ const StoreCreationWizard: React.FC<{ platformBaseUrl: string }> = ({ platformBa
               <span className="block text-neutral-500">Brand name</span>
               {brandName || name || "—"}
             </div>
-            <div>
-              <span className="block text-neutral-500">Subdomain</span>
-              {slug ? buildTenantUrl(platformBaseUrl, slug) : "—"}
+            <div className="col-span-2">
+              <span className="block text-neutral-500">Public Storefront URL</span>
+              <span className="font-mono text-xs font-bold text-primary-6000">{storefrontUrl || "—"}</span>
+            </div>
+            <div className="col-span-2">
+              <span className="block text-neutral-500">Store Admin URL</span>
+              <span className="font-mono text-xs font-bold text-indigo-600">{adminUrl || "—"}</span>
             </div>
             <div>
               <span className="block text-neutral-500">Status</span>
               {status}
             </div>
             <div>
-              <span className="block text-neutral-500">Template</span>
-              {template === "demo" ? "Demo Store" : "Empty Store"}
-            </div>
-            <div>
               <span className="block text-neutral-500">Theme</span>
-              {THEME_PRESETS[themeKey].name}
+              Default Theme (with demo homepage/products)
             </div>
             <div>
               <span className="block text-neutral-500">Currency</span>

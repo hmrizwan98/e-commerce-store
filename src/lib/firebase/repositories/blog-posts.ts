@@ -29,6 +29,21 @@ export async function getActiveBlogPosts(limit?: number): Promise<BlogPost[]> {
   });
 }
 
+export async function getBlogPostsByIds(ids: string[]): Promise<BlogPost[]> {
+  if (!ids || ids.length === 0) return [];
+  const tenant = await getCurrentTenant();
+  if (!tenant) return [];
+  return safeQuery("getBlogPostsByIds", [], async () => {
+    const snap = await adminDb()
+      .collection(COLLECTION)
+      .where("storeId", "==", tenant.id)
+      .where(FieldPath.documentId(), "in", ids.slice(0, 30))
+      .get();
+    const map = new Map(snap.docs.map((doc) => [doc.id, docData<BlogPost>(doc)]));
+    return ids.map((id) => map.get(id)).filter((p): p is BlogPost => Boolean(p && p.isActive));
+  });
+}
+
 export async function getBlogPostBySlug(slug: string): Promise<BlogPost | null> {
   const tenant = await getCurrentTenant();
   if (!tenant) return null;

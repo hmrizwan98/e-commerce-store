@@ -34,32 +34,51 @@ export default function AnnouncementBar() {
     }
   }, [bar]);
 
-  if (isAdminRoute || !bar || dismissed) return null;
-  if (!bar.showOnDesktop && !bar.showOnMobile) return null;
+  const activeBar: AnnouncementBarData = bar ?? {
+    id: "default",
+    title: "✦ FREE SHIPPING ON ALL ORDERS ✦",
+    subtitle: "",
+    backgroundColor: "#000000",
+    textColor: "#ffffff",
+    showOnDesktop: true,
+    showOnMobile: true,
+    isClosable: false,
+    autoScroll: false,
+    priority: 1,
+    isActive: true,
+    order: 1,
+    createdAt: 0,
+    updatedAt: 0,
+  };
+
+  if (isAdminRoute || dismissed) return null;
+  if (!activeBar.showOnDesktop && !activeBar.showOnMobile) return null;
 
   const visibilityClass =
-    bar.showOnDesktop && bar.showOnMobile ? "flex" : bar.showOnDesktop ? "hidden lg:flex" : "flex lg:hidden";
+    activeBar.showOnDesktop && activeBar.showOnMobile ? "flex" : activeBar.showOnDesktop ? "hidden lg:flex" : "flex lg:hidden";
 
   const handleClose = () => {
-    window.localStorage.setItem(dismissKey(bar.id), "1");
+    if (activeBar.id !== "default") {
+      window.localStorage.setItem(dismissKey(activeBar.id), "1");
+    }
     setDismissed(true);
   };
 
   return (
     <div
-      className={`${visibilityClass} relative items-center justify-center gap-1 px-10 py-2 text-sm text-center overflow-hidden`}
-      style={{ color: bar.textColor, backgroundColor: bar.backgroundColor }}
+      className={`${visibilityClass} relative items-center justify-center gap-1 px-10 py-2.5 text-xs sm:text-sm tracking-wider text-center overflow-hidden font-mono uppercase font-bold`}
+      style={{ color: activeBar.textColor, backgroundColor: activeBar.backgroundColor }}
     >
-      <span className={bar.autoScroll ? "announcement-marquee" : ""}>
-        <span className="font-medium">{bar.title}</span>
-        {bar.subtitle && <span className="ml-2 font-normal opacity-90">{bar.subtitle}</span>}
+      <span className={activeBar.autoScroll ? "announcement-marquee" : ""}>
+        <span>{activeBar.title}</span>
+        {activeBar.subtitle && <span className="ml-2 opacity-90">{activeBar.subtitle}</span>}
       </span>
-      {bar.buttonText && bar.buttonHref && (
-        <Link href={bar.buttonHref as any} className="ml-3 underline underline-offset-2 font-semibold whitespace-nowrap">
-          {bar.buttonText}
+      {activeBar.buttonText && activeBar.buttonHref && (
+        <Link href={activeBar.buttonHref as any} className="ml-3 underline underline-offset-2 font-semibold whitespace-nowrap">
+          {activeBar.buttonText}
         </Link>
       )}
-      {bar.isClosable && (
+      {activeBar.isClosable && (
         <button
           onClick={handleClose}
           aria-label="Dismiss announcement"

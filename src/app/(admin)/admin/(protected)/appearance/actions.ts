@@ -20,6 +20,19 @@ export async function publishThemeAction() {
   return { ok: true, message: "Theme published to storefront live!" };
 }
 
+/**
+ * "Activate" (without Publish): stages a preset as the draft only - the live
+ * storefront is untouched until the merchant explicitly publishes from the
+ * Theme Editor. Distinct from Activate & Publish (saveThemeDraftAction +
+ * publishThemeAction back-to-back), which also pushes it live immediately.
+ */
+export async function activateThemeAction(draftConfig: Partial<SystemThemeConfig>) {
+  await requireAdmin();
+  await saveDraftThemeConfig(draftConfig);
+  revalidatePath("/admin/appearance/customize");
+  return { ok: true, message: "Theme staged as draft. Customize it, then Publish when ready." };
+}
+
 export async function resetThemeDraftAction() {
   await requireAdmin();
   const activeConfig = await getActiveThemeConfig();

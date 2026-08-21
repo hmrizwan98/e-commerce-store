@@ -39,7 +39,17 @@ export default async function EditStorePage({ params }: { params: { id: string }
               {store.status}
             </span>
           </div>
-          <p className="text-xs font-mono text-neutral-500">Tenant Slug: {store.slug} • Store ID: {store.id}</p>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-mono text-neutral-500">
+            <span>Tenant Slug: {store.slug} • Store ID: {store.id}</span>
+            <a
+              href={`/store/${store.slug}/admin/login`}
+              target="_blank"
+              rel="noreferrer"
+              className="text-indigo-600 dark:text-indigo-400 hover:underline font-sans font-semibold inline-flex items-center gap-1"
+            >
+              🔑 Open Store Admin Login (`/store/{store.slug}/admin/login`)
+            </a>
+          </div>
         </div>
       </div>
 

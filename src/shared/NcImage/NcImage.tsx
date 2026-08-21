@@ -10,11 +10,20 @@ const NcImage: FC<NcImageProps> = ({
   containerClassName = "",
   alt = "nc-image",
   className = "object-cover w-full h-full",
+  fill,
+  width,
+  height,
   ...args
 }) => {
+  const isFillMode = Boolean(fill || (!width && !height));
+
   return (
     <div className={containerClassName}>
-      <Image className={className} alt={alt} {...args} />
+      {isFillMode ? (
+        <Image className={className} alt={alt} fill {...args} />
+      ) : (
+        <Image className={className} alt={alt} width={width} height={height} {...args} />
+      )}
     </div>
   );
 };

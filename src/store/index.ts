@@ -1,5 +1,5 @@
 import { configureStore, combineReducers } from '@reduxjs/toolkit';
-import cartReducer, { CART_STORAGE_KEY } from './slices/cartSlice';
+import cartReducer, { getCartStorageKey } from './slices/cartSlice';
 
 const combinedReducer = combineReducers({
   cart: cartReducer,
@@ -24,7 +24,10 @@ const store = configureStore({
 // this project has none installed, and a single key/subscribe pair is enough).
 if (typeof window !== 'undefined') {
   store.subscribe(() => {
-    window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(store.getState().cart.items));
+    // Plain module, not a component - reads window.location directly rather
+    // than a hook. See getCartStorageKey()'s own comment (Phase 8A).
+    const key = getCartStorageKey(window.location.pathname);
+    window.localStorage.setItem(key, JSON.stringify(store.getState().cart.items));
   });
 }
 

@@ -1,10 +1,12 @@
 import React, { FC } from "react";
 import ButtonSecondary from "@/shared/Button/ButtonSecondary";
 import Link from "next/link";
-import Image, { StaticImageData } from "next/image";
+import { StaticImageData } from "next/image";
 import type { Route } from "next";
 import { CATS_DISCOVER } from "./data";
 import { safeImageSrc } from "@/utils/safeImageSrc";
+import { useAutoImageColor } from "@/utils/useAutoImageColor";
+import NcImage from "@/shared/NcImage/NcImage";
 
 export interface CardCategory3Props {
   className?: string;
@@ -13,6 +15,8 @@ export interface CardCategory3Props {
   desc?: string;
   color?: string;
   href?: string;
+  btnText?: string;
+  showBtn?: boolean;
 }
 
 const CardCategory3: FC<CardCategory3Props> = ({
@@ -20,23 +24,30 @@ const CardCategory3: FC<CardCategory3Props> = ({
   featuredImage = CATS_DISCOVER[2].featuredImage,
   name = CATS_DISCOVER[2].name,
   desc = CATS_DISCOVER[2].desc,
-  color = CATS_DISCOVER[2].color,
+  color,
   href = "/collection",
+  btnText = "Show me all",
+  showBtn = true,
 }) => {
+  const imageSrcStr = typeof featuredImage === "string" ? featuredImage : (featuredImage as any)?.src;
+  const autoColor = useAutoImageColor(imageSrcStr, color, name);
+
   return (
     <Link
-      href={href as Route}
+      href={(href || "/collection") as Route}
       className={`nc-CardCategory3 block ${className}`}
     >
       <div
-        className={`relative w-full aspect-w-16 aspect-h-11 sm:aspect-h-9 h-0 rounded-2xl overflow-hidden group ${color}`}
+        style={autoColor.style}
+        className={`relative w-full aspect-w-16 aspect-h-11 sm:aspect-h-9 h-0 rounded-2xl overflow-hidden group transition-colors duration-300 ${autoColor.className}`}
       >
         <div>
           <div className="absolute inset-5 sm:inset-8">
-            <Image
-              alt=""
+            <NcImage
+              alt={name || "Discover card"}
               src={typeof featuredImage === "string" ? safeImageSrc(featuredImage) : featuredImage ?? safeImageSrc()}
-              className="absolute end-0 w-1/2 max-w-[260px] h-full object-contain drop-shadow-xl"
+              containerClassName="absolute end-0 w-1/2 max-w-[260px] h-full"
+              className="object-contain w-full h-full drop-shadow-xl"
             />
           </div>
         </div>
@@ -45,7 +56,7 @@ const CardCategory3: FC<CardCategory3Props> = ({
         <div>
           <div className="absolute inset-5 sm:inset-8 flex flex-col">
             <div className="max-w-xs">
-              <span className={`block mb-2 text-sm text-slate-700`}>
+              <span className={`block mb-2 text-sm text-slate-700 font-medium`}>
                 {name}
               </span>
               {desc && (
@@ -55,15 +66,17 @@ const CardCategory3: FC<CardCategory3Props> = ({
                 ></h2>
               )}
             </div>
-            <div className="mt-auto">
-              <ButtonSecondary
-                sizeClass="py-3 px-4 sm:py-3.5 sm:px-6"
-                fontSize="text-sm font-medium"
-                className="nc-shadow-lg"
-              >
-                Show me all
-              </ButtonSecondary>
-            </div>
+            {showBtn !== false && (
+              <div className="mt-auto">
+                <ButtonSecondary
+                  sizeClass="py-3 px-4 sm:py-3.5 sm:px-6"
+                  fontSize="text-sm font-medium"
+                  className="nc-shadow-lg"
+                >
+                  {btnText || "Show me all"}
+                </ButtonSecondary>
+              </div>
+            )}
           </div>
         </div>
       </div>

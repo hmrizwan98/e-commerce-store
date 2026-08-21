@@ -29,7 +29,7 @@ const SectionSliderProductCard: FC<SectionSliderProductCardProps> = ({
   headingFontClassName,
   headingClassName,
   heading,
-  subHeading = "REY backpacks & bags",
+  subHeading = "",
   data = [],
   viewAllText,
   viewAllHref,
@@ -87,7 +87,7 @@ const SectionSliderProductCard: FC<SectionSliderProductCardProps> = ({
           rightDescText={subHeading}
           hasNextPrev
         >
-          {heading || `New Arrivals`}
+          {heading}
         </Heading>
         <div className="glide__track" data-glide-el="track">
           <ul className="glide__slides">

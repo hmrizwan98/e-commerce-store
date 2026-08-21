@@ -71,7 +71,7 @@ export const PRESET_MODERN_MINIMAL: SystemThemeConfig = {
     background: "#ffffff",
   },
   productCard: {
-    variant: "minimal",
+    variant: "sleek-pill",
     aspectRatio: "1:1",
     imageRadius: "xl",
     cardRadius: "none",
@@ -141,110 +141,19 @@ export const PRESET_MODERN_MINIMAL: SystemThemeConfig = {
     trigger: "page-load",
     delaySeconds: 3,
     frequency: "once-per-session",
-    styleVariant: "center-modal",
+    styleVariant: "bottom-slide",
   },
-};
-
-export const PRESET_BOLD_COMMERCE: SystemThemeConfig = {
-  ...PRESET_MODERN_MINIMAL,
-  id: "preset-bold-commerce",
-  presetId: "bold-commerce",
-  name: "Bold Commerce",
-  colors: {
-    ...PRESET_MODERN_MINIMAL.colors,
-    primary: "#dc2626",
-    secondary: "#2563eb",
-    accent: "#059669",
-    background: "#f8fafc",
-    surface: "#ffffff",
-    card: "#ffffff",
-    border: "#cbd5e1",
-    heading: "#0f172a",
-    text: "#1e293b",
-    buttonBackground: "#dc2626",
-    buttonHoverBackground: "#b91c1c",
-    buttonText: "#ffffff",
-  },
-  typography: {
-    headingFont: "montserrat",
-    bodyFont: "inter",
-    baseFontSizePx: 16,
-    lineHeight: 1.45,
-    letterSpacingPx: 0.5,
-    headingWeight: 800,
-    bodyWeight: 400,
-    buttonWeight: 700,
-  },
-  buttons: {
-    radius: "sm",
-    heightPx: 52,
-    shadow: "md",
-    hoverEffect: "lift",
-    border: false,
-    paddingX: 28,
-    paddingY: 16,
-    transitionSpeed: "fast",
-  },
-  cards: {
-    radius: "sm",
-    shadow: "md",
-    border: true,
-    hoverEffect: "lift",
-    spacingPx: 16,
-    background: "#ffffff",
-  },
-  productCard: {
-    variant: "bold-grid",
-    aspectRatio: "1:1",
-    imageRadius: "sm",
-    cardRadius: "sm",
-    hoverEffect: "scale",
-    buttonStyle: "solid",
-    showSecondaryImageOnHover: true,
-    showQuickAdd: true,
-    badgePosition: "top-right",
-    showWishlist: true,
-    showCompare: true,
-    showQuickView: true,
-  },
-  productDetail: {
-    variant: "bold",
-    galleryStyle: "clickable-thumbnails",
-    purchasePanelStyle: "sticky",
-    showCompare: true,
-  },
-  cart: {
-    variant: "bold",
-    drawerStyle: "compact",
-    itemLayout: "compact",
-  },
-  header: {
-    variant: "mega-menu",
-    logoAlignment: "left",
-    sticky: true,
-    transparent: false,
-    heightPx: 88,
-    shadow: "md",
-    showSearch: true,
-    showWishlist: true,
-    showCompare: true,
-    showAccount: true,
-    showCart: true,
-    topBar: { enabled: true, text: "FLASH SALE: Up to 50% Off Selected Electronics!", showSocialIcons: true },
-  },
-  footer: {
-    variant: "newsletter-focused",
-    showCopyright: true,
-    showPaymentIcons: true,
-    showNewsletter: true,
-  },
+  hero: { variant: "generic" },
+  categories: { variant: "generic" },
+  promo: { styleVariant: "generic" },
+  announcementBar: { variant: "generic" },
 };
 
 export const PRESET_PREMIUM_LUXURY: SystemThemeConfig = {
   ...PRESET_MODERN_MINIMAL,
   id: "preset-premium-luxury",
   presetId: "premium-luxury",
-  name: "Premium Luxury",
+  name: "Default Theme",
   colors: {
     ...PRESET_MODERN_MINIMAL.colors,
     primary: "#78350f",
@@ -334,12 +243,30 @@ export const PRESET_PREMIUM_LUXURY: SystemThemeConfig = {
     showPaymentIcons: false,
     showNewsletter: true,
   },
+  popup: { ...PRESET_MODERN_MINIMAL.popup, styleVariant: "center-modal" },
+  hero: { variant: "luxe" },
+  categories: { variant: "luxe" },
+  promo: { styleVariant: "luxe" },
+  announcementBar: { variant: "luxe" },
 };
 
-export const THEME_PRESETS: Record<ThemePresetId, SystemThemeConfig> = {
-  "modern-minimal": PRESET_MODERN_MINIMAL,
-  "bold-commerce": PRESET_BOLD_COMMERCE,
+/**
+ * Consolidated to a single retained theme (Phase 1 cleanup) - the other 8
+ * former presets (bold-commerce/fashion-editorial/beauty-cosmetics/
+ * electronics-tech/streetwear-urban/furniture-home/grocery-fresh, plus the
+ * base modern-minimal itself) were mostly the same layout with different
+ * colors, not genuinely distinct themes. `PRESET_MODERN_MINIMAL` above is
+ * kept only because this preset structurally spreads it as its base -
+ * existing tenants still on a removed presetId keep rendering exactly as
+ * before, since their persisted themeSettings doc already has every field
+ * populated (see deepMergeTheme() in theme-repository.ts) and the underlying
+ * variant components (MinimalHero, BoldStreetCategories, TechDealsPromo,
+ * CenteredHeader, MegaMenuHeader, MultiColumnFooter, etc.) are untouched -
+ * only the preset *catalog* shrank, not the reusable component layer future
+ * themes will build on.
+ */
+export const THEME_PRESETS: Partial<Record<ThemePresetId, SystemThemeConfig>> = {
   "premium-luxury": PRESET_PREMIUM_LUXURY,
 };
 
-export const DEFAULT_SYSTEM_THEME = PRESET_MODERN_MINIMAL;
+export const DEFAULT_SYSTEM_THEME = PRESET_PREMIUM_LUXURY;

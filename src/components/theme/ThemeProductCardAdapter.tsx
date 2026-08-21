@@ -4,6 +4,9 @@ import React from "react";
 import MinimalCard from "./variants/product-cards/MinimalCard";
 import BoldGridCard from "./variants/product-cards/BoldGridCard";
 import EditorialCard from "./variants/product-cards/EditorialCard";
+import DealCard from "./variants/product-cards/DealCard";
+import TrendGlassCard from "./variants/product-cards/TrendGlassCard";
+import SleekPillCard from "./variants/product-cards/SleekPillCard";
 import ProductCard from "@/components/ProductCard";
 import type { Product } from "@/types/product";
 import type { ProductCardThemeConfig } from "@/lib/theme/theme-types";
@@ -17,6 +20,13 @@ export interface ThemeProductCardAdapterProps {
 
 export default function ThemeProductCardAdapter({ data, productCardSettings, className = "", isLiked }: ThemeProductCardAdapterProps) {
   switch (productCardSettings?.variant) {
+    case "sleek-pill":
+    case "sleek":
+      return <SleekPillCard data={data} className={className} productCardSettings={productCardSettings} />;
+    case "trend-glass":
+      return <TrendGlassCard data={data} className={className} productCardSettings={productCardSettings} />;
+    case "deal-card":
+      return <DealCard data={data} className={className} productCardSettings={productCardSettings} />;
     case "bold-grid":
       return <BoldGridCard data={data} className={className} productCardSettings={productCardSettings} />;
     case "editorial":

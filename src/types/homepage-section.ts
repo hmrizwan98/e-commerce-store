@@ -26,6 +26,11 @@ export interface HomepageTile {
   title?: string;
   subtitle?: string;
   href?: string;
+  badge?: string;
+  isActive?: boolean;
+  color?: string;
+  buttonText?: string;
+  showButton?: boolean;
 }
 
 export interface HomepageSectionConfig {
@@ -35,13 +40,27 @@ export interface HomepageSectionConfig {
   mode?: "auto" | "manual";
   categoryIds?: string[];
   productIds?: string[];
+  brandIds?: string[];
+  testimonialIds?: string[];
+  postIds?: string[];
   bannerIds?: string[];
   limit?: number;
   /** Grid layout controls for category/grid-style sections (exploreGrid, collections). */
   columns?: number;
   showProductCount?: boolean;
+  showViewAll?: boolean;
+  showDate?: boolean;
+  showReadMore?: boolean;
+  readMoreText?: string;
   viewAllText?: string;
   viewAllHref?: string;
+  buttonText?: string;
+  buttonHref?: string;
+  secondaryButtonText?: string;
+  secondaryButtonHref?: string;
+  imageUrl?: string;
+  badgeText?: string;
+  placeholderText?: string;
   /** Only used by type "promo" - picks which of the 3 promo banner layouts/placements to render. */
   variant?: 1 | 2 | 3;
   /** Tile content for discoverMore, howItWork, socialGallery. */

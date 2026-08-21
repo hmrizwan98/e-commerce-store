@@ -14,7 +14,7 @@ export function docData<T>(
   } as T & { id: string };
 }
 
-function toMillis(value: unknown): number | undefined {
+export function toMillis(value: unknown): number | undefined {
   if (
     value &&
     typeof value === "object" &&

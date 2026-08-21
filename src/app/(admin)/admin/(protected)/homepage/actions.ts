@@ -112,3 +112,28 @@ export async function reorderHomepageSections(orderedIds: string[]): Promise<voi
   await batch.commit();
   revalidateStorefront();
 }
+
+export async function resetHomepageSectionsToDefault(): Promise<void> {
+  await requireAdmin();
+  const col = await tenantCollection(COLLECTION);
+  const snap = await col.get();
+
+  const batch = col.firestore.batch();
+  snap.docs.forEach((doc) => batch.delete(doc.ref));
+
+  const { getThemePreset } = await import("@/lib/themes/theme-presets");
+  const preset = getThemePreset("universal-premium");
+
+  preset.homepageSections.forEach((s) => {
+    const newRef = col.doc();
+    batch.set(newRef, {
+      ...s,
+      isActive: true,
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+  });
+
+  await batch.commit();
+  revalidateStorefront();
+}

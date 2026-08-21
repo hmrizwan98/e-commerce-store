@@ -30,8 +30,7 @@ import {
   type ActionErrorCode,
 } from "@/lib/errors/action-error";
 import { createStageTimer } from "@/lib/errors/stage-timer";
-import type { ThemePresetKey } from "@/lib/themes/theme-presets";
-import type { StoreStatus, StoreTemplate } from "@/types/store";
+import type { StoreStatus } from "@/types/store";
 
 const HOSTNAME_PATTERN = /^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/i;
 
@@ -81,8 +80,6 @@ export interface StoreFormInput {
   domains?: string[];
   status?: StoreStatus;
   themeId?: string;
-  template?: StoreTemplate;
-  themeKey?: ThemePresetKey;
 }
 
 export type CreateStoreResult =
@@ -273,7 +270,6 @@ export async function createStore(input: StoreFormInput): Promise<CreateStoreRes
       error: toActionError(traceId, "VALIDATION", "VALIDATION_FAILED", "Email is required to create the store's admin user."),
     };
   }
-  const themeKey: ThemePresetKey = input.themeKey ?? "universal-premium";
   const platformBaseUrl = getPlatformBaseUrl();
 
   let shell: ProvisionShellResult;
@@ -287,7 +283,7 @@ export async function createStore(input: StoreFormInput): Promise<CreateStoreRes
         ownerName: input.ownerName,
         domains: input.domains,
         status: input.status,
-        themeId: themeKey,
+        themeId: "premium-luxury",
         extra: {
           phone: input.phone,
           country: input.country,
@@ -369,7 +365,7 @@ export async function createStore(input: StoreFormInput): Promise<CreateStoreRes
     (async () => {
     try {
       await Promise.all([
-        installDefaultTheme(storeDocRef, { template: input.template ?? "empty", themeKey }, stage).then(() =>
+        installDefaultTheme(storeDocRef, {}, stage).then(() =>
           stage("THEME_INSTALL_FINISHED", { storeId })
         ),
         provisionCloudinaryMetadata(storeDocRef, slug).then(() => stage("CLOUDINARY_PROVISIONED", { storeId })),
