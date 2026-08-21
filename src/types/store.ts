@@ -34,6 +34,7 @@ export interface Store {
   timezone?: string;
   language?: string;
   themeId?: string;
+  adminTheme?: string;
   status: StoreStatus;
   subscription?: StoreSubscription;
   storageLimit?: number;

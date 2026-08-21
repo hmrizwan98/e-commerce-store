@@ -10,16 +10,20 @@ import { useMenu } from "@/hooks/useMenu";
 import { subscribeToNewsletter } from "@/lib/newsletter/actions";
 import toast from "react-hot-toast";
 import type { FooterThemeConfig } from "@/lib/theme/theme-types";
+import type { ThemeLogos } from "@/types/theme";
 
 export interface FooterVariantProps {
   footerSettings?: FooterThemeConfig;
+  logos?: ThemeLogos;
   storeName?: string;
 }
 
-export default function NewsletterFooter({ footerSettings, storeName = "Tradz Glint" }: FooterVariantProps) {
+export default function NewsletterFooter({ footerSettings, logos, storeName = "Tradz Glint" }: FooterVariantProps) {
   const footerItems = useMenu("footer");
   const [email, setEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  const footerLogoImage = footerSettings?.footerLogo || logos?.footerLogo || logos?.logoLight;
 
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,7 +63,7 @@ export default function NewsletterFooter({ footerSettings, storeName = "Tradz Gl
 
       <div className="container grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8">
         <div className="col-span-2 space-y-4">
-          <Logo />
+          <Logo img={footerLogoImage} storeName={storeName} logoHeightPx={footerSettings?.logoHeightPx} />
           <SocialsList1 />
         </div>
 

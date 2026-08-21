@@ -6,25 +6,30 @@ import SocialsList1 from "@/shared/SocialsList1/SocialsList1";
 import PaymentIcons from "@/components/PaymentIcons";
 import { useMenu } from "@/hooks/useMenu";
 import type { FooterThemeConfig } from "@/lib/theme/theme-types";
+import type { ThemeLogos } from "@/types/theme";
 
 export interface FooterVariantProps {
   footerSettings?: FooterThemeConfig;
+  logos?: ThemeLogos;
   storeName?: string;
 }
 
-export default function MultiColumnFooter({ footerSettings, storeName = "Tradz Glint" }: FooterVariantProps) {
+export default function MultiColumnFooter({ footerSettings, logos, storeName = "Tradz Glint" }: FooterVariantProps) {
   const footerItems = useMenu("footer");
   const showCopyright = footerSettings?.showCopyright ?? true;
   const showPaymentIcons = footerSettings?.showPaymentIcons ?? false;
   const copyrightText = footerSettings?.copyrightText || `© ${new Date().getFullYear()} ${storeName}. All rights reserved.`;
 
+  const footerLogoImage = footerSettings?.footerLogo || logos?.footerLogo || logos?.logoLight;
+  const descriptionText = footerSettings?.description || "Discover modern essentials crafted for everyday living. High quality products delivered directly to your doorstep.";
+
   return (
     <footer className="relative py-16 lg:py-20 border-t border-[var(--border,#e5e7eb)] dark:border-slate-800 bg-[var(--footer-bg,white)] dark:bg-slate-950 text-[var(--text,#111827)] dark:text-slate-100">
       <div className="container grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-10">
         <div className="md:col-span-2 lg:col-span-2 space-y-4">
-          <Logo />
+          <Logo img={footerLogoImage} storeName={storeName} logoHeightPx={footerSettings?.logoHeightPx} />
           <p className="text-sm text-[var(--muted)] max-w-sm">
-            Discover modern essentials crafted for everyday living. High quality products delivered directly to your doorstep.
+            {descriptionText}
           </p>
           <SocialsList1 />
         </div>

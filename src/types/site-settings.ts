@@ -35,6 +35,7 @@ export interface BrandingSettings {
   secondaryColor?: string;
   fontFamily?: string;
   borderRadius?: string;
+  adminTheme?: string;
 }
 
 /** Currency stays owned by GeneralSettings - not duplicated here. */

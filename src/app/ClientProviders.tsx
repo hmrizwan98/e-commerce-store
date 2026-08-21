@@ -90,7 +90,7 @@ const ClientProviders: React.FC<ClientProvidersProps> = ({
           <SiteHeader headerSettings={headerSettings} cartSettings={cartSettings} logos={logos} storeName={storeName} />
           {children}
           <CommonClient />
-          <Footer footerSettings={footerSettings} storeName={storeName} />
+          <Footer footerSettings={footerSettings} logos={logos} storeName={storeName} />
           <WhatsAppButton />
           <ThemePopupModal popupConfig={popupConfig} tenantId={tenantId} themePresetId={themePresetId} />
         </Provider>

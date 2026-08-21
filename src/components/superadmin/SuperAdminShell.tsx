@@ -64,7 +64,7 @@ export default function SuperAdminShell({
   };
 
   return (
-    <div className="min-h-screen flex bg-neutral-900 text-neutral-900 dark:text-neutral-100 font-sans antialiased">
+    <div className="h-screen w-screen flex overflow-hidden bg-neutral-900 text-neutral-900 dark:text-neutral-100 font-sans antialiased">
       {/* Mobile Sidebar Overlay */}
       {mobileOpen && (
         <div
@@ -75,11 +75,11 @@ export default function SuperAdminShell({
 
       {/* Sidebar */}
       <aside
-        className={`fixed lg:sticky top-0 left-0 z-50 h-screen w-72 bg-neutral-950 border-r border-neutral-800 flex flex-col justify-between transition-transform duration-300 ease-in-out ${
+        className={`fixed lg:sticky top-0 left-0 z-50 h-screen w-72 bg-neutral-950 border-r border-neutral-800 flex flex-col justify-between transition-transform duration-300 ease-in-out shrink-0 ${
           mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
-        <div className="p-6 space-y-8 overflow-y-auto">
+        <div className="p-6 space-y-8 overflow-y-auto flex-1">
           {/* Logo Brand Header */}
           <div className="flex items-center justify-between">
             <Link href={"/superadmin" as any} className="flex items-center gap-3 group">
@@ -136,7 +136,7 @@ export default function SuperAdminShell({
         </div>
 
         {/* Sidebar Footer User Info */}
-        <div className="p-4 border-t border-neutral-900 bg-neutral-950/50 flex items-center justify-between gap-3">
+        <div className="p-4 border-t border-neutral-900 bg-neutral-950/50 flex items-center justify-between gap-3 shrink-0">
           <div className="min-w-0 flex-1">
             <span className="block text-xs font-semibold text-white truncate">{email || "Super Admin"}</span>
             <span className="block text-[10px] font-mono text-emerald-400 flex items-center gap-1.5 mt-0.5">
@@ -155,9 +155,9 @@ export default function SuperAdminShell({
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 bg-[#f0f4fa] dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100">
+      <div className="flex-1 flex flex-col h-screen min-w-0 overflow-hidden bg-[#f0f4fa] dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100">
         {/* Top Header Bar matching input_file_1.png */}
-        <header className="sticky top-0 z-30 h-16 bg-gradient-to-r from-indigo-500 via-sky-400 to-cyan-400 text-white shadow-md px-4 sm:px-8 flex items-center justify-between">
+        <header className="sticky top-0 z-30 h-16 shrink-0 bg-gradient-to-r from-indigo-500 via-sky-400 to-cyan-400 text-white shadow-md px-4 sm:px-8 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
               type="button"
@@ -181,10 +181,8 @@ export default function SuperAdminShell({
         </header>
 
         {/* Canvas Body */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto relative">{children}</main>
+        <main className="flex-1 p-4 sm:p-5 lg:p-6 max-w-7xl w-full mx-auto relative overflow-y-auto flex flex-col min-h-0">{children}</main>
       </div>
     </div>
   );
 }
-
-

@@ -123,7 +123,7 @@ export default async function ThemeCustomizerPreviewPage({ searchParams }: Previ
       <ThemeAnnouncementBarAdapter announcementSettings={draft.announcementBar} topBar={draft.header?.topBar} />
       <ThemeHeaderAdapter headerSettings={draft.header} cartSettings={draft.cart} />
       <main className="min-h-[60vh]">{renderSurfaceContent()}</main>
-      <ThemeFooterAdapter footerSettings={draft.footer} storeName={general.storeName} />
+      <ThemeFooterAdapter footerSettings={draft.footer} logos={draft.logos} storeName={general.storeName} />
       <ThemePopupModal popupConfig={draft.popup} tenantId={tenant.id} themePresetId={draft.presetId} />
     </ThemePreviewModeProvider>
   );

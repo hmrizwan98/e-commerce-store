@@ -126,6 +126,9 @@ export interface ThemeFooter {
   copyrightText?: string;
   showPaymentIcons?: boolean;
   showNewsletter?: boolean;
+  footerLogo?: string;
+  logoHeightPx?: number;
+  description?: string;
 }
 
 export interface ThemeBanner {

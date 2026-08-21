@@ -80,6 +80,7 @@ export interface StoreFormInput {
   domains?: string[];
   status?: StoreStatus;
   themeId?: string;
+  adminTheme?: string;
 }
 
 export type CreateStoreResult =
@@ -294,6 +295,7 @@ export async function createStore(input: StoreFormInput): Promise<CreateStoreRes
           firebaseProject: input.firebaseProject,
           notes: input.notes,
           expiryDate: input.expiryDate,
+          adminTheme: input.adminTheme || "indigo",
         },
       },
       stage
@@ -327,6 +329,14 @@ export async function createStore(input: StoreFormInput): Promise<CreateStoreRes
         taxRatePercent: 0,
         taxInclusive: false,
       });
+
+    await storeDocRef
+      .collection("siteSettings")
+      .doc("branding")
+      .set({
+        adminTheme: input.adminTheme || "indigo",
+      }, { merge: true });
+
     stage("SITE_SETTINGS_CREATED", { storeId });
 
     await adminAuth().setCustomUserClaims(userRecord.uid, { role: "admin", tenantId: storeId });

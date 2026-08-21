@@ -16,6 +16,9 @@ import {
   TagIcon,
 } from "@heroicons/react/24/outline";
 
+import { getGeneralSettings } from "@/lib/firebase/repositories/site-settings";
+import { getCurrentTenant } from "@/lib/tenant/current";
+
 export const dynamic = "force-dynamic";
 
 async function countCollection(name: string, filter?: [string, FirebaseFirestore.WhereFilterOp, unknown]) {
@@ -26,7 +29,7 @@ async function countCollection(name: string, filter?: [string, FirebaseFirestore
 }
 
 export default async function AdminDashboardPage() {
-  const [productCount, categoryCount, brandCount, orderStats, customerCount, inventory, topSelling, revenueTrend, onboardingProgress] =
+  const [productCount, categoryCount, brandCount, orderStats, customerCount, inventory, topSelling, revenueTrend, onboardingProgress, general, tenant] =
     await Promise.all([
       countCollection("products", ["isDeleted", "==", false]),
       countCollection("categories", ["isDeleted", "==", false]),
@@ -37,10 +40,16 @@ export default async function AdminDashboardPage() {
       getTopSellingProducts(5),
       getRevenueTrend(14),
       getOnboardingProgress(),
+      getGeneralSettings(),
+      getCurrentTenant(),
     ]);
 
   const lowStock = inventory.filter((p) => p.stock <= (p.lowStockThreshold ?? 5)).slice(0, 8);
   const maxRevenue = Math.max(1, ...revenueTrend.map((p) => p.revenue));
+
+  const storeName = general.storeName || tenant?.brandName || tenant?.name || "Store Owner";
+  const hour = new Date().getHours();
+  const timeGreeting = hour < 12 ? "Good Morning" : hour < 18 ? "Good Afternoon" : "Good Evening";
 
   return (
     <div className="space-y-8">
@@ -48,7 +57,7 @@ export default async function AdminDashboardPage() {
       <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-200/80 dark:border-slate-800 border-l-4 border-l-indigo-600 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1">
           <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
-            <span>Good Evening, Ginyaki</span>
+            <span>{timeGreeting}, {storeName}</span>
             <span className="inline-block animate-bounce">👋</span>
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 font-medium">

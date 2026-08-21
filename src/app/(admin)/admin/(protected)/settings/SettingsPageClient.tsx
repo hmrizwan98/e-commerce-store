@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import AdminThemeSelector from "@/components/admin/AdminThemeSelector";
 import {
   updateGeneralSettings,
   updateShippingSettings,
@@ -259,6 +260,7 @@ export default function SettingsPageClient({
             Basic brand identity (used for emails/loading screens/social previews) - independent
             of the full visual Theme Builder at <code>/admin/theme</code>.
           </p>
+
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
               <label className={labelClass}>Logo URL</label>
@@ -293,6 +295,12 @@ export default function SettingsPageClient({
                 <option value="lg">Large</option>
                 <option value="full">Full</option>
               </select>
+            </div>
+            <div className="sm:col-span-2 pt-4 border-t border-neutral-200 dark:border-neutral-800">
+              <AdminThemeSelector
+                selectedTheme={branding.adminTheme || "indigo"}
+                onSelect={(themeId) => setBranding({ ...branding, adminTheme: themeId })}
+              />
             </div>
           </div>
           <SaveButton onClick={() => updateBrandingSettings(branding)} />

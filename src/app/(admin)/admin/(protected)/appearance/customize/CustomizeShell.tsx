@@ -192,11 +192,35 @@ export default function CustomizeShell({ initialDraft, homepage, navigation }: C
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
   const [viewport, setViewport] = useState<ViewportKey>("desktop");
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const previewContainerRef = useRef<HTMLDivElement>(null);
+  const [previewScale, setPreviewScale] = useState(1);
+
+  useEffect(() => {
+    const updatePreviewScale = () => {
+      if (!previewContainerRef.current) return;
+      const availableWidth = previewContainerRef.current.clientWidth;
+      const targetW = VIEWPORTS[viewport].width;
+
+      if (availableWidth > 0 && availableWidth < targetW) {
+        setPreviewScale(availableWidth / targetW);
+      } else {
+        setPreviewScale(1);
+      }
+    };
+
+    updatePreviewScale();
+    const observer = new ResizeObserver(updatePreviewScale);
+    if (previewContainerRef.current) {
+      observer.observe(previewContainerRef.current);
+    }
+    return () => observer.disconnect();
+  }, [viewport]);
+  
   const [previewSurface, setPreviewSurface] = useState<PreviewSurfaceKey>("home");
   const [previewLoaded, setPreviewLoaded] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
   const [confirmDiscardOpen, setConfirmDiscardOpen] = useState(false);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const updateDraft = useCallback((patch: Partial<SystemThemeConfig>) => {
     setDraft((prev) => mergeDraft(prev, patch));
@@ -477,9 +501,9 @@ export default function CustomizeShell({ initialDraft, homepage, navigation }: C
   };
 
   return (
-    <div className="space-y-4 font-sans text-slate-900 dark:text-slate-100">
+    <div className="flex-1 flex flex-col min-h-0 space-y-4 font-sans text-slate-900 dark:text-slate-100 h-full">
       {/* Top Shopify-Style Editor Action Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl sticky top-0 z-20 shadow-xs">
+      <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xs shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-sm">
             🎨
@@ -551,25 +575,44 @@ export default function CustomizeShell({ initialDraft, homepage, navigation }: C
         </div>
 
         {/* Action Controls */}
-        <div className="flex items-center gap-2">
-          <ButtonSecondary onClick={() => setConfirmDiscardOpen(true)} disabled={saving || !dirty} sizeClass="py-2 px-3 text-xs">
+        <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={() => setConfirmDiscardOpen(true)}
+            disabled={saving || !dirty}
+            className="px-3.5 py-2 text-xs font-semibold rounded-xl text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700/80 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer border border-slate-200/60 dark:border-slate-700/60"
+          >
             Discard
-          </ButtonSecondary>
-          <ButtonSecondary onClick={handleSaveDraft} loading={saving} disabled={saving} sizeClass="py-2 px-4 text-xs font-semibold">
+          </button>
+
+          <button
+            type="button"
+            onClick={handleSaveDraft}
+            disabled={saving}
+            className="px-4.5 py-2 text-xs font-bold rounded-xl text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700/80 shadow-2xs active:scale-95 disabled:opacity-50 transition-all flex items-center gap-1.5 cursor-pointer"
+          >
+            {saving ? <ArrowPathIcon className="w-3.5 h-3.5 animate-spin" /> : null}
             Save Draft
-          </ButtonSecondary>
-          <ButtonPrimary onClick={handlePublish} loading={saving} disabled={saving} sizeClass="py-2 px-4 text-xs font-bold">
-            Publish Live
-          </ButtonPrimary>
+          </button>
+
+          <button
+            type="button"
+            onClick={handlePublish}
+            disabled={saving}
+            className="px-5 py-2 text-xs font-extrabold rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 shadow-md shadow-indigo-500/20 active:scale-95 disabled:opacity-50 transition-all flex items-center gap-2 cursor-pointer"
+          >
+            {saving ? <ArrowPathIcon className="w-3.5 h-3.5 animate-spin" /> : null}
+            🚀 Publish Live
+          </button>
         </div>
       </div>
 
       {/* Main 3-Panel Studio Grid */}
-      <div className="grid grid-cols-1 xl:grid-cols-[380px_1fr] gap-4 items-start">
+      <div className="flex-1 min-h-0 grid grid-cols-1 xl:grid-cols-[380px_1fr] gap-4 items-stretch">
         {/* Left Navigation & Inspector Panel */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs flex flex-col min-h-[640px]">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs flex flex-col h-full min-h-[500px] xl:min-h-0">
           {/* Top Panel Mode Tabs */}
-          <div className="grid grid-cols-2 p-1.5 bg-slate-100 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800">
+          <div className="grid grid-cols-2 p-1.5 bg-slate-100 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 shrink-0">
             <button
               onClick={() => {
                 setEditorMode("sections");
@@ -602,7 +645,7 @@ export default function CustomizeShell({ initialDraft, homepage, navigation }: C
 
           {/* Mode 1: Sections & Tree View */}
           {editorMode === "sections" && (
-            <div className="p-4 flex-1 flex flex-col space-y-4 overflow-y-auto max-h-[75vh]">
+            <div className="p-4 flex-1 flex flex-col space-y-4 overflow-y-auto">
               {selectedSectionId ? (
                 /* Contextual Section Inspector Header & Form */
                 <div className="space-y-4">
@@ -772,7 +815,7 @@ export default function CustomizeShell({ initialDraft, homepage, navigation }: C
 
           {/* Mode 2: Global Settings */}
           {editorMode === "global" && (
-            <div className="p-4 flex-1 flex flex-col space-y-4 overflow-y-auto max-h-[75vh]">
+            <div className="p-4 flex-1 flex flex-col space-y-4 overflow-y-auto">
               {/* Tab Navigation */}
               <div className="space-y-4">
                 {GLOBAL_TAB_GROUPS.map((group) => (
@@ -821,8 +864,8 @@ export default function CustomizeShell({ initialDraft, homepage, navigation }: C
         </div>
 
         {/* Right Panel: Live Storefront Preview */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 space-y-3 xl:sticky xl:top-20 shadow-xs">
-          <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 space-y-3 shadow-xs flex flex-col h-full min-h-[500px] xl:min-h-0">
+          <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3 shrink-0">
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
               <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 font-mono">
@@ -840,19 +883,45 @@ export default function CustomizeShell({ initialDraft, homepage, navigation }: C
             </a>
           </div>
 
-          <div className="overflow-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-950 flex justify-center" style={{ maxHeight: "75vh" }}>
-            <div style={{ width: VIEWPORTS[viewport].width, maxWidth: "100%" }}>
-              <iframe
-                key={`${reloadKey}-${previewSurface}`}
-                ref={iframeRef}
-                src={`/admin/theme-customizer-preview?page=${previewSurface}`}
-                title="Live Storefront Preview"
-                style={{ width: VIEWPORTS[viewport].width, height: "75vh", border: "none", background: "white" }}
-                onLoad={() => sendPreviewUpdate(draft)}
-              />
-            </div>
+          <div
+            ref={previewContainerRef}
+            className="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-950 flex justify-center items-center flex-1 min-h-0 relative w-full h-full"
+          >
+            {viewport === "mobile" && previewScale === 1 ? (
+              <div
+                style={{ width: "390px", height: "100%" }}
+                className="relative shrink-0 shadow-lg rounded-xl overflow-hidden bg-white border border-slate-300 dark:border-slate-700"
+              >
+                <iframe
+                  key={`${reloadKey}-${previewSurface}`}
+                  ref={iframeRef}
+                  src={`/admin/theme-customizer-preview?page=${previewSurface}`}
+                  title="Live Storefront Preview"
+                  style={{ width: "100%", height: "100%", border: "none", background: "white" }}
+                  onLoad={() => sendPreviewUpdate(draft)}
+                />
+              </div>
+            ) : (
+              <div className="w-full h-full relative overflow-hidden bg-white">
+                <iframe
+                  key={`${reloadKey}-${previewSurface}`}
+                  ref={iframeRef}
+                  src={`/admin/theme-customizer-preview?page=${previewSurface}`}
+                  title="Live Storefront Preview"
+                  style={{
+                    width: `${(1 / previewScale) * 100}%`,
+                    height: `${(1 / previewScale) * 100}%`,
+                    transform: `scale(${previewScale})`,
+                    transformOrigin: "0 0",
+                    border: "none",
+                    background: "white",
+                  }}
+                  onLoad={() => sendPreviewUpdate(draft)}
+                />
+              </div>
+            )}
           </div>
-          <p className="text-[11px] text-slate-400 text-center">
+          <p className="text-[11px] text-slate-400 text-center shrink-0">
             Colors, typography &amp; tokens update live in real-time. Component variants refresh automatically on Save/Reload.
           </p>
         </div>

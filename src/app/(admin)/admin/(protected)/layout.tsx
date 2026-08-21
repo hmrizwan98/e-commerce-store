@@ -8,6 +8,8 @@ import { requireCurrentTenant } from "@/lib/tenant/current";
 import AdminShell from "@/components/admin/AdminShell";
 import ImpersonationBanner from "@/components/admin/ImpersonationBanner";
 
+import { getBrandingSettings } from "@/lib/firebase/repositories/site-settings";
+
 export default async function AdminProtectedLayout({
   children,
 }: {
@@ -37,6 +39,9 @@ export default async function AdminProtectedLayout({
     redirect("/admin/login");
   }
 
+  const branding = await getBrandingSettings().catch(() => ({ adminTheme: "indigo" }));
+  const adminTheme = branding?.adminTheme || (tenant as any).adminTheme || "indigo";
+
   // Purely additive/cosmetic - doesn't affect any check above. Presence of this cookie
   // just means a Super Admin is currently viewing as this store's admin (see
   // /api/admin/impersonate/start and /return).
@@ -45,7 +50,7 @@ export default async function AdminProtectedLayout({
   return (
     <>
       {isImpersonating && <ImpersonationBanner />}
-      <AdminShell email={decoded.email}>{children}</AdminShell>
+      <AdminShell email={decoded.email} adminTheme={adminTheme}>{children}</AdminShell>
     </>
   );
 }

@@ -9,6 +9,8 @@ import { getTenantStorefrontUrl, getTenantAdminUrl, buildTenantUrl } from "@/lib
 import Link from "next/link";
 import type { StoreStatus } from "@/types/store";
 
+import AdminThemeSelector from "@/components/admin/AdminThemeSelector";
+
 const STEPS = ["Store Details", "Owner Account", "Review & Create"] as const;
 
 const inputClass =
@@ -34,6 +36,7 @@ const StoreCreationWizard: React.FC<{ platformBaseUrl: string }> = ({ platformBa
   const [country, setCountry] = useState("");
   const [timezone, setTimezone] = useState("");
   const [status, setStatus] = useState<StoreStatus>("active");
+  const [adminTheme, setAdminTheme] = useState("indigo");
 
   const [ownerName, setOwnerName] = useState("");
   const [email, setEmail] = useState("");
@@ -87,6 +90,7 @@ const StoreCreationWizard: React.FC<{ platformBaseUrl: string }> = ({ platformBa
       currency: currency.trim() || undefined,
       timezone: timezone.trim() || undefined,
       status,
+      adminTheme,
     };
     setSubmitting(true);
     setError(null);
@@ -240,9 +244,13 @@ const StoreCreationWizard: React.FC<{ platformBaseUrl: string }> = ({ platformBa
               <option value="suspended">Suspended</option>
             </select>
           </div>
+
+          <div className="pt-2 border-t border-slate-200 dark:border-slate-800">
+            <AdminThemeSelector selectedTheme={adminTheme} onSelect={setAdminTheme} />
+          </div>
+
           <p className="text-xs text-neutral-500">
-            Every new store is automatically set up with the platform&apos;s default theme, a complete homepage, and a
-            small set of demo products/categories/brands to customize or remove.
+            Every new store is automatically set up with the selected Admin theme, default storefront layout, and demo products.
           </p>
         </div>
       )}
