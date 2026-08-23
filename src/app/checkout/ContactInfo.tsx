@@ -3,6 +3,7 @@ import React, { FC } from "react";
 import ButtonPrimary from "@/shared/Button/ButtonPrimary";
 import ButtonSecondary from "@/shared/Button/ButtonSecondary";
 import Input from "@/shared/Input/Input";
+import { UserIcon, CheckIcon } from "@heroicons/react/24/outline";
 
 interface Props {
   isActive: boolean;
@@ -21,118 +22,106 @@ const ContactInfo: FC<Props> = ({
   email,
   onChange,
 }) => {
-  const renderAccount = () => {
-    return (
-      <div className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden z-0">
-        <div className="flex flex-col sm:flex-row items-start p-6 ">
-          <span className="hidden sm:block">
-            <svg
-              className="w-6 h-6 text-slate-700 dark:text-slate-400 mt-0.5"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M12.12 12.78C12.05 12.77 11.96 12.77 11.88 12.78C10.12 12.72 8.71997 11.28 8.71997 9.50998C8.71997 7.69998 10.18 6.22998 12 6.22998C13.81 6.22998 15.28 7.69998 15.28 9.50998C15.27 11.28 13.88 12.72 12.12 12.78Z"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M18.74 19.3801C16.96 21.0101 14.6 22.0001 12 22.0001C9.40001 22.0001 7.04001 21.0101 5.26001 19.3801C5.36001 18.4401 5.96001 17.5201 7.03001 16.8001C9.77001 14.9801 14.25 14.9801 16.97 16.8001C18.04 17.5201 18.64 18.4401 18.74 19.3801Z"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </span>
-          <div className="sm:ml-8">
-            <h3 className=" text-slate-700 dark:text-slate-300 flex ">
-              <span className="uppercase tracking-tight">CONTACT INFO</span>
-              <svg
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth="2.5"
-                stroke="currentColor"
-                className="w-5 h-5 ml-3 text-slate-900 dark:text-slate-100 "
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M4.5 12.75l6 6 9-13.5"
-                />
-              </svg>
-            </h3>
-            <div className="font-semibold mt-1 text-sm">
-              <span className="">{email || "Guest checkout"}</span>
-              {phone && <span className="ml-3 tracking-tighter">{phone}</span>}
-            </div>
-          </div>
-          <button
-            className="py-2 px-4 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 mt-5 sm:mt-0 sm:ml-auto text-sm font-medium rounded-lg"
-            onClick={() => onOpenActive()}
+  const isCompleted = Boolean(phone || email);
+
+  return (
+    <div
+      className={`border rounded-2xl transition-all ${
+        isActive
+          ? "border-indigo-600 dark:border-indigo-500 ring-4 ring-indigo-500/10 bg-white dark:bg-slate-900 shadow-md"
+          : "border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/50 hover:border-slate-300"
+      }`}
+    >
+      <div className="p-5 sm:p-6 flex items-center justify-between">
+        <div className="flex items-center gap-3.5 min-w-0">
+          <div
+            className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+              isCompleted
+                ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400"
+                : isActive
+                ? "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400"
+                : "bg-slate-100 dark:bg-slate-800 text-slate-400"
+            }`}
           >
-            Change
-          </button>
-        </div>
-        <div
-          className={`border-t border-slate-200 dark:border-slate-700 px-6 py-7 space-y-4 sm:space-y-6 ${
-            isActive ? "block" : "hidden"
-          }`}
-        >
-          <div className="flex justify-between flex-wrap items-baseline">
-            <h3 className="text-lg font-semibold">Contact infomation</h3>
+            <UserIcon className="w-5 h-5" />
           </div>
-          <div className="max-w-lg">
-            <Label className="text-sm">Your phone number</Label>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                1. Contact Information
+              </h3>
+              {isCompleted && !isActive && (
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full">
+                  <CheckIcon className="w-3 h-3" /> Saved
+                </span>
+              )}
+            </div>
+            <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate mt-0.5">
+              {[phone, email].filter(Boolean).join(" · ") || "Guest checkout — Enter phone or email"}
+            </p>
+          </div>
+        </div>
+
+        {!isActive && (
+          <button
+            type="button"
+            onClick={onOpenActive}
+            className="px-3.5 py-1.5 text-xs font-bold rounded-xl text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 transition-colors shrink-0 cursor-pointer"
+          >
+            {isCompleted ? "Edit" : "Change"}
+          </button>
+        )}
+      </div>
+
+      {isActive && (
+        <div className="border-t border-slate-100 dark:border-slate-800 p-5 sm:p-7 space-y-5">
+          <div>
+            <Label className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+              Mobile Phone Number (For Order Updates &amp; Delivery) *
+            </Label>
             <Input
               className="mt-1.5"
-              type={"tel"}
+              type="tel"
+              placeholder="e.g. 0300 1234567"
               value={phone}
               onChange={(e) => onChange({ phone: e.target.value })}
             />
           </div>
-          <div className="max-w-lg">
-            <Label className="text-sm">Email address</Label>
+
+          <div>
+            <Label className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+              Email Address (Optional — for order receipt)
+            </Label>
             <Input
               className="mt-1.5"
-              type={"email"}
-              required
+              type="email"
+              placeholder="e.g. yourname@example.com"
               value={email}
               onChange={(e) => onChange({ email: e.target.value })}
             />
           </div>
 
-          {/* ============ */}
-          <div className="flex flex-col sm:flex-row pt-6">
+          <div className="flex items-center gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
             <ButtonPrimary
-              className="sm:!px-7 shadow-none"
-              onClick={() => onCloseActive()}
+              type="button"
+              className="sm:!px-7 shadow-sm"
+              onClick={onCloseActive}
             >
-              Save and next to Shipping
+              Save &amp; Continue to Address →
             </ButtonPrimary>
-            <ButtonSecondary
-              className="mt-3 sm:mt-0 sm:ml-3"
-              onClick={() => onCloseActive()}
-            >
-              Cancel
-            </ButtonSecondary>
+            {onCloseActive && (
+              <ButtonSecondary
+                type="button"
+                onClick={onCloseActive}
+              >
+                Cancel
+              </ButtonSecondary>
+            )}
           </div>
         </div>
-      </div>
-    );
-  };
-
-  return renderAccount();
+      )}
+    </div>
+  );
 };
 
 export default ContactInfo;

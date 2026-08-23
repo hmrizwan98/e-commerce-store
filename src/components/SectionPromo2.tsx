@@ -11,17 +11,31 @@ import { safeImageSrc } from "@/utils/safeImageSrc";
 export interface SectionPromo2Props {
   className?: string;
   banner?: Banner;
+  heading?: string;
+  subHeading?: string;
+  ctaText?: string;
+  ctaHref?: string;
+  badgeText?: string;
 }
 
-const SectionPromo2: FC<SectionPromo2Props> = ({ className = "lg:pt-10", banner }) => {
-  const heading = banner?.title ?? "Special offer in kids products";
+const SectionPromo2: FC<SectionPromo2Props> = ({
+  className = "lg:pt-10",
+  banner,
+  heading: customHeading,
+  subHeading: customSubHeading,
+  ctaText: customCtaText,
+  ctaHref: customCtaHref,
+  badgeText: customBadgeText,
+}) => {
+  const heading = banner?.title ?? customHeading ?? "Exclusive Offers & Special Deals";
   const subHeading =
     banner?.subtitle ??
     banner?.description ??
-    "Fashion is a form of self-expression and autonomy at a particular period and place.";
-  const ctaText = banner?.ctaText ?? "Discover more";
-  const ctaHref = banner?.ctaHref ?? "/search";
-  const badgeText = banner?.subtitle || "STORE";
+    customSubHeading ??
+    "Explore our handpicked collection with exclusive limited-time discounts and premium quality.";
+  const ctaText = banner?.ctaText ?? customCtaText ?? "Discover More";
+  const ctaHref = banner?.ctaHref ?? customCtaHref ?? "/collection";
+  const badgeText = customBadgeText ?? banner?.subtitle ?? "PROMO";
 
   const bannerImg = (banner as any)?.imageDesktop || (banner as any)?.image ? safeImageSrc((banner as any).imageDesktop || (banner as any).image) : null;
 

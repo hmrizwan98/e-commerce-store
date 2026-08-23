@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Checkbox from "@/shared/Checkbox/Checkbox";
 import Slider from "rc-slider";
 import Radio from "@/shared/Radio/Radio";
@@ -11,17 +11,33 @@ import type { FilterCategoryOption } from "@/components/TabFilters";
 
 export interface SidebarFiltersProps {
   categories?: FilterCategoryOption[];
+  availableColors?: string[];
+  availableSizes?: string[];
+  showHeader?: boolean;
 }
 
-const DATA_colors = FILTER_COLORS.map((name) => ({ name }));
-const DATA_sizes = FILTER_SIZES.map((name) => ({ name }));
-const DATA_sortOrderRadios = SORT_OPTIONS;
+// Every filter change commits straight to the URL
+const SidebarFilters = ({
+  categories = [],
+  availableColors = FILTER_COLORS,
+  availableSizes = FILTER_SIZES,
+  showHeader = true,
+}: SidebarFiltersProps) => {
+  const { filters, applyFilters, clearAll } = useFilterParams();
 
-// This sidebar has no explicit Apply step (unlike TabFilters' popovers), so
-// every change commits straight to the URL.
-const SidebarFilters = ({ categories = [] }: SidebarFiltersProps) => {
-  const { filters, applyFilters } = useFilterParams();
-  const DATA_categories = categories.map((c) => ({ name: c.name }));
+  // Dynamic Categories from props (or fallbacks)
+  const DATA_categories = categories.length > 0
+    ? categories.map((c) => ({ name: c.name }))
+    : [
+        { name: "All Categories" },
+        { name: "Clothing" },
+        { name: "Accessories" },
+        { name: "Footwear" },
+      ];
+
+  const DATA_colors = availableColors.map((name) => ({ name }));
+  const DATA_sizes = availableSizes.map((name) => ({ name }));
+  const DATA_sortOrderRadios = SORT_OPTIONS;
 
   const [isOnSale, setIsIsOnSale] = useState(filters.sale);
   const [rangePrices, setRangePrices] = useState<number[]>([
@@ -33,7 +49,38 @@ const SidebarFilters = ({ categories = [] }: SidebarFiltersProps) => {
   const [sizesState, setSizesState] = useState<string[]>(filters.size);
   const [sortOrderStates, setSortOrderStates] = useState<string>(filters.sort ?? "");
 
-  //
+  // Sync state when filters URL prop changes or resets
+  useEffect(() => {
+    setCategoriesState(filters.category);
+    setColorsState(filters.color);
+    setSizesState(filters.size);
+    setIsIsOnSale(filters.sale);
+    setSortOrderStates(filters.sort ?? "");
+    setRangePrices([
+      filters.minPrice ?? PRICE_RANGE[0],
+      filters.maxPrice ?? PRICE_RANGE[1],
+    ]);
+  }, [filters]);
+
+  const hasActiveFilters =
+    categoriesState.length > 0 ||
+    colorsState.length > 0 ||
+    sizesState.length > 0 ||
+    isOnSale ||
+    Boolean(sortOrderStates) ||
+    filters.minPrice !== undefined ||
+    filters.maxPrice !== undefined;
+
+  const handleClearAll = () => {
+    setCategoriesState([]);
+    setColorsState([]);
+    setSizesState([]);
+    setIsIsOnSale(false);
+    setSortOrderStates("");
+    setRangePrices([PRICE_RANGE[0], PRICE_RANGE[1]]);
+    clearAll();
+  };
+
   const handleChangeCategories = (checked: boolean, name: string) => {
     const next = checked
       ? [...categoriesState, name]
@@ -75,82 +122,87 @@ const SidebarFilters = ({ categories = [] }: SidebarFiltersProps) => {
     });
   };
 
-  //
-
-  // OK
   const renderTabsCategories = () => {
     return (
-      <div className="relative flex flex-col pb-8 space-y-4">
-        <h3 className="font-semibold mb-2.5">Categories</h3>
-        {DATA_categories.map((item) => (
-          <div key={item.name} className="">
+      <div className="relative flex flex-col py-5 space-y-3">
+        <h3 className="font-bold text-xs uppercase tracking-wider text-slate-400">Categories</h3>
+        <div className="space-y-2.5 max-h-56 overflow-y-auto pr-1">
+          {DATA_categories.map((item) => (
             <Checkbox
+              key={item.name}
+              id={`cat-filter-${item.name.toLowerCase().replace(/[^a-z0-9]/g, "-")}`}
               name={item.name}
               label={item.name}
-              defaultChecked={categoriesState.includes(item.name)}
-              sizeClassName="w-5 h-5"
-              labelClassName="text-sm font-normal"
+              checked={categoriesState.includes(item.name)}
+              sizeClassName="w-4 h-4 rounded"
+              labelClassName="text-xs font-semibold text-slate-700 dark:text-slate-300"
               onChange={(checked) => handleChangeCategories(checked, item.name)}
             />
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     );
   };
 
-  // OK
   const renderTabsColor = () => {
     return (
-      <div className="relative flex flex-col py-8 space-y-4">
-        <h3 className="font-semibold mb-2.5">Colors</h3>
-        {DATA_colors.map((item) => (
-          <div key={item.name} className="">
+      <div className="relative flex flex-col py-5 space-y-3">
+        <h3 className="font-bold text-xs uppercase tracking-wider text-slate-400">Colors</h3>
+        <div className="space-y-2.5 max-h-48 overflow-y-auto pr-1">
+          {DATA_colors.map((item) => (
             <Checkbox
-              sizeClassName="w-5 h-5"
-              labelClassName="text-sm font-normal"
+              key={item.name}
+              id={`color-filter-${item.name.toLowerCase().replace(/[^a-z0-9]/g, "-")}`}
+              sizeClassName="w-4 h-4 rounded"
+              labelClassName="text-xs font-semibold text-slate-700 dark:text-slate-300"
               name={item.name}
               label={item.name}
-              defaultChecked={colorsState.includes(item.name)}
+              checked={colorsState.includes(item.name)}
               onChange={(checked) => handleChangeColors(checked, item.name)}
             />
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     );
   };
 
-  // OK
   const renderTabsSize = () => {
     return (
-      <div className="relative flex flex-col py-8 space-y-4">
-        <h3 className="font-semibold mb-2.5">Sizes</h3>
-        {DATA_sizes.map((item) => (
-          <div key={item.name} className="">
-            <Checkbox
-              name={item.name}
-              label={item.name}
-              defaultChecked={sizesState.includes(item.name)}
-              onChange={(checked) => handleChangeSizes(checked, item.name)}
-              sizeClassName="w-5 h-5"
-              labelClassName="text-sm font-normal"
-            />
-          </div>
-        ))}
+      <div className="relative flex flex-col py-5 space-y-3">
+        <h3 className="font-bold text-xs uppercase tracking-wider text-slate-400">Sizes</h3>
+        <div className="flex flex-wrap gap-2">
+          {DATA_sizes.map((item) => {
+            const isSelected = sizesState.includes(item.name);
+            return (
+              <button
+                key={item.name}
+                type="button"
+                onClick={() => handleChangeSizes(!isSelected, item.name)}
+                className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all cursor-pointer ${
+                  isSelected
+                    ? "bg-indigo-600 text-white border-indigo-600 shadow-2xs"
+                    : "bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-indigo-400"
+                }`}
+              >
+                {item.name}
+              </button>
+            );
+          })}
+        </div>
       </div>
     );
   };
 
-  // OK
-  const renderTabsPriceRage = () => {
+  const renderTabsPriceRange = () => {
     return (
-      <div className="relative flex flex-col py-8 space-y-5 pr-3">
-        <div className="space-y-5">
-          <span className="font-semibold">Price range</span>
+      <div className="relative flex flex-col py-5 space-y-4">
+        <h3 className="font-bold text-xs uppercase tracking-wider text-slate-400">Price Range</h3>
+        <div className="px-1">
           <Slider
             range
             min={PRICE_RANGE[0]}
             max={PRICE_RANGE[1]}
-            step={1}
+            step={5}
             defaultValue={[rangePrices[0], rangePrices[1]]}
             allowCross={false}
             onChange={(_input: number | number[]) =>
@@ -160,47 +212,21 @@ const SidebarFilters = ({ categories = [] }: SidebarFiltersProps) => {
           />
         </div>
 
-        <div className="flex justify-between space-x-5">
+        <div className="grid grid-cols-2 gap-2">
           <div>
-            <label
-              htmlFor="minPrice"
-              className="block text-sm font-medium text-neutral-700 dark:text-neutral-300"
-            >
-              Min price
+            <label className="block text-[11px] font-semibold text-slate-500 mb-1">
+              Min Price
             </label>
-            <div className="mt-1 relative rounded-md">
-              <span className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-neutral-500 sm:text-sm">
-                $
-              </span>
-              <input
-                type="text"
-                name="minPrice"
-                disabled
-                id="minPrice"
-                className="block w-32 pr-10 pl-4 sm:text-sm border-neutral-200 dark:border-neutral-700 rounded-full bg-transparent"
-                value={rangePrices[0]}
-              />
+            <div className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-1.5 flex items-center justify-between text-xs font-bold text-slate-900 dark:text-slate-100">
+              <span>${rangePrices[0]}</span>
             </div>
           </div>
           <div>
-            <label
-              htmlFor="maxPrice"
-              className="block text-sm font-medium text-neutral-700 dark:text-neutral-300"
-            >
-              Max price
+            <label className="block text-[11px] font-semibold text-slate-500 mb-1">
+              Max Price
             </label>
-            <div className="mt-1 relative rounded-md">
-              <span className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-neutral-500 sm:text-sm">
-                $
-              </span>
-              <input
-                type="text"
-                disabled
-                name="maxPrice"
-                id="maxPrice"
-                className="block w-32 pr-10 pl-4 sm:text-sm border-neutral-200 dark:border-neutral-700 rounded-full bg-transparent"
-                value={rangePrices[1]}
-              />
+            <div className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-1.5 flex items-center justify-between text-xs font-bold text-slate-900 dark:text-slate-100">
+              <span>${rangePrices[1]}</span>
             </div>
           </div>
         </div>
@@ -208,42 +234,61 @@ const SidebarFilters = ({ categories = [] }: SidebarFiltersProps) => {
     );
   };
 
-  // OK
   const renderTabsSortOrder = () => {
     return (
-      <div className="relative flex flex-col py-8 space-y-4">
-        <h3 className="font-semibold mb-2.5">Sort order</h3>
-        {DATA_sortOrderRadios.map((item) => (
-          <Radio
-            id={item.id}
-            key={item.id}
-            name="radioNameSort"
-            label={item.name}
-            defaultChecked={sortOrderStates === item.id}
-            sizeClassName="w-5 h-5"
-            onChange={handleChangeSortOrder}
-            className="!text-sm"
-          />
-        ))}
+      <div className="relative flex flex-col py-5 space-y-3">
+        <h3 className="font-bold text-xs uppercase tracking-wider text-slate-400">Sort Order</h3>
+        <div className="space-y-2">
+          {DATA_sortOrderRadios.map((item) => (
+            <Radio
+              id={item.id}
+              key={item.id}
+              name="radioNameSort"
+              label={item.name}
+              defaultChecked={sortOrderStates === item.id}
+              sizeClassName="w-4 h-4"
+              onChange={handleChangeSortOrder}
+              className="!text-xs font-semibold"
+            />
+          ))}
+        </div>
       </div>
     );
   };
 
   return (
-    <div className="divide-y divide-slate-200 dark:divide-slate-700">
-      {renderTabsCategories()}
-      {renderTabsColor()}
-      {renderTabsSize()}
-      {renderTabsPriceRage()}
-      <div className="py-8 pr-2">
-        <MySwitch
-          label="On sale!"
-          desc="Products currently on sale"
-          enabled={isOnSale}
-          onChange={handleChangeOnSale}
-        />
+    <div className="text-slate-900 dark:text-slate-100">
+      {showHeader && (
+        <div className="flex items-center justify-between pb-3 mb-2 border-b border-slate-100 dark:border-slate-800">
+          <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+            <span>⚡</span> Filters
+          </h3>
+          {hasActiveFilters && (
+            <button
+              type="button"
+              onClick={handleClearAll}
+              className="text-xs font-bold text-rose-600 dark:text-rose-400 hover:underline cursor-pointer transition-all"
+            >
+              Clear All
+            </button>
+          )}
+        </div>
+      )}
+      <div className="divide-y divide-slate-100 dark:divide-slate-800">
+        {renderTabsCategories()}
+        {renderTabsColor()}
+        {renderTabsSize()}
+        {renderTabsPriceRange()}
+        <div className="py-5">
+          <MySwitch
+            label="On Sale Only"
+            desc="Discounted items"
+            enabled={isOnSale}
+            onChange={handleChangeOnSale}
+          />
+        </div>
+        {renderTabsSortOrder()}
       </div>
-      {renderTabsSortOrder()}
     </div>
   );
 };

@@ -63,6 +63,8 @@ export interface HomepageSectionConfig {
   placeholderText?: string;
   /** Only used by type "promo" - picks which of the 3 promo banner layouts/placements to render. */
   variant?: 1 | 2 | 3;
+  /** Per-section Product Card Style override ("default" | "minimal" | "bold-grid" | "editorial" | "deal-card" | "trend-glass" | "sleek-pill"). */
+  cardVariant?: string;
   /** Tile content for discoverMore, howItWork, socialGallery. */
   items?: HomepageTile[];
 }

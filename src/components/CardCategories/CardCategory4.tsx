@@ -5,6 +5,7 @@ import { ArrowRightIcon } from "@heroicons/react/24/outline";
 import { StaticImageData } from "next/image";
 import Link from "next/link";
 import { safeImageSrc } from "@/utils/safeImageSrc";
+import { getTenantHref } from "@/utils/getTenantHref";
 
 export interface CardCategory4Props {
   id?: string | number;
@@ -27,7 +28,7 @@ const CardCategory4: FC<CardCategory4Props> = ({
   color = "bg-rose-50",
   count,
 }) => {
-  const collectionHref = id ? (`/collection/${id}` as any) : "/collection";
+  const collectionHref = getTenantHref(id ? `/collection/${id}` : "/collection") as any;
   const bgSvgSrc =
     typeof bgSVG === "string"
       ? bgSVG

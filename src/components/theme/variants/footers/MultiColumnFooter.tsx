@@ -8,13 +8,18 @@ import { useMenu } from "@/hooks/useMenu";
 import type { FooterThemeConfig } from "@/lib/theme/theme-types";
 import type { ThemeLogos } from "@/types/theme";
 
+import type { GeneralSettings } from "@/types/site-settings";
+
 export interface FooterVariantProps {
   footerSettings?: FooterThemeConfig;
   logos?: ThemeLogos;
   storeName?: string;
+  socialLinks?: GeneralSettings["socialLinks"];
 }
 
-export default function MultiColumnFooter({ footerSettings, logos, storeName = "Tradz Glint" }: FooterVariantProps) {
+import FooterSocials from "@/components/FooterSocials";
+
+export default function MultiColumnFooter({ footerSettings, logos, storeName = "Tradz Glint", socialLinks }: FooterVariantProps) {
   const footerItems = useMenu("footer");
   const showCopyright = footerSettings?.showCopyright ?? true;
   const showPaymentIcons = footerSettings?.showPaymentIcons ?? false;
@@ -31,7 +36,6 @@ export default function MultiColumnFooter({ footerSettings, logos, storeName = "
           <p className="text-sm text-[var(--muted)] max-w-sm">
             {descriptionText}
           </p>
-          <SocialsList1 />
         </div>
 
         {footerItems.map((item, idx) => (
@@ -51,8 +55,17 @@ export default function MultiColumnFooter({ footerSettings, logos, storeName = "
       </div>
 
       <div className="container mt-12 pt-8 border-t border-[var(--border)] flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-[var(--muted)]">
-        {showCopyright && <p>{copyrightText}</p>}
-        {showPaymentIcons && <PaymentIcons />}
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300">
+            <span>🌐</span>
+            <span>English (US)</span>
+          </div>
+          {showCopyright && <p>{copyrightText}</p>}
+        </div>
+        <div className="flex items-center gap-6">
+          {showPaymentIcons && <PaymentIcons />}
+          <FooterSocials socialLinks={socialLinks} />
+        </div>
       </div>
     </footer>
   );

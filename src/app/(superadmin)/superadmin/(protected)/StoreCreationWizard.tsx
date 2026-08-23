@@ -10,6 +10,7 @@ import Link from "next/link";
 import type { StoreStatus } from "@/types/store";
 
 import AdminThemeSelector from "@/components/admin/AdminThemeSelector";
+import { COUNTRY_OPTIONS, CURRENCY_OPTIONS, TIMEZONE_OPTIONS } from "@/lib/constants/location-options";
 
 const STEPS = ["Store Details", "Owner Account", "Review & Create"] as const;
 
@@ -32,9 +33,9 @@ const StoreCreationWizard: React.FC<{ platformBaseUrl: string }> = ({ platformBa
   const [name, setName] = useState("");
   const [brandName, setBrandName] = useState("");
   const [slug, setSlug] = useState("");
-  const [currency, setCurrency] = useState("USD");
-  const [country, setCountry] = useState("");
-  const [timezone, setTimezone] = useState("");
+  const [currency, setCurrency] = useState("PKR");
+  const [country, setCountry] = useState("Pakistan");
+  const [timezone, setTimezone] = useState("Asia/Karachi");
   const [status, setStatus] = useState<StoreStatus>("active");
   const [adminTheme, setAdminTheme] = useState("indigo");
 
@@ -226,15 +227,33 @@ const StoreCreationWizard: React.FC<{ platformBaseUrl: string }> = ({ platformBa
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className={labelClass}>Currency</label>
-              <input className={inputClass} value={currency} onChange={(e) => setCurrency(e.target.value)} />
+              <select className={inputClass} value={currency} onChange={(e) => setCurrency(e.target.value)}>
+                {CURRENCY_OPTIONS.map((c) => (
+                  <option key={c.code} value={c.code}>
+                    {c.code} ({c.symbol}) — {c.name}
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
               <label className={labelClass}>Country</label>
-              <input className={inputClass} value={country} onChange={(e) => setCountry(e.target.value)} />
+              <select className={inputClass} value={country} onChange={(e) => setCountry(e.target.value)}>
+                {COUNTRY_OPTIONS.map((c) => (
+                  <option key={c.name} value={c.name}>
+                    {c.flag} {c.name}
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
               <label className={labelClass}>Timezone</label>
-              <input className={inputClass} value={timezone} onChange={(e) => setTimezone(e.target.value)} />
+              <select className={inputClass} value={timezone} onChange={(e) => setTimezone(e.target.value)}>
+                {TIMEZONE_OPTIONS.map((t) => (
+                  <option key={t.value} value={t.value}>
+                    {t.label}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
           <div>

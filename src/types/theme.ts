@@ -99,6 +99,7 @@ export interface ThemeProductCard {
   cardRadius?: RadiusSize;
   hoverEffect?: HoverEffect;
   buttonStyle?: "solid" | "outline";
+  showColorSwatches?: boolean;
 }
 
 export interface ThemeHeader {

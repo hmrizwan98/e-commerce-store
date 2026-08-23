@@ -96,6 +96,7 @@ const NAV_GROUPS: NavGroup[] = [
 ];
 
 import { getAdminThemePreset } from "@/lib/theme/admin-theme-presets";
+import { generateColorScale } from "@/lib/theme/color-scale";
 
 const COLLAPSE_STORAGE_KEY = "admin_sidebar_collapsed";
 
@@ -114,6 +115,23 @@ export default function AdminShell({
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const preset = getAdminThemePreset(adminTheme);
+  const colorScale = generateColorScale(preset.accentColor);
+
+  const styleVars: Record<string, string> = {
+    "--c-primary-50": colorScale["50"],
+    "--c-primary-100": colorScale["100"],
+    "--c-primary-200": colorScale["200"],
+    "--c-primary-300": colorScale["300"],
+    "--c-primary-400": colorScale["400"],
+    "--c-primary-500": colorScale["500"],
+    "--c-primary-600": colorScale["600"],
+    "--c-primary-700": colorScale["700"],
+    "--c-primary-800": colorScale["800"],
+    "--c-primary-900": colorScale["900"],
+    "--btn-bg": `rgb(${colorScale["600"]})`,
+    "--btn-hover-bg": `rgb(${colorScale["700"]})`,
+    "--btn-text": "#ffffff",
+  };
 
   useEffect(() => {
     try {
@@ -122,6 +140,101 @@ export default function AdminShell({
     } catch { }
     setCollapsed(false);
   }, []);
+
+  const playNotificationChime = () => {
+    try {
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContextClass) return;
+      const ctx = new AudioContextClass();
+      const now = ctx.currentTime;
+
+      // Tone 1 (E5 659.25Hz)
+      const osc1 = ctx.createOscillator();
+      const gain1 = ctx.createGain();
+      osc1.type = "sine";
+      osc1.frequency.setValueAtTime(659.25, now);
+      gain1.gain.setValueAtTime(0.3, now);
+      gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+      osc1.connect(gain1);
+      gain1.connect(ctx.destination);
+      osc1.start(now);
+      osc1.stop(now + 0.35);
+
+      // Tone 2 (B5 987.77Hz - high pleasant bell)
+      const osc2 = ctx.createOscillator();
+      const gain2 = ctx.createGain();
+      osc2.type = "sine";
+      osc2.frequency.setValueAtTime(987.77, now + 0.12);
+      gain2.gain.setValueAtTime(0.35, now + 0.12);
+      gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.65);
+      osc2.connect(gain2);
+      gain2.connect(ctx.destination);
+      osc2.start(now + 0.12);
+      osc2.stop(now + 0.65);
+    } catch {
+      // Audio context policy fallback
+    }
+  };
+
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const markOrderAsViewed = (orderId: string) => {
+    try {
+      const raw = localStorage.getItem("admin_viewed_order_ids");
+      const list: string[] = raw ? JSON.parse(raw) : [];
+      if (!list.includes(orderId)) {
+        list.push(orderId);
+        localStorage.setItem("admin_viewed_order_ids", JSON.stringify(list));
+      }
+    } catch {}
+  };
+
+  const getViewedOrderIds = (): string[] => {
+    try {
+      const raw = localStorage.getItem("admin_viewed_order_ids");
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  };
+
+  useEffect(() => {
+    const match = pathname?.match(/\/orders\/([^\/]+)/);
+    if (match && match[1]) {
+      markOrderAsViewed(match[1]);
+    }
+  }, [pathname]);
+
+  useEffect(() => {
+    let prevIds: string[] = [];
+
+    const fetchPending = async () => {
+      try {
+        const res = await fetch("/api/admin/pending-orders");
+        if (res.ok) {
+          const data = await res.json();
+          const pendingIds: string[] = data.pendingIds || [];
+          const viewedIds = getViewedOrderIds();
+
+          const unviewed = pendingIds.filter((id) => !viewedIds.includes(id));
+          setUnreadCount(unviewed.length);
+
+          if (prevIds.length > 0) {
+            const newlyAdded = pendingIds.filter((id) => !prevIds.includes(id));
+            if (newlyAdded.length > 0) {
+              toast.success(`🔔 ${newlyAdded.length} new order(s) received!`, { duration: 6000 });
+              playNotificationChime();
+            }
+          }
+          prevIds = pendingIds;
+        }
+      } catch {}
+    };
+
+    fetchPending();
+    const interval = setInterval(fetchPending, 10000);
+    return () => clearInterval(interval);
+  }, [pathname]);
 
   useEffect(() => {
     setMobileOpen(false);
@@ -224,7 +337,17 @@ export default function AdminShell({
                       }`}>
                       <Icon className={`w-5 h-5 flex-shrink-0 transition-transform group-hover:scale-110 ${active ? "stroke-[2.5]" : "opacity-80"}`} />
                       {!collapsed && (
-                        <span className="truncate text-xs font-extrabold tracking-tight">{item.label}</span>
+                        <div className="flex items-center gap-2 truncate">
+                          <span className="truncate text-xs font-extrabold tracking-tight">{item.label}</span>
+                          {item.href === "/admin/orders" && unreadCount > 0 && (
+                            <span className="px-1.5 py-0.5 text-[9px] font-black rounded-full bg-rose-500 text-white shadow-2xs leading-none shrink-0">
+                              {unreadCount}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                      {collapsed && item.href === "/admin/orders" && unreadCount > 0 && (
+                        <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-rose-500 ring-2 ring-slate-900" />
                       )}
                     </div>
                   </Link>
@@ -238,7 +361,7 @@ export default function AdminShell({
   );
 
   return (
-    <div className="h-screen w-screen flex overflow-hidden bg-[#f0f4fa] dark:bg-slate-950 font-sans antialiased text-slate-900 dark:text-slate-100">
+    <div className="h-screen w-screen flex overflow-hidden bg-[#f0f4fa] dark:bg-slate-950 font-sans antialiased text-slate-900 dark:text-slate-100" style={styleVars as any}>
       {/* Desktop sidebar - Collapsible w-16 (Closed/Patla) vs w-60 (Open) - Border removed for seamless cutout */}
       <aside
         className={`h-screen flex-shrink-0 hidden md:flex flex-col ${preset.sidebarBg} transition-all duration-200 ${collapsed ? "w-16" : "w-60"
@@ -289,8 +412,21 @@ export default function AdminShell({
             </div>
           </div>
 
-          {/* User Controls & Logout in Header */}
+          {/* User Controls & Notifications in Header */}
           <div className="flex items-center gap-2 sm:gap-3">
+            <Link
+              href="/admin/orders"
+              className="relative p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors text-white flex items-center justify-center"
+              title={unreadCount > 0 ? `${unreadCount} Unread Orders` : "Orders"}
+            >
+              <ShoppingCartIcon className="w-5 h-5" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-rose-500 text-white text-[9px] font-black flex items-center justify-center shadow-md animate-bounce">
+                  {unreadCount}
+                </span>
+              )}
+            </Link>
+
             <div className="w-8 h-8 rounded-full bg-white/20 border border-white/30 flex items-center justify-center text-white font-bold text-xs shrink-0 shadow-xs">
               {email ? email[0].toUpperCase() : "A"}
             </div>

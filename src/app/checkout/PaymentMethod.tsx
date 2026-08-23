@@ -6,6 +6,7 @@ import ButtonPrimary from "@/shared/Button/ButtonPrimary";
 import ButtonSecondary from "@/shared/Button/ButtonSecondary";
 import Input from "@/shared/Input/Input";
 import Radio from "@/shared/Radio/Radio";
+import { CreditCardIcon, CheckIcon, BanknotesIcon, BuildingLibraryIcon, DevicePhoneMobileIcon } from "@heroicons/react/24/outline";
 import type { PaymentMethod as PaymentMethodValue } from "@/types/order";
 import type { PaymentSettings } from "@/types/site-settings";
 
@@ -21,9 +22,15 @@ interface Props {
 }
 
 const METHOD_LABELS: Record<PaymentMethodValue, string> = {
-  cod: "Cash on Delivery",
+  cod: "Cash on Delivery (COD)",
   bank_transfer: "Bank Transfer",
-  jazzcash: "JazzCash",
+  jazzcash: "JazzCash / EasyPaisa",
+};
+
+const METHOD_ICONS: Record<PaymentMethodValue, any> = {
+  cod: BanknotesIcon,
+  bank_transfer: BuildingLibraryIcon,
+  jazzcash: DevicePhoneMobileIcon,
 };
 
 const PaymentMethod: FC<Props> = ({
@@ -46,176 +53,157 @@ const PaymentMethod: FC<Props> = ({
   const renderMethodOption = (m: PaymentMethodValue) => {
     const active = method === m;
     const setting = settingsFor(m);
-    return (
-      <div key={m} className="flex items-start space-x-4 sm:space-x-6">
-        <Radio
-          className="pt-3.5"
-          name="payment-method"
-          id={m}
-          defaultChecked={active}
-          onChange={() => onMethodChange(m)}
-        />
-        <div className="flex-1">
-          <label htmlFor={m} className="flex items-center space-x-4 sm:space-x-6">
-            <p className="font-medium">{METHOD_LABELS[m]}</p>
-          </label>
+    const IconComp = METHOD_ICONS[m];
 
-          <div className={`mt-4 mb-4 space-y-3 ${active ? "block" : "hidden"}`}>
+    return (
+      <div
+        key={m}
+        onClick={() => onMethodChange(m)}
+        className={`p-4 rounded-xl border transition-all cursor-pointer ${
+          active
+            ? "border-indigo-600 dark:border-indigo-500 bg-indigo-50/40 dark:bg-indigo-950/30 shadow-2xs"
+            : "border-slate-200 dark:border-slate-800 hover:border-slate-300 bg-white dark:bg-slate-900"
+        }`}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Radio
+              name="payment-method"
+              id={m}
+              defaultChecked={active}
+              onChange={() => onMethodChange(m)}
+            />
+            <div className="flex items-center gap-2">
+              <IconComp className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+              <span className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                {METHOD_LABELS[m]}
+              </span>
+            </div>
+          </div>
+          {m === "cod" && (
+            <span className="text-[10px] font-bold text-amber-700 bg-amber-50 dark:bg-amber-950/60 dark:text-amber-300 px-2 py-0.5 rounded-md">
+              Pay on Delivery
+            </span>
+          )}
+        </div>
+
+        {active && (
+          <div className="mt-3.5 pt-3.5 border-t border-slate-100 dark:border-slate-800 space-y-3 text-xs">
             {setting.instructions && (
-              <p className="text-sm dark:text-slate-300">{setting.instructions}</p>
+              <p className="text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
+                {setting.instructions}
+              </p>
             )}
             {m !== "cod" && (
-              <ul className="text-sm text-slate-500 dark:text-slate-400 space-y-2">
+              <div className="bg-slate-50 dark:bg-slate-800/60 rounded-xl p-3 space-y-1.5 font-mono text-[11px] text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-slate-800">
                 {setting.accountName && (
-                  <li>
-                    Account name:{" "}
-                    <span className="text-slate-900 dark:text-slate-200 font-medium">
-                      {setting.accountName}
-                    </span>
-                  </li>
+                  <div>
+                    Account Name: <span className="font-bold text-slate-900 dark:text-white">{setting.accountName}</span>
+                  </div>
                 )}
                 {setting.bankName && (
-                  <li>
-                    Bank name:{" "}
-                    <span className="text-slate-900 dark:text-slate-200 font-medium">
-                      {setting.bankName}
-                    </span>
-                  </li>
+                  <div>
+                    Bank/Provider: <span className="font-bold text-slate-900 dark:text-white">{setting.bankName}</span>
+                  </div>
                 )}
                 {setting.accountNumber && (
-                  <li>
-                    Account number:{" "}
-                    <span className="text-slate-900 dark:text-slate-200 font-medium">
-                      {setting.accountNumber}
-                    </span>
-                  </li>
+                  <div>
+                    Account/Mobile #: <span className="font-bold text-slate-900 dark:text-white">{setting.accountNumber}</span>
+                  </div>
                 )}
-              </ul>
+              </div>
             )}
-            {m !== "cod" && active && (
-              <div className="max-w-lg">
-                <Label className="text-sm">Transaction reference (after you&apos;ve sent payment)</Label>
+            {m !== "cod" && (
+              <div className="pt-1">
+                <Label className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                  Transaction Reference / TRX ID (Required)
+                </Label>
                 <Input
                   className="mt-1.5"
                   value={transactionRef}
                   onChange={(e) => onTransactionRefChange(e.target.value)}
-                  placeholder="e.g. transaction ID / reference number"
+                  placeholder="e.g. TRX1298471928"
                 />
               </div>
             )}
           </div>
-        </div>
+        )}
       </div>
     );
   };
 
-  const renderPaymentMethod = () => {
-    return (
-      <div className="border border-slate-200 dark:border-slate-700 rounded-xl ">
-        <div className="p-6 flex flex-col sm:flex-row items-start">
-          <span className="hidden sm:block">
-            <svg
-              className="w-6 h-6 text-slate-700 dark:text-slate-400 mt-0.5"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M3.92969 15.8792L15.8797 3.9292"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeMiterlimit="10"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M11.1013 18.2791L12.3013 17.0791"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeMiterlimit="10"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M13.793 15.5887L16.183 13.1987"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeMiterlimit="10"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M3.60127 10.239L10.2413 3.599C12.3613 1.479 13.4213 1.469 15.5213 3.569L20.4313 8.479C22.5313 10.579 22.5213 11.639 20.4013 13.759L13.7613 20.399C11.6413 22.519 10.5813 22.529 8.48127 20.429L3.57127 15.519C1.47127 13.419 1.47127 12.369 3.60127 10.239Z"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M2 21.9985H22"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </span>
-          <div className="sm:ml-8">
-            <h3 className=" text-slate-700 dark:text-slate-400 flex ">
-              <span className="uppercase tracking-tight">PAYMENT METHOD</span>
-              <svg
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth="2.5"
-                stroke="currentColor"
-                className="w-5 h-5 ml-3 text-slate-900"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M4.5 12.75l6 6 9-13.5"
-                />
-              </svg>
-            </h3>
-            <div className="font-semibold mt-1 text-sm">
-              <span className="">{METHOD_LABELS[method]}</span>
-            </div>
+  return (
+    <div
+      className={`border rounded-2xl transition-all ${
+        isActive
+          ? "border-indigo-600 dark:border-indigo-500 ring-4 ring-indigo-500/10 bg-white dark:bg-slate-900 shadow-md"
+          : "border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/50 hover:border-slate-300"
+      }`}
+    >
+      <div className="p-5 sm:p-6 flex items-center justify-between">
+        <div className="flex items-center gap-3.5 min-w-0">
+          <div
+            className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+              method
+                ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400"
+                : isActive
+                ? "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400"
+                : "bg-slate-100 dark:bg-slate-800 text-slate-400"
+            }`}
+          >
+            <CreditCardIcon className="w-5 h-5" />
           </div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                3. Payment Method
+              </h3>
+              {!isActive && method && (
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full">
+                  <CheckIcon className="w-3 h-3" /> Selected
+                </span>
+              )}
+            </div>
+            <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate mt-0.5">
+              {METHOD_LABELS[method]}
+            </p>
+          </div>
+        </div>
+
+        {!isActive && (
           <button
-            className="py-2 px-4 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 mt-5 sm:mt-0 sm:ml-auto text-sm font-medium rounded-lg"
+            type="button"
             onClick={onOpenActive}
+            className="px-3.5 py-1.5 text-xs font-bold rounded-xl text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 transition-colors shrink-0 cursor-pointer"
           >
             Change
           </button>
-        </div>
+        )}
+      </div>
 
-        <div
-          className={`border-t border-slate-200 dark:border-slate-700 px-6 py-7 space-y-6 ${
-            isActive ? "block" : "hidden"
-          }`}
-        >
+      {isActive && (
+        <div className="border-t border-slate-100 dark:border-slate-800 p-5 sm:p-7 space-y-4">
           {availableMethods.length ? (
-            availableMethods.map((m) => <div key={m}>{renderMethodOption(m)}</div>)
+            availableMethods.map((m) => renderMethodOption(m))
           ) : (
             <p className="text-sm text-slate-500">
-              No payment methods are currently enabled. Please contact support.
+              No payment methods are currently enabled. Please contact store support.
             </p>
           )}
 
-          <div className="flex pt-6">
-            <ButtonPrimary className="w-full max-w-[240px]" onClick={onCloseActive}>
-              Confirm
+          <div className="flex items-center gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+            <ButtonPrimary
+              type="button"
+              className="sm:!px-7 shadow-sm"
+              onClick={onCloseActive}
+            >
+              Confirm Payment Option →
             </ButtonPrimary>
-            <ButtonSecondary className="ml-3" onClick={onCloseActive}>
-              Cancel
-            </ButtonSecondary>
           </div>
         </div>
-      </div>
-    );
-  };
-
-  return renderPaymentMethod();
+      )}
+    </div>
+  );
 };
 
 export default PaymentMethod;

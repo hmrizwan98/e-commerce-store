@@ -123,6 +123,7 @@ export default function BoldProductDetail({
           crossSellProducts={crossSellProducts}
           upsellProducts={upsellProducts}
           productCardSettings={productCardSettings}
+          productDetailSettings={productDetailSettings}
           isOpenModalViewAllReviews={s.isOpenModalViewAllReviews}
           setIsOpenModalViewAllReviews={s.setIsOpenModalViewAllReviews}
         />

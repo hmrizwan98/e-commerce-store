@@ -107,6 +107,29 @@ export default function ProductGridSectionInspector({
             />
           </div>
 
+          {/* Per-Section Product Card Style Override */}
+          <div className="pt-2 border-t border-sky-200/60 dark:border-sky-800/40">
+            <label className="block text-xs font-bold text-slate-900 dark:text-slate-100 mb-1">
+              Product Card Style (This Section Only)
+            </label>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-1.5 leading-snug">
+              Choose a distinct product card layout for &quot;{section.title}&quot;, or inherit the global setting.
+            </p>
+            <select
+              value={config.cardVariant ?? "default"}
+              onChange={(e) => updateConfig({ cardVariant: e.target.value })}
+              className={inputClass}
+            >
+              <option value="default">✨ Use Global Settings Default ({draft.productCard?.variant ?? "minimal"})</option>
+              <option value="deal-card">🏷️ Deal Card (SS3 Style - Top Original Price, Red Badge)</option>
+              <option value="trend-glass">✨ Trend Glass (2026 Modern - Gradient &amp; Savings Pill)</option>
+              <option value="minimal">⚪ Minimal (Clean Rounded, Soft Hover)</option>
+              <option value="bold-grid">🔳 Bold Grid (Sharp Corners, High Contrast)</option>
+              <option value="editorial">📜 Editorial (Serif Typography, Understated Actions)</option>
+              <option value="sleek-pill">💊 Sleek Pill (Modern Pill Badges &amp; Details)</option>
+            </select>
+          </div>
+
           {/* Mode Selection */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">

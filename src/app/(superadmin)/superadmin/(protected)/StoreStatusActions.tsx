@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { setStoreStatus, archiveStore, restoreStore } from "./actions";
 import type { StoreStatus } from "@/types/store";
+import ConfirmModal from "./ConfirmModal";
 
 /** Activate/Suspend/Archive/Restore for the Store Details page's Status tab - StoreRowActions.tsx
  * covers the same lifecycle for the store list rows; this is a standalone version without the
@@ -13,6 +14,7 @@ const StoreStatusActions: React.FC<{ id: string; status: StoreStatus }> = ({ id,
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [current, setCurrent] = useState(status);
+  const [archiveConfirmOpen, setArchiveConfirmOpen] = useState(false);
 
   const toggle = () => {
     const next: StoreStatus = current === "active" ? "suspended" : "active";
@@ -28,8 +30,8 @@ const StoreStatusActions: React.FC<{ id: string; status: StoreStatus }> = ({ id,
     });
   };
 
-  const handleArchive = () => {
-    if (!confirm("Archive this store? It will disappear from the active store list, but its data is kept and this can be reversed.")) return;
+  const executeArchive = () => {
+    setArchiveConfirmOpen(false);
     startTransition(async () => {
       try {
         await archiveStore(id);
@@ -81,11 +83,22 @@ const StoreStatusActions: React.FC<{ id: string; status: StoreStatus }> = ({ id,
       <button
         type="button"
         disabled={isPending}
-        onClick={handleArchive}
-        className="px-4 py-2 rounded-full border border-red-300 text-red-600 text-sm font-medium disabled:opacity-50"
+        onClick={() => setArchiveConfirmOpen(true)}
+        className="px-4 py-2 rounded-full border border-red-300 dark:border-red-800 text-red-600 dark:text-red-400 text-sm font-medium hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors disabled:opacity-50"
       >
         Archive
       </button>
+
+      <ConfirmModal
+        isOpen={archiveConfirmOpen}
+        onClose={() => setArchiveConfirmOpen(false)}
+        onConfirm={executeArchive}
+        title="Archive Store?"
+        message="Archive this store? It will disappear from the active store list, but its data is kept safely and this action can be reversed anytime."
+        confirmText="Archive Store"
+        variant="warning"
+        isLoading={isPending}
+      />
     </div>
   );
 };

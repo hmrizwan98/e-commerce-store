@@ -76,11 +76,51 @@ export async function installDefaultTheme(
   const faqPageRef = pagesCol.doc();
 
   const homepageSections: { type: HomepageSectionType; title: string; order: number; config: HomepageSectionConfig }[] = [
-    { type: "hero", title: "Hero", order: 0, config: {} },
+    { type: "hero", title: "Hero Slider", order: 0, config: {} },
+    { type: "onSale", title: "On Sale", order: 1, config: { heading: "On Sale", mode: "auto", limit: 8, cardVariant: "deal-card" } },
+    { type: "bestSellers", title: "Best Sellers", order: 2, config: { heading: "Best Sellers", subHeading: "BEST SELLERS OF THE MONTH", mode: "auto", limit: 8 } },
+    { type: "blog", title: "Latest Blog", order: 3, config: { heading: "The Latest News", subHeading: "FROM THE BLOG", limit: 4 } },
+    { type: "newArrivals", title: "New Arrivals", order: 4, config: { heading: "New Arrivals", subHeading: "DISCOVER LATEST ARRIVALS", mode: "auto", limit: 8 } },
+    {
+      type: "howItWork",
+      title: "How It Works",
+      order: 5,
+      config: {
+        items: [
+          { id: "1", icon: "🔍", title: "Filter & Discover", subtitle: "Smart filtering and search" },
+          { id: "2", icon: "🛍️", title: "Add to bag", subtitle: "Easily select and add items" },
+          { id: "3", icon: "📦", title: "Fast shipping", subtitle: "Worldwide delivery options" },
+          { id: "4", icon: "✨", title: "Enjoy the product", subtitle: "Quality guaranteed" },
+        ],
+      },
+    },
+    { type: "largeProductSlider", title: "Large Product Slider", order: 6, config: { heading: "CHOSEN BY OUR EXPERTS", mode: "auto", limit: 3 } },
+    { type: "featuredProducts", title: "Featured Products", order: 7, config: { heading: "Featured Products", subHeading: "Top handpicked items", mode: "auto", limit: 8 } },
+    { type: "collections", title: "Shop by Category", order: 8, config: { heading: "Shop by department", mode: "auto" } },
+    {
+      type: "socialGallery",
+      title: "Social Gallery",
+      order: 9,
+      config: {
+        heading: "Follow Us On Instagram",
+        items: [
+          { id: "1", image: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=600&q=80", href: "#" },
+          { id: "2", image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=600&q=80", href: "#" },
+          { id: "3", image: "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&w=600&q=80", href: "#" },
+          { id: "4", image: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=600&q=80", href: "#" },
+          { id: "5", image: "https://images.unsplash.com/photo-1601924994987-69e26d50dc26?auto=format&fit=crop&w=600&q=80", href: "#" },
+        ],
+      },
+    },
+    { type: "brands", title: "Brands", order: 10, config: { heading: "Top Featured Brands" } },
+    { type: "newsletter", title: "Newsletter", order: 11, config: { heading: "Join our newsletter 📦" } },
+    { type: "testimonials", title: "Testimonials", order: 12, config: { heading: "What People Are Saying", subHeading: "HAPPY CUSTOMERS" } },
+    { type: "featureItemsGrid", title: "Feature Items Grid", order: 13, config: { heading: "What's trending now", subHeading: "DISCOVER MORE PRODUCTS", mode: "auto", limit: 8 } },
+    { type: "promo", title: "Promo Banner", order: 14, config: { variant: 1 } },
     {
       type: "discoverMore",
-      title: "Discover More",
-      order: 1,
+      title: "Discover More Slider",
+      order: 15,
       config: {
         heading: "Discover more",
         subHeading: "Good things are waiting for you",
@@ -91,31 +131,6 @@ export async function installDefaultTheme(
         ],
       },
     },
-    { type: "newArrivals", title: "New Arrivals", order: 2, config: { heading: "New Arrivals", subHeading: "REY BUY WITH ALL DISCOUNT COUPON", mode: "auto", limit: 8 } },
-    {
-      type: "howItWork",
-      title: "How It Works",
-      order: 3,
-      config: {
-        items: [
-          { id: "1", icon: "🔍", title: "Filter & Discover", subtitle: "Smart filtering and search" },
-          { id: "2", icon: "🛍️", title: "Add to bag", subtitle: "Easily select and add items" },
-          { id: "3", icon: "📦", title: "Fast shipping", subtitle: "Worldwide delivery options" },
-          { id: "4", icon: "✨", title: "Enjoy the product", subtitle: "Quality guaranteed" },
-        ],
-      },
-    },
-    { type: "promo", title: "Earn Free Money", order: 4, config: { variant: 1 } },
-    { type: "exploreGrid", title: "Start Exploring", order: 5, config: { heading: "Start exploring", mode: "auto", limit: 6 } },
-    { type: "bestSellers", title: "Best Sellers", order: 6, config: { heading: "Best Sellers", subHeading: "BEST SELLERS OF THE MONTH", mode: "auto", limit: 8 } },
-    { type: "promo", title: "Special Offer", order: 7, config: { variant: 2 } },
-    { type: "largeProductSlider", title: "Chosen by Our Experts", order: 8, config: { heading: "CHOSEN BY OUR EXPERTS", mode: "auto", limit: 3 } },
-    { type: "collections", title: "Shop by Department", order: 9, config: { heading: "Shop by department", mode: "auto" } },
-    { type: "promo", title: "Don't Miss Out", order: 10, config: { variant: 3 } },
-    { type: "featureItemsGrid", title: "What's Trending Now", order: 11, config: { heading: "What's trending now", subHeading: "DISCOVER MORE PRODUCTS", mode: "auto", limit: 8 } },
-    { type: "blog", title: "The Latest News", order: 12, config: { heading: "The latest news", subHeading: "FROM THE CISECO BLOG", limit: 4 } },
-    { type: "testimonials", title: "What People Are Saying", order: 13, config: { heading: "What People Are Saying", subHeading: "HAPPY CUSTOMERS" } },
-    { type: "newsletter", title: "Join our newsletter 📦", order: 14, config: { heading: "Join our newsletter 📦" } },
   ];
 
   // ~3 demo categories - real docs (not fake frontend data) so exploreGrid/
@@ -137,11 +152,12 @@ export async function installDefaultTheme(
     { name: "Lumen Studio", slug: "lumen-studio", logo: "" },
   ];
 
-  // ~6 ordinary demo products (plain status:"active", no demo/seed flag - the
-  // Product type has none, and the merchant can edit/delete/replace them
-  // exactly like any product they create themselves). Spread across the
-  // seeded categories, with at least one each flagged isFeatured/isNewArrival/
-  // isOnSale so those homepage sections render real data on day one.
+  // Demo attributes
+  const demoAttributes = [
+    { type: "color", name: "Color", values: [{ hex: "#0f172a", label: "Black" }, { hex: "#e11d48", label: "Rose" }, { hex: "#f97316", label: "Orange" }] },
+    { type: "text", name: "Size", values: ["S", "M", "L", "XL"] },
+  ];
+
   const productsCol = storeDocRef.collection("products");
   const productDefs = [
     {
@@ -153,6 +169,7 @@ export async function installDefaultTheme(
       images: ["https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=800&q=80"],
       isFeatured: true,
       isBestSeller: true,
+      attributes: demoAttributes,
     },
     {
       name: "Silk Twill Scarf",
@@ -162,6 +179,7 @@ export async function installDefaultTheme(
       categoryIndex: 1,
       images: ["https://images.unsplash.com/photo-1601924994987-69e26d50dc26?auto=format&fit=crop&w=800&q=80"],
       isNewArrival: true,
+      attributes: demoAttributes,
     },
     {
       name: "Minimalist Chronograph Watch",
@@ -171,6 +189,7 @@ export async function installDefaultTheme(
       categoryIndex: 1,
       images: ["https://images.unsplash.com/photo-1524805444758-089113d48a6d?auto=format&fit=crop&w=800&q=80"],
       isFeatured: true,
+      attributes: demoAttributes,
     },
     {
       name: "Merino Wool Sweater",
@@ -182,6 +201,7 @@ export async function installDefaultTheme(
       images: ["https://images.unsplash.com/photo-1434389677669-e08b4cac3105?auto=format&fit=crop&w=800&q=80"],
       isNewArrival: true,
       isOnSale: true,
+      attributes: demoAttributes,
     },
     {
       name: "Ceramic Vase Set",
@@ -192,6 +212,7 @@ export async function installDefaultTheme(
       categoryIndex: 2,
       images: ["https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&w=800&q=80"],
       isOnSale: true,
+      attributes: demoAttributes,
     },
     {
       name: "Linen Throw Blanket",
@@ -201,6 +222,52 @@ export async function installDefaultTheme(
       categoryIndex: 2,
       images: ["https://images.unsplash.com/photo-1449247613801-ab06418e2861?auto=format&fit=crop&w=800&q=80"],
       isBestSeller: true,
+      attributes: demoAttributes,
+    },
+  ];
+
+  const defaultHeroBanners = [
+    {
+      title: "New Season Collection 2026",
+      subtitle: "Discover modern luxury and handcrafted style 🔥",
+      ctaText: "Shop Collection",
+      ctaHref: "/search",
+      imageUrl: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1600&q=80",
+      imageDesktop: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1600&q=80",
+      imageMobile: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1600&q=80",
+      placement: "hero",
+      order: 0,
+      isActive: true,
+      textAlign: "left",
+      animation: "fade",
+    },
+    {
+      title: "Exclusive Minimalist Essentials",
+      subtitle: "Up to 40% off on selected items",
+      ctaText: "Explore Now",
+      ctaHref: "/search",
+      imageUrl: "https://images.unsplash.com/photo-1445205170230-053b83016050?auto=format&fit=crop&w=1600&q=80",
+      imageDesktop: "https://images.unsplash.com/photo-1445205170230-053b83016050?auto=format&fit=crop&w=1600&q=80",
+      imageMobile: "https://images.unsplash.com/photo-1445205170230-053b83016050?auto=format&fit=crop&w=1600&q=80",
+      placement: "hero",
+      order: 1,
+      isActive: true,
+      textAlign: "left",
+      animation: "fade",
+    },
+    {
+      title: "Premium Footwear & Accessories",
+      subtitle: "Designed for everyday life & comfort",
+      ctaText: "View Trending",
+      ctaHref: "/search",
+      imageUrl: "https://images.unsplash.com/photo-1491553895911-0055eca6402d?auto=format&fit=crop&w=1600&q=80",
+      imageDesktop: "https://images.unsplash.com/photo-1491553895911-0055eca6402d?auto=format&fit=crop&w=1600&q=80",
+      imageMobile: "https://images.unsplash.com/photo-1491553895911-0055eca6402d?auto=format&fit=crop&w=1600&q=80",
+      placement: "hero",
+      order: 2,
+      isActive: true,
+      textAlign: "left",
+      animation: "fade",
     },
   ];
 
@@ -233,7 +300,7 @@ export async function installDefaultTheme(
     storeDocRef.collection("announcementBars").doc().set({ ...preset.announcementBar, createdAt: now, updatedAt: now }).then(() => stage("ANNOUNCEMENT_BAR_WRITTEN")),
 
     Promise.all(
-      [preset.heroBanner, ...preset.promoBanners].map((banner) => bannersCol.doc().set({ ...banner, createdAt: now, updatedAt: now }))
+      [...defaultHeroBanners, ...preset.promoBanners].map((banner) => bannersCol.doc().set({ ...banner, createdAt: now, updatedAt: now }))
     ).then(() => stage("BANNERS_WRITTEN")),
 
     Promise.all(preset.testimonials.map((t) => testimonialsCol.doc().set({ ...t, createdAt: now, updatedAt: now }))).then(() => stage("TESTIMONIALS_WRITTEN")),
@@ -316,7 +383,7 @@ export async function installDefaultTheme(
             badge: p.isOnSale ? "sale" : p.isNewArrival ? "new" : null,
             stock: 50,
             trackInventory: true,
-            attributes: [],
+            attributes: p.attributes ?? [],
             hasVariants: false,
             isFeatured: p.isFeatured ?? false,
             isNewArrival: p.isNewArrival ?? false,

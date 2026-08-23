@@ -41,15 +41,24 @@ export default function SectionRegistry({ sections, products = [], categories = 
           case "featuredProducts":
           case "newArrivals":
           case "bestSellers":
+          case "onSale": {
+            const sectionConfig = (section as any).config ?? section;
+            const sectionCardVariant = sectionConfig?.cardVariant || section.cardVariant;
+            const sectionSettings = sectionCardVariant && sectionCardVariant !== "default"
+              ? { variant: sectionCardVariant as any }
+              : undefined;
+
             return (
               <div key={section.id} className="container">
                 <SectionSliderProductCard
-                  heading={section.heading || "Featured Products"}
-                  subHeading={section.subHeading || ""}
+                  heading={section.heading || sectionConfig?.heading || "Featured Products"}
+                  subHeading={section.subHeading || sectionConfig?.subHeading || ""}
                   data={products}
+                  productCardSettings={sectionSettings}
                 />
               </div>
             );
+          }
           case "categories":
           case "exploreGrid":
             return (
@@ -60,17 +69,25 @@ export default function SectionRegistry({ sections, products = [], categories = 
                 />
               </div>
             );
-          case "featureItemsGrid":
+          case "featureItemsGrid": {
+            const sectionConfig = (section as any).config ?? section;
+            const sectionCardVariant = sectionConfig?.cardVariant || section.cardVariant;
+            const sectionSettings = sectionCardVariant && sectionCardVariant !== "default"
+              ? { variant: sectionCardVariant as any }
+              : undefined;
+
             return (
               <div key={section.id} className="container">
                 <SectionGridFeatureItems
-                  heading={section.heading || "What's trending now"}
-                  subHeading={section.subHeading || "Discover our top featured collection"}
+                  heading={section.heading || sectionConfig?.heading || "What's trending now"}
+                  subHeading={section.subHeading || sectionConfig?.subHeading || "Discover our top featured collection"}
                   data={products}
                   categories={categories}
+                  productCardSettings={sectionSettings}
                 />
               </div>
             );
+          }
           case "brands":
             return (
               <div key={section.id} className="container">

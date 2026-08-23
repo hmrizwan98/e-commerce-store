@@ -183,7 +183,7 @@ export async function getOrdersByGuestEmail(email: string): Promise<Order[]> {
 export interface CreateGuestOrderInput {
   items: { productId: string; variantId?: string; quantity: number }[];
   guestName: string;
-  guestEmail: string;
+  guestEmail?: string;
   shippingAddress: OrderAddress;
   paymentMethod: PaymentMethod;
   paymentTransactionRef?: string;
@@ -334,7 +334,7 @@ export async function createGuestOrder(input: CreateGuestOrderInput): Promise<Cr
       ...stripUndefined({
         orderNumber,
         userId: verifiedUserId,
-        guestEmail: input.guestEmail.trim(),
+        guestEmail: (input.guestEmail || "").trim(),
         guestName: input.guestName.trim(),
         items: orderItems,
         subtotal: totals.subtotal,
@@ -362,6 +362,28 @@ export async function createGuestOrder(input: CreateGuestOrderInput): Promise<Cr
 
     return { orderId: orderRef.id, orderNumber };
   });
+
+  // Async dispatch notifications (Email & WhatsApp)
+  try {
+    const orderData = {
+      orderNumber: result.orderNumber,
+      guestName: input.guestName,
+      guestEmail: input.guestEmail,
+      items: input.items.map((i) => ({ ...i, name: i.productId, unitPrice: 0, quantity: i.quantity, lineTotal: 0 })),
+      shippingAddress: input.shippingAddress,
+      total: 0,
+    };
+    // Dynamically import notification helpers to prevent server bundle cycles
+    const { sendOrderConfirmationEmail } = await import("@/lib/notifications/email-service");
+    const { sendWhatsAppNotification } = await import("@/lib/notifications/whatsapp-service");
+
+    await Promise.allSettled([
+      sendOrderConfirmationEmail(orderData as any),
+      sendWhatsAppNotification("ORDER_PLACED", orderData as any),
+    ]);
+  } catch (err) {
+    console.error("[Order Notification Trigger Error]:", err);
+  }
 
   return result;
 }

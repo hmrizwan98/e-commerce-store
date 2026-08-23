@@ -6,6 +6,7 @@ import Link from "next/link";
 import Prices from "@/components/Prices";
 import ButtonPrimary from "@/shared/Button/ButtonPrimary";
 import ButtonSecondary from "@/shared/Button/ButtonSecondary";
+import { getCartUrl } from "@/utils/getCartUrl";
 import type { CartDrawerPanelProps } from "./StandardCartDrawer";
 
 export default function CompactCartDrawer({ items, subtotal, onRemove, close }: CartDrawerPanelProps) {
@@ -49,7 +50,7 @@ export default function CompactCartDrawer({ items, subtotal, onRemove, close }: 
           <span>${subtotal.toFixed(2)}</span>
         </p>
         <div className="flex gap-2 mt-3">
-          <ButtonSecondary href="/cart" onClick={close} className="flex-1 uppercase font-bold tracking-wider text-xs py-2.5 border-2 border-[var(--border)]">
+          <ButtonSecondary href={getCartUrl() as any} onClick={close} className="flex-1 uppercase font-bold tracking-wider text-xs py-2.5 border-2 border-[var(--border)]">
             View Cart
           </ButtonSecondary>
           <ButtonPrimary href="/checkout" onClick={close} className="flex-1 uppercase font-bold tracking-wider text-xs py-2.5">

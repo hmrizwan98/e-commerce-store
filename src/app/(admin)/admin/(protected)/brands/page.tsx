@@ -1,7 +1,9 @@
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { getAllBrandsForAdmin } from "@/lib/firebase/repositories/brands";
 import BrandRowActions from "./BrandRowActions";
+import { PlusIcon, BuildingStorefrontIcon } from "@heroicons/react/24/outline";
 
 export const dynamic = "force-dynamic";
 
@@ -16,60 +18,116 @@ export default async function AdminBrandsPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Brands ({brands.length})</h1>
-        <div className="flex gap-3">
+      {/* Executive Top Banner */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs">
+        <div>
+          <div className="flex items-center gap-2 text-xs font-mono font-bold text-slate-400">
+            <span>CATALOG</span>
+            <span>/</span>
+            <span className="text-indigo-600 dark:text-indigo-400">BRANDS</span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mt-1 flex items-center gap-3">
+            <span>Brands</span>
+            <span className="px-3 py-1 text-xs font-mono font-bold rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200/60 dark:border-indigo-800">
+              {brands.length} Total
+            </span>
+          </h1>
+        </div>
+
+        <div className="flex items-center gap-3 shrink-0">
           <Link
             href={trashed ? "/admin/brands" : "/admin/brands?trashed=true"}
-            className={`px-4 py-2 rounded-full text-sm font-medium border ${
-              trashed ? "bg-red-600 text-white border-red-600" : "border-neutral-300 dark:border-neutral-700"
+            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all border ${
+              trashed
+                ? "bg-rose-600 text-white border-rose-600 shadow-xs"
+                : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:bg-slate-200"
             }`}
           >
-            {trashed ? "Viewing Trash" : "Trash"}
+            {trashed ? "🔴 Viewing Trash" : "🗑️ Trash"}
           </Link>
+
           <Link
             href={"/admin/brands/new" as any}
-            className="px-4 py-2 rounded-full bg-primary-6000 text-white text-sm font-medium"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
-            Add brand
+            <PlusIcon className="w-4 h-4" />
+            <span>Add Brand</span>
           </Link>
         </div>
       </div>
 
-      <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-left border-b border-neutral-200 dark:border-neutral-800 text-neutral-500">
-              <th className="p-4">Name</th>
-              <th className="p-4">Order</th>
-              <th className="p-4">Active</th>
-              <th className="p-4"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {brands.map((b) => (
-              <tr key={b.id} className="border-b border-neutral-100 dark:border-neutral-800/60">
-                <td className="p-4">
-                  <Link href={`/admin/brands/${b.id}/edit` as any} className="font-medium hover:underline">
-                    {b.name}
-                  </Link>
-                </td>
-                <td className="p-4">{b.order}</td>
-                <td className="p-4">{b.isActive ? "Yes" : "No"}</td>
-                <td className="p-4 text-right">
-                  <BrandRowActions id={b.id} slug={b.slug} trashed={trashed} />
-                </td>
-              </tr>
-            ))}
-            {!brands.length && (
+      {/* Master Brands Table */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl shadow-xs overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs">
+            <thead className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 text-[11px] font-mono uppercase text-slate-400">
               <tr>
-                <td colSpan={4} className="p-8 text-center text-neutral-500">
-                  No brands found.
-                </td>
+                <th className="py-3.5 px-4 font-bold">Brand Logo &amp; Name</th>
+                <th className="py-3.5 px-4 font-bold">Sort Order</th>
+                <th className="py-3.5 px-4 font-bold">Status</th>
+                <th className="py-3.5 px-4 font-bold text-right">Actions</th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
+              {brands.map((b) => (
+                <tr key={b.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors group">
+                  <td className="py-3.5 px-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 overflow-hidden shrink-0 border border-slate-200/60 dark:border-slate-700/60 flex items-center justify-center font-bold text-sm text-indigo-600 dark:text-indigo-400">
+                        {b.logo ? (
+                          <Image
+                            src={b.logo}
+                            alt={b.name}
+                            width={40}
+                            height={40}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                          />
+                        ) : (
+                          <BuildingStorefrontIcon className="w-5 h-5" />
+                        )}
+                      </div>
+                      <div>
+                        <Link
+                          href={`/admin/brands/${b.id}/edit` as any}
+                          className="font-bold text-sm text-slate-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors block"
+                        >
+                          {b.name}
+                        </Link>
+                        <span className="text-[11px] text-slate-400 font-mono">
+                          /{b.slug}
+                        </span>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="py-3.5 px-4 font-mono font-bold text-slate-700 dark:text-slate-300">
+                    {b.order}
+                  </td>
+                  <td className="py-3.5 px-4">
+                    <span
+                      className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
+                        b.isActive
+                          ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/60"
+                          : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200/60"
+                      }`}
+                    >
+                      {b.isActive ? "🟢 Active" : "⚪ Inactive"}
+                    </span>
+                  </td>
+                  <td className="py-3.5 px-4 text-right">
+                    <BrandRowActions id={b.id} slug={b.slug} trashed={trashed} />
+                  </td>
+                </tr>
+              ))}
+              {!brands.length && (
+                <tr>
+                  <td colSpan={4} className="py-12 text-center text-slate-400 italic text-xs">
+                    No brands found.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

@@ -26,23 +26,47 @@ export default async function AdminMenusPage() {
   };
 
   return (
-    <div className="space-y-10">
-      <div>
-        <h1 className="text-2xl font-semibold">Menus</h1>
-        <p className="text-sm text-neutral-500 mt-1">
-          Header items with a &quot;Mega menu&quot; type render their children as grouped columns; &quot;Dropdown&quot; renders a
-          simple list. Pick a &quot;Link Type&quot; to link straight to a page/product/category/brand - the URL is
-          generated for you. Reorder with the arrow buttons - only items you see here appear on the storefront.
+    <div className="space-y-8">
+      {/* Executive Top Banner */}
+      <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-1">
+        <div className="flex items-center gap-2 text-xs font-mono font-bold text-slate-400">
+          <span>CONTENT</span>
+          <span>/</span>
+          <span className="text-indigo-600 dark:text-indigo-400">NAVIGATION MENUS</span>
+        </div>
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+          Store Navigation Menus
+        </h1>
+        <p className="text-xs text-slate-500 max-w-3xl leading-relaxed pt-1">
+          Customize header and footer navigation links. Pick link types to generate automatic URL paths for internal pages, categories, products, or brands. Drag and reorder items seamlessly.
         </p>
       </div>
 
-      <section className="space-y-4">
-        <h2 className="text-lg font-semibold">Header menu</h2>
+      {/* Header Menu Section */}
+      <section className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-xs border border-slate-200/80 dark:border-slate-800 space-y-4">
+        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+          <div>
+            <h2 className="text-lg font-extrabold text-slate-900 dark:text-white">Header Main Navigation</h2>
+            <p className="text-xs text-slate-400">Navigation links displayed at top of storefront</p>
+          </div>
+          <span className="px-3 py-1 text-xs font-mono font-bold rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200/60">
+            {header.length} Top Items
+          </span>
+        </div>
         <MenuEditor menuId="header" initialItems={header} options={options} />
       </section>
 
-      <section className="space-y-4">
-        <h2 className="text-lg font-semibold">Footer menu</h2>
+      {/* Footer Menu Section */}
+      <section className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-xs border border-slate-200/80 dark:border-slate-800 space-y-4">
+        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+          <div>
+            <h2 className="text-lg font-extrabold text-slate-900 dark:text-white">Footer Links Navigation</h2>
+            <p className="text-xs text-slate-400">Links displayed in the bottom footer of your store</p>
+          </div>
+          <span className="px-3 py-1 text-xs font-mono font-bold rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+            {footer.length} Footer Items
+          </span>
+        </div>
         <MenuEditor menuId="footer" initialItems={footer} options={options} />
       </section>
     </div>

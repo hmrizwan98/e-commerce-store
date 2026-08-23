@@ -29,11 +29,11 @@ export default function CenteredHeader({ headerSettings, cartSettings, logos, st
         className={`container flex items-center justify-between gap-6 ${customHeight ? "" : "min-h-[50px] py-2"}`}
         style={customHeight ? { height: customHeight } : undefined}
       >
-        <div className="flex-1 lg:hidden">
-          <MenuBar />
+        <div className="flex-1 flex items-center lg:hidden">
+          <MenuBar logos={logos} storeName={storeName} />
         </div>
         
-        <div className="flex items-center gap-6">
+        <div className="flex items-center justify-center">
           <Logo img={logos?.logoLight} imgLight={logos?.logoDark} storeName={storeName} logoHeightPx={headerSettings?.logoHeightPx} />
         </div>
 

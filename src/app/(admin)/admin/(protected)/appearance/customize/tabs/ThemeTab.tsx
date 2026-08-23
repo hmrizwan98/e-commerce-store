@@ -9,51 +9,49 @@ export interface TabProps {
   onChange: (patch: Partial<SystemThemeConfig>) => void;
 }
 
-/**
- * Selecting a preset here only updates the in-memory draft (via onChange) -
- * unlike /admin/appearance/themes' "Activate & Publish" button, it never
- * touches the live storefront until the toolbar's Save Draft/Publish runs.
- */
 export default function ThemeTab({ draft, onChange }: TabProps) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 w-full min-w-0">
       <div>
-        <h2 className="text-lg font-semibold">Theme preset</h2>
-        <p className="text-sm text-slate-500 mt-1">
-          Choosing a preset replaces colors, typography, header, footer and product card styling in your draft.
-          Nothing changes on your live storefront until you publish.
+        <h2 className="text-sm font-extrabold tracking-tight text-slate-900 dark:text-slate-100">Theme Preset</h2>
+        <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
+          Choosing a preset updates colors, typography, header, footer, and card styling in your draft.
         </p>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+      <div className="space-y-3 w-full min-w-0">
         {Object.values(THEME_PRESETS).map((preset) => {
           const isSelected = draft.presetId === preset.presetId;
           return (
             <button
               key={preset.presetId}
+              type="button"
               onClick={() => onChange(preset)}
-              className={`text-left border rounded-2xl p-5 space-y-3 transition-all ${
+              className={`w-full text-left border rounded-xl p-4 space-y-2.5 transition-all cursor-pointer ${
                 isSelected
-                  ? "border-sky-500 ring-2 ring-sky-500/20"
-                  : "border-slate-200 dark:border-slate-800 hover:border-slate-300"
+                  ? "border-indigo-500 ring-2 ring-indigo-500/20 bg-indigo-50/30 dark:bg-indigo-950/20"
+                  : "border-slate-200 dark:border-slate-800 hover:border-indigo-300 bg-white dark:bg-slate-900/60"
               }`}
             >
-              <div className="flex items-center justify-between">
-                <h3 className="font-bold">{preset.name}</h3>
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="font-bold text-xs text-slate-900 dark:text-slate-100">{preset.name}</h3>
                 {isSelected && (
-                  <span className="bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300 text-[11px] font-semibold px-2 py-0.5 rounded-full">
+                  <span className="bg-indigo-100 text-indigo-700 dark:bg-indigo-900/60 dark:text-indigo-300 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full shrink-0">
                     Selected
                   </span>
                 )}
               </div>
-              <div className="flex gap-1.5">
+
+              <div className="flex items-center gap-1.5">
                 {[preset.colors.primary, preset.colors.secondary, preset.colors.accent].map((c, i) => (
-                  <span key={i} className="w-6 h-6 rounded-full border border-black/10" style={{ background: c }} />
+                  <span key={i} className="w-5 h-5 rounded-full border border-black/10 shadow-2xs shrink-0" style={{ background: c }} />
                 ))}
               </div>
-              <div className="text-xs space-y-1 text-slate-600 dark:text-slate-400">
-                <p>Header: {preset.header.variant}</p>
-                <p>Footer: {preset.footer.variant}</p>
-                <p>Font: {preset.typography.headingFont}</p>
+
+              <div className="text-[11px] text-slate-500 dark:text-slate-400 space-y-0.5 font-mono pt-1 border-t border-slate-100 dark:border-slate-800">
+                <p className="truncate"><span className="font-bold text-slate-700 dark:text-slate-300 font-sans">Header:</span> {preset.header.variant}</p>
+                <p className="truncate"><span className="font-bold text-slate-700 dark:text-slate-300 font-sans">Footer:</span> {preset.footer.variant}</p>
+                <p className="truncate"><span className="font-bold text-slate-700 dark:text-slate-300 font-sans">Font:</span> {preset.typography.headingFont}</p>
               </div>
             </button>
           );

@@ -19,7 +19,7 @@ export default function OnboardingWelcomeCard({ progress }: { progress: Onboardi
       </div>
       <Link
         href={"/admin/onboarding" as any}
-        className="px-5 py-2.5 rounded-full bg-primary-6000 text-white text-sm font-medium whitespace-nowrap"
+        className="px-5 py-2.5 rounded-full bg-primary-6000 hover:bg-primary-700 text-white text-sm font-semibold whitespace-nowrap transition-all shadow-md hover:shadow-lg"
       >
         Continue Setup
       </Link>

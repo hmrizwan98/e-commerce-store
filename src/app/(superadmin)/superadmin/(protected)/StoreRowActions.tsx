@@ -6,12 +6,16 @@ import toast from "react-hot-toast";
 import { setStoreStatus, archiveStore, restoreStore, resetStoreAdminPassword } from "./actions";
 import type { StoreStatus } from "@/types/store";
 import { ArrowPathIcon, KeyIcon, LockClosedIcon, CheckBadgeIcon, ArchiveBoxIcon } from "@heroicons/react/24/outline";
+import ConfirmModal from "./ConfirmModal";
 
 const StoreRowActions: React.FC<{ id: string; status: StoreStatus }> = ({ id, status }) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [current, setCurrent] = useState(status);
   const [resetResult, setResetResult] = useState<{ adminEmail: string; newPassword: string } | null>(null);
+
+  const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
+  const [archiveConfirmOpen, setArchiveConfirmOpen] = useState(false);
 
   const toggle = () => {
     const next: StoreStatus = current === "active" ? "suspended" : "active";
@@ -26,8 +30,8 @@ const StoreRowActions: React.FC<{ id: string; status: StoreStatus }> = ({ id, st
     });
   };
 
-  const handleResetPassword = () => {
-    if (!confirm("Reset this store's admin password? The current password stops working immediately.")) return;
+  const executeResetPassword = () => {
+    setResetConfirmOpen(false);
     startTransition(async () => {
       try {
         const result = await resetStoreAdminPassword(id);
@@ -38,8 +42,8 @@ const StoreRowActions: React.FC<{ id: string; status: StoreStatus }> = ({ id, st
     });
   };
 
-  const handleArchive = () => {
-    if (!confirm("Archive this store? It will disappear from the active store list, but its data is kept and this can be reversed.")) return;
+  const executeArchive = () => {
+    setArchiveConfirmOpen(false);
     startTransition(async () => {
       try {
         await archiveStore(id);
@@ -130,7 +134,7 @@ const StoreRowActions: React.FC<{ id: string; status: StoreStatus }> = ({ id, st
       <button
         type="button"
         disabled={isPending}
-        onClick={handleResetPassword}
+        onClick={() => setResetConfirmOpen(true)}
         className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-neutral-300 dark:border-neutral-700 text-xs font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 disabled:opacity-50 transition-colors"
         title="Reset Admin Password"
       >
@@ -141,12 +145,35 @@ const StoreRowActions: React.FC<{ id: string; status: StoreStatus }> = ({ id, st
       <button
         type="button"
         disabled={isPending}
-        onClick={handleArchive}
+        onClick={() => setArchiveConfirmOpen(true)}
         className="p-1.5 rounded-lg text-neutral-400 hover:text-red-600 hover:bg-red-500/10 disabled:opacity-50 transition-colors"
         title="Archive Store"
       >
         <ArchiveBoxIcon className="w-4 h-4" />
       </button>
+
+      {/* Confirmation Modals */}
+      <ConfirmModal
+        isOpen={resetConfirmOpen}
+        onClose={() => setResetConfirmOpen(false)}
+        onConfirm={executeResetPassword}
+        title="Reset Admin Password?"
+        message="Reset this store's admin password? The current password will stop working immediately and a temporary password will be generated."
+        confirmText="Reset Password"
+        variant="warning"
+        isLoading={isPending}
+      />
+
+      <ConfirmModal
+        isOpen={archiveConfirmOpen}
+        onClose={() => setArchiveConfirmOpen(false)}
+        onConfirm={executeArchive}
+        title="Archive Store?"
+        message="Archive this store? It will disappear from the active store list, but its data is kept safely and this action can be reversed."
+        confirmText="Archive Store"
+        variant="warning"
+        isLoading={isPending}
+      />
     </div>
   );
 };

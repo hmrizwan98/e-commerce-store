@@ -15,11 +15,14 @@ import Footer from "@/shared/Footer/Footer";
 import { TenantProvider } from "@/lib/tenant/TenantContext";
 import { MenuProvider } from "@/lib/tenant/MenuContext";
 import ThemePopupModal from "@/components/theme/ThemePopupModal";
+import StorePreloader from "@/components/StorePreloader";
 import type { ThemeHeader, ThemeFooter, ThemeLogos } from "@/types/theme";
 import type { PopupThemeConfig, CartThemeConfig, AnnouncementBarThemeConfig } from "@/lib/theme/theme-types";
 import type { NavItemType } from "@/shared/Navigation/NavigationItem";
 
 import { usePathname } from "next/navigation";
+
+import type { GeneralSettings } from "@/types/site-settings";
 
 export interface ClientProvidersProps {
   children: React.ReactNode;
@@ -34,6 +37,7 @@ export interface ClientProvidersProps {
   headerMenu?: NavItemType[];
   footerMenu?: NavItemType[];
   logos?: ThemeLogos;
+  socialLinks?: GeneralSettings["socialLinks"];
 }
 
 /**
@@ -54,6 +58,7 @@ const ClientProviders: React.FC<ClientProvidersProps> = ({
   headerMenu,
   footerMenu,
   logos,
+  socialLinks,
 }) => {
   const pathname = usePathname();
   const isAdminRoute = Boolean(
@@ -82,6 +87,7 @@ const ClientProviders: React.FC<ClientProvidersProps> = ({
     <TenantProvider tenantId={tenantId}>
       <MenuProvider headerItems={headerMenu} footerItems={footerMenu}>
         <Provider store={store}>
+          <StorePreloader storeName={storeName} logoUrl={logos?.logoLight} />
           <CartHydrator />
           <PageViewTracker />
           <MarketingPixels />
@@ -90,7 +96,7 @@ const ClientProviders: React.FC<ClientProvidersProps> = ({
           <SiteHeader headerSettings={headerSettings} cartSettings={cartSettings} logos={logos} storeName={storeName} />
           {children}
           <CommonClient />
-          <Footer footerSettings={footerSettings} logos={logos} storeName={storeName} />
+          <Footer footerSettings={footerSettings} logos={logos} storeName={storeName} socialLinks={socialLinks} />
           <WhatsAppButton />
           <ThemePopupModal popupConfig={popupConfig} tenantId={tenantId} themePresetId={themePresetId} />
         </Provider>

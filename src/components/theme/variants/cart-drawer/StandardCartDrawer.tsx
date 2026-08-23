@@ -6,6 +6,7 @@ import Link from "next/link";
 import Prices from "@/components/Prices";
 import ButtonPrimary from "@/shared/Button/ButtonPrimary";
 import ButtonSecondary from "@/shared/Button/ButtonSecondary";
+import { getCartUrl } from "@/utils/getCartUrl";
 import type { CartItem } from "@/store/slices/cartSlice";
 
 export interface CartDrawerPanelProps {
@@ -73,7 +74,7 @@ export default function StandardCartDrawer({ items, subtotal, onRemove, close }:
           <span className="">${subtotal.toFixed(2)}</span>
         </p>
         <div className="flex space-x-2 mt-5">
-          <ButtonSecondary href="/cart" className="flex-1 border border-slate-200 dark:border-slate-700" onClick={close}>
+          <ButtonSecondary href={getCartUrl() as any} className="flex-1 border border-slate-200 dark:border-slate-700" onClick={close}>
             View cart
           </ButtonSecondary>
           <ButtonPrimary href="/checkout" onClick={close} className="flex-1">

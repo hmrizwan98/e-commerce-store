@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { getTenantHref } from "@/utils/getTenantHref";
 import NcImage from "@/shared/NcImage/NcImage";
 import Prices from "@/components/Prices";
 import ProductStatus from "@/components/ProductStatus";
@@ -34,7 +35,7 @@ export default function EditorialCard({ data, className = "", productCardSetting
     <>
       <div className={`group relative flex flex-col bg-transparent text-center space-y-4 ${className}`}>
         <Link
-          href={`/product/${slug}`}
+          href={getTenantHref(`/product/${slug}`) as any}
           className="absolute inset-0 z-[1]"
           onClick={() => trackEvent("product_click", { productId: data.id })}
         />

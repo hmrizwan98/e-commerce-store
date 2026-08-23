@@ -25,16 +25,16 @@ export default function TransparentHeader({ headerSettings, cartSettings, logos,
   return (
     <header className="relative w-full z-40 bg-[var(--header-bg)]/90 backdrop-blur-md transition-all duration-300 border-b border-[var(--border)]/50">
       <div className="container py-6 flex items-center justify-between gap-8">
-        <div className="flex-1 lg:hidden">
-          <MenuBar />
+        <div className="flex-1 flex items-center lg:hidden">
+          <MenuBar logos={logos} storeName={storeName} />
+        </div>
+
+        <div className="flex items-center justify-center">
+          <Logo img={logos?.logoLight} imgLight={logos?.logoDark} storeName={storeName} logoHeightPx={headerSettings?.logoHeightPx} />
         </div>
 
         <div className="hidden lg:flex items-center space-x-8 flex-1">
           <Navigation />
-        </div>
-        
-        <div className="flex items-center justify-center">
-          <Logo img={logos?.logoLight} imgLight={logos?.logoDark} storeName={storeName} logoHeightPx={headerSettings?.logoHeightPx} />
         </div>
 
         <div className="flex items-center justify-end gap-5 flex-1">

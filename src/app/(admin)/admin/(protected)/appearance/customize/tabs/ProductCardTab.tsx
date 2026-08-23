@@ -103,6 +103,7 @@ export default function ProductCardTab({ draft, onChange }: TabProps) {
         <Toggle label="Wishlist" checked={productCard.showWishlist ?? true} onChange={(v) => setProductCard({ showWishlist: v })} />
         <Toggle label="Compare" checked={productCard.showCompare ?? true} onChange={(v) => setProductCard({ showCompare: v })} />
         <Toggle label="Quick view" checked={productCard.showQuickView ?? true} onChange={(v) => setProductCard({ showQuickView: v })} />
+        <Toggle label="Show color swatches (circles)" checked={productCard.showColorSwatches ?? true} onChange={(v) => setProductCard({ showColorSwatches: v })} />
       </div>
     </div>
   );

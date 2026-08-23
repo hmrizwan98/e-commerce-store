@@ -90,8 +90,13 @@ export default function ProductDetailTab({ draft, onChange }: TabProps) {
         </div>
       </div>
 
-      <div className="border-t border-slate-200 dark:border-slate-800 pt-4">
-        <Toggle label="Compare button" checked={productDetail.showCompare ?? true} onChange={(v) => setProductDetail({ showCompare: v })} />
+      <div className="border-t border-slate-200 dark:border-slate-800 pt-4 space-y-2">
+        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Buttons &amp; Page Sections</h3>
+        <Toggle label="Compare Button" checked={productDetail.showCompare ?? true} onChange={(v) => setProductDetail({ showCompare: v })} />
+        <Toggle label="Wishlist Heart Button" checked={productDetail.showWishlist ?? true} onChange={(v) => setProductDetail({ showWishlist: v })} />
+        <Toggle label="Customer Reviews Section" checked={productDetail.showReviews ?? true} onChange={(v) => setProductDetail({ showReviews: v })} />
+        <Toggle label="Related Products Carousel" checked={productDetail.showRelatedProducts ?? true} onChange={(v) => setProductDetail({ showRelatedProducts: v })} />
+        <Toggle label="Promotional Deals Banner" checked={productDetail.showBottomPromo ?? true} onChange={(v) => setProductDetail({ showBottomPromo: v })} />
       </div>
     </div>
   );

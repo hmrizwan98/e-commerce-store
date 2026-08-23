@@ -11,14 +11,20 @@ import { ChevronDownIcon } from '@heroicons/react/24/solid';
 import SwitchDarkMode from '@/shared/SwitchDarkMode/SwitchDarkMode';
 import Link from 'next/link';
 
+import type { ThemeLogos } from '@/types/theme';
+
 export interface NavMobileProps {
   data?: NavItemType[];
   onClickClose?: () => void;
+  logos?: ThemeLogos;
+  storeName?: string;
 }
 
 const NavMobile: React.FC<NavMobileProps> = ({
   data = [],
   onClickClose,
+  logos,
+  storeName,
 }) => {
   const _renderMenuChild = (
     item: NavItemType,
@@ -153,7 +159,7 @@ const NavMobile: React.FC<NavMobileProps> = ({
   return (
     <div className="w-full h-screen py-2 overflow-y-auto transition transform bg-white divide-y-2 shadow-lg ring-1 dark:ring-neutral-700 dark:bg-neutral-900 divide-neutral-100 dark:divide-neutral-800">
       <div className="px-5 py-6">
-        <Logo />
+        <Logo img={logos?.logoLight} imgLight={logos?.logoDark} storeName={storeName} />
         <div className="flex flex-col mt-5 text-sm text-slate-600 dark:text-slate-300">
           <span>
             Discover the most outstanding articles on all topics of life. Write

@@ -27,7 +27,7 @@ import { addItem } from "@/store/slices/cartSlice";
 import { trackEvent } from "@/lib/analytics/track";
 import type { Product, ProductVariant } from "@/types/product";
 import type { Review } from "@/types/review";
-import type { ProductCardThemeConfig } from "@/lib/theme/theme-types";
+import type { ProductCardThemeConfig, ProductDetailThemeConfig } from "@/lib/theme/theme-types";
 
 export interface ProductDetailClientProps {
   product: Product;
@@ -37,6 +37,7 @@ export interface ProductDetailClientProps {
   crossSellProducts?: Product[];
   upsellProducts?: Product[];
   productCardSettings?: ProductCardThemeConfig;
+  productDetailSettings?: ProductDetailThemeConfig;
 }
 
 const ProductDetailClient: React.FC<ProductDetailClientProps> = ({
@@ -47,6 +48,7 @@ const ProductDetailClient: React.FC<ProductDetailClientProps> = ({
   crossSellProducts = [],
   upsellProducts = [],
   productCardSettings,
+  productDetailSettings,
 }) => {
   const {
     selections,
@@ -332,14 +334,18 @@ const ProductDetailClient: React.FC<ProductDetailClientProps> = ({
 
   return (
     <div className={`nc-ProductDetailPage `}>
-      <main className="container mt-5 lg:mt-11">
+      <main className="container mt-5 lg:mt-11 pb-20 lg:pb-32">
         <div className="lg:flex">
           <div className="w-full lg:w-[55%] ">
             <div className="relative">
               <ProductGallery activeImage={activeImage} thumbnails={thumbnails} alt={product.name} />
               <ProductStatus status={product.badge} />
-              <LikeButton productId={product.id} className="absolute right-3 top-3 " />
-              <CompareButton productId={product.id} className="absolute right-3 top-16" />
+              {(productDetailSettings?.showWishlist ?? true) && (
+                <LikeButton productId={product.id} className="absolute right-3 top-3 " />
+              )}
+              {(productDetailSettings?.showCompare ?? true) && (
+                <CompareButton productId={product.id} className="absolute right-3 top-16" />
+              )}
             </div>
           </div>
 
@@ -353,20 +359,26 @@ const ProductDetailClient: React.FC<ProductDetailClientProps> = ({
             <Policy />
           </div>
 
-          <hr className="border-slate-200 dark:border-slate-700" />
+          {(productDetailSettings?.showReviews ?? true) && (
+            <>
+              <hr className="border-slate-200 dark:border-slate-700" />
+              {renderReviews()}
+            </>
+          )}
 
-          {renderReviews()}
-
-          <hr className="border-slate-200 dark:border-slate-700" />
-
-          <SectionSliderProductCard
-            heading="Customers also purchased"
-            subHeading=""
-            headingFontClassName="text-2xl font-semibold"
-            headingClassName="mb-10 text-neutral-900 dark:text-neutral-50"
-            data={relatedProducts.length ? relatedProducts : undefined}
-            productCardSettings={productCardSettings}
-          />
+          {(productDetailSettings?.showRelatedProducts ?? true) && (
+            <>
+              <hr className="border-slate-200 dark:border-slate-700" />
+              <SectionSliderProductCard
+                heading="Customers also purchased"
+                subHeading=""
+                headingFontClassName="text-2xl font-semibold"
+                headingClassName="mb-10 text-neutral-900 dark:text-neutral-50"
+                data={relatedProducts.length ? relatedProducts : undefined}
+                productCardSettings={productCardSettings}
+              />
+            </>
+          )}
 
           {crossSellProducts.length > 0 && (
             <SectionSliderProductCard
@@ -392,9 +404,11 @@ const ProductDetailClient: React.FC<ProductDetailClientProps> = ({
 
           <RecentlyViewedSection excludeProductId={product.id} productCardSettings={productCardSettings} />
 
-          <div className="pb-20 xl:pb-28 lg:pt-14">
-            <SectionPromo2 />
-          </div>
+          {(productDetailSettings?.showBottomPromo ?? true) && (
+            <div className="pb-20 xl:pb-28 lg:pt-14">
+              <SectionPromo2 />
+            </div>
+          )}
         </div>
       </main>
 

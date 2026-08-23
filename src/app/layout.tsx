@@ -148,6 +148,7 @@ export default async function RootLayout({
           headerMenu={headerMenu as any}
           footerMenu={footerMenu as any}
           logos={theme.logos}
+          socialLinks={general.socialLinks}
         >
           {suspended ? (
             <div className="flex min-h-[60vh] flex-col items-center justify-center gap-2 px-6 text-center">

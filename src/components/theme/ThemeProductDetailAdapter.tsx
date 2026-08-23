@@ -18,6 +18,6 @@ export default function ThemeProductDetailAdapter({ productDetailSettings, ...pr
     case "luxury":
       return <LuxuryProductDetail {...props} productDetailSettings={productDetailSettings} />;
     default:
-      return <ProductDetailClient {...props} />;
+      return <ProductDetailClient {...props} productDetailSettings={productDetailSettings} />;
   }
 }

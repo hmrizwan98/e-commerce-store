@@ -51,6 +51,21 @@ export async function updateOrderStatus(id: string, status: OrderStatus, note?: 
       updatedAt: FieldValue.serverTimestamp(),
     });
   await logOrderActivity(id, "status_changed", decoded.uid, { status });
+
+  // Trigger WhatsApp notification for status transition
+  try {
+    const { sendWhatsAppNotification } = await import("@/lib/notifications/whatsapp-service");
+    if (status === "confirmed") {
+      await sendWhatsAppNotification("ORDER_CONFIRMED", order);
+    } else if (status === "shipped" || status === "packed") {
+      await sendWhatsAppNotification("ORDER_DISPATCHED", order);
+    } else if (status === "delivered") {
+      await sendWhatsAppNotification("ORDER_DELIVERED", order);
+    }
+  } catch (err) {
+    console.error("[WhatsApp Status Update Trigger Error]:", err);
+  }
+
   revalidatePath("/admin/orders");
   revalidatePath(`/admin/orders/${id}`);
 }

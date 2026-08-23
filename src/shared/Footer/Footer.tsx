@@ -11,6 +11,7 @@ import ButtonPrimary from "@/shared/Button/ButtonPrimary";
 import { subscribeToNewsletter } from "@/lib/newsletter/actions";
 import toast from "react-hot-toast";
 import ThemeFooterAdapter from "@/components/theme/ThemeFooterAdapter";
+import FooterSocials from "@/components/FooterSocials";
 import type { FooterThemeConfig } from "@/lib/theme/theme-types";
 import type { ThemeLogos } from "@/types/theme";
 
@@ -25,13 +26,16 @@ export interface WidgetFooterMenu {
   menus: WidgetFooterMenuLink[];
 }
 
+import type { GeneralSettings } from "@/types/site-settings";
+
 export interface FooterProps {
   footerSettings?: FooterThemeConfig;
   logos?: ThemeLogos;
   storeName?: string;
+  socialLinks?: GeneralSettings["socialLinks"];
 }
 
-const Footer: React.FC<FooterProps> = ({ footerSettings, logos, storeName = "Tradz Glint" }) => {
+const Footer: React.FC<FooterProps> = ({ footerSettings, logos, storeName = "Tradz Glint", socialLinks }) => {
   const isSuppressed = useChromeSuppressed();
   const footerItems = useMenu("footer");
   const widgetMenus: WidgetFooterMenu[] = footerItems.map((item) => ({
@@ -68,7 +72,7 @@ const Footer: React.FC<FooterProps> = ({ footerSettings, logos, storeName = "Tra
   if (isSuppressed) return null;
 
   if (footerSettings?.variant) {
-    return <ThemeFooterAdapter footerSettings={footerSettings} logos={logos} storeName={storeName} />;
+    return <ThemeFooterAdapter footerSettings={footerSettings} logos={logos} storeName={storeName} socialLinks={socialLinks} />;
   }
 
   const renderWidgetMenuItem = (menu: WidgetFooterMenu, index: number) => {
@@ -97,14 +101,11 @@ const Footer: React.FC<FooterProps> = ({ footerSettings, logos, storeName = "Tra
   };
 
   return (
-    <div className="nc-Footer relative py-20 lg:pt-28 lg:pb-24 border-t border-neutral-200 dark:border-neutral-700 bg-[var(--footer-bg)]">
+    <div className="nc-Footer relative py-20 lg:pt-24 lg:pb-16 border-t border-neutral-200 dark:border-neutral-700 bg-[var(--footer-bg)]">
       <div className="container grid grid-cols-2 gap-y-10 gap-x-5 sm:gap-x-8 md:grid-cols-4 lg:grid-cols-5 lg:gap-x-10 ">
         <div className="grid grid-cols-4 gap-5 col-span-2 md:col-span-4 lg:md:col-span-1 lg:flex lg:flex-col">
           <div className="col-span-2 md:col-span-1">
             <Logo img={footerSettings?.footerLogo} storeName={storeName} logoHeightPx={footerSettings?.logoHeightPx} />
-          </div>
-          <div className="col-span-2 flex items-center md:col-span-3">
-            <SocialsList1 className="flex items-center space-x-2 lg:space-x-0 lg:flex-col lg:space-y-3 lg:items-start" />
           </div>
         </div>
         {widgetMenus.map(renderWidgetMenuItem)}
@@ -124,12 +125,21 @@ const Footer: React.FC<FooterProps> = ({ footerSettings, logos, storeName = "Tra
             </form>
           </div>
         )}
-        {showCopyright && (
-          <div className="col-span-2 md:col-span-4 lg:col-span-5 pt-10 mt-4 border-t border-neutral-200 dark:border-neutral-700 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <span className="text-sm text-neutral-500 dark:text-neutral-400">{copyrightText}</span>
-            {showPaymentIcons && <PaymentIcons />}
+        <div className="col-span-2 md:col-span-4 lg:col-span-5 pt-10 mt-4 border-t border-neutral-200 dark:border-neutral-700 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300">
+              <span>🌐</span>
+              <span>English (US)</span>
+            </div>
+            {showCopyright && (
+              <span className="text-xs text-neutral-500 dark:text-neutral-400">{copyrightText}</span>
+            )}
           </div>
-        )}
+          <div className="flex items-center gap-6">
+            {showPaymentIcons && <PaymentIcons />}
+            <FooterSocials socialLinks={socialLinks} />
+          </div>
+        </div>
       </div>
     </div>
   );

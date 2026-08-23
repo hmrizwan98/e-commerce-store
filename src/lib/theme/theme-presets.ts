@@ -267,6 +267,7 @@ export const PRESET_PREMIUM_LUXURY: SystemThemeConfig = {
  */
 export const THEME_PRESETS: Partial<Record<ThemePresetId, SystemThemeConfig>> = {
   "premium-luxury": PRESET_PREMIUM_LUXURY,
+  "modern-minimal": PRESET_MODERN_MINIMAL,
 };
 
 export const DEFAULT_SYSTEM_THEME = PRESET_PREMIUM_LUXURY;

@@ -185,12 +185,14 @@ export interface CustomizeShellProps {
 
 export default function CustomizeShell({ initialDraft, homepage, navigation }: CustomizeShellProps) {
   const [editorMode, setEditorMode] = useState<"sections" | "global">("sections");
-  const [activeGlobalTab, setActiveGlobalTab] = useState<GlobalSettingsTabKey>("theme");
+  const [activeGlobalTab, setActiveGlobalTab] = useState<GlobalSettingsTabKey | null>(null);
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
 
   const [draft, setDraft] = useState<SystemThemeConfig>(initialDraft);
   const [dirty, setDirty] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const [savingDraft, setSavingDraft] = useState(false);
+  const [publishingLive, setPublishingLive] = useState(false);
+  const saving = savingDraft || publishingLive;
   const [viewport, setViewport] = useState<ViewportKey>("desktop");
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const previewContainerRef = useRef<HTMLDivElement>(null);
@@ -222,6 +224,24 @@ export default function CustomizeShell({ initialDraft, homepage, navigation }: C
   const [reloadKey, setReloadKey] = useState(0);
   const [confirmDiscardOpen, setConfirmDiscardOpen] = useState(false);
 
+  const handleSurfaceChange = (surface: PreviewSurfaceKey) => {
+    setPreviewSurface(surface);
+    setSelectedSectionId(null);
+    if (surface === "collection") {
+      setEditorMode("global");
+      setActiveGlobalTab("shop");
+    } else if (surface === "product") {
+      setEditorMode("global");
+      setActiveGlobalTab("productDetail");
+    } else if (surface === "cart") {
+      setEditorMode("global");
+      setActiveGlobalTab("cart");
+    } else if (surface === "home") {
+      setEditorMode("sections");
+      setActiveGlobalTab(null);
+    }
+  };
+
   const updateDraft = useCallback((patch: Partial<SystemThemeConfig>) => {
     setDraft((prev) => mergeDraft(prev, patch));
     setDirty(true);
@@ -240,21 +260,155 @@ export default function CustomizeShell({ initialDraft, homepage, navigation }: C
     [updateDraft]
   );
 
+  const collectionSections: HomepageSection[] = draft.collection?.sections ?? [
+    {
+      id: "sec-col-promo",
+      type: "promo",
+      title: "Promotional Deals Banner",
+      order: 0,
+      isActive: draft.collection?.showBottomPromo ?? true,
+      config: {},
+    },
+    {
+      id: "sec-col-categories",
+      type: "collections",
+      title: "Featured Categories Carousel",
+      order: 1,
+      isActive: draft.collection?.showFeaturedSection ?? true,
+      config: {},
+    },
+  ];
+
+  const updateCollectionSections = useCallback(
+    (nextSections: HomepageSection[]) => {
+      updateDraft({
+        collection: {
+          ...(draft.collection ?? {}),
+          sections: nextSections,
+        },
+      });
+    },
+    [draft.collection, updateDraft]
+  );
+
+  const productSections: HomepageSection[] = draft.productDetail?.sections ?? [
+    {
+      id: "sec-prod-promo",
+      type: "promo",
+      title: "Special Offer Banner",
+      order: 0,
+      isActive: draft.productDetail?.showBottomPromo ?? true,
+      config: {},
+    },
+    {
+      id: "sec-prod-related",
+      type: "featuredProducts",
+      title: "Customers Also Purchased",
+      order: 1,
+      isActive: draft.productDetail?.showRelatedProducts ?? true,
+      config: {},
+    },
+  ];
+
+  const updateProductSections = useCallback(
+    (nextSections: HomepageSection[]) => {
+      updateDraft({
+        productDetail: {
+          ...(draft.productDetail ?? {}),
+          sections: nextSections,
+        },
+      });
+    },
+    [draft.productDetail, updateDraft]
+  );
+
   const handleAddSection = (type: HomepageSectionType) => {
     const meta = SECTION_META[type];
+    const targetArray =
+      previewSurface === "collection"
+        ? collectionSections
+        : previewSurface === "product"
+        ? productSections
+        : sections;
+
     const newSec: HomepageSection = {
       id: `sec-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
       type,
       title: meta ? meta.label : type,
-      order: sections.length,
+      order: targetArray.length,
       isActive: true,
       config: {},
     };
-    const next = [...sections, newSec];
-    updateDraftSections(next);
+
+    if (previewSurface === "collection") {
+      updateCollectionSections([...collectionSections, newSec]);
+    } else if (previewSurface === "product") {
+      updateProductSections([...productSections, newSec]);
+    } else {
+      updateDraftSections([...sections, newSec]);
+    }
+
     setAddModalOpen(false);
     setSelectedSectionId(newSec.id);
-    toast.success(`Added "${newSec.title}" section to draft.`);
+    toast.success(`Added "${newSec.title}" section to ${previewSurface === "product" ? "Product Page" : previewSurface === "collection" ? "Collection Page" : "Homepage"}.`);
+  };
+
+  const handleMoveProductSection = (index: number, direction: "up" | "down", e: React.MouseEvent) => {
+    e.stopPropagation();
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= productSections.length) return;
+    const next = [...productSections];
+    const temp = next[index];
+    next[index] = next[targetIndex];
+    next[targetIndex] = temp;
+    next.forEach((s, idx) => {
+      s.order = idx;
+    });
+    updateProductSections(next);
+  };
+
+  const handleToggleProductSectionActive = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const next = productSections.map((s) => (s.id === id ? { ...s, isActive: !s.isActive } : s));
+    updateProductSections(next);
+  };
+
+  const handleDeleteProductSection = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!window.confirm("Remove this section from Product Page?")) return;
+    const next = productSections.filter((s) => s.id !== id);
+    updateProductSections(next);
+    if (selectedSectionId === id) setSelectedSectionId(null);
+    toast.success("Section removed.");
+  };
+
+  const handleMoveCollectionSection = (index: number, direction: "up" | "down", e: React.MouseEvent) => {
+    e.stopPropagation();
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= collectionSections.length) return;
+    const next = [...collectionSections];
+    const temp = next[index];
+    next[index] = next[targetIndex];
+    next[targetIndex] = temp;
+    next.forEach((s, idx) => {
+      s.order = idx;
+    });
+    updateCollectionSections(next);
+  };
+
+  const handleToggleCollectionSectionActive = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const next = collectionSections.map((s) => (s.id === id ? { ...s, isActive: !s.isActive } : s));
+    updateCollectionSections(next);
+  };
+
+  const handleDeleteCollectionSection = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!window.confirm("Remove this section from Collection Page?")) return;
+    const next = collectionSections.filter((s) => s.id !== id);
+    updateCollectionSections(next);
+    if (selectedSectionId === id) setSelectedSectionId(null);
+    toast.success("Section removed.");
   };
 
   const handleMoveSection = (index: number, direction: "up" | "down", e: React.MouseEvent) => {
@@ -321,7 +475,7 @@ export default function CustomizeShell({ initialDraft, homepage, navigation }: C
   }, [dirty]);
 
   const handleSaveDraft = async () => {
-    setSaving(true);
+    setSavingDraft(true);
     try {
       const res = await saveCustomizerDraftAction(draft);
       if (res.ok) {
@@ -331,12 +485,12 @@ export default function CustomizeShell({ initialDraft, homepage, navigation }: C
         toast.error("Failed to save draft.");
       }
     } finally {
-      setSaving(false);
+      setSavingDraft(false);
     }
   };
 
   const handleRefreshPreview = async () => {
-    setSaving(true);
+    setSavingDraft(true);
     try {
       const res = await saveCustomizerDraftAction(draft);
       if (res.ok) {
@@ -347,12 +501,12 @@ export default function CustomizeShell({ initialDraft, homepage, navigation }: C
         toast.error("Failed to save draft before reloading.");
       }
     } finally {
-      setSaving(false);
+      setSavingDraft(false);
     }
   };
 
   const handlePublish = async () => {
-    setSaving(true);
+    setPublishingLive(true);
     try {
       const saveRes = await saveCustomizerDraftAction(draft);
       if (!saveRes.ok) {
@@ -367,12 +521,12 @@ export default function CustomizeShell({ initialDraft, homepage, navigation }: C
         toast.error("Failed to publish.");
       }
     } finally {
-      setSaving(false);
+      setPublishingLive(false);
     }
   };
 
   const handleDiscardConfirmed = async () => {
-    setSaving(true);
+    setSavingDraft(true);
     setConfirmDiscardOpen(false);
     try {
       const res = await discardCustomizerDraftAction();
@@ -384,7 +538,7 @@ export default function CustomizeShell({ initialDraft, homepage, navigation }: C
         toast.error("Failed to discard draft.");
       }
     } finally {
-      setSaving(false);
+      setSavingDraft(false);
     }
   };
 
@@ -532,7 +686,7 @@ export default function CustomizeShell({ initialDraft, homepage, navigation }: C
           {/* Surface Page Selector */}
           <select
             value={previewSurface}
-            onChange={(e) => setPreviewSurface(e.target.value as PreviewSurfaceKey)}
+            onChange={(e) => handleSurfaceChange(e.target.value as PreviewSurfaceKey)}
             className="px-3 py-1.5 text-xs font-semibold rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 cursor-pointer focus:outline-none"
           >
             {PREVIEW_SURFACES.map((s) => (
@@ -575,12 +729,12 @@ export default function CustomizeShell({ initialDraft, homepage, navigation }: C
         </div>
 
         {/* Action Controls */}
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2.5 shrink-0">
           <button
             type="button"
             onClick={() => setConfirmDiscardOpen(true)}
             disabled={saving || !dirty}
-            className="px-3.5 py-2 text-xs font-semibold rounded-xl text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700/80 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer border border-slate-200/60 dark:border-slate-700/60"
+            className="px-4 py-2.5 text-xs font-bold rounded-xl text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700/80 shrink-0 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
           >
             Discard
           </button>
@@ -588,21 +742,21 @@ export default function CustomizeShell({ initialDraft, homepage, navigation }: C
           <button
             type="button"
             onClick={handleSaveDraft}
-            disabled={saving}
-            className="px-4.5 py-2 text-xs font-bold rounded-xl text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700/80 shadow-2xs active:scale-95 disabled:opacity-50 transition-all flex items-center gap-1.5 cursor-pointer"
+            disabled={savingDraft || publishingLive}
+            className="px-5 py-2.5 text-xs font-bold rounded-xl text-indigo-700 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:text-indigo-300 dark:hover:bg-indigo-900/60 border border-indigo-200 dark:border-indigo-800/60 shrink-0 shadow-2xs active:scale-95 disabled:opacity-50 transition-all flex items-center gap-2 cursor-pointer"
           >
-            {saving ? <ArrowPathIcon className="w-3.5 h-3.5 animate-spin" /> : null}
-            Save Draft
+            {savingDraft ? <ArrowPathIcon className="w-3.5 h-3.5 animate-spin" /> : null}
+            {savingDraft ? "Saving Draft..." : "Save Draft"}
           </button>
 
           <button
             type="button"
             onClick={handlePublish}
-            disabled={saving}
-            className="px-5 py-2 text-xs font-extrabold rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 shadow-md shadow-indigo-500/20 active:scale-95 disabled:opacity-50 transition-all flex items-center gap-2 cursor-pointer"
+            disabled={savingDraft || publishingLive}
+            className="px-6 py-2.5 text-xs font-extrabold rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 shrink-0 shadow-md shadow-indigo-500/25 active:scale-95 disabled:opacity-50 transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap"
           >
-            {saving ? <ArrowPathIcon className="w-3.5 h-3.5 animate-spin" /> : null}
-            🚀 Publish Live
+            {publishingLive ? <ArrowPathIcon className="w-3.5 h-3.5 animate-spin" /> : null}
+            {publishingLive ? "Publishing Live..." : "🚀 Publish Live"}
           </button>
         </div>
       </div>
@@ -660,17 +814,35 @@ export default function CustomizeShell({ initialDraft, homepage, navigation }: C
               ) : (
                 /* Modular Sections Tree View */
                 <div className="space-y-4">
+                  {previewSurface !== "home" && (
+                    <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 rounded-xl text-xs text-amber-900 dark:text-amber-200 flex items-center justify-between gap-2">
+                      <div>
+                        <span className="font-bold block">Previewing {PREVIEW_SURFACES.find((s) => s.key === previewSurface)?.label}</span>
+                        <span className="text-[11px] opacity-90 block">Page Sections below structure the Homepage.</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleSurfaceChange(previewSurface)}
+                        className="px-2.5 py-1 text-[11px] font-bold bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-all shrink-0 cursor-pointer"
+                      >
+                        Edit {PREVIEW_SURFACES.find((s) => s.key === previewSurface)?.label} Settings
+                      </button>
+                    </div>
+                  )}
+
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
                         Page Structure
                       </h3>
                       <p className="text-sm font-extrabold text-slate-900 dark:text-slate-100">
-                        Homepage Layout
+                        {previewSurface === "home"
+                          ? "Homepage Layout"
+                          : `${PREVIEW_SURFACES.find((s) => s.key === previewSurface)?.label} Layout`}
                       </p>
                     </div>
                     <span className="text-[11px] font-semibold text-slate-500">
-                      {homepage.sections.length + 3} Sections
+                      {previewSurface === "home" ? homepage.sections.length + 3 : 5} Sections
                     </span>
                   </div>
 
@@ -706,92 +878,422 @@ export default function CustomizeShell({ initialDraft, homepage, navigation }: C
                       <span className="text-xs text-indigo-600 font-semibold">Inspect →</span>
                     </div>
 
-                    {/* Dynamic Homepage Sections */}
-                    <div className="space-y-2 pt-2">
-                      <div className="flex items-center justify-between px-1 pb-1">
-                        <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
-                          Modular Sections
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setAddModalOpen(true)}
-                          className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-bold rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition-colors"
-                        >
-                          <PlusIcon className="w-3.5 h-3.5" /> Add Section
-                        </button>
-                      </div>
-
-                      {sections.map((sec, index) => {
-                        const meta = SECTION_META[sec.type];
-                        const isSelected = selectedSectionId === sec.id;
-                        const isHidden = sec.isActive === false;
-
-                        return (
-                          <div
-                            key={sec.id}
-                            onClick={() => setSelectedSectionId(sec.id)}
-                            className={`p-2.5 rounded-xl border transition-all cursor-pointer group flex items-center justify-between ${
-                              isSelected
-                                ? "border-indigo-600 bg-indigo-50/50 dark:bg-indigo-950/30 shadow-xs"
-                                : isHidden
-                                ? "border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/40 opacity-60"
-                                : "border-slate-200 dark:border-slate-800 hover:border-indigo-400 bg-white dark:bg-slate-900 shadow-2xs"
-                            }`}
+                    {/* Page Specific Sections */}
+                    {previewSurface === "home" && (
+                      <div className="space-y-2 pt-2">
+                        <div className="flex items-center justify-between px-1 pb-1">
+                          <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
+                            Modular Sections
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setAddModalOpen(true)}
+                            className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-bold rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition-colors"
                           >
-                            <div className="flex items-center gap-2.5 min-w-0">
-                              <div className="flex flex-col gap-0.5 text-slate-400 opacity-60 group-hover:opacity-100">
-                                <button
-                                  type="button"
-                                  onClick={(e) => handleMoveSection(index, "up", e)}
-                                  disabled={index === 0}
-                                  className="hover:text-indigo-600 disabled:opacity-20"
-                                  title="Move Up"
-                                >
-                                  <ChevronUpIcon className="w-3.5 h-3.5" />
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={(e) => handleMoveSection(index, "down", e)}
-                                  disabled={index === sections.length - 1}
-                                  className="hover:text-indigo-600 disabled:opacity-20"
-                                  title="Move Down"
-                                >
-                                  <ChevronDownIcon className="w-3.5 h-3.5" />
-                                </button>
+                            <PlusIcon className="w-3.5 h-3.5" /> Add Section
+                          </button>
+                        </div>
+
+                        {sections.map((sec, index) => {
+                          const meta = SECTION_META[sec.type];
+                          const isSelected = selectedSectionId === sec.id;
+                          const isHidden = sec.isActive === false;
+
+                          return (
+                            <div
+                              key={sec.id}
+                              onClick={() => setSelectedSectionId(sec.id)}
+                              className={`p-2.5 rounded-xl border transition-all cursor-pointer group flex items-center justify-between ${
+                                isSelected
+                                  ? "border-indigo-600 bg-indigo-50/50 dark:bg-indigo-950/30 shadow-xs"
+                                  : isHidden
+                                  ? "border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/40 opacity-60"
+                                  : "border-slate-200 dark:border-slate-800 hover:border-indigo-400 bg-white dark:bg-slate-900 shadow-2xs"
+                              }`}
+                            >
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <div className="flex flex-col gap-0.5 text-slate-400 opacity-60 group-hover:opacity-100">
+                                  <button
+                                    type="button"
+                                    onClick={(e) => handleMoveSection(index, "up", e)}
+                                    disabled={index === 0}
+                                    className="hover:text-indigo-600 disabled:opacity-20"
+                                  >
+                                    <ChevronUpIcon className="w-3 h-3" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => handleMoveSection(index, "down", e)}
+                                    disabled={index === sections.length - 1}
+                                    className="hover:text-indigo-600 disabled:opacity-20"
+                                  >
+                                    <ChevronDownIcon className="w-3 h-3" />
+                                  </button>
+                                </div>
+                                <span className="text-base">{meta ? meta.icon : "📦"}</span>
+                                <div className="min-w-0">
+                                  <span className="block text-xs font-bold truncate">{sec.title || (meta ? meta.label : sec.type)}</span>
+                                  <span className="block text-[10px] text-slate-400 uppercase tracking-wider font-mono">{sec.type}</span>
+                                </div>
                               </div>
-                              <span className="text-base flex-shrink-0">{meta?.icon || "🧩"}</span>
-                              <div className="truncate">
-                                <span className="block text-xs font-bold truncate">{sec.title}</span>
-                                <span className="block text-[10px] text-slate-400 uppercase font-mono truncate">{sec.type}</span>
+
+                              <div className="flex items-center gap-1">
+                                <button
+                                  type="button"
+                                  onClick={(e) => handleToggleSectionActive(sec.id, e)}
+                                  className={`p-1 rounded-lg transition-colors ${
+                                    isHidden
+                                      ? "text-slate-400 hover:text-slate-600"
+                                      : "text-emerald-600 dark:text-emerald-400 hover:text-emerald-700"
+                                  }`}
+                                  title={isHidden ? "Hidden (Click to show)" : "Visible (Click to hide)"}
+                                >
+                                  <EyeIcon className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => handleDeleteSection(sec.id, e)}
+                                  className="p-1 text-slate-400 hover:text-rose-600 rounded-lg transition-colors"
+                                  title="Delete Section"
+                                >
+                                  <TrashIcon className="w-3.5 h-3.5" />
+                                </button>
                               </div>
                             </div>
+                          );
+                        })}
+                      </div>
+                    )}
 
-                            <div className="flex items-center gap-1 flex-shrink-0">
-                              <button
-                                type="button"
-                                onClick={(e) => handleToggleSectionActive(sec.id, e)}
-                                className={`p-1 rounded-lg transition-colors ${
-                                  isHidden
-                                    ? "text-slate-400 hover:text-slate-600"
-                                    : "text-emerald-600 dark:text-emerald-400 hover:text-emerald-700"
-                                }`}
-                                title={isHidden ? "Hidden (Click to show)" : "Visible (Click to hide)"}
-                              >
-                                <EyeIcon className="w-3.5 h-3.5" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={(e) => handleDeleteSection(sec.id, e)}
-                                className="p-1 text-slate-400 hover:text-rose-600 rounded-lg transition-colors"
-                                title="Delete Section"
-                              >
-                                <TrashIcon className="w-3.5 h-3.5" />
-                              </button>
+                    {previewSurface === "collection" && (
+                      <div className="space-y-2 pt-2">
+                        <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 px-1 pb-1">
+                          Collection Page Layout &amp; Header
+                        </div>
+
+                        <div
+                          onClick={() => {
+                            setEditorMode("global");
+                            setActiveGlobalTab("shop");
+                          }}
+                          className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-indigo-400 bg-white dark:bg-slate-900 flex items-center justify-between cursor-pointer transition-colors"
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className="text-lg">🖼️</span>
+                            <div>
+                              <span className="block text-xs font-bold">Collection Hero &amp; Banner</span>
+                              <span className="block text-[11px] text-slate-500">Collection title, description &amp; hero banner</span>
                             </div>
                           </div>
-                        );
-                      })}
-                    </div>
+                          <span className="text-xs text-indigo-600 font-semibold">Inspect →</span>
+                        </div>
+
+                        <div
+                          onClick={() => {
+                            setEditorMode("global");
+                            setActiveGlobalTab("shop");
+                          }}
+                          className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-indigo-400 bg-white dark:bg-slate-900 flex items-center justify-between cursor-pointer transition-colors"
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className="text-lg">🎛️</span>
+                            <div>
+                              <span className="block text-xs font-bold">Category Filters &amp; Sidebar</span>
+                              <span className="block text-[11px] text-slate-500">Filter accordion, colors, sizes &amp; sorting</span>
+                            </div>
+                          </div>
+                          <span className="text-xs text-indigo-600 font-semibold">Inspect →</span>
+                        </div>
+
+                        <div
+                          onClick={() => {
+                            setEditorMode("global");
+                            setActiveGlobalTab("shop");
+                          }}
+                          className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-indigo-400 bg-white dark:bg-slate-900 flex items-center justify-between cursor-pointer transition-colors"
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className="text-lg">🛍️</span>
+                            <div>
+                              <span className="block text-xs font-bold">Product Grid Layout</span>
+                              <span className="block text-[11px] text-slate-500">Products per row (2-5), card variant &amp; ratio</span>
+                            </div>
+                          </div>
+                          <span className="text-xs text-indigo-600 font-semibold">Inspect →</span>
+                        </div>
+
+                        {/* Modular Collection Sections (Dynamic Add/Reorder/Delete) */}
+                        <div className="pt-3">
+                          <div className="flex items-center justify-between px-1 pb-2 border-t border-slate-200 dark:border-slate-800 pt-3">
+                            <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
+                              Modular Collection Sections
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setAddModalOpen(true)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition-colors cursor-pointer"
+                            >
+                              <PlusIcon className="w-3.5 h-3.5" /> Add Section
+                            </button>
+                          </div>
+
+                          {collectionSections.map((sec, index) => {
+                            const meta = SECTION_META[sec.type];
+                            const isSelected = selectedSectionId === sec.id;
+                            const isHidden = sec.isActive === false;
+
+                            return (
+                              <div
+                                key={sec.id}
+                                onClick={() => setSelectedSectionId(sec.id)}
+                                className={`p-2.5 mb-2 rounded-xl border transition-all cursor-pointer group flex items-center justify-between ${
+                                  isSelected
+                                    ? "border-indigo-600 bg-indigo-50/50 dark:bg-indigo-950/30 shadow-xs"
+                                    : isHidden
+                                    ? "border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/40 opacity-60"
+                                    : "border-slate-200 dark:border-slate-800 hover:border-indigo-400 bg-white dark:bg-slate-900 shadow-2xs"
+                                }`}
+                              >
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                  <div className="flex flex-col gap-0.5 text-slate-400 opacity-60 group-hover:opacity-100">
+                                    <button
+                                      type="button"
+                                      onClick={(e) => handleMoveCollectionSection(index, "up", e)}
+                                      disabled={index === 0}
+                                      className="hover:text-indigo-600 disabled:opacity-20"
+                                    >
+                                      <ChevronUpIcon className="w-3 h-3" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => handleMoveCollectionSection(index, "down", e)}
+                                      disabled={index === collectionSections.length - 1}
+                                      className="hover:text-indigo-600 disabled:opacity-20"
+                                    >
+                                      <ChevronDownIcon className="w-3 h-3" />
+                                    </button>
+                                  </div>
+                                  <span className="text-base">{meta ? meta.icon : "📦"}</span>
+                                  <div className="min-w-0">
+                                    <span className="block text-xs font-bold truncate">{sec.title || (meta ? meta.label : sec.type)}</span>
+                                    <span className="block text-[10px] text-slate-400 uppercase tracking-wider font-mono">{sec.type}</span>
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center gap-1">
+                                  <button
+                                    type="button"
+                                    onClick={(e) => handleToggleCollectionSectionActive(sec.id, e)}
+                                    className={`p-1 rounded-lg transition-colors ${
+                                      isHidden
+                                        ? "text-slate-400 hover:text-slate-600"
+                                        : "text-emerald-600 dark:text-emerald-400 hover:text-emerald-700"
+                                    }`}
+                                    title={isHidden ? "Hidden (Click to show)" : "Visible (Click to hide)"}
+                                  >
+                                    <EyeIcon className="w-3.5 h-3.5" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => handleDeleteCollectionSection(sec.id, e)}
+                                    className="p-1 text-slate-400 hover:text-rose-600 rounded-lg transition-colors"
+                                    title="Delete Section"
+                                  >
+                                    <TrashIcon className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {previewSurface === "product" && (
+                      <div className="space-y-2 pt-2">
+                        <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 px-1 pb-1">
+                          Product Page Layout &amp; Detail
+                        </div>
+
+                        <div
+                          onClick={() => {
+                            setEditorMode("global");
+                            setActiveGlobalTab("productDetail");
+                          }}
+                          className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-indigo-400 bg-white dark:bg-slate-900 flex items-center justify-between cursor-pointer transition-colors"
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className="text-lg">📸</span>
+                            <div>
+                              <span className="block text-xs font-bold">Product Media Gallery</span>
+                              <span className="block text-[11px] text-slate-500">Image ratio, thumbnails layout &amp; zoom</span>
+                            </div>
+                          </div>
+                          <span className="text-xs text-indigo-600 font-semibold">Inspect →</span>
+                        </div>
+
+                        <div
+                          onClick={() => {
+                            setEditorMode("global");
+                            setActiveGlobalTab("productDetail");
+                          }}
+                          className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-indigo-400 bg-white dark:bg-slate-900 flex items-center justify-between cursor-pointer transition-colors"
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className="text-lg">🏷️</span>
+                            <div>
+                              <span className="block text-xs font-bold">Product Details &amp; Add To Cart</span>
+                              <span className="block text-[11px] text-slate-500">Price, variants, stock status &amp; buy bar</span>
+                            </div>
+                          </div>
+                          <span className="text-xs text-indigo-600 font-semibold">Inspect →</span>
+                        </div>
+
+                        <div
+                          onClick={() => {
+                            setEditorMode("global");
+                            setActiveGlobalTab("productCard");
+                          }}
+                          className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-indigo-400 bg-white dark:bg-slate-900 flex items-center justify-between cursor-pointer transition-colors"
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className="text-lg">🎴</span>
+                            <div>
+                              <span className="block text-xs font-bold">Product Card Tokens</span>
+                              <span className="block text-[11px] text-slate-500">Card variants, badges &amp; action buttons</span>
+                            </div>
+                          </div>
+                          <span className="text-xs text-indigo-600 font-semibold">Inspect →</span>
+                        </div>
+
+                        {/* Modular Product Page Sections (Dynamic Add/Reorder/Delete) */}
+                        <div className="pt-3">
+                          <div className="flex items-center justify-between px-1 pb-2 border-t border-slate-200 dark:border-slate-800 pt-3">
+                            <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
+                              Modular Product Page Sections
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setAddModalOpen(true)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition-colors cursor-pointer"
+                            >
+                              <PlusIcon className="w-3.5 h-3.5" /> Add Section
+                            </button>
+                          </div>
+
+                          {productSections.map((sec, index) => {
+                            const meta = SECTION_META[sec.type];
+                            const isSelected = selectedSectionId === sec.id;
+                            const isHidden = sec.isActive === false;
+
+                            return (
+                              <div
+                                key={sec.id}
+                                onClick={() => setSelectedSectionId(sec.id)}
+                                className={`p-2.5 mb-2 rounded-xl border transition-all cursor-pointer group flex items-center justify-between ${
+                                  isSelected
+                                    ? "border-indigo-600 bg-indigo-50/50 dark:bg-indigo-950/30 shadow-xs"
+                                    : isHidden
+                                    ? "border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/40 opacity-60"
+                                    : "border-slate-200 dark:border-slate-800 hover:border-indigo-400 bg-white dark:bg-slate-900 shadow-2xs"
+                                }`}
+                              >
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                  <div className="flex flex-col gap-0.5 text-slate-400 opacity-60 group-hover:opacity-100">
+                                    <button
+                                      type="button"
+                                      onClick={(e) => handleMoveProductSection(index, "up", e)}
+                                      disabled={index === 0}
+                                      className="hover:text-indigo-600 disabled:opacity-20"
+                                    >
+                                      <ChevronUpIcon className="w-3 h-3" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => handleMoveProductSection(index, "down", e)}
+                                      disabled={index === productSections.length - 1}
+                                      className="hover:text-indigo-600 disabled:opacity-20"
+                                    >
+                                      <ChevronDownIcon className="w-3 h-3" />
+                                    </button>
+                                  </div>
+                                  <span className="text-base">{meta ? meta.icon : "📦"}</span>
+                                  <div className="min-w-0">
+                                    <span className="block text-xs font-bold truncate">{sec.title || (meta ? meta.label : sec.type)}</span>
+                                    <span className="block text-[10px] text-slate-400 uppercase tracking-wider font-mono">{sec.type}</span>
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center gap-1">
+                                  <button
+                                    type="button"
+                                    onClick={(e) => handleToggleProductSectionActive(sec.id, e)}
+                                    className={`p-1 rounded-lg transition-colors ${
+                                      isHidden
+                                        ? "text-slate-400 hover:text-slate-600"
+                                        : "text-emerald-600 dark:text-emerald-400 hover:text-emerald-700"
+                                    }`}
+                                    title={isHidden ? "Hidden (Click to show)" : "Visible (Click to hide)"}
+                                  >
+                                    <EyeIcon className="w-3.5 h-3.5" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => handleDeleteProductSection(sec.id, e)}
+                                    className="p-1 text-slate-400 hover:text-rose-600 rounded-lg transition-colors"
+                                    title="Delete Section"
+                                  >
+                                    <TrashIcon className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {previewSurface === "cart" && (
+                      <div className="space-y-2 pt-2">
+                        <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 px-1 pb-1">
+                          Cart &amp; Checkout Sections
+                        </div>
+
+                        <div
+                          onClick={() => {
+                            setEditorMode("global");
+                            setActiveGlobalTab("cart");
+                          }}
+                          className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-indigo-400 bg-white dark:bg-slate-900 flex items-center justify-between cursor-pointer transition-colors"
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className="text-lg">🛒</span>
+                            <div>
+                              <span className="block text-xs font-bold">Cart Items &amp; Drawer</span>
+                              <span className="block text-[11px] text-slate-500">Drawer layout, items list &amp; free shipping bar</span>
+                            </div>
+                          </div>
+                          <span className="text-xs text-indigo-600 font-semibold">Inspect →</span>
+                        </div>
+
+                        <div
+                          onClick={() => {
+                            setEditorMode("global");
+                            setActiveGlobalTab("cart");
+                          }}
+                          className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-indigo-400 bg-white dark:bg-slate-900 flex items-center justify-between cursor-pointer transition-colors"
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className="text-lg">💳</span>
+                            <div>
+                              <span className="block text-xs font-bold">Order Summary &amp; Checkout Actions</span>
+                              <span className="block text-[11px] text-slate-500">Subtotal calculation, promo box &amp; checkout CTA</span>
+                            </div>
+                          </div>
+                          <span className="text-xs text-indigo-600 font-semibold">Inspect →</span>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Fixed Footer */}
                     <div
@@ -816,49 +1318,58 @@ export default function CustomizeShell({ initialDraft, homepage, navigation }: C
           {/* Mode 2: Global Settings */}
           {editorMode === "global" && (
             <div className="p-4 flex-1 flex flex-col space-y-4 overflow-y-auto">
-              {/* Tab Navigation */}
-              <div className="space-y-4">
-                {GLOBAL_TAB_GROUPS.map((group) => (
-                  <div key={group.groupName} className="space-y-1">
-                    <h3 className="px-1 text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
-                      {group.groupName}
-                    </h3>
-                    {group.tabs.map((tab) => {
-                      const Icon = tab.icon;
-                      const isActive = activeGlobalTab === tab.key;
-                      return (
-                        <button
-                          key={tab.key}
-                          onClick={() => setActiveGlobalTab(tab.key)}
-                          className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${
-                            isActive
-                              ? "bg-indigo-600 text-white shadow-xs"
-                              : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
-                          }`}
-                        >
-                          <Icon className="w-4 h-4 flex-shrink-0" />
-                          {tab.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                ))}
-              </div>
+              {activeGlobalTab ? (
+                /* Sub-Inspector Form View */
+                <div className="space-y-4">
+                  <button
+                    onClick={() => setActiveGlobalTab(null)}
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
+                  >
+                    <ArrowLeftIcon className="w-3.5 h-3.5" /> Back to Global Settings
+                  </button>
 
-              {/* Inspector Content for Active Global Tab */}
-              <div className="pt-4 border-t border-slate-200 dark:border-slate-800">
-                {activeGlobalTab === "theme" && <ThemeTab draft={draft} onChange={updateDraft} />}
-                {activeGlobalTab === "colors" && <ColorsTab draft={draft} onChange={updateDraft} />}
-                {activeGlobalTab === "typography" && <TypographyTab draft={draft} onChange={updateDraft} />}
-                {activeGlobalTab === "buttonsCards" && <ButtonsCardsTab draft={draft} onChange={updateDraft} />}
-                {activeGlobalTab === "layout" && <LayoutTab draft={draft} onChange={updateDraft} />}
-                {activeGlobalTab === "shop" && <ShopTab draft={draft} onChange={updateDraft} />}
-                {activeGlobalTab === "productCard" && <ProductCardTab draft={draft} onChange={updateDraft} />}
-                {activeGlobalTab === "productDetail" && <ProductDetailTab draft={draft} onChange={updateDraft} />}
-                {activeGlobalTab === "cart" && <CartTab draft={draft} onChange={updateDraft} />}
-                {activeGlobalTab === "popup" && <PopupTab draft={draft} onChange={updateDraft} />}
-                {activeGlobalTab === "navigation" && <NavigationTab {...navigation} />}
-              </div>
+                  <div className="space-y-4">
+                    {activeGlobalTab === "theme" && <ThemeTab draft={draft} onChange={updateDraft} />}
+                    {activeGlobalTab === "colors" && <ColorsTab draft={draft} onChange={updateDraft} />}
+                    {activeGlobalTab === "typography" && <TypographyTab draft={draft} onChange={updateDraft} />}
+                    {activeGlobalTab === "buttonsCards" && <ButtonsCardsTab draft={draft} onChange={updateDraft} />}
+                    {activeGlobalTab === "layout" && <LayoutTab draft={draft} onChange={updateDraft} />}
+                    {activeGlobalTab === "shop" && <ShopTab draft={draft} onChange={updateDraft} />}
+                    {activeGlobalTab === "productCard" && <ProductCardTab draft={draft} onChange={updateDraft} />}
+                    {activeGlobalTab === "productDetail" && <ProductDetailTab draft={draft} onChange={updateDraft} />}
+                    {activeGlobalTab === "cart" && <CartTab draft={draft} onChange={updateDraft} />}
+                    {activeGlobalTab === "popup" && <PopupTab draft={draft} onChange={updateDraft} />}
+                    {activeGlobalTab === "navigation" && <NavigationTab {...navigation} />}
+                  </div>
+                </div>
+              ) : (
+                /* Category Menu View */
+                <div className="space-y-4">
+                  {GLOBAL_TAB_GROUPS.map((group) => (
+                    <div key={group.groupName} className="space-y-1.5">
+                      <h3 className="px-1 text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
+                        {group.groupName}
+                      </h3>
+                      {group.tabs.map((tab) => {
+                        const Icon = tab.icon;
+                        return (
+                          <button
+                            key={tab.key}
+                            onClick={() => setActiveGlobalTab(tab.key)}
+                            className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-indigo-50/70 hover:text-indigo-600 dark:hover:bg-slate-800 transition-all cursor-pointer border border-slate-100 dark:border-slate-800 hover:border-indigo-200 dark:hover:border-indigo-900 bg-white dark:bg-slate-900/60 shadow-2xs"
+                          >
+                            <div className="flex items-center gap-2.5">
+                              <Icon className="w-4 h-4 text-indigo-500 flex-shrink-0" />
+                              {tab.label}
+                            </div>
+                            <span className="text-[11px] font-medium text-slate-400">Edit →</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>

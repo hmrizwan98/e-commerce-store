@@ -12,13 +12,17 @@ import toast from "react-hot-toast";
 import type { FooterThemeConfig } from "@/lib/theme/theme-types";
 import type { ThemeLogos } from "@/types/theme";
 
+import FooterSocials from "@/components/FooterSocials";
+import type { GeneralSettings } from "@/types/site-settings";
+
 export interface FooterVariantProps {
   footerSettings?: FooterThemeConfig;
   logos?: ThemeLogos;
   storeName?: string;
+  socialLinks?: GeneralSettings["socialLinks"];
 }
 
-export default function NewsletterFooter({ footerSettings, logos, storeName = "Tradz Glint" }: FooterVariantProps) {
+export default function NewsletterFooter({ footerSettings, logos, storeName = "Tradz Glint", socialLinks }: FooterVariantProps) {
   const footerItems = useMenu("footer");
   const [email, setEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -43,7 +47,7 @@ export default function NewsletterFooter({ footerSettings, logos, storeName = "T
       <div className="container mb-12 p-8 bg-[var(--surface)] border border-[var(--border)] rounded-xl flex flex-col lg:flex-row items-center justify-between gap-8">
         <div className="space-y-2 text-center lg:text-left">
           <h3 className="text-xl font-bold uppercase tracking-wider text-[var(--heading)]">Stay Ahead of the Deals</h3>
-          <p className="text-sm text-[var(--muted)]">Subscribe to get exclusive discounts, flash sales & insider product releases.</p>
+          <p className="text-sm text-[var(--muted)]">Subscribe to get exclusive discounts, flash sales &amp; insider product releases.</p>
         </div>
 
         <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
@@ -64,7 +68,6 @@ export default function NewsletterFooter({ footerSettings, logos, storeName = "T
       <div className="container grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8">
         <div className="col-span-2 space-y-4">
           <Logo img={footerLogoImage} storeName={storeName} logoHeightPx={footerSettings?.logoHeightPx} />
-          <SocialsList1 />
         </div>
 
         {footerItems.map((item, idx) => (
@@ -84,8 +87,17 @@ export default function NewsletterFooter({ footerSettings, logos, storeName = "T
       </div>
 
       <div className="container mt-12 pt-6 border-t border-[var(--border)] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-medium text-[var(--muted)]">
-        <p>© {new Date().getFullYear()} {storeName}. All rights reserved.</p>
-        <PaymentIcons />
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300">
+            <span>🌐</span>
+            <span>English (US)</span>
+          </div>
+          <p>© {new Date().getFullYear()} {storeName}. All rights reserved.</p>
+        </div>
+        <div className="flex items-center gap-6">
+          <PaymentIcons />
+          <FooterSocials socialLinks={socialLinks} />
+        </div>
       </div>
     </footer>
   );

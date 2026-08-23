@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { getTenantHref } from "@/utils/getTenantHref";
 import { StarIcon } from "@heroicons/react/24/solid";
 import { ArrowsPointingOutIcon } from "@heroicons/react/24/outline";
 import NcImage from "@/shared/NcImage/NcImage";
@@ -39,7 +40,7 @@ export default function BoldGridCard({ data, className = "", productCardSettings
     <>
       <div className={`group relative flex flex-col bg-[var(--card)] rounded-lg overflow-hidden border-2 border-[var(--border)] hover:border-[var(--primary-600,#dc2626)] transition-all shadow-sm ${className}`}>
         <Link
-          href={`/product/${slug}`}
+          href={getTenantHref(`/product/${slug}`) as any}
           className="absolute inset-0 z-[1]"
           onClick={() => trackEvent("product_click", { productId: data.id })}
         />
@@ -83,7 +84,7 @@ export default function BoldGridCard({ data, className = "", productCardSettings
         </div>
 
         <div className="p-4 flex flex-col flex-1 justify-between space-y-3">
-          {colorAttribute && colorAttribute.values.length > 0 && (
+          {(productCardSettings?.showColorSwatches ?? true) && colorAttribute && colorAttribute.values.length > 0 && (
             <div className="flex space-x-1">
               {colorAttribute.values.slice(0, 5).map((value, index) => {
                 const hex = typeof value === "string" ? undefined : value.hex;

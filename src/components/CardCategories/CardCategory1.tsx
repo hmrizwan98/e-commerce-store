@@ -2,6 +2,7 @@ import { _getTagNameRd } from "@/contains/fakeData";
 import React, { FC } from "react";
 import NcImage from "@/shared/NcImage/NcImage";
 import Link from "next/link";
+import { getTenantHref } from "@/utils/getTenantHref";
 import { StaticImageData } from "next/image";
 import { safeImageSrc } from "@/utils/safeImageSrc";
 
@@ -22,7 +23,7 @@ const CardCategory1: FC<CardCategory1Props> = ({
 }) => {
   return (
     <Link
-      href={"/collection"}
+      href={getTenantHref("/collection") as any}
       className={`nc-CardCategory1 flex items-center ${className}`}
     >
       <NcImage

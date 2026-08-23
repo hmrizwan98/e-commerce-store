@@ -3,6 +3,7 @@
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { getCartUrl } from "@/utils/getCartUrl";
 import Prices from "@/components/Prices";
 import type { CartDrawerPanelProps } from "./StandardCartDrawer";
 
@@ -57,7 +58,7 @@ export default function MinimalCartDrawer({ items, subtotal, onRemove, close }: 
         </p>
         <div className="mt-4 grid grid-cols-2 gap-3">
           <Link
-            href="/cart"
+            href={getCartUrl() as any}
             onClick={close}
             className="block text-center border border-[var(--border)] text-[var(--muted)] hover:text-[var(--heading)] hover:border-[var(--heading)] py-3 text-xs uppercase tracking-[0.2em] transition-colors"
           >

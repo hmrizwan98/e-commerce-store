@@ -83,8 +83,8 @@ ${hexVar("muted", c.mutedText, DEFAULT_COLOR_FALLBACKS.mutedText)}
 ${hexVar("header-bg", c.headerBackground, DEFAULT_COLOR_FALLBACKS.headerBackground)}
 ${hexVar("footer-bg", c.footerBackground, DEFAULT_COLOR_FALLBACKS.footerBackground)}
 ${hexVar("top-bar-bg", c.topBarBackground, DEFAULT_COLOR_FALLBACKS.topBarBackground)}
-${hexVar("btn-bg", c.buttonBackground, DEFAULT_COLOR_FALLBACKS.buttonBackground)}
-${hexVar("btn-hover-bg", c.buttonHoverBackground, DEFAULT_COLOR_FALLBACKS.buttonHoverBackground)}
+${hexVar("btn-bg", c.buttonBackground, c.primary || DEFAULT_COLOR_FALLBACKS.primary)}
+${hexVar("btn-hover-bg", c.buttonHoverBackground, c.primary || DEFAULT_COLOR_FALLBACKS.primary)}
 ${hexVar("btn-text", c.buttonText, DEFAULT_COLOR_FALLBACKS.buttonText)}
 ${hexVar("link", c.link, DEFAULT_COLOR_FALLBACKS.link)}
 ${hexVar("link-hover", c.linkHover, DEFAULT_COLOR_FALLBACKS.linkHover)}

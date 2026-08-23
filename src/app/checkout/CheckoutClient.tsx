@@ -22,6 +22,7 @@ export interface CheckoutClientProps {
   taxRatePercent: number;
   taxInclusive: boolean;
   paymentSettings: PaymentSettings;
+  storeWhatsappNumber?: string;
 }
 
 const CheckoutClient: React.FC<CheckoutClientProps> = ({
@@ -30,6 +31,7 @@ const CheckoutClient: React.FC<CheckoutClientProps> = ({
   taxRatePercent,
   taxInclusive,
   paymentSettings,
+  storeWhatsappNumber,
 }) => {
   const items = useAppSelector((state) => state.cart.items);
   const dispatch = useAppDispatch();
@@ -99,14 +101,26 @@ const CheckoutClient: React.FC<CheckoutClientProps> = ({
       setError("Your cart is empty.");
       return;
     }
-    if (!email.trim()) {
-      setError("Please enter your email address.");
+    if (!phone.trim() && !email.trim()) {
+      setError("Please enter your phone number to receive order updates.");
       setTabActive("ContactInfo");
       handleScrollToEl("ContactInfo");
       return;
     }
-    if (!shipping.fullName.trim() || !shipping.line1.trim() || !shipping.city.trim()) {
-      setError("Please complete your shipping address.");
+    if (!shipping.fullName.trim()) {
+      setError("Please enter the Recipient Full Name in shipping address.");
+      setTabActive("ShippingAddress");
+      handleScrollToEl("ShippingAddress");
+      return;
+    }
+    if (!shipping.line1.trim()) {
+      setError("Please enter your street address, house #, or village/area.");
+      setTabActive("ShippingAddress");
+      handleScrollToEl("ShippingAddress");
+      return;
+    }
+    if (!shipping.city.trim()) {
+      setError("Please enter your city/town.");
       setTabActive("ShippingAddress");
       handleScrollToEl("ShippingAddress");
       return;
@@ -121,7 +135,7 @@ const CheckoutClient: React.FC<CheckoutClientProps> = ({
           quantity: i.quantity,
         })),
         guestName: shipping.fullName,
-        guestEmail: email,
+        guestEmail: email.trim(),
         shippingAddress: {
           fullName: shipping.fullName,
           phone,
@@ -148,18 +162,60 @@ const CheckoutClient: React.FC<CheckoutClientProps> = ({
   };
 
   if (confirmedOrder) {
+    const waText = encodeURIComponent(
+      `🛒 *New Order Confirmation*\n\nHi Store Team! I just placed Order *#${confirmedOrder.orderNumber}* on your website.\n\n👤 *Name:* ${shipping.fullName}\n📞 *Phone:* ${phone}\n📍 *Address:* ${[shipping.line1, shipping.city].filter(Boolean).join(", ")}\n💰 *Total Amount:* $${totals.total.toFixed(2)}\n\nPlease confirm my order. Thank you!`
+    );
+    const waUrl = storeWhatsappNumber ? `https://wa.me/${storeWhatsappNumber}?text=${waText}` : "";
+
     return (
       <div className="nc-CheckoutPage">
         <main className="container py-16 lg:pb-28 lg:pt-20 max-w-2xl">
-          <div className="flex flex-col items-center text-center space-y-6 py-16">
-            <h2 className="text-2xl sm:text-3xl font-semibold">Thank you for your order!</h2>
-            <p className="text-slate-500 dark:text-slate-400">
-              Your order <span className="font-semibold text-slate-900 dark:text-slate-100">{confirmedOrder.orderNumber}</span> has
-              been placed. Save this number to track your order.
-            </p>
-            <Link href={`/order-tracking?orderNumber=${confirmedOrder.orderNumber}&email=${encodeURIComponent(email)}` as any}>
-              <ButtonPrimary>Track your order</ButtonPrimary>
-            </Link>
+          <div className="flex flex-col items-center text-center space-y-6 py-12 px-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-xl">
+            <div className="w-16 h-16 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 flex items-center justify-center text-3xl shadow-xs">
+              🎉
+            </div>
+            <div>
+              <span className="text-xs font-mono font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-3 py-1 rounded-full">
+                Order Placed Successfully
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 mt-3">
+                Thank You For Your Order!
+              </h2>
+              <p className="text-slate-500 dark:text-slate-400 text-sm mt-2">
+                Order Reference Number:{" "}
+                <span className="font-extrabold font-mono text-indigo-600 dark:text-indigo-400">
+                  #{confirmedOrder.orderNumber}
+                </span>
+              </p>
+            </div>
+
+            {/* Direct WhatsApp Confirmation Button (Rendered ONLY if Store Admin configured a number!) */}
+            {storeWhatsappNumber ? (
+              <div className="w-full bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/60 rounded-2xl p-5 space-y-3">
+                <p className="text-xs font-semibold text-emerald-800 dark:text-emerald-300">
+                  ⚡ Want instant updates on WhatsApp? Tap below to send your order reference directly to our support team:
+                </p>
+                <a
+                  href={waUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 text-sm font-extrabold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/20 transition-all cursor-pointer"
+                >
+                  💬 Confirm &amp; Track Order via WhatsApp →
+                </a>
+              </div>
+            ) : null}
+
+            <div className="flex items-center gap-3 pt-2">
+              <Link href={`/order-tracking?orderNumber=${confirmedOrder.orderNumber}&email=${encodeURIComponent(email)}` as any}>
+                <ButtonPrimary className="text-xs !py-2.5">Track Order Status</ButtonPrimary>
+              </Link>
+              <Link href={"/collection" as any}>
+                <ButtonPrimary className="text-xs !py-2.5 !bg-slate-800 hover:!bg-slate-900">
+                  Continue Shopping
+                </ButtonPrimary>
+              </Link>
+            </div>
           </div>
         </main>
       </div>
@@ -280,75 +336,90 @@ const CheckoutClient: React.FC<CheckoutClientProps> = ({
               Clothing Categories
             </Link>
             <span className="text-xs mx-1 sm:mx-1.5">/</span>
-            <span className="underline">Checkout</span>
-          </div>
-        </div>
-
-        {!items.length ? (
-          <div className="flex flex-col items-center py-20 space-y-6">
-            <p className="text-neutral-500 dark:text-neutral-400 text-lg">
-              Your cart is empty.
-            </p>
-            <Link href={"/collection" as any}>
-              <ButtonPrimary>Continue shopping</ButtonPrimary>
-            </Link>
-          </div>
-        ) : (
-          <div className="flex flex-col lg:flex-row">
-            <div className="flex-1">{renderLeft()}</div>
-
-            <div className="flex-shrink-0 border-t lg:border-t-0 lg:border-l border-slate-200 dark:border-slate-700 my-10 lg:my-0 lg:mx-10 xl:lg:mx-14 2xl:mx-16 "></div>
-
-            <div className="w-full lg:w-[36%] ">
-              <h3 className="text-lg font-semibold">Order summary</h3>
-              <div className="mt-8 divide-y divide-slate-200/70 dark:divide-slate-700 ">
-                {items.map(renderProduct)}
-              </div>
-
-              <div className="mt-10 pt-6 text-sm text-slate-500 dark:text-slate-400 border-t border-slate-200/70 dark:border-slate-700 ">
-                <div className="flex justify-between py-2.5">
-                  <span>Subtotal</span>
-                  <span className="font-semibold text-slate-900 dark:text-slate-200">
-                    ${totals.subtotal.toFixed(2)}
-                  </span>
-                </div>
-                <div className="flex justify-between py-2.5">
-                  <span>Shipping estimate</span>
-                  <span className="font-semibold text-slate-900 dark:text-slate-200">
-                    {totals.shippingCost === 0 ? "Free" : `$${totals.shippingCost.toFixed(2)}`}
-                  </span>
-                </div>
-                <div className="flex justify-between py-2.5">
-                  <span>Tax estimate</span>
-                  <span className="font-semibold text-slate-900 dark:text-slate-200">
-                    ${totals.tax.toFixed(2)}
-                  </span>
-                </div>
-                <div className="flex justify-between font-semibold text-slate-900 dark:text-slate-200 text-base pt-4">
-                  <span>Order total</span>
-                  <span>${totals.total.toFixed(2)}</span>
-                </div>
-              </div>
-
-              {error && (
-                <div className="mt-4 p-3 rounded-lg bg-red-50 text-red-700 text-sm border border-red-200">
-                  {error}
-                </div>
-              )}
-
-              <ButtonPrimary
-                className="mt-8 w-full"
-                onClick={handleConfirmOrder}
-                disabled={submitting}
-              >
-                {submitting ? "Placing order…" : "Confirm order"}
-              </ButtonPrimary>
+              <span className="text-xs mx-1 sm:mx-1.5 text-slate-400">/</span>
+              <span className="text-slate-900 dark:text-slate-100 font-semibold">Checkout</span>
             </div>
           </div>
-        )}
-      </main>
-    </div>
-  );
-};
+
+          {!items.length ? (
+            <div className="flex flex-col items-center py-20 space-y-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-12 text-center shadow-xs">
+              <div className="w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 flex items-center justify-center text-2xl">
+                🛍️
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">Your cart is empty</h3>
+                <p className="text-sm text-slate-500 mt-1">Explore our catalog to add items before checking out.</p>
+              </div>
+              <Link href={"/collection" as any}>
+                <ButtonPrimary className="shadow-md">Explore Products →</ButtonPrimary>
+              </Link>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+              <div className="lg:col-span-7 xl:col-span-8">{renderLeft()}</div>
+
+              <div className="lg:col-span-5 xl:col-span-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 sm:p-7 shadow-xs sticky top-24 space-y-6">
+                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+                  <h3 className="text-sm font-mono font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
+                    Order Summary ({items.length} {items.length === 1 ? "Item" : "Items"})
+                  </h3>
+                  <Link href="/cart" className="text-xs text-indigo-600 font-bold hover:underline">
+                    Edit Cart
+                  </Link>
+                </div>
+
+                <div className="divide-y divide-slate-100 dark:divide-slate-800/60 max-h-72 overflow-y-auto pr-1">
+                  {items.map(renderProduct)}
+                </div>
+
+                <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-2.5 text-xs text-slate-600 dark:text-slate-400 font-medium">
+                  <div className="flex justify-between">
+                    <span>Subtotal</span>
+                    <span className="font-bold text-slate-900 dark:text-slate-100">
+                      ${totals.subtotal.toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Estimated Shipping</span>
+                    <span className="font-bold text-slate-900 dark:text-slate-100">
+                      {totals.shippingCost === 0 ? "Free" : `$${totals.shippingCost.toFixed(2)}`}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Tax</span>
+                    <span className="font-bold text-slate-900 dark:text-slate-100">
+                      ${totals.tax.toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between font-extrabold text-slate-900 dark:text-slate-100 text-base pt-3 border-t border-slate-100 dark:border-slate-800">
+                    <span>Total Amount</span>
+                    <span className="text-indigo-600 dark:text-indigo-400">${totals.total.toFixed(2)}</span>
+                  </div>
+                </div>
+
+                {error && (
+                  <div className="p-3 rounded-xl bg-rose-50 text-rose-700 text-xs font-semibold border border-rose-200 flex items-center gap-2">
+                    ⚠️ {error}
+                  </div>
+                )}
+
+                <ButtonPrimary
+                  className="w-full !py-3 text-sm font-extrabold shadow-md shadow-indigo-500/20"
+                  onClick={handleConfirmOrder}
+                  disabled={submitting}
+                >
+                  {submitting ? "Placing Your Order..." : "Confirm & Place Order →"}
+                </ButtonPrimary>
+
+                <p className="text-[11px] text-slate-400 text-center flex items-center justify-center gap-1">
+                  🔒 256-bit Encrypted Checkout · 100% Guaranteed Delivery
+                </p>
+              </div>
+            </div>
+          )}
+        </main>
+      </div>
+    );
+  };
 
 export default CheckoutClient;

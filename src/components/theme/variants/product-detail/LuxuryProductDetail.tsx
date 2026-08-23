@@ -117,6 +117,7 @@ export default function LuxuryProductDetail({
           crossSellProducts={crossSellProducts}
           upsellProducts={upsellProducts}
           productCardSettings={productCardSettings}
+          productDetailSettings={productDetailSettings}
           isOpenModalViewAllReviews={s.isOpenModalViewAllReviews}
           setIsOpenModalViewAllReviews={s.setIsOpenModalViewAllReviews}
         />

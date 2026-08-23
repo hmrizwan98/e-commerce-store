@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { getTenantHref } from "@/utils/getTenantHref";
 import { StarIcon } from "@heroicons/react/24/solid";
 import { ArrowsPointingOutIcon } from "@heroicons/react/24/outline";
 import NcImage from "@/shared/NcImage/NcImage";
@@ -39,7 +40,7 @@ export default function MinimalCard({ data, className = "", productCardSettings 
     <>
       <div className={`group relative flex flex-col bg-[var(--card)] rounded-[var(--card-radius,1.5rem)] overflow-hidden transition-all duration-300 border border-[var(--border)] ${className}`}>
         <Link
-          href={`/product/${slug}`}
+          href={getTenantHref(`/product/${slug}`) as any}
           className="absolute inset-0 z-[1]"
           onClick={() => trackEvent("product_click", { productId: data.id })}
         />

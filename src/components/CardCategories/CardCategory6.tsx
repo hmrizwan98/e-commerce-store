@@ -4,6 +4,7 @@ import explore1Svg from "@/images/collections/explore1.svg";
 import { ArrowRightIcon } from "@heroicons/react/24/outline";
 import { StaticImageData } from "next/image";
 import Link from "next/link";
+import { getTenantHref } from "@/utils/getTenantHref";
 import { safeImageSrc } from "@/utils/safeImageSrc";
 
 export interface CardCategory6Props {
@@ -52,7 +53,7 @@ const CardCategory6: FC<CardCategory6Props> = ({
           </div>
 
           <Link
-            href={"/collection"}
+            href={getTenantHref("/collection") as any}
             className="flex items-center text-sm font-medium group-hover:text-primary-500 transition-colors"
           >
             <span>See Collection</span>
@@ -61,7 +62,7 @@ const CardCategory6: FC<CardCategory6Props> = ({
         </div>
       </div>
 
-      <Link href={"/collection"}></Link>
+      <Link href={getTenantHref("/collection") as any}></Link>
     </div>
   );
 };

@@ -48,6 +48,7 @@ export interface ProductCardThemeConfig extends ThemeProductCard {
   showWishlist?: boolean;
   showCompare?: boolean;
   showQuickView?: boolean;
+  showColorSwatches?: boolean;
 }
 
 export interface ProductDetailThemeConfig {
@@ -55,6 +56,11 @@ export interface ProductDetailThemeConfig {
   galleryStyle?: "static" | "clickable-thumbnails";
   purchasePanelStyle?: "standard" | "sticky" | "compact";
   showCompare?: boolean;
+  showWishlist?: boolean;
+  showReviews?: boolean;
+  showRelatedProducts?: boolean;
+  showBottomPromo?: boolean;
+  sections?: HomepageSection[];
 }
 
 export interface CartThemeConfig {
@@ -107,6 +113,7 @@ export interface HomepageThemeSectionConfig {
   buttonText?: string;
   placeholderText?: string;
   layoutVariant?: string;
+  cardVariant?: string;
   settings?: Record<string, unknown>;
 }
 
@@ -116,6 +123,25 @@ export interface HomepageThemeConfig {
 
 import type { HomepageSection } from "@/types/homepage-section";
 
+export interface CollectionThemeConfig {
+  gridColumnsDesktop?: 2 | 3 | 4 | 5;
+  gridColumnsMobile?: 1 | 2;
+  showSidebarFilter?: boolean;
+  filterPosition?: "left" | "top";
+  showSorting?: boolean;
+  showHeroBanner?: boolean;
+  heroStyle?: "minimal" | "full-width" | "luxe";
+  heroTitle?: string;
+  heroSubtitle?: string;
+  heroImageUrl?: string;
+  heroHeight?: "small" | "medium" | "large";
+  showBottomPromo?: boolean;
+  showBottomNewsletter?: boolean;
+  showFeaturedSection?: boolean;
+  productsPerPage?: 8 | 12 | 16 | 24;
+  sections?: HomepageSection[];
+}
+
 export interface SystemThemeConfig extends Omit<Theme, "header" | "footer" | "productCard"> {
   presetId: ThemePresetId;
   header: HeaderThemeConfig;
@@ -123,6 +149,7 @@ export interface SystemThemeConfig extends Omit<Theme, "header" | "footer" | "pr
   productCard: ProductCardThemeConfig;
   productDetail?: ProductDetailThemeConfig;
   cart?: CartThemeConfig;
+  collection?: CollectionThemeConfig;
   homepage?: HomepageThemeConfig;
   popup?: PopupThemeConfig;
   hero?: HeroThemeConfig;

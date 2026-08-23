@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { getTenantHref } from "@/utils/getTenantHref";
 import { StarIcon } from "@heroicons/react/24/solid";
 import { ArrowsPointingOutIcon, ShoppingBagIcon } from "@heroicons/react/24/outline";
 import NcImage from "@/shared/NcImage/NcImage";
@@ -39,7 +40,7 @@ export default function DealCard({ data, className = "", productCardSettings }: 
     <>
       <div className={`group relative flex flex-col bg-white dark:bg-slate-900 rounded-[1.75rem] border border-slate-200/90 dark:border-slate-800 p-3.5 transition-all duration-300 hover:shadow-lg hover:border-slate-300 dark:hover:border-slate-700 ${className}`}>
         <Link
-          href={`/product/${slug}`}
+          href={getTenantHref(`/product/${slug}`) as any}
           className="absolute inset-0 z-[1]"
           onClick={() => trackEvent("product_click", { productId: data.id })}
         />

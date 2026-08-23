@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { getTenantHref } from "@/utils/getTenantHref";
 import { StarIcon } from "@heroicons/react/24/solid";
 import { HeartIcon as HeartOutline } from "@heroicons/react/24/outline";
 import { HeartIcon as HeartSolid } from "@heroicons/react/24/solid";
@@ -122,7 +123,7 @@ export default function SleekPillCard({ data, className = "", productCardSetting
         className={`group relative flex flex-col bg-transparent border-0 shadow-none p-0 ${className}`}
       >
         <Link
-          href={`/product/${slug}`}
+          href={getTenantHref(`/product/${slug}`) as any}
           className="absolute inset-0 z-[1]"
           onClick={() => trackEvent("product_click", { productId: id })}
         />
@@ -178,8 +179,8 @@ export default function SleekPillCard({ data, className = "", productCardSetting
           )}
         </div>
 
-        {/* Dynamic Color Swatches - Only rendered if product actually has color variants */}
-        {colorValues.length > 0 && (
+        {/* Dynamic Color Swatches - Only rendered if enabled and product actually has color variants */}
+        {(productCardSettings?.showColorSwatches ?? true) && colorValues.length > 0 && (
           <div className="mt-3 mb-1 flex items-center gap-2 px-0.5 z-[2]">
             {colorValues.map((val: any, idx: number) => {
               const hex = typeof val === "object" ? val.hex : undefined;

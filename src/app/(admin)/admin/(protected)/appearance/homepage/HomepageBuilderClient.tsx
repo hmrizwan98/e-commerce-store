@@ -15,12 +15,22 @@ export interface HomepageBuilderClientProps {
 }
 
 const DEFAULT_HOMEPAGE_SECTIONS: HomepageThemeSectionConfig[] = [
-  { id: "s1", type: "hero", enabled: true, order: 1, heading: "New Season Arrivals" },
-  { id: "s2", type: "featuredProducts", enabled: true, order: 2, heading: "Featured Products", subHeading: "Top handpicked items" },
-  { id: "s3", type: "categories", enabled: true, order: 3, heading: "Shop by Category" },
-  { id: "s4", type: "brands", enabled: true, order: 4, heading: "Featured Brands" },
-  { id: "s5", type: "testimonials", enabled: true, order: 5, heading: "Customer Reviews" },
-  { id: "s6", type: "newsletter", enabled: true, order: 6, heading: "Stay Informed" },
+  { id: "s1", type: "hero", enabled: true, order: 1, heading: "Hero Slider" },
+  { id: "s2", type: "onSale", enabled: true, order: 2, heading: "On Sale", subHeading: "LIMITED TIME DISCOUNTS", cardVariant: "deal-card" },
+  { id: "s3", type: "bestSellers", enabled: true, order: 3, heading: "Best Sellers", subHeading: "BEST SELLERS OF THE MONTH" },
+  { id: "s4", type: "blog", enabled: true, order: 4, heading: "Latest Blog", subHeading: "FROM THE BLOG" },
+  { id: "s5", type: "newArrivals", enabled: true, order: 5, heading: "New Arrivals", subHeading: "DISCOVER LATEST ARRIVALS" },
+  { id: "s6", type: "howItWork", enabled: true, order: 6, heading: "How It Works" },
+  { id: "s7", type: "largeProductSlider", enabled: true, order: 7, heading: "Large Product Slider", subHeading: "CHOSEN BY OUR EXPERTS" },
+  { id: "s8", type: "featuredProducts", enabled: true, order: 8, heading: "Featured Products", subHeading: "Top handpicked items" },
+  { id: "s9", type: "collections", enabled: true, order: 9, heading: "Shop by Category" },
+  { id: "s10", type: "socialGallery", enabled: true, order: 10, heading: "Social Gallery", subHeading: "Follow us on Instagram" },
+  { id: "s11", type: "brands", enabled: true, order: 11, heading: "Brands" },
+  { id: "s12", type: "newsletter", enabled: true, order: 12, heading: "Newsletter" },
+  { id: "s13", type: "testimonials", enabled: true, order: 13, heading: "Customer Reviews", subHeading: "HAPPY CUSTOMERS" },
+  { id: "s14", type: "featureItemsGrid", enabled: true, order: 14, heading: "Feature Items Grid", subHeading: "DISCOVER MORE PRODUCTS" },
+  { id: "s15", type: "promo", enabled: true, order: 15, heading: "Promo Banner" },
+  { id: "s16", type: "discoverMore", enabled: true, order: 16, heading: "Discover More Slider" },
 ];
 
 export default function HomepageBuilderClient({ draftTheme, activeTheme }: HomepageBuilderClientProps) {

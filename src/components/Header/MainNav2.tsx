@@ -11,11 +11,15 @@ import CartDropdown from "./CartDropdown";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
 
+import type { ThemeLogos } from "@/types/theme";
+
 export interface MainNav2Props {
   className?: string;
+  logos?: ThemeLogos;
+  storeName?: string;
 }
 
-const MainNav2: FC<MainNav2Props> = ({ className = "" }) => {
+const MainNav2: FC<MainNav2Props> = ({ className = "", logos, storeName }) => {
   const [showSearchForm, setShowSearchForm] = useState(false);
   const router = useRouter();
 
@@ -76,12 +80,12 @@ const MainNav2: FC<MainNav2Props> = ({ className = "" }) => {
     <div className="nc-MainNav2 relative z-10 bg-white dark:bg-slate-900 ">
       <div className="container">
         <div className="flex justify-between items-center w-full min-h-[50px] py-1.5">
-          <div className="flex items-center md:hidden flex-1">
-            <MenuBar />
+          <div className="flex-1 flex items-center md:hidden">
+            <MenuBar logos={logos} storeName={storeName} />
           </div>
 
-          <div className="flex lg:flex-1 items-center space-x-3 sm:space-x-8">
-            <Logo />
+          <div className="flex items-center justify-center lg:flex-1 lg:justify-start space-x-3 sm:space-x-8">
+            <Logo img={logos?.logoLight} imgLight={logos?.logoDark} storeName={storeName} />
             {!showSearchForm && (
               <div className="hidden md:block h-10 border-l border-slate-200 dark:border-slate-700"></div>
             )}

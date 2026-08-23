@@ -64,20 +64,71 @@ export default async function ThemeCustomizerPreviewPage({ searchParams }: Previ
 
   const renderSurfaceContent = () => {
     switch (previewSurface) {
-      case "collection":
+      case "collection": {
+        const col = draft.collection ?? {};
+        const showHero = col.showHeroBanner ?? true;
+        const heroTitle = col.heroTitle || "Collection";
+        const heroSubtitle = col.heroSubtitle || "Discover exceptional products handcrafted for your everyday lifestyle.";
+        const heroImage = col.heroImageUrl;
+        const heroHeight = col.heroHeight || "medium";
+        const desktopCols = col.gridColumnsDesktop ?? 3;
+        const mobileCols = col.gridColumnsMobile ?? 2;
+
+        const heroHeightClass = {
+          small: "py-8 sm:py-10",
+          medium: "py-12 sm:py-16",
+          large: "py-16 sm:py-24",
+        }[heroHeight];
+
+        const gridColsClass = `${mobileCols === 1 ? "grid-cols-1" : "grid-cols-2"} sm:grid-cols-2 ${
+          desktopCols === 2
+            ? "lg:grid-cols-2"
+            : desktopCols === 3
+            ? "lg:grid-cols-3"
+            : desktopCols === 5
+            ? "lg:grid-cols-5"
+            : "lg:grid-cols-4"
+        }`;
+
         return (
-          <div className="container py-12 space-y-8">
-            <div>
-              <h1 className="text-3xl font-bold text-[var(--heading)]">Collection Preview</h1>
-              <p className="text-sm text-[var(--muted)] mt-1">Previewing product grid layout and product card tokens.</p>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="container py-12 space-y-12">
+            {showHero && (
+              <div className={`relative overflow-hidden rounded-3xl bg-slate-900 text-white ${heroHeightClass} px-6 sm:px-12 shadow-lg`}>
+                {heroImage && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={heroImage} alt={heroTitle} className="absolute inset-0 w-full h-full object-cover opacity-45" />
+                )}
+                <div className="relative z-10 max-w-screen-md space-y-3">
+                  <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight drop-shadow-xs">
+                    {heroTitle}
+                  </h1>
+                  <p className="text-sm sm:text-base text-slate-200 font-medium leading-relaxed max-w-xl drop-shadow-xs">
+                    {heroSubtitle}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <div className={`grid ${gridColsClass} gap-6`}>
               {products.map((p) => (
                 <ThemeProductCardAdapter key={p.id} data={p} productCardSettings={draft.productCard} />
               ))}
             </div>
+
+            {(col.showBottomPromo ?? true) && (
+              <div className="p-8 bg-slate-900 text-white rounded-3xl flex flex-col md:flex-row items-center justify-between gap-6">
+                <div>
+                  <h3 className="text-xl font-bold">Special Promo Offer</h3>
+                  <p className="text-xs text-slate-300 mt-1">Get up to 50% off on all trending collection items.</p>
+                </div>
+                <button className="px-5 py-2.5 bg-white text-slate-900 text-xs font-bold rounded-xl shadow-xs">
+                  Shop Deals
+                </button>
+              </div>
+            )}
           </div>
         );
+      }
 
       case "product":
         if (!sampleProduct) {

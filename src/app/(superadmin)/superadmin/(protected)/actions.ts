@@ -341,6 +341,10 @@ export async function createStore(input: StoreFormInput): Promise<CreateStoreRes
 
     await adminAuth().setCustomUserClaims(userRecord.uid, { role: "admin", tenantId: storeId });
     stage("OWNER_ASSIGNED", { storeId });
+
+    // Synchronously install default theme & seed data so storefront is 100% populated on day one
+    await installDefaultTheme(storeDocRef, {}, stage);
+    stage("THEME_INSTALL_FINISHED", { storeId });
   } catch (err) {
     logActionError(traceId, "OWNER_ASSIGNED", err);
     await cleanupPartialStore(ref, userRecord.uid);
@@ -375,9 +379,6 @@ export async function createStore(input: StoreFormInput): Promise<CreateStoreRes
     (async () => {
     try {
       await Promise.all([
-        installDefaultTheme(storeDocRef, {}, stage).then(() =>
-          stage("THEME_INSTALL_FINISHED", { storeId })
-        ),
         provisionCloudinaryMetadata(storeDocRef, slug).then(() => stage("CLOUDINARY_PROVISIONED", { storeId })),
         provisionDeploymentMetadata(storeDocRef, {
           websiteUrl: buildTenantUrl(platformBaseUrl, slug),

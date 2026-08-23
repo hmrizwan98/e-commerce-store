@@ -1,6 +1,7 @@
 import React, { FC } from "react";
 import NcImage from "@/shared/NcImage/NcImage";
 import Link from "next/link";
+import { getTenantHref } from "@/utils/getTenantHref";
 import { StaticImageData } from "next/image";
 import { safeImageSrc } from "@/utils/safeImageSrc";
 
@@ -23,7 +24,7 @@ const CardCategory2: FC<CardCategory2Props> = ({
 }) => {
   return (
     <Link
-      href={"/collection"}
+      href={getTenantHref("/collection") as any}
       className={`nc-CardCategory2 ${className}`}
       data-nc-id="CardCategory2"
     >

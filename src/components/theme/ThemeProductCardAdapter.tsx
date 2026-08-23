@@ -34,6 +34,6 @@ export default function ThemeProductCardAdapter({ data, productCardSettings, cla
     case "minimal":
       return <MinimalCard data={data} className={className} productCardSettings={productCardSettings} />;
     default:
-      return <ProductCard data={data} className={className} isLiked={isLiked} />;
+      return <ProductCard data={data} className={className} isLiked={isLiked} productCardSettings={productCardSettings} />;
   }
 }

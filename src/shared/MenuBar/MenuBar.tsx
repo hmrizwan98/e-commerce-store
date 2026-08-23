@@ -5,8 +5,13 @@ import { Transition, Dialog } from "@/app/headlessui";
 import NavMobile from "@/shared/Navigation/NavMobile";
 import { useMenu } from "@/hooks/useMenu";
 
-export interface MenuBarProps {}
-const MenuBar: React.FC<MenuBarProps> = () => {
+import type { ThemeLogos } from "@/types/theme";
+
+export interface MenuBarProps {
+  logos?: ThemeLogos;
+  storeName?: string;
+}
+const MenuBar: React.FC<MenuBarProps> = ({ logos, storeName }) => {
   const [isVisable, setIsVisable] = useState(false);
   const menuItems = useMenu("header");
 
@@ -33,7 +38,7 @@ const MenuBar: React.FC<MenuBarProps> = () => {
                 leaveTo="opacity-0 -translate-x-14"
               >
                 <div className="z-20 relative">
-                  <NavMobile data={menuItems} onClickClose={handleCloseMenu} />
+                  <NavMobile data={menuItems} onClickClose={handleCloseMenu} logos={logos} storeName={storeName} />
                 </div>
               </Transition.Child>
 

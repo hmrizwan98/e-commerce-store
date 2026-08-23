@@ -113,9 +113,12 @@ async function renderSectionInner(
   section: HomepageSection,
   themeConfig: SystemThemeConfig
 ): Promise<JSX.Element | null> {
-  const { heading, subHeading, limit, columns, showProductCount, viewAllText, viewAllHref } = section.config;
+  const { heading, subHeading, limit, columns, showProductCount, viewAllText, viewAllHref, cardVariant } = section.config;
   const presetId = themeConfig.presetId;
-  const productCardSettings = themeConfig.productCard;
+  const baseProductCardSettings = themeConfig.productCard;
+  const productCardSettings = cardVariant && cardVariant !== "default"
+    ? { ...baseProductCardSettings, variant: cardVariant as any }
+    : baseProductCardSettings;
 
   switch (section.type) {
     case 'discoverMore':
@@ -388,6 +391,70 @@ export interface HomeContentProps {
   themeConfig?: SystemThemeConfig;
 }
 
+const DEFAULT_HOMEPAGE_SECTIONS_FALLBACK: HomepageSection[] = [
+  { id: "s1", type: "hero", title: "Hero Slider", isActive: true, order: 1, config: {} },
+  { id: "s2", type: "onSale", title: "On Sale", isActive: true, order: 2, config: { heading: "On Sale", mode: "auto", limit: 8, cardVariant: "deal-card" } },
+  { id: "s3", type: "bestSellers", title: "Best Sellers", isActive: true, order: 3, config: { heading: "Best Sellers", subHeading: "BEST SELLERS OF THE MONTH", mode: "auto", limit: 8 } },
+  { id: "s4", type: "blog", title: "Latest Blog", isActive: true, order: 4, config: { heading: "The Latest News", subHeading: "FROM THE BLOG", limit: 4 } },
+  { id: "s5", type: "newArrivals", title: "New Arrivals", isActive: true, order: 5, config: { heading: "New Arrivals", subHeading: "DISCOVER LATEST ARRIVALS", mode: "auto", limit: 8 } },
+  {
+    id: "s6",
+    type: "howItWork",
+    title: "How It Works",
+    isActive: true,
+    order: 6,
+    config: {
+      items: [
+        { id: "1", icon: "🔍", title: "Filter & Discover", subtitle: "Smart filtering and search" },
+        { id: "2", icon: "🛍️", title: "Add to bag", subtitle: "Easily select and add items" },
+        { id: "3", icon: "📦", title: "Fast shipping", subtitle: "Worldwide delivery options" },
+        { id: "4", icon: "✨", title: "Enjoy the product", subtitle: "Quality guaranteed" },
+      ],
+    },
+  },
+  { id: "s7", type: "largeProductSlider", title: "Large Product Slider", isActive: true, order: 7, config: { heading: "CHOSEN BY OUR EXPERTS", mode: "auto", limit: 3 } },
+  { id: "s8", type: "featuredProducts", title: "Featured Products", isActive: true, order: 8, config: { heading: "Featured Products", subHeading: "Top handpicked items", mode: "auto", limit: 8 } },
+  { id: "s9", type: "collections", title: "Shop by Category", isActive: true, order: 9, config: { heading: "Shop by Category", mode: "auto" } },
+  {
+    id: "s10",
+    type: "socialGallery",
+    title: "Social Gallery",
+    isActive: true,
+    order: 10,
+    config: {
+      heading: "Follow Us On Instagram",
+      items: [
+        { id: "1", image: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=600&q=80", href: "#" },
+        { id: "2", image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=600&q=80", href: "#" },
+        { id: "3", image: "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&w=600&q=80", href: "#" },
+        { id: "4", image: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=600&q=80", href: "#" },
+        { id: "5", image: "https://images.unsplash.com/photo-1601924994987-69e26d50dc26?auto=format&fit=crop&w=600&q=80", href: "#" },
+      ],
+    },
+  },
+  { id: "s11", type: "brands", title: "Brands", isActive: true, order: 11, config: { heading: "Top Featured Brands" } },
+  { id: "s12", type: "newsletter", title: "Newsletter", isActive: true, order: 12, config: { heading: "Join our newsletter 📦" } },
+  { id: "s13", type: "testimonials", title: "Testimonials", isActive: true, order: 13, config: { heading: "What People Are Saying", subHeading: "HAPPY CUSTOMERS" } },
+  { id: "s14", type: "featureItemsGrid", title: "Feature Items Grid", isActive: true, order: 14, config: { heading: "What's trending now", subHeading: "DISCOVER MORE PRODUCTS", mode: "auto", limit: 8 } },
+  { id: "s15", type: "promo", title: "Promo Banner", isActive: true, order: 15, config: { variant: 1 } },
+  {
+    id: "s16",
+    type: "discoverMore",
+    title: "Discover More Slider",
+    isActive: true,
+    order: 16,
+    config: {
+      heading: "Discover more",
+      subHeading: "Good things are waiting for you",
+      items: [
+        { id: "1", title: "Explore new arrivals", subtitle: "Give the gift of choice", image: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=600&q=80", href: "/collection" },
+        { id: "2", title: "Digital gift cards", subtitle: "Give the gift of choice", image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=600&q=80", href: "/collection-2" },
+        { id: "3", title: "Sale collection", subtitle: "Up to 80% off", image: "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&w=600&q=80", href: "/search" },
+      ],
+    },
+  },
+];
+
 export default async function HomeContent({ themeConfig: themeConfigOverride }: HomeContentProps = {}) {
   const tenant = isPlatformDomainRequest() ? null : await getCurrentTenant();
   if (!tenant) {
@@ -401,7 +468,8 @@ export default async function HomeContent({ themeConfig: themeConfigOverride }: 
   const themeConfig = themeConfigOverride ?? (await getActiveThemeConfig());
   const presetId = themeConfig.presetId;
 
-  const sections = await getActiveHomepageSections();
+  const rawSections = await getActiveHomepageSections();
+  const sections = rawSections.length ? rawSections : DEFAULT_HOMEPAGE_SECTIONS_FALLBACK;
 
   const heroSection = sections.find((s) => s.type === 'hero');
   const restSections = sections.filter((s) => s.type !== 'hero');

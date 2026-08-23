@@ -17,17 +17,22 @@ import Link from "next/link";
 import NcImage from "@/shared/NcImage/NcImage";
 import { trackEvent } from "@/lib/analytics/track";
 import { safeImageSrc } from "@/utils/safeImageSrc";
+import { getTenantHref } from "@/utils/getTenantHref";
+
+import type { ProductCardThemeConfig } from "@/lib/theme/theme-types";
 
 export interface ProductCardProps {
   className?: string;
   data: Product;
   isLiked?: boolean;
+  productCardSettings?: ProductCardThemeConfig;
 }
 
 const ProductCard: FC<ProductCardProps> = ({
   className = "",
   data,
   isLiked,
+  productCardSettings,
 }) => {
   const {
     name,
@@ -68,8 +73,10 @@ const ProductCard: FC<ProductCardProps> = ({
     return hex ? "border-slate-900 dark:border-slate-100" : "border-transparent";
   };
 
+  const showColorSwatches = productCardSettings?.showColorSwatches ?? true;
+
   const renderVariants = () => {
-    if (!colorAttribute || !colorAttribute.values.length) {
+    if (!showColorSwatches || !colorAttribute || !colorAttribute.values.length) {
       return null;
     }
 
@@ -151,13 +158,13 @@ const ProductCard: FC<ProductCardProps> = ({
         className={`nc-ProductCard group relative flex flex-col bg-white dark:bg-slate-900/90 rounded-2xl lg:rounded-3xl border border-slate-100 dark:border-slate-800/80 p-3 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${className}`}
       >
         <Link
-          href={`/product/${slug}`}
+          href={getTenantHref(`/product/${slug}`) as any}
           className="absolute inset-0 z-10"
           onClick={() => trackEvent("product_click", { productId: data.id })}
         ></Link>
 
         <div className="relative flex-shrink-0 bg-slate-50 dark:bg-slate-800/50 rounded-xl lg:rounded-2xl overflow-hidden z-0">
-          <Link href={`/product/${slug}`} className="block">
+          <Link href={getTenantHref(`/product/${slug}`) as any} className="block">
             <NcImage
               containerClassName="flex aspect-w-11 aspect-h-12 w-full h-0 transition-transform duration-500 ease-out group-hover:scale-105"
               src={image}

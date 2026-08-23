@@ -7,6 +7,7 @@ import { createStore, updateStore, type StoreFormInput } from "./actions";
 import { slugify } from "@/lib/utils/slugify";
 import { buildTenantUrl } from "@/lib/platform/tenant-url";
 import type { Store } from "@/types/store";
+import { COUNTRY_OPTIONS, CURRENCY_OPTIONS, TIMEZONE_OPTIONS } from "@/lib/constants/location-options";
 
 const StoreForm: React.FC<{ mode: "create" | "edit"; store?: Store; platformBaseUrl: string }> = ({
   mode,
@@ -24,9 +25,9 @@ const StoreForm: React.FC<{ mode: "create" | "edit"; store?: Store; platformBase
   const [email, setEmail] = useState(store?.email ?? "");
   const [ownerName, setOwnerName] = useState(store?.ownerName ?? "");
   const [phone, setPhone] = useState(store?.phone ?? "");
-  const [country, setCountry] = useState(store?.country ?? "");
-  const [currency, setCurrency] = useState(store?.currency ?? "USD");
-  const [timezone, setTimezone] = useState(store?.timezone ?? "");
+  const [country, setCountry] = useState(store?.country || "Pakistan");
+  const [currency, setCurrency] = useState(store?.currency || "PKR");
+  const [timezone, setTimezone] = useState(store?.timezone || "Asia/Karachi");
   const [language, setLanguage] = useState(store?.language ?? "en");
   const [notes, setNotes] = useState(store?.notes ?? "");
   const [domainsText, setDomainsText] = useState(store?.domains?.join("\n") ?? "");
@@ -204,15 +205,33 @@ const StoreForm: React.FC<{ mode: "create" | "edit"; store?: Store; platformBase
           </div>
           <div>
             <label className={labelClass}>Country</label>
-            <input className={inputClass} value={country} onChange={(e) => setCountry(e.target.value)} />
+            <select className={inputClass} value={country} onChange={(e) => setCountry(e.target.value)}>
+              {COUNTRY_OPTIONS.map((c) => (
+                <option key={c.name} value={c.name}>
+                  {c.flag} {c.name}
+                </option>
+              ))}
+            </select>
           </div>
           <div>
             <label className={labelClass}>Currency</label>
-            <input className={inputClass} value={currency} onChange={(e) => setCurrency(e.target.value)} />
+            <select className={inputClass} value={currency} onChange={(e) => setCurrency(e.target.value)}>
+              {CURRENCY_OPTIONS.map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.code} ({c.symbol}) — {c.name}
+                </option>
+              ))}
+            </select>
           </div>
           <div>
             <label className={labelClass}>Timezone</label>
-            <input className={inputClass} value={timezone} onChange={(e) => setTimezone(e.target.value)} />
+            <select className={inputClass} value={timezone} onChange={(e) => setTimezone(e.target.value)}>
+              {TIMEZONE_OPTIONS.map((t) => (
+                <option key={t.value} value={t.value}>
+                  {t.label}
+                </option>
+              ))}
+            </select>
           </div>
           <div>
             <label className={labelClass}>Language</label>

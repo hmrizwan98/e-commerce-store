@@ -93,11 +93,11 @@ const MainNav2Logged: FC<MainNav2LoggedProps> = ({ headerSettings, cartSettings,
         className={`flex justify-between items-center w-full ${customHeight ? "" : "min-h-[50px] py-1.5"}`}
         style={customHeight ? { height: customHeight } : undefined}
       >
-        <div className="flex items-center lg:hidden flex-1">
-          <MenuBar />
+        <div className="flex-1 flex items-center lg:hidden">
+          <MenuBar logos={logos} storeName={storeName} />
         </div>
 
-        <div className="lg:flex-1 flex items-center">
+        <div className="flex items-center justify-center lg:flex-1 lg:justify-start">
           <Logo className="flex-shrink-0" img={logos?.logoLight} imgLight={logos?.logoDark} storeName={storeName} logoHeightPx={headerSettings?.logoHeightPx} />
         </div>
 

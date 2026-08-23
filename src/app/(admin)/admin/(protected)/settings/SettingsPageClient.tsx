@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import AdminThemeSelector from "@/components/admin/AdminThemeSelector";
+import { COUNTRY_OPTIONS, CURRENCY_OPTIONS, TIMEZONE_OPTIONS } from "@/lib/constants/location-options";
 import {
   updateGeneralSettings,
   updateShippingSettings,
@@ -215,17 +216,55 @@ export default function SettingsPageClient({
               <label className={labelClass}>Store address</label>
               <input className={inputClass} value={general.storeAddress ?? ""} onChange={(e) => setGeneral({ ...general, storeAddress: e.target.value })} />
             </div>
+
             <div>
               <label className={labelClass}>Country</label>
-              <input className={inputClass} value={general.country ?? ""} onChange={(e) => setGeneral({ ...general, country: e.target.value })} />
+              <select
+                className={inputClass}
+                value={general.country ?? "Pakistan"}
+                onChange={(e) => setGeneral({ ...general, country: e.target.value })}
+              >
+                {COUNTRY_OPTIONS.map((c) => (
+                  <option key={c.name} value={c.name}>
+                    {c.flag} {c.name}
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
               <label className={labelClass}>Timezone</label>
-              <input className={inputClass} value={general.timezone ?? ""} onChange={(e) => setGeneral({ ...general, timezone: e.target.value })} />
+              <select
+                className={inputClass}
+                value={general.timezone ?? "Asia/Karachi"}
+                onChange={(e) => setGeneral({ ...general, timezone: e.target.value })}
+              >
+                {TIMEZONE_OPTIONS.map((t) => (
+                  <option key={t.value} value={t.value}>
+                    {t.label}
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
               <label className={labelClass}>Currency code</label>
-              <input className={inputClass} value={general.currency} onChange={(e) => setGeneral({ ...general, currency: e.target.value })} />
+              <select
+                className={inputClass}
+                value={general.currency ?? "PKR"}
+                onChange={(e) => {
+                  const selected = CURRENCY_OPTIONS.find((c) => c.code === e.target.value);
+                  setGeneral({
+                    ...general,
+                    currency: e.target.value,
+                    currencySymbol: selected ? selected.symbol : general.currencySymbol,
+                  });
+                }}
+              >
+                {CURRENCY_OPTIONS.map((c) => (
+                  <option key={c.code} value={c.code}>
+                    {c.code} ({c.symbol}) — {c.name}
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
               <label className={labelClass}>Currency symbol</label>

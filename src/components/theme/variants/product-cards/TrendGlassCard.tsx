@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { getTenantHref } from "@/utils/getTenantHref";
 import { StarIcon } from "@heroicons/react/24/solid";
 import { ArrowsPointingOutIcon, ShoppingBagIcon, SparklesIcon } from "@heroicons/react/24/outline";
 import NcImage from "@/shared/NcImage/NcImage";
@@ -38,7 +39,7 @@ export default function TrendGlassCard({ data, className = "", productCardSettin
     <>
       <div className={`group relative flex flex-col bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-[2rem] border border-slate-200/80 dark:border-slate-800/80 p-3.5 transition-all duration-300 hover:shadow-2xl hover:shadow-sky-500/10 hover:-translate-y-1.5 ${className}`}>
         <Link
-          href={`/product/${slug}`}
+          href={getTenantHref(`/product/${slug}`) as any}
           className="absolute inset-0 z-[1]"
           onClick={() => trackEvent("product_click", { productId: data.id })}
         />

@@ -7,7 +7,7 @@ import useInterval from "react-use/lib/useInterval";
 import useBoolean from "react-use/lib/useBoolean";
 import Next from "@/shared/NextPrev/Next";
 import Prev from "@/shared/NextPrev/Prev";
-import type { Hero2DataType } from "@/components/SectionHero/data";
+import { HERO2_DEMO_DATA, Hero2DataType } from "@/components/SectionHero/data";
 import type { ThemeBanner } from "@/types/theme";
 import { safeImageSrc } from "@/utils/safeImageSrc";
 
@@ -27,7 +27,7 @@ const FullWidthImageHero: FC<FullWidthImageHeroProps> = ({
   const [indexActive, setIndexActive] = useState(0);
   const [isRunning, toggleIsRunning] = useBoolean(true);
 
-  const slides = DATA.length > 0 ? DATA : [];
+  const slides = DATA.length > 0 ? DATA : HERO2_DEMO_DATA;
 
   useInterval(
     () => {
@@ -75,7 +75,10 @@ const FullWidthImageHero: FC<FullWidthImageHeroProps> = ({
       <div className="relative w-full h-[260px] sm:h-[380px] md:h-[480px] lg:h-[560px] overflow-hidden">
         {slides.map((item, index) => {
           const isActive = indexActive === index;
-          const imgSrc = typeof item.image === "string" ? safeImageSrc(item.image) : item.image;
+          const rawImg = typeof item.image === "string" ? item.image : (item.image as any)?.src;
+          const fallbackImg = HERO2_DEMO_DATA[index % HERO2_DEMO_DATA.length]?.image;
+          const fallbackSrc = typeof fallbackImg === "string" ? fallbackImg : (fallbackImg as any)?.src;
+          const imgSrc = rawImg && !rawImg.includes("placeholder") ? safeImageSrc(rawImg) : safeImageSrc(fallbackSrc);
           const href = item.btnLink || (item as any).href || undefined;
 
           return (

@@ -2,11 +2,12 @@
 
 import React from "react";
 import toast from "react-hot-toast";
-import { useRouter } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
 import { Transition } from "@/app/headlessui";
 import Prices from "@/components/Prices";
 import { safeImageSrc } from "@/utils/safeImageSrc";
+import { getCartUrl } from "@/utils/getCartUrl";
 import type { Product } from "@/types/product";
 
 export interface AddToBagToastOptions {
@@ -48,8 +49,6 @@ function AddToBagToastBody({
   size?: string;
   colorLabel?: string;
 }) {
-  const router = useRouter();
-
   return (
     <Transition
       appear
@@ -87,16 +86,15 @@ function AddToBagToastBody({
             <p className="text-gray-500 dark:text-slate-400">Qty 1</p>
 
             <div className="flex">
-              <button
-                type="button"
-                className="font-medium text-primary-6000 dark:text-primary-500 "
-                onClick={(e) => {
-                  e.preventDefault();
-                  router.push("/cart");
+              <Link
+                href={getCartUrl() as any}
+                className="font-semibold text-primary-6000 dark:text-primary-500 hover:underline transition-all cursor-pointer"
+                onClick={() => {
+                  toast.dismiss();
                 }}
               >
                 View cart
-              </button>
+              </Link>
             </div>
           </div>
         </div>

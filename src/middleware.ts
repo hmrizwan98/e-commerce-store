@@ -105,16 +105,32 @@ export function middleware(req: NextRequest) {
     }
   }
 
-  // When request did NOT resolve a tenant by subdomain, and a path preview cookie is present,
+  // When request did NOT resolve a tenant by subdomain, and a path preview cookie or Referer is present,
   // transparently bounce plain internal relative links back under /store/{slug}/ prefix.
   if (!slug) {
-    const previewSlug = req.cookies.get(FRONTSTORE_COOKIE)?.value;
+    let previewSlug = req.cookies.get(FRONTSTORE_COOKIE)?.value;
+
+    // Check if the referer header contains a store path (e.g. http://localhost:3000/store/testing/...)
+    const referer = req.headers.get("referer") || "";
+    const refererMatch = referer.match(/\/store\/([^\/]+)/);
+    if (refererMatch && refererMatch[1]) {
+      previewSlug = refererMatch[1];
+    }
+
     if (previewSlug) {
       requestHeaders.set(TENANT_SLUG_HEADER, previewSlug);
       if (!req.nextUrl.pathname.startsWith("/api") && !req.nextUrl.pathname.startsWith("/superadmin")) {
         const url = req.nextUrl.clone();
         url.pathname = `/store/${previewSlug}${req.nextUrl.pathname}`;
-        return NextResponse.redirect(url);
+        const res = NextResponse.redirect(url);
+        res.cookies.set(FRONTSTORE_COOKIE, previewSlug, {
+          httpOnly: true,
+          sameSite: "lax",
+          secure: process.env.NODE_ENV === "production",
+          maxAge: 60 * 60 * 6,
+          path: "/",
+        });
+        return res;
       }
     }
   }

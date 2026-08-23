@@ -1,4 +1,6 @@
 import React, { FC } from "react";
+import Link from "next/link";
+import { getCartUrl } from "@/utils/getCartUrl";
 import { Transition } from "@/app/headlessui";
 import Prices from "@/components/Prices";
 import type { Product } from "@/types/product";
@@ -56,12 +58,12 @@ const NotifyAddTocart: FC<Props> = ({
             <p className="text-gray-500 dark:text-slate-400">{`Qty ${qualitySelected}`}</p>
 
             <div className="flex">
-              <button
-                type="button"
-                className="font-medium text-primary-6000 dark:text-primary-500 "
+              <Link
+                href={getCartUrl() as any}
+                className="font-semibold text-primary-6000 dark:text-primary-500 hover:underline transition-all cursor-pointer"
               >
                 View cart
-              </button>
+              </Link>
             </div>
           </div>
         </div>

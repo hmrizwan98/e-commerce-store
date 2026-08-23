@@ -25,11 +25,11 @@ export default function MegaMenuHeader({ headerSettings, cartSettings, logos, st
   return (
     <header className="relative w-full z-40 bg-[var(--header-bg)] shadow-md transition-all duration-200">
       <div className="container py-3 flex items-center justify-between gap-6 border-b border-[var(--border)]">
-        <div className="flex-1 lg:hidden">
-          <MenuBar />
+        <div className="flex-1 flex items-center lg:hidden">
+          <MenuBar logos={logos} storeName={storeName} />
         </div>
         
-        <div className="flex items-center gap-4">
+        <div className="flex items-center justify-center lg:flex-none">
           <Logo img={logos?.logoLight} imgLight={logos?.logoDark} storeName={storeName} logoHeightPx={headerSettings?.logoHeightPx} />
         </div>
 

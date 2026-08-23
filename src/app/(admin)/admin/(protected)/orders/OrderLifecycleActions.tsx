@@ -32,6 +32,19 @@ function toDateInputValue(ms?: number): string {
   return ms ? new Date(ms).toISOString().slice(0, 10) : "";
 }
 
+function formatDate(ms: number): string {
+  if (!ms) return "";
+  const d = new Date(ms);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  let hours = d.getHours();
+  const mins = String(d.getMinutes()).padStart(2, "0");
+  const ampm = hours >= 12 ? "PM" : "AM";
+  hours = hours % 12 || 12;
+  return `${month}/${day}/${year}, ${hours}:${mins} ${ampm}`;
+}
+
 const OrderLifecycleActions: React.FC<{
   order: Order;
   activity: OrderActivityLog[];
@@ -74,7 +87,7 @@ const OrderLifecycleActions: React.FC<{
                 {e.label}
                 {e.note ? ` — ${e.note}` : ""}
               </span>
-              <span>{new Date(e.at).toLocaleString()}</span>
+              <span suppressHydrationWarning>{formatDate(e.at)}</span>
             </div>
           ))}
           {!timeline.length && <p className="text-neutral-500">No activity recorded yet.</p>}
@@ -90,7 +103,7 @@ const OrderLifecycleActions: React.FC<{
                 {h.status.replace("_", " ")}
                 {h.note ? ` — ${h.note}` : ""}
               </span>
-              <span>{new Date(h.at).toLocaleString()}</span>
+              <span suppressHydrationWarning>{formatDate(h.at)}</span>
             </div>
           ))}
           {!order.paymentStatusHistory?.length && (
@@ -161,7 +174,9 @@ const OrderLifecycleActions: React.FC<{
                 .map((n, i) => (
                   <div key={i} className="text-neutral-600 dark:text-neutral-400">
                     <p>{n.text}</p>
-                    <p className="text-xs text-neutral-400">{new Date(n.at).toLocaleString()}</p>
+                    <p className="text-xs text-neutral-400" suppressHydrationWarning>
+                      {formatDate(n.at)}
+                    </p>
                   </div>
                 ))}
               {!order.internalNotes?.length && <p className="text-neutral-500">No internal notes yet.</p>}
@@ -195,7 +210,9 @@ const OrderLifecycleActions: React.FC<{
                 .map((n, i) => (
                   <div key={i} className="text-neutral-600 dark:text-neutral-400">
                     <p>{n.text}</p>
-                    <p className="text-xs text-neutral-400">{new Date(n.at).toLocaleString()}</p>
+                    <p className="text-xs text-neutral-400" suppressHydrationWarning>
+                      {formatDate(n.at)}
+                    </p>
                   </div>
                 ))}
               {!order.customerNotes?.length && <p className="text-neutral-500">No customer notes yet.</p>}

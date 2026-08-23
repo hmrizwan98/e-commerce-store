@@ -3,6 +3,7 @@
 import { Popover, Transition } from "@/app/headlessui";
 import { Fragment } from "react";
 import Link from "next/link";
+import { getCartUrl } from "@/utils/getCartUrl";
 import { useAppDispatch, useAppSelector } from "@/utils/hooks/store";
 import { removeItem, type CartItem } from "@/store/slices/cartSlice";
 import { trackEvent } from "@/lib/analytics/track";
@@ -82,7 +83,7 @@ export default function CartDropdown({ cartSettings }: CartDropdownProps) {
               />
             </svg>
 
-            <Link className="block md:hidden absolute inset-0" href={"/cart"} />
+            <Link className="block md:hidden absolute inset-0" href={getCartUrl() as any} />
           </Popover.Button>
           <Transition
             as={Fragment}
