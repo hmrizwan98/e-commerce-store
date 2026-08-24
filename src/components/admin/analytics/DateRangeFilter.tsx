@@ -33,39 +33,41 @@ export default function DateRangeFilter() {
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      {DATE_RANGE_PRESETS.filter((p) => p.value !== "custom").map((p) => (
-        <button
-          key={p.value}
-          onClick={() => applyPreset(p.value)}
-          className={`px-3 py-1.5 text-sm rounded-full border whitespace-nowrap ${
-            current === p.value
-              ? "bg-primary-6000 text-white border-primary-6000"
-              : "border-neutral-300 dark:border-neutral-700"
-          }`}
-        >
-          {p.label}
-        </button>
-      ))}
-      <div className="flex items-center gap-1.5">
+      <div className="flex flex-wrap items-center gap-1.5 p-1 rounded-2xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 shadow-md shadow-slate-900/5">
+        {DATE_RANGE_PRESETS.filter((p) => p.value !== "custom").map((p) => (
+          <button
+            key={p.value}
+            onClick={() => applyPreset(p.value)}
+            className={`px-3.5 py-1.5 text-xs font-semibold rounded-full whitespace-nowrap transition-all ${
+              current === p.value
+                ? "bg-primary-6000 text-white shadow-md shadow-primary-500/25 scale-[1.02]"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+            }`}
+          >
+            {p.label}
+          </button>
+        ))}
+      </div>
+      <div className="flex items-center gap-1.5 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 p-1 rounded-2xl shadow-md shadow-slate-900/5">
         <input
           type="date"
           value={from}
           onChange={(e) => setFrom(e.target.value)}
-          className="px-2 py-1.5 text-sm rounded-lg border border-neutral-300 dark:border-neutral-700 bg-transparent"
+          className="px-2.5 py-1 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-transparent text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-primary-500"
         />
-        <span className="text-neutral-400">–</span>
+        <span className="text-slate-400 text-xs">–</span>
         <input
           type="date"
           value={to}
           onChange={(e) => setTo(e.target.value)}
-          className="px-2 py-1.5 text-sm rounded-lg border border-neutral-300 dark:border-neutral-700 bg-transparent"
+          className="px-2.5 py-1 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-transparent text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-primary-500"
         />
         <button
           onClick={applyCustom}
-          className={`px-3 py-1.5 text-sm rounded-full border whitespace-nowrap ${
+          className={`px-3 py-1 text-xs font-semibold rounded-full whitespace-nowrap transition-all ${
             current === "custom"
-              ? "bg-primary-6000 text-white border-primary-6000"
-              : "border-neutral-300 dark:border-neutral-700"
+              ? "bg-primary-6000 text-white shadow-md shadow-primary-500/25"
+              : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700"
           }`}
         >
           Apply

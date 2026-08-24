@@ -21,17 +21,17 @@ const TABS = [
 export default function AnalyticsNav() {
   const pathname = usePathname();
   return (
-    <div className="flex flex-wrap gap-1 border-b border-neutral-200 dark:border-neutral-800 pb-px overflow-x-auto">
+    <div className="p-1.5 rounded-2xl bg-slate-100/80 dark:bg-slate-800/60 backdrop-blur-md border border-slate-200/60 dark:border-slate-700/60 flex items-center gap-1 overflow-x-auto no-scrollbar shadow-inner">
       {TABS.map((tab) => {
         const active = tab.href === "/admin/analytics" ? pathname === tab.href : pathname?.startsWith(tab.href);
         return (
           <Link
             key={tab.href}
             href={tab.href as any}
-            className={`px-3 py-2 text-sm font-medium whitespace-nowrap border-b-2 -mb-px ${
+            className={`px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
               active
-                ? "border-primary-6000 text-primary-6000"
-                : "border-transparent text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200"
+                ? "bg-white dark:bg-slate-900 text-primary-600 dark:text-primary-400 shadow-md shadow-slate-900/5 font-bold"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-white/40 dark:hover:bg-slate-700/40"
             }`}
           >
             {tab.label}

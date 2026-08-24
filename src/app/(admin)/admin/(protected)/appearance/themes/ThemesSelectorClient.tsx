@@ -39,6 +39,7 @@ const PRESET_META: Record<
 
 function ThemePreviewFrame({ presetId }: { presetId: ThemePresetId }) {
   const [visible, setVisible] = useState(false);
+  const [iframeLoaded, setIframeLoaded] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -57,14 +58,51 @@ function ThemePreviewFrame({ presetId }: { presetId: ThemePresetId }) {
     return () => observer.disconnect();
   }, []);
 
+  const isLuxury = presetId === "premium-luxury";
+
   return (
-    <div ref={containerRef} className="relative h-64 sm:h-72 w-full overflow-hidden bg-slate-100 dark:bg-slate-950 pointer-events-none">
+    <div ref={containerRef} className="relative h-64 sm:h-72 w-full overflow-hidden bg-slate-50 dark:bg-slate-950 pointer-events-none">
       {/* Browser Chrome Header Mockup */}
-      <div className="absolute top-0 inset-x-0 h-6 bg-slate-200 dark:bg-slate-800 z-10 flex items-center px-3 gap-1.5 border-b border-slate-300 dark:border-slate-700">
-        <span className="w-2.5 h-2.5 rounded-full bg-rose-400" />
-        <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
-        <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
+      <div className="absolute top-0 inset-x-0 h-7 bg-slate-200/90 dark:bg-slate-800/90 z-20 flex items-center px-3 justify-between border-b border-slate-300/80 dark:border-slate-700/80 backdrop-blur-md">
+        <div className="flex items-center gap-1.5">
+          <span className="w-2.5 h-2.5 rounded-full bg-rose-400/90 shadow-2xs" />
+          <span className="w-2.5 h-2.5 rounded-full bg-amber-400/90 shadow-2xs" />
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-400/90 shadow-2xs" />
+        </div>
+        <div className="px-3 py-0.5 rounded-full bg-white/70 dark:bg-slate-900/70 border border-slate-300/50 dark:border-slate-700/50 text-[10px] font-mono text-slate-500 dark:text-slate-400 flex items-center gap-1">
+          <span className="text-emerald-500">🔒</span> store.domain.com
+        </div>
+        <div className="w-10" />
       </div>
+
+      {/* Fallback Mockup Graphics (Visible before/during iframe load) */}
+      {!iframeLoaded && (
+        <div className="absolute inset-0 pt-7 p-4 bg-gradient-to-b from-slate-100 via-slate-50 to-white dark:from-slate-900 dark:to-slate-950 flex flex-col justify-between">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-200/60 dark:border-slate-800/60">
+            <div className="h-4 w-24 bg-slate-300/80 dark:bg-slate-700/80 rounded-md animate-pulse" />
+            <div className="flex gap-2">
+              <div className="h-3 w-12 bg-slate-200 dark:bg-slate-800 rounded-full" />
+              <div className="h-3 w-12 bg-slate-200 dark:bg-slate-800 rounded-full" />
+              <div className="h-3 w-12 bg-slate-200 dark:bg-slate-800 rounded-full" />
+            </div>
+          </div>
+          <div className="flex-1 my-3 rounded-2xl bg-gradient-to-r from-slate-200/70 via-slate-100 to-slate-200/70 dark:from-slate-800/70 dark:to-slate-900/70 p-4 flex flex-col justify-center items-start gap-2 border border-slate-200/60 dark:border-slate-800/60">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-500">
+              {isLuxury ? "Timeless Style Redefined" : "Modern Minimalist Design"}
+            </span>
+            <div className="h-5 w-40 bg-slate-400/50 dark:bg-slate-600/50 rounded-lg animate-pulse" />
+            <div className="h-3 w-56 bg-slate-300/60 dark:bg-slate-700/60 rounded-md" />
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-16 rounded-xl bg-slate-200/60 dark:bg-slate-800/60 border border-slate-200/40 dark:border-slate-700/40 p-2 space-y-1">
+                <div className="h-8 rounded-lg bg-slate-300/50 dark:bg-slate-700/50" />
+                <div className="h-2 w-3/4 bg-slate-300/80 dark:bg-slate-600/80 rounded" />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {visible && (
         <iframe
@@ -73,7 +111,10 @@ function ThemePreviewFrame({ presetId }: { presetId: ThemePresetId }) {
           tabIndex={-1}
           aria-hidden="true"
           loading="lazy"
-          className="absolute top-6 left-0 border-0"
+          onLoad={() => setIframeLoaded(true)}
+          className={`absolute top-7 left-0 border-0 transition-opacity duration-500 ${
+            iframeLoaded ? "opacity-100" : "opacity-0"
+          }`}
           style={{ width: "400%", height: "400%", transform: "scale(0.25)", transformOrigin: "top left" }}
         />
       )}
@@ -91,12 +132,15 @@ export default function ThemesSelectorClient({ activePresetId, presets }: Themes
     setLoadingAction(preset.presetId);
     try {
       const res = await saveThemeDraftAction(preset);
-      if (res.ok) {
+      if (res?.ok) {
         toast.success(`Applied "${preset.name}" preset to customizer draft!`);
         router.push("/admin/appearance/customize");
       } else {
-        toast.error("Failed to apply preset to draft.");
+        toast.error(res?.message || "Failed to apply preset to draft.");
       }
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err?.message || "Failed to apply preset.");
     } finally {
       setLoadingAction(null);
     }
@@ -106,17 +150,20 @@ export default function ThemesSelectorClient({ activePresetId, presets }: Themes
     setLoadingAction(`publish-${preset.presetId}`);
     try {
       const draftRes = await saveThemeDraftAction(preset);
-      if (draftRes.ok) {
+      if (draftRes?.ok) {
         const pubRes = await publishThemeAction();
-        if (pubRes.ok) {
+        if (pubRes?.ok) {
           toast.success(`Published "${preset.name}" live storefront theme!`);
           router.refresh();
         } else {
-          toast.error("Failed to publish live theme.");
+          toast.error(pubRes?.message || "Failed to publish live theme.");
         }
       } else {
-        toast.error("Failed to save draft.");
+        toast.error(draftRes?.message || "Failed to save draft.");
       }
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err?.message || "Failed to publish preset.");
     } finally {
       setLoadingAction(null);
     }

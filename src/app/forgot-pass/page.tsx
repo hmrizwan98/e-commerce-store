@@ -3,7 +3,7 @@ import Input from "@/shared/Input/Input";
 import ButtonPrimary from "@/shared/Button/ButtonPrimary";
 import Link from "next/link";
 
-const PageForgotPass = ({}) => {
+const PageForgotPass = ({ }) => {
   return (
     <div className="container mb-24 lg:mb-32">
       <header className="text-center max-w-2xl mx-auto - mb-14 sm:mb-16 lg:mb-20">

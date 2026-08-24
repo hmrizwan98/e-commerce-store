@@ -49,16 +49,23 @@ export default async function AlertBanners({ range }: { range: { start: number; 
   if (!banners.length) return null;
 
   const toneClass: Record<string, string> = {
-    good: "border-[var(--chart-good)]/30 bg-[var(--chart-good)]/5 text-[var(--chart-good)]",
-    warning: "border-[var(--chart-warning)]/30 bg-[var(--chart-warning)]/10 text-neutral-800 dark:text-neutral-100",
-    critical: "border-[var(--chart-critical)]/30 bg-[var(--chart-critical)]/5 text-[var(--chart-critical)]",
+    good: "border-emerald-200/80 dark:border-emerald-800/60 bg-emerald-50/80 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300",
+    warning: "border-amber-200/80 dark:border-amber-800/60 bg-amber-50/80 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300",
+    critical: "border-rose-200/80 dark:border-rose-800/60 bg-rose-50/80 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300",
+  };
+
+  const toneIcon: Record<string, string> = {
+    good: "📈",
+    warning: "⚠️",
+    critical: "📉",
   };
 
   return (
     <div className="space-y-2">
       {banners.map((b, i) => (
-        <div key={i} className={`px-4 py-3 rounded-xl border text-sm font-medium ${toneClass[b.tone]}`}>
-          {b.message}
+        <div key={i} className={`px-4 py-3 rounded-2xl border text-xs font-semibold backdrop-blur-xl flex items-center gap-2.5 shadow-sm ${toneClass[b.tone]}`}>
+          <span>{toneIcon[b.tone]}</span>
+          <span>{b.message}</span>
         </div>
       ))}
     </div>

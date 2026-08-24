@@ -60,7 +60,17 @@ export default async function AdminSettingsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Settings</h1>
+      <div>
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary-50 dark:bg-primary-950/40 border border-primary-200 dark:border-primary-800/60 text-primary-600 dark:text-primary-400 text-xs font-semibold uppercase tracking-wider mb-2">
+          ⚙️ System &amp; Store Configuration
+        </div>
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+          Store Settings
+        </h1>
+        <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+          Manage general store details, payments, taxes, shipping, localization, integrations, and backups.
+        </p>
+      </div>
       <SettingsPageClient
         general={general}
         shipping={shipping}

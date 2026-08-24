@@ -47,14 +47,19 @@ export default async function AdminBlogPostsPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold">Blog Posts</h1>
-          <p className="text-sm text-neutral-500 mt-1">Posts shown in the homepage &quot;Latest blog&quot; section and the blog page.</p>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary-50 dark:bg-primary-950/40 border border-primary-200 dark:border-primary-800/60 text-primary-600 dark:text-primary-400 text-xs font-semibold uppercase tracking-wider mb-2">
+            📝 Editorial & News
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+            Blog Posts
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">Posts shown in the homepage &quot;Latest blog&quot; section and the blog directory.</p>
         </div>
         <Link
           href={"/admin/blog-posts/new" as any}
-          className="px-4 py-2 rounded-full bg-primary-6000 text-white text-sm font-medium"
+          className="inline-flex items-center justify-center px-5 py-2.5 rounded-full bg-primary-6000 hover:bg-primary-700 text-white text-sm font-semibold shadow-lg shadow-primary-500/20 transition-all hover:scale-[1.02]"
         >
           + Add post
         </Link>
@@ -63,24 +68,24 @@ export default async function AdminBlogPostsPage({
       <BlogPostsList posts={posts} />
 
       {(nextHref || prevHref) && (
-        <div className="flex items-center justify-end gap-2 px-4 py-3 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-xs font-mono">
+        <div className="flex items-center justify-end gap-2 px-5 py-3.5 rounded-2xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 shadow-lg text-xs font-medium">
           <Link
             href={prevHref ?? "#"}
             aria-disabled={!prevHref}
-            className={`px-3 py-1.5 rounded-lg border border-neutral-300 dark:border-neutral-700 font-medium ${
-              !prevHref ? "pointer-events-none opacity-40" : "hover:bg-neutral-100 dark:hover:bg-neutral-800"
+            className={`px-4 py-2 rounded-full border border-slate-200/80 dark:border-slate-700/80 font-semibold transition-all ${
+              !prevHref ? "pointer-events-none opacity-40" : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200"
             }`}
           >
-            Previous
+            ← Previous
           </Link>
           <Link
             href={nextHref ?? "#"}
             aria-disabled={!nextHref}
-            className={`px-3 py-1.5 rounded-lg border border-neutral-300 dark:border-neutral-700 font-medium ${
-              !nextHref ? "pointer-events-none opacity-40" : "hover:bg-neutral-100 dark:hover:bg-neutral-800"
+            className={`px-4 py-2 rounded-full border border-slate-200/80 dark:border-slate-700/80 font-semibold transition-all ${
+              !nextHref ? "pointer-events-none opacity-40" : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200"
             }`}
           >
-            Next
+            Next →
           </Link>
         </div>
       )}

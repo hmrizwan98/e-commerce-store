@@ -3,7 +3,26 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import AdminThemeSelector from "@/components/admin/AdminThemeSelector";
+import CustomSelect from "@/components/admin/CustomSelect";
 import { COUNTRY_OPTIONS, CURRENCY_OPTIONS, TIMEZONE_OPTIONS } from "@/lib/constants/location-options";
+import {
+  Cog6ToothIcon,
+  PaintBrushIcon,
+  GlobeAltIcon,
+  MagnifyingGlassIcon,
+  ShareIcon,
+  TruckIcon,
+  CreditCardIcon,
+  BanknotesIcon,
+  DocumentCheckIcon,
+  EnvelopeIcon,
+  EnvelopeOpenIcon,
+  ChatBubbleLeftRightIcon,
+  PuzzlePieceIcon,
+  BellIcon,
+  ArrowPathIcon,
+  AdjustmentsHorizontalIcon,
+} from "@heroicons/react/24/outline";
 import {
   updateGeneralSettings,
   updateShippingSettings,
@@ -44,16 +63,88 @@ import type {
 import type { BackupRecord } from "@/types/backup-record";
 
 const inputClass =
-  "w-full px-3 py-2 text-sm rounded-lg border border-neutral-300 dark:border-neutral-700 bg-transparent";
-const labelClass = "block text-sm font-medium mb-1";
+  "w-full px-4 py-2.5 text-sm rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-800/90 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all shadow-xs hover:border-slate-300 dark:hover:border-slate-600";
+const labelClass = "block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5";
 const cardClass =
-  "bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-6 space-y-4";
+  "bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 rounded-3xl p-6 sm:p-8 shadow-xl shadow-slate-900/5 space-y-6 transition-all";
+
+// Pre-formatted options for CustomSelect dropdowns
+const COUNTRY_SELECT_OPTIONS = COUNTRY_OPTIONS.map((c) => ({
+  value: c.name,
+  label: `${c.flag} ${c.name}`,
+}));
+
+const TIMEZONE_SELECT_OPTIONS = TIMEZONE_OPTIONS.map((t) => ({
+  value: t.value,
+  label: t.label,
+}));
+
+const CURRENCY_SELECT_OPTIONS = CURRENCY_OPTIONS.map((c) => ({
+  value: c.code,
+  label: `${c.code} (${c.symbol}) — ${c.name}`,
+}));
+
+const BORDER_RADIUS_OPTIONS = [
+  { value: "none", label: "None (Square)" },
+  { value: "sm", label: "Small (Curved)" },
+  { value: "md", label: "Medium (Default)" },
+  { value: "lg", label: "Large (Rounded)" },
+  { value: "full", label: "Full (Pill)" },
+];
+
+const DIRECTION_OPTIONS = [
+  { value: "ltr", label: "Left-to-right (LTR)" },
+  { value: "rtl", label: "Right-to-left (RTL)" },
+];
+
+const TWITTER_CARD_OPTIONS = [
+  { value: "summary", label: "Summary" },
+  { value: "summary_large_image", label: "Summary with large image" },
+];
+
+const SITEMAP_FREQ_OPTIONS = [
+  { value: "always", label: "Always" },
+  { value: "hourly", label: "Hourly" },
+  { value: "daily", label: "Daily" },
+  { value: "weekly", label: "Weekly" },
+  { value: "monthly", label: "Monthly" },
+  { value: "yearly", label: "Yearly" },
+  { value: "never", label: "Never" },
+];
+
+const COMMISSION_TYPE_OPTIONS = [
+  { value: "none", label: "No commission (0%)" },
+  { value: "percentage", label: "Percentage (%)" },
+  { value: "fixed", label: "Fixed amount" },
+];
+
+function SectionHeader({
+  icon: Icon,
+  title,
+  subtitle,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  subtitle?: string;
+}) {
+  return (
+    <div className="flex items-center gap-3.5 pb-4 border-b border-slate-100 dark:border-slate-800">
+      <div className="w-10 h-10 rounded-2xl bg-primary-50 dark:bg-primary-950/50 text-primary-6000 dark:text-primary-400 flex items-center justify-center font-bold shadow-xs border border-primary-100 dark:border-primary-900/50 shrink-0">
+        <Icon className="w-5 h-5 stroke-[2]" />
+      </div>
+      <div>
+        <h2 className="text-base font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">{title}</h2>
+        {subtitle && <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{subtitle}</p>}
+      </div>
+    </div>
+  );
+}
 
 function SaveButton({ onClick }: { onClick: () => Promise<void> }) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
       <button
         type="button"
         onClick={async () => {
@@ -64,11 +155,15 @@ function SaveButton({ onClick }: { onClick: () => Promise<void> }) {
           setSaved(true);
         }}
         disabled={saving}
-        className="px-5 py-2 rounded-full bg-primary-6000 text-white text-sm font-medium disabled:opacity-50"
+        className="px-6 py-2.5 rounded-full bg-primary-6000 hover:bg-primary-700 text-white text-xs font-bold shadow-lg shadow-primary-500/25 active:scale-95 transition-all disabled:opacity-50 cursor-pointer"
       >
-        {saving ? "Saving…" : "Save"}
+        {saving ? "Saving Changes…" : "Save Changes"}
       </button>
-      {saved && <span className="text-sm text-green-600">Saved.</span>}
+      {saved && (
+        <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-3.5 py-1.5 rounded-full border border-emerald-200 dark:border-emerald-800/60 shadow-2xs">
+          ✓ Saved successfully
+        </span>
+      )}
     </div>
   );
 }
@@ -92,6 +187,25 @@ const TABS = [
   "Advanced",
 ] as const;
 type Tab = (typeof TABS)[number];
+
+const TAB_ICONS: Record<Tab, React.ComponentType<{ className?: string }>> = {
+  General: Cog6ToothIcon,
+  Branding: PaintBrushIcon,
+  Localization: GlobeAltIcon,
+  SEO: MagnifyingGlassIcon,
+  Social: ShareIcon,
+  Shipping: TruckIcon,
+  Payments: CreditCardIcon,
+  Commission: BanknotesIcon,
+  Tax: DocumentCheckIcon,
+  Email: EnvelopeIcon,
+  "Email Templates": EnvelopeOpenIcon,
+  WhatsApp: ChatBubbleLeftRightIcon,
+  Integrations: PuzzlePieceIcon,
+  Notifications: BellIcon,
+  Backup: ArrowPathIcon,
+  Advanced: AdjustmentsHorizontalIcon,
+};
 
 export default function SettingsPageClient({
   general: initialGeneral,
@@ -174,27 +288,36 @@ export default function SettingsPageClient({
   };
 
   return (
-    <div className="max-w-3xl">
-      <div className="flex flex-wrap gap-1 border-b border-neutral-200 dark:border-neutral-800 mb-6">
-        {TABS.map((t) => (
-          <button
-            key={t}
-            type="button"
-            onClick={() => setTab(t)}
-            className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px whitespace-nowrap ${
-              tab === t
-                ? "border-primary-6000 text-primary-6000"
-                : "border-transparent text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
-            }`}
-          >
-            {t}
-          </button>
-        ))}
+    <div className="w-full max-w-5xl space-y-6">
+      {/* Theme Pill Tabs Header with Scroll Padding Fix */}
+      <div className="w-full overflow-x-auto no-scrollbar p-2 rounded-3xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 shadow-lg shadow-slate-900/5">
+        <div className="flex items-center gap-2 min-w-max px-1">
+          {TABS.map((t) => {
+            const Icon = TAB_ICONS[t];
+            const isActiveTab = tab === t;
+            return (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setTab(t)}
+                className={`px-4 py-2.5 rounded-2xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
+                  isActiveTab
+                    ? "bg-primary-6000 text-white shadow-md shadow-primary-500/25 ring-1 ring-primary-500/30 scale-[1.02]"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/60"
+                }`}
+              >
+                <Icon className={`w-4 h-4 ${isActiveTab ? "stroke-[2.5]" : "opacity-75"}`} />
+                <span>{t}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
+      {/* General Tab */}
       {tab === "General" && (
         <section className={cardClass}>
-          <h2 className="font-semibold">General / Store information</h2>
+          <SectionHeader icon={Cog6ToothIcon} title="General / Store Information" subtitle="Manage your primary store details, contact info, location, currency & tax settings." />
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
               <label className={labelClass}>Store name</label>
@@ -212,59 +335,41 @@ export default function SettingsPageClient({
               <label className={labelClass}>Store phone</label>
               <input className={inputClass} value={general.storePhone ?? ""} onChange={(e) => setGeneral({ ...general, storePhone: e.target.value })} />
             </div>
-            <div>
+            <div className="sm:col-span-2">
               <label className={labelClass}>Store address</label>
               <input className={inputClass} value={general.storeAddress ?? ""} onChange={(e) => setGeneral({ ...general, storeAddress: e.target.value })} />
             </div>
 
             <div>
               <label className={labelClass}>Country</label>
-              <select
-                className={inputClass}
+              <CustomSelect
                 value={general.country ?? "Pakistan"}
-                onChange={(e) => setGeneral({ ...general, country: e.target.value })}
-              >
-                {COUNTRY_OPTIONS.map((c) => (
-                  <option key={c.name} value={c.name}>
-                    {c.flag} {c.name}
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => setGeneral({ ...general, country: val })}
+                options={COUNTRY_SELECT_OPTIONS}
+              />
             </div>
             <div>
               <label className={labelClass}>Timezone</label>
-              <select
-                className={inputClass}
+              <CustomSelect
                 value={general.timezone ?? "Asia/Karachi"}
-                onChange={(e) => setGeneral({ ...general, timezone: e.target.value })}
-              >
-                {TIMEZONE_OPTIONS.map((t) => (
-                  <option key={t.value} value={t.value}>
-                    {t.label}
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => setGeneral({ ...general, timezone: val })}
+                options={TIMEZONE_SELECT_OPTIONS}
+              />
             </div>
             <div>
               <label className={labelClass}>Currency code</label>
-              <select
-                className={inputClass}
+              <CustomSelect
                 value={general.currency ?? "PKR"}
-                onChange={(e) => {
-                  const selected = CURRENCY_OPTIONS.find((c) => c.code === e.target.value);
+                onChange={(val) => {
+                  const selected = CURRENCY_OPTIONS.find((c) => c.code === val);
                   setGeneral({
                     ...general,
-                    currency: e.target.value,
+                    currency: val,
                     currencySymbol: selected ? selected.symbol : general.currencySymbol,
                   });
                 }}
-              >
-                {CURRENCY_OPTIONS.map((c) => (
-                  <option key={c.code} value={c.code}>
-                    {c.code} ({c.symbol}) — {c.name}
-                  </option>
-                ))}
-              </select>
+                options={CURRENCY_SELECT_OPTIONS}
+              />
             </div>
             <div>
               <label className={labelClass}>Currency symbol</label>
@@ -279,26 +384,26 @@ export default function SettingsPageClient({
                 onChange={(e) => setGeneral({ ...general, taxRatePercent: Number(e.target.value) || 0 })}
               />
             </div>
-            <label className="flex items-center gap-2 text-sm mt-6">
-              <input
-                type="checkbox"
-                checked={general.taxInclusive}
-                onChange={(e) => setGeneral({ ...general, taxInclusive: e.target.checked })}
-              />
-              Prices include tax
-            </label>
+            <div className="flex items-center pt-5">
+              <label className="flex items-center gap-3 text-sm font-semibold text-slate-800 dark:text-slate-200 cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="w-4 h-4 rounded-md text-primary-6000 focus:ring-primary-500/20 border-slate-300 dark:border-slate-700"
+                  checked={general.taxInclusive}
+                  onChange={(e) => setGeneral({ ...general, taxInclusive: e.target.checked })}
+                />
+                Prices include tax
+              </label>
+            </div>
           </div>
           <SaveButton onClick={() => updateGeneralSettings(general)} />
         </section>
       )}
 
+      {/* Branding Tab */}
       {tab === "Branding" && (
         <section className={cardClass}>
-          <h2 className="font-semibold">Branding</h2>
-          <p className="text-xs text-neutral-500">
-            Basic brand identity (used for emails/loading screens/social previews) - independent
-            of the full visual Theme Builder at <code>/admin/theme</code>.
-          </p>
+          <SectionHeader icon={PaintBrushIcon} title="Branding & Identity" subtitle="Configure logo URLs, brand colors, typography and store admin theme presets." />
 
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
@@ -319,23 +424,27 @@ export default function SettingsPageClient({
             </div>
             <div>
               <label className={labelClass}>Primary color</label>
-              <input type="color" className={`${inputClass} h-10`} value={branding.primaryColor ?? "#000000"} onChange={(e) => setBranding({ ...branding, primaryColor: e.target.value })} />
+              <div className="flex items-center gap-2">
+                <input type="color" className="w-12 h-10 rounded-xl border border-slate-200 dark:border-slate-700 p-1 cursor-pointer bg-white dark:bg-slate-800" value={branding.primaryColor ?? "#000000"} onChange={(e) => setBranding({ ...branding, primaryColor: e.target.value })} />
+                <input className={inputClass} value={branding.primaryColor ?? "#000000"} onChange={(e) => setBranding({ ...branding, primaryColor: e.target.value })} />
+              </div>
             </div>
             <div>
               <label className={labelClass}>Secondary color</label>
-              <input type="color" className={`${inputClass} h-10`} value={branding.secondaryColor ?? "#000000"} onChange={(e) => setBranding({ ...branding, secondaryColor: e.target.value })} />
+              <div className="flex items-center gap-2">
+                <input type="color" className="w-12 h-10 rounded-xl border border-slate-200 dark:border-slate-700 p-1 cursor-pointer bg-white dark:bg-slate-800" value={branding.secondaryColor ?? "#000000"} onChange={(e) => setBranding({ ...branding, secondaryColor: e.target.value })} />
+                <input className={inputClass} value={branding.secondaryColor ?? "#000000"} onChange={(e) => setBranding({ ...branding, secondaryColor: e.target.value })} />
+              </div>
             </div>
             <div>
               <label className={labelClass}>Border radius</label>
-              <select className={inputClass} value={branding.borderRadius ?? "md"} onChange={(e) => setBranding({ ...branding, borderRadius: e.target.value })}>
-                <option value="none">None</option>
-                <option value="sm">Small</option>
-                <option value="md">Medium</option>
-                <option value="lg">Large</option>
-                <option value="full">Full</option>
-              </select>
+              <CustomSelect
+                value={branding.borderRadius ?? "md"}
+                onChange={(val) => setBranding({ ...branding, borderRadius: val })}
+                options={BORDER_RADIUS_OPTIONS}
+              />
             </div>
-            <div className="sm:col-span-2 pt-4 border-t border-neutral-200 dark:border-neutral-800">
+            <div className="sm:col-span-2 pt-6 border-t border-slate-100 dark:border-slate-800">
               <AdminThemeSelector
                 selectedTheme={branding.adminTheme || "indigo"}
                 onSelect={(themeId) => setBranding({ ...branding, adminTheme: themeId })}
@@ -346,10 +455,10 @@ export default function SettingsPageClient({
         </section>
       )}
 
+      {/* Localization Tab */}
       {tab === "Localization" && (
         <section className={cardClass}>
-          <h2 className="font-semibold">Localization</h2>
-          <p className="text-xs text-neutral-500">Currency is managed on the General tab.</p>
+          <SectionHeader icon={GlobeAltIcon} title="Localization & Regional" subtitle="Manage default language, date formats and text direction." />
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
               <label className={labelClass}>Language</label>
@@ -365,30 +474,34 @@ export default function SettingsPageClient({
             </div>
             <div>
               <label className={labelClass}>Text direction</label>
-              <select className={inputClass} value={localization.direction ?? "ltr"} onChange={(e) => setLocalization({ ...localization, direction: e.target.value as "ltr" | "rtl" })}>
-                <option value="ltr">Left-to-right (LTR)</option>
-                <option value="rtl">Right-to-left (RTL)</option>
-              </select>
+              <CustomSelect
+                value={localization.direction ?? "ltr"}
+                onChange={(val) => setLocalization({ ...localization, direction: val as "ltr" | "rtl" })}
+                options={DIRECTION_OPTIONS}
+              />
             </div>
           </div>
           <SaveButton onClick={() => updateLocalizationSettings(localization)} />
         </section>
       )}
 
+      {/* SEO Tab */}
       {tab === "SEO" && (
         <section className={cardClass}>
-          <h2 className="font-semibold">SEO</h2>
-          <div>
-            <label className={labelClass}>Meta title</label>
-            <input className={inputClass} value={general.seoTitle ?? ""} onChange={(e) => setGeneral({ ...general, seoTitle: e.target.value })} />
-          </div>
-          <div>
-            <label className={labelClass}>Meta description</label>
-            <textarea className={inputClass} rows={3} value={general.seoDescription ?? ""} onChange={(e) => setGeneral({ ...general, seoDescription: e.target.value })} />
+          <SectionHeader icon={MagnifyingGlassIcon} title="Search Engine Optimization (SEO)" subtitle="Optimize meta tags, Open Graph previews, and XML sitemap directives." />
+          <div className="space-y-4">
+            <div>
+              <label className={labelClass}>Meta title</label>
+              <input className={inputClass} value={general.seoTitle ?? ""} onChange={(e) => setGeneral({ ...general, seoTitle: e.target.value })} />
+            </div>
+            <div>
+              <label className={labelClass}>Meta description</label>
+              <textarea className={inputClass} rows={3} value={general.seoDescription ?? ""} onChange={(e) => setGeneral({ ...general, seoDescription: e.target.value })} />
+            </div>
           </div>
           <SaveButton onClick={() => updateGeneralSettings(general)} />
 
-          <hr className="border-neutral-200 dark:border-neutral-800" />
+          <hr className="border-slate-100 dark:border-slate-800" />
 
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
@@ -405,10 +518,11 @@ export default function SettingsPageClient({
             </div>
             <div>
               <label className={labelClass}>Twitter card type</label>
-              <select className={inputClass} value={seo.twitterCard ?? "summary_large_image"} onChange={(e) => setSeo({ ...seo, twitterCard: e.target.value as SeoSettings["twitterCard"] })}>
-                <option value="summary">Summary</option>
-                <option value="summary_large_image">Summary with large image</option>
-              </select>
+              <CustomSelect
+                value={seo.twitterCard ?? "summary_large_image"}
+                onChange={(val) => setSeo({ ...seo, twitterCard: val as SeoSettings["twitterCard"] })}
+                options={TWITTER_CARD_OPTIONS}
+              />
             </div>
             <div>
               <label className={labelClass}>Robots directive</label>
@@ -420,18 +534,14 @@ export default function SettingsPageClient({
             </div>
             <div>
               <label className={labelClass}>Sitemap change frequency</label>
-              <select
-                className={inputClass}
+              <CustomSelect
                 value={seo.sitemapChangeFrequency ?? "weekly"}
-                onChange={(e) => setSeo({ ...seo, sitemapChangeFrequency: e.target.value as SeoSettings["sitemapChangeFrequency"] })}
-              >
-                {(["always", "hourly", "daily", "weekly", "monthly", "yearly", "never"] as const).map((f) => (
-                  <option key={f} value={f}>{f}</option>
-                ))}
-              </select>
+                onChange={(val) => setSeo({ ...seo, sitemapChangeFrequency: val as SeoSettings["sitemapChangeFrequency"] })}
+                options={SITEMAP_FREQ_OPTIONS}
+              />
             </div>
             <div>
-              <label className={labelClass}>Sitemap priority (0-1)</label>
+              <label className={labelClass}>Sitemap priority (0 - 1.0)</label>
               <input
                 type="number"
                 step="0.1"
@@ -447,9 +557,10 @@ export default function SettingsPageClient({
         </section>
       )}
 
+      {/* Social Tab */}
       {tab === "Social" && (
         <section className={cardClass}>
-          <h2 className="font-semibold">Social links</h2>
+          <SectionHeader icon={ShareIcon} title="Social Media Profiles" subtitle="Connect official social channels displayed across website header/footer." />
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
               <label className={labelClass}>Facebook</label>
@@ -480,9 +591,10 @@ export default function SettingsPageClient({
         </section>
       )}
 
+      {/* Shipping Tab */}
       {tab === "Shipping" && (
         <section className={cardClass}>
-          <h2 className="font-semibold">Shipping</h2>
+          <SectionHeader icon={TruckIcon} title="Shipping & Delivery Rates" subtitle="Set standard flat rates, free shipping thresholds and estimated delivery times." />
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
               <label className={labelClass}>Flat rate</label>
@@ -503,7 +615,7 @@ export default function SettingsPageClient({
               />
             </div>
             <div>
-              <label className={labelClass}>Estimate - min days</label>
+              <label className={labelClass}>Estimated delivery - Minimum days</label>
               <input
                 type="number"
                 className={inputClass}
@@ -512,7 +624,7 @@ export default function SettingsPageClient({
               />
             </div>
             <div>
-              <label className={labelClass}>Estimate - max days</label>
+              <label className={labelClass}>Estimated delivery - Maximum days</label>
               <input
                 type="number"
                 className={inputClass}
@@ -525,37 +637,39 @@ export default function SettingsPageClient({
         </section>
       )}
 
+      {/* Payments Tab */}
       {tab === "Payments" && (
         <section className={cardClass}>
-          <h2 className="font-semibold">Payment methods</h2>
+          <SectionHeader icon={CreditCardIcon} title="Payment Gateways & Options" subtitle="Enable supported checkout methods and customer transaction instructions." />
 
           {(["cod", "bankTransfer", "jazzcash"] as const).map((key) => (
-            <div key={key} className="border border-neutral-200 dark:border-neutral-800 rounded-xl p-4 space-y-3">
-              <label className="flex items-center gap-2 text-sm font-medium capitalize">
+            <div key={key} className="border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-4 bg-slate-50/50 dark:bg-slate-800/30">
+              <label className="flex items-center gap-3 text-sm font-extrabold text-slate-900 dark:text-slate-100 capitalize cursor-pointer">
                 <input
                   type="checkbox"
+                  className="w-4 h-4 rounded-md text-primary-6000 focus:ring-primary-500/20 border-slate-300 dark:border-slate-700"
                   checked={payments[key].enabled}
                   onChange={(e) => updatePaymentMethod(key, { enabled: e.target.checked })}
                 />
-                {key === "cod" ? "Cash on delivery" : key === "bankTransfer" ? "Bank transfer" : "JazzCash"}
+                {key === "cod" ? "Cash on delivery (COD)" : key === "bankTransfer" ? "Direct Bank Transfer" : "JazzCash / Mobile Wallet"}
               </label>
               {key !== "cod" && (
-                <div className="grid sm:grid-cols-2 gap-3">
+                <div className="grid sm:grid-cols-2 gap-3 pt-1">
                   <input
-                    placeholder="Account name"
+                    placeholder="Account Name"
                     className={inputClass}
                     value={payments[key].accountName ?? ""}
                     onChange={(e) => updatePaymentMethod(key, { accountName: e.target.value })}
                   />
                   <input
-                    placeholder="Account number"
+                    placeholder="Account Number / IBAN"
                     className={inputClass}
                     value={payments[key].accountNumber ?? ""}
                     onChange={(e) => updatePaymentMethod(key, { accountNumber: e.target.value })}
                   />
                   {key === "bankTransfer" && (
                     <input
-                      placeholder="Bank name"
+                      placeholder="Bank Name"
                       className={inputClass}
                       value={payments.bankTransfer.bankName ?? ""}
                       onChange={(e) => updatePaymentMethod("bankTransfer", { bankName: e.target.value })}
@@ -564,7 +678,7 @@ export default function SettingsPageClient({
                 </div>
               )}
               <textarea
-                placeholder="Instructions shown to customer at checkout"
+                placeholder="Instructions shown to customer at checkout..."
                 className={inputClass}
                 rows={2}
                 value={payments[key].instructions ?? ""}
@@ -572,40 +686,27 @@ export default function SettingsPageClient({
               />
             </div>
           ))}
-          <p className="text-xs text-neutral-500">
-            JazzCash/Bank transfer are manual/instructions-based for now (customer submits a transaction
-            reference, admin verifies via Orders). Real gateway APIs can be added later without changing this
-            settings shape.
-          </p>
           <SaveButton onClick={() => updatePaymentSettings(payments)} />
         </section>
       )}
 
+      {/* Commission Tab */}
       {tab === "Commission" && (
         <section className={cardClass}>
-          <h2 className="font-semibold">Commission Engine</h2>
-          <p className="text-xs text-neutral-500">
-            Store-level configuration only - applied to each payment transaction logged in
-            the Transaction Ledger (see Finance). &ldquo;None&rdquo; means the platform takes no
-            per-transaction cut for this store.
-          </p>
+          <SectionHeader icon={BanknotesIcon} title="Commission Engine" subtitle="Configure transaction commission rates for order settlements." />
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
               <label className={labelClass}>Commission type</label>
-              <select
-                className={inputClass}
+              <CustomSelect
                 value={commission.type}
-                onChange={(e) => setCommission({ ...commission, type: e.target.value as CommissionSettings["type"] })}
-              >
-                <option value="none">No commission (one-time purchase)</option>
-                <option value="percentage">Percentage</option>
-                <option value="fixed">Fixed amount</option>
-              </select>
+                onChange={(val) => setCommission({ ...commission, type: val as CommissionSettings["type"] })}
+                options={COMMISSION_TYPE_OPTIONS}
+              />
             </div>
             {commission.type !== "none" && (
               <div>
                 <label className={labelClass}>
-                  {commission.type === "percentage" ? "Percentage (%)" : "Fixed amount"}
+                  {commission.type === "percentage" ? "Percentage Rate (%)" : "Fixed Amount"}
                 </label>
                 <input
                   type="number"
@@ -620,29 +721,28 @@ export default function SettingsPageClient({
         </section>
       )}
 
+      {/* Tax Tab */}
       {tab === "Tax" && (
         <section className={cardClass}>
-          <h2 className="font-semibold">Tax Metadata</h2>
-          <p className="text-xs text-neutral-500">
-            Architecture only - registration/jurisdiction metadata for a future
-            invoicing/reporting phase. The actual tax rate used at checkout is still the
-            General tab&apos;s &ldquo;Tax rate (%)&rdquo;/&ldquo;Prices include tax&rdquo; fields, unchanged.
-          </p>
-          <label className="flex items-center gap-2 text-sm font-medium">
+          <SectionHeader icon={DocumentCheckIcon} title="Tax Metadata & Jurisdiction" subtitle="Registration details for official tax compliance and invoicing." />
+          
+          <label className="flex items-center gap-3 text-sm font-extrabold text-slate-900 dark:text-slate-100 cursor-pointer">
             <input
               type="checkbox"
+              className="w-4 h-4 rounded-md text-primary-6000 focus:ring-primary-500/20 border-slate-300 dark:border-slate-700"
               checked={tax.taxRegistered}
               onChange={(e) => setTax({ ...tax, taxRegistered: e.target.checked })}
             />
-            Store is tax-registered
+            Store is officially tax-registered
           </label>
+          
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
-              <label className={labelClass}>Tax ID / registration number</label>
+              <label className={labelClass}>Tax ID / NTN / Registration Number</label>
               <input className={inputClass} value={tax.taxId ?? ""} onChange={(e) => setTax({ ...tax, taxId: e.target.value })} />
             </div>
             <div>
-              <label className={labelClass}>Tax jurisdiction</label>
+              <label className={labelClass}>Tax Jurisdiction</label>
               <input className={inputClass} value={tax.taxJurisdiction ?? ""} onChange={(e) => setTax({ ...tax, taxJurisdiction: e.target.value })} />
             </div>
           </div>
@@ -650,20 +750,21 @@ export default function SettingsPageClient({
         </section>
       )}
 
+      {/* Email Tab */}
       {tab === "Email" && (
         <section className={cardClass}>
-          <h2 className="font-semibold">Email</h2>
+          <SectionHeader icon={EnvelopeIcon} title="Email Sender Info" subtitle="Sender details used for transactional email notifications." />
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
-              <label className={labelClass}>From name</label>
+              <label className={labelClass}>From Name</label>
               <input className={inputClass} value={email.fromName} onChange={(e) => setEmail({ ...email, fromName: e.target.value })} />
             </div>
             <div>
-              <label className={labelClass}>From email</label>
+              <label className={labelClass}>From Email Address</label>
               <input className={inputClass} value={email.fromEmail} onChange={(e) => setEmail({ ...email, fromEmail: e.target.value })} />
             </div>
-            <div>
-              <label className={labelClass}>Support email</label>
+            <div className="sm:col-span-2">
+              <label className={labelClass}>Support Email Address</label>
               <input className={inputClass} value={email.supportEmail ?? ""} onChange={(e) => setEmail({ ...email, supportEmail: e.target.value })} />
             </div>
           </div>
@@ -671,33 +772,31 @@ export default function SettingsPageClient({
         </section>
       )}
 
+      {/* Email Templates Tab */}
       {tab === "Email Templates" && (
         <section className={cardClass}>
-          <h2 className="font-semibold">Email templates</h2>
-          <p className="text-xs text-neutral-500">
-            Subject line + on/off only - no HTML body editor or real sending yet (see Integrations
-            → SMTP, not connected).
-          </p>
+          <SectionHeader icon={EnvelopeOpenIcon} title="Email Templates" subtitle="Configure automated subjects and active status for customer triggers." />
           {(
             [
-              ["welcome", "Welcome"],
-              ["orderConfirmation", "Order Confirmation"],
-              ["passwordReset", "Password Reset"],
-              ["contact", "Contact"],
-              ["newsletter", "Newsletter"],
+              ["welcome", "Welcome Email"],
+              ["orderConfirmation", "Order Confirmation Email"],
+              ["passwordReset", "Password Reset Email"],
+              ["contact", "Contact Form Response"],
+              ["newsletter", "Newsletter Subscription"],
             ] as const
           ).map(([key, label]) => (
-            <div key={key} className="border border-neutral-200 dark:border-neutral-800 rounded-xl p-4 space-y-2">
-              <label className="flex items-center gap-2 text-sm font-medium">
+            <div key={key} className="border border-slate-200 dark:border-slate-800 rounded-2xl p-4 space-y-2 bg-slate-50/50 dark:bg-slate-800/30">
+              <label className="flex items-center gap-3 text-sm font-extrabold text-slate-900 dark:text-slate-100 cursor-pointer">
                 <input
                   type="checkbox"
+                  className="w-4 h-4 rounded-md text-primary-6000 focus:ring-primary-500/20 border-slate-300 dark:border-slate-700"
                   checked={emailTemplates[key].enabled}
                   onChange={(e) => updateEmailTemplate(key, { enabled: e.target.checked })}
                 />
                 {label}
               </label>
               <input
-                placeholder="Subject line"
+                placeholder="Subject Line"
                 className={inputClass}
                 value={emailTemplates[key].subject}
                 onChange={(e) => updateEmailTemplate(key, { subject: e.target.value })}
@@ -708,20 +807,22 @@ export default function SettingsPageClient({
         </section>
       )}
 
+      {/* WhatsApp Tab */}
       {tab === "WhatsApp" && (
         <section className={cardClass}>
-          <h2 className="font-semibold">WhatsApp chat button</h2>
-          <label className="flex items-center gap-2 text-sm font-medium">
+          <SectionHeader icon={ChatBubbleLeftRightIcon} title="WhatsApp Support Widget" subtitle="Configure the floating WhatsApp button for instant storefront chat." />
+          <label className="flex items-center gap-3 text-sm font-extrabold text-slate-900 dark:text-slate-100 cursor-pointer">
             <input
               type="checkbox"
+              className="w-4 h-4 rounded-md text-primary-6000 focus:ring-primary-500/20 border-slate-300 dark:border-slate-700"
               checked={whatsapp.enabled}
               onChange={(e) => setWhatsapp({ ...whatsapp, enabled: e.target.checked })}
             />
-            Show floating WhatsApp button on the storefront
+            Show floating WhatsApp widget on store pages
           </label>
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
-              <label className={labelClass}>WhatsApp number (with country code, digits only)</label>
+              <label className={labelClass}>WhatsApp Number (Digits only with country code)</label>
               <input
                 placeholder="923001234567"
                 className={inputClass}
@@ -730,7 +831,7 @@ export default function SettingsPageClient({
               />
             </div>
             <div>
-              <label className={labelClass}>Default message</label>
+              <label className={labelClass}>Default Greeting Message</label>
               <input
                 className={inputClass}
                 value={whatsapp.defaultMessage ?? ""}
@@ -738,73 +839,61 @@ export default function SettingsPageClient({
               />
             </div>
           </div>
-          <p className="text-xs text-neutral-500">
-            Opens a WhatsApp chat with this number pre-filled with the default message. Leave the number empty
-            to keep the button hidden even if enabled above.
-          </p>
           <SaveButton onClick={() => updateWhatsAppSettings(whatsapp)} />
         </section>
       )}
 
+      {/* Integrations Tab */}
       {tab === "Integrations" && (
         <div className="space-y-6">
           <section className={cardClass}>
-            <h2 className="font-semibold">Status</h2>
-            <p className="text-xs text-neutral-500">Read-only. No external service is connected from here.</p>
-            <div className="grid sm:grid-cols-2 gap-4 text-sm">
-              <div>
-                <span className="block text-neutral-500">Cloudinary</span>
-                <span className="text-green-600">Configured</span> (asset folders provisioned)
+            <SectionHeader icon={PuzzlePieceIcon} title="Connected Services Status" subtitle="Overview of active third-party APIs and Cloud integrations." />
+            <div className="grid sm:grid-cols-2 gap-4 text-sm font-medium">
+              <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
+                <span className="block text-xs font-bold text-slate-500 uppercase">Cloudinary Storage</span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-bold">✓ Configured</span>
               </div>
-              <div>
-                <span className="block text-neutral-500">Firebase</span>
-                <span className="text-green-600">Configured</span> (project connected)
+              <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
+                <span className="block text-xs font-bold text-slate-500 uppercase">Firebase Backend</span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-bold">✓ Configured</span>
               </div>
-              <div>
-                <span className="block text-neutral-500">Google Analytics</span>
+              <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
+                <span className="block text-xs font-bold text-slate-500 uppercase">Google Analytics (GA4)</span>
                 {analytics.integrations.ga4MeasurementId ? (
-                  <span className="text-green-600">Configured</span>
+                  <span className="text-emerald-600 dark:text-emerald-400 font-bold">✓ Configured</span>
                 ) : (
-                  <span className="text-neutral-500">Not configured</span>
+                  <span className="text-slate-400 font-bold">Not configured</span>
                 )}
               </div>
-              <div>
-                <span className="block text-neutral-500">Google Tag Manager</span>
-                {analytics.integrations.gtmContainerId ? (
-                  <span className="text-green-600">Configured</span>
-                ) : (
-                  <span className="text-neutral-500">Not configured</span>
-                )}
-              </div>
-              <div>
-                <span className="block text-neutral-500">Meta Pixel</span>
+              <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
+                <span className="block text-xs font-bold text-slate-500 uppercase">Meta Pixel</span>
                 {analytics.integrations.metaPixelId ? (
-                  <span className="text-green-600">Configured</span>
+                  <span className="text-emerald-600 dark:text-emerald-400 font-bold">✓ Configured</span>
                 ) : (
-                  <span className="text-neutral-500">Not configured</span>
+                  <span className="text-slate-400 font-bold">Not configured</span>
                 )}
               </div>
             </div>
-            <Link href={"/admin/analytics/settings" as any} className="text-sm font-medium hover:underline">
-              Manage Google Analytics / GTM / Meta Pixel in Analytics Settings →
+            <Link href={"/admin/analytics/settings" as any} className="text-xs font-bold text-primary-6000 hover:underline inline-block">
+              Manage GA4 / Meta Pixel Settings →
             </Link>
           </section>
 
           <section className={cardClass}>
-            <h2 className="font-semibold">SMTP</h2>
-            <p className="text-xs text-neutral-500">Metadata only - no real email is sent yet.</p>
-            <label className="flex items-center gap-2 text-sm font-medium">
+            <SectionHeader icon={EnvelopeIcon} title="SMTP Server Config" subtitle="Custom mail server settings for transactional email routing." />
+            <label className="flex items-center gap-3 text-sm font-extrabold text-slate-900 dark:text-slate-100 cursor-pointer">
               <input
                 type="checkbox"
+                className="w-4 h-4 rounded-md text-primary-6000 focus:ring-primary-500/20 border-slate-300 dark:border-slate-700"
                 checked={integrations.smtp.enabled}
                 onChange={(e) => setIntegrations({ ...integrations, smtp: { ...integrations.smtp, enabled: e.target.checked } })}
               />
-              Enabled
+              Enable Custom SMTP Server
             </label>
             <div className="grid sm:grid-cols-2 gap-4">
-              <input placeholder="Host" className={inputClass} value={integrations.smtp.host ?? ""} onChange={(e) => setIntegrations({ ...integrations, smtp: { ...integrations.smtp, host: e.target.value } })} />
+              <input placeholder="Host (e.g. smtp.mailgun.org)" className={inputClass} value={integrations.smtp.host ?? ""} onChange={(e) => setIntegrations({ ...integrations, smtp: { ...integrations.smtp, host: e.target.value } })} />
               <input
-                placeholder="Port"
+                placeholder="Port (e.g. 587)"
                 type="number"
                 className={inputClass}
                 value={integrations.smtp.port ?? ""}
@@ -815,124 +904,123 @@ export default function SettingsPageClient({
           </section>
 
           <section className={cardClass}>
-            <h2 className="font-semibold">reCAPTCHA</h2>
-            <p className="text-xs text-neutral-500">Metadata only - no real verification is performed yet.</p>
-            <label className="flex items-center gap-2 text-sm font-medium">
+            <SectionHeader icon={PuzzlePieceIcon} title="Google reCAPTCHA" subtitle="Spam protection settings for form submissions." />
+            <label className="flex items-center gap-3 text-sm font-extrabold text-slate-900 dark:text-slate-100 cursor-pointer">
               <input
                 type="checkbox"
+                className="w-4 h-4 rounded-md text-primary-6000 focus:ring-primary-500/20 border-slate-300 dark:border-slate-700"
                 checked={integrations.recaptcha.enabled}
                 onChange={(e) => setIntegrations({ ...integrations, recaptcha: { ...integrations.recaptcha, enabled: e.target.checked } })}
               />
-              Enabled
+              Enable reCAPTCHA Validation
             </label>
-            <input placeholder="Site key" className={inputClass} value={integrations.recaptcha.siteKey ?? ""} onChange={(e) => setIntegrations({ ...integrations, recaptcha: { ...integrations.recaptcha, siteKey: e.target.value } })} />
+            <input placeholder="Site Key" className={inputClass} value={integrations.recaptcha.siteKey ?? ""} onChange={(e) => setIntegrations({ ...integrations, recaptcha: { ...integrations.recaptcha, siteKey: e.target.value } })} />
+            <SaveButton onClick={() => updateIntegrationsSettings(integrations)} />
           </section>
-
-          <SaveButton onClick={() => updateIntegrationsSettings(integrations)} />
         </div>
       )}
 
+      {/* Notifications Tab */}
       {tab === "Notifications" && (
         <section className={cardClass}>
-          <h2 className="font-semibold">Notification channels</h2>
-          <p className="text-xs text-neutral-500">
-            Channel preferences for a future notification-dispatch system - independent of the
-            WhatsApp chat-button config on the WhatsApp tab.
-          </p>
-          {(
-            [
-              ["email", "Email"],
-              ["push", "Push"],
-              ["sms", "SMS"],
-              ["whatsapp", "WhatsApp"],
-            ] as const
-          ).map(([key, label]) => (
-            <label key={key} className="flex items-center gap-2 text-sm font-medium">
-              <input
-                type="checkbox"
-                checked={notifications[key].enabled}
-                onChange={(e) => setNotifications({ ...notifications, [key]: { enabled: e.target.checked } })}
-              />
-              {label}
-            </label>
-          ))}
+          <SectionHeader icon={BellIcon} title="Notification Channels" subtitle="Select active communication channels for operational notifications." />
+          <div className="grid sm:grid-cols-2 gap-4">
+            {(
+              [
+                ["email", "Email Notifications"],
+                ["push", "Push Notifications"],
+                ["sms", "SMS Notifications"],
+                ["whatsapp", "WhatsApp Alerts"],
+              ] as const
+            ).map(([key, label]) => (
+              <label key={key} className="flex items-center gap-3 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 text-sm font-extrabold text-slate-900 dark:text-slate-100 cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="w-4 h-4 rounded-md text-primary-6000 focus:ring-primary-500/20 border-slate-300 dark:border-slate-700"
+                  checked={notifications[key].enabled}
+                  onChange={(e) => setNotifications({ ...notifications, [key]: { enabled: e.target.checked } })}
+                />
+                {label}
+              </label>
+            ))}
+          </div>
           <SaveButton onClick={() => updateNotificationsSettings(notifications)} />
         </section>
       )}
 
+      {/* Backup Tab */}
       {tab === "Backup" && (
         <section className={cardClass}>
-          <h2 className="font-semibold">Backup</h2>
-          <p className="text-xs text-neutral-500">
-            Architecture only - requests are queued for a future export/import engine; nothing is
-            produced yet.
-          </p>
+          <SectionHeader icon={ArrowPathIcon} title="Data Backup & Export" subtitle="Export or import store catalog snapshots and configuration backups." />
           <div className="flex gap-3">
             <button
               type="button"
               disabled={backupBusy}
               onClick={() => handleBackup("export")}
-              className="px-4 py-2 rounded-full bg-primary-6000 text-white text-sm font-medium disabled:opacity-50"
+              className="px-5 py-2.5 rounded-full bg-primary-6000 hover:bg-primary-700 text-white text-xs font-bold shadow-lg shadow-primary-500/25 active:scale-95 transition-all disabled:opacity-50 cursor-pointer"
             >
-              Request export
+              Request Export Snapshot
             </button>
             <button
               type="button"
               disabled={backupBusy}
               onClick={() => handleBackup("import")}
-              className="px-4 py-2 rounded-full border border-neutral-300 dark:border-neutral-700 text-sm font-medium disabled:opacity-50"
+              className="px-5 py-2.5 rounded-full border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold transition-all disabled:opacity-50 cursor-pointer"
             >
-              Request import
+              Request Import Snapshot
             </button>
           </div>
-          <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
+          <div className="divide-y divide-slate-100 dark:divide-slate-800">
             {history.map((record) => (
-              <div key={record.id} className="py-2 text-sm flex items-center justify-between">
-                <span className="capitalize">{record.type}</span>
-                <span className="text-neutral-500 capitalize">{record.status}</span>
-                <span className="text-xs text-neutral-500">
+              <div key={record.id} className="py-3 text-sm flex items-center justify-between">
+                <span className="capitalize font-bold text-slate-900 dark:text-slate-100">{record.type}</span>
+                <span className="text-slate-500 capitalize text-xs bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-full">{record.status}</span>
+                <span className="text-xs text-slate-400">
                   {record.createdAt ? new Date(record.createdAt).toLocaleString() : ""}
                 </span>
               </div>
             ))}
-            {!history.length && <p className="text-sm text-neutral-500 py-2">No backup activity yet.</p>}
+            {!history.length && <p className="text-xs text-slate-500 py-3">No backup history available.</p>}
           </div>
         </section>
       )}
 
+      {/* Advanced Tab */}
       {tab === "Advanced" && (
         <section className={cardClass}>
-          <h2 className="font-semibold">Advanced</h2>
-          <p className="text-xs text-neutral-500">
-            Metadata only - none of these flags are wired to real behavior yet.
-          </p>
-          <label className="flex items-center gap-2 text-sm font-medium">
-            <input
-              type="checkbox"
-              checked={advanced.maintenanceMode}
-              onChange={(e) => setAdvanced({ ...advanced, maintenanceMode: e.target.checked })}
-            />
-            Maintenance mode
-          </label>
-          <label className="flex items-center gap-2 text-sm font-medium">
-            <input
-              type="checkbox"
-              checked={advanced.debugFlag}
-              onChange={(e) => setAdvanced({ ...advanced, debugFlag: e.target.checked })}
-            />
-            Debug flag
-          </label>
-          <label className="flex items-center gap-2 text-sm font-medium">
-            <input
-              type="checkbox"
-              checked={advanced.themeRebuildFlag}
-              onChange={(e) => setAdvanced({ ...advanced, themeRebuildFlag: e.target.checked })}
-            />
-            Theme rebuild flag
-          </label>
-          <div>
-            <label className={labelClass}>Cache version</label>
-            <input className={inputClass} value={advanced.cacheVersion} onChange={(e) => setAdvanced({ ...advanced, cacheVersion: e.target.value })} />
+          <SectionHeader icon={AdjustmentsHorizontalIcon} title="Advanced Settings" subtitle="System controls, maintenance mode and cache directives." />
+          <div className="space-y-4">
+            <label className="flex items-center gap-3 text-sm font-extrabold text-slate-900 dark:text-slate-100 cursor-pointer">
+              <input
+                type="checkbox"
+                className="w-4 h-4 rounded-md text-primary-6000 focus:ring-primary-500/20 border-slate-300 dark:border-slate-700"
+                checked={advanced.maintenanceMode}
+                onChange={(e) => setAdvanced({ ...advanced, maintenanceMode: e.target.checked })}
+              />
+              Maintenance Mode
+            </label>
+            <label className="flex items-center gap-3 text-sm font-extrabold text-slate-900 dark:text-slate-100 cursor-pointer">
+              <input
+                type="checkbox"
+                className="w-4 h-4 rounded-md text-primary-6000 focus:ring-primary-500/20 border-slate-300 dark:border-slate-700"
+                checked={advanced.debugFlag}
+                onChange={(e) => setAdvanced({ ...advanced, debugFlag: e.target.checked })}
+              />
+              Debug Logging Flag
+            </label>
+            <label className="flex items-center gap-3 text-sm font-extrabold text-slate-900 dark:text-slate-100 cursor-pointer">
+              <input
+                type="checkbox"
+                className="w-4 h-4 rounded-md text-primary-6000 focus:ring-primary-500/20 border-slate-300 dark:border-slate-700"
+                checked={advanced.themeRebuildFlag}
+                onChange={(e) => setAdvanced({ ...advanced, themeRebuildFlag: e.target.checked })}
+              />
+              Theme Rebuild Flag
+            </label>
+            <div>
+              <label className={labelClass}>Cache Version Tag</label>
+              <input className={inputClass} value={advanced.cacheVersion} onChange={(e) => setAdvanced({ ...advanced, cacheVersion: e.target.value })} />
+            </div>
           </div>
           <SaveButton onClick={() => updateAdvancedSettings(advanced)} />
         </section>

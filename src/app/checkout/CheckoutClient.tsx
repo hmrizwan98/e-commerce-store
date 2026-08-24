@@ -336,90 +336,90 @@ const CheckoutClient: React.FC<CheckoutClientProps> = ({
               Clothing Categories
             </Link>
             <span className="text-xs mx-1 sm:mx-1.5">/</span>
-              <span className="text-xs mx-1 sm:mx-1.5 text-slate-400">/</span>
-              <span className="text-slate-900 dark:text-slate-100 font-semibold">Checkout</span>
+            <span className="text-xs mx-1 sm:mx-1.5 text-slate-400">/</span>
+            <span className="text-slate-900 dark:text-slate-100 font-semibold">Checkout</span>
+          </div>
+        </div>
+
+        {!items.length ? (
+          <div className="flex flex-col items-center py-20 space-y-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-12 text-center shadow-xs">
+            <div className="w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 flex items-center justify-center text-2xl">
+              🛍️
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">Your cart is empty</h3>
+              <p className="text-sm text-slate-500 mt-1">Explore our catalog to add items before checking out.</p>
+            </div>
+            <Link href={"/collection" as any}>
+              <ButtonPrimary className="shadow-md">Explore Products →</ButtonPrimary>
+            </Link>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            <div className="lg:col-span-7 xl:col-span-8">{renderLeft()}</div>
+
+            <div className="lg:col-span-5 xl:col-span-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 sm:p-7 shadow-xs sticky top-24 space-y-6">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+                <h3 className="text-sm font-mono font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
+                  Order Summary ({items.length} {items.length === 1 ? "Item" : "Items"})
+                </h3>
+                <Link href="/cart" className="text-xs text-indigo-600 font-bold hover:underline">
+                  Edit Cart
+                </Link>
+              </div>
+
+              <div className="divide-y divide-slate-100 dark:divide-slate-800/60 max-h-72 overflow-y-auto pr-1">
+                {items.map(renderProduct)}
+              </div>
+
+              <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-2.5 text-xs text-slate-600 dark:text-slate-400 font-medium">
+                <div className="flex justify-between">
+                  <span>Subtotal</span>
+                  <span className="font-bold text-slate-900 dark:text-slate-100">
+                    ${totals.subtotal.toFixed(2)}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Estimated Shipping</span>
+                  <span className="font-bold text-slate-900 dark:text-slate-100">
+                    {totals.shippingCost === 0 ? "Free" : `$${totals.shippingCost.toFixed(2)}`}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Tax</span>
+                  <span className="font-bold text-slate-900 dark:text-slate-100">
+                    ${totals.tax.toFixed(2)}
+                  </span>
+                </div>
+                <div className="flex justify-between font-extrabold text-slate-900 dark:text-slate-100 text-base pt-3 border-t border-slate-100 dark:border-slate-800">
+                  <span>Total Amount</span>
+                  <span className="text-indigo-600 dark:text-indigo-400">${totals.total.toFixed(2)}</span>
+                </div>
+              </div>
+
+              {error && (
+                <div className="p-3 rounded-xl bg-rose-50 text-rose-700 text-xs font-semibold border border-rose-200 flex items-center gap-2">
+                  ⚠️ {error}
+                </div>
+              )}
+
+              <ButtonPrimary
+                className="w-full !py-3 text-sm font-extrabold shadow-md shadow-indigo-500/20"
+                onClick={handleConfirmOrder}
+                disabled={submitting}
+              >
+                {submitting ? "Placing Your Order..." : "Confirm & Place Order →"}
+              </ButtonPrimary>
+
+              <p className="text-[11px] text-slate-400 text-center flex items-center justify-center gap-1">
+                🔒 256-bit Encrypted Checkout · 100% Guaranteed Delivery
+              </p>
             </div>
           </div>
-
-          {!items.length ? (
-            <div className="flex flex-col items-center py-20 space-y-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-12 text-center shadow-xs">
-              <div className="w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 flex items-center justify-center text-2xl">
-                🛍️
-              </div>
-              <div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">Your cart is empty</h3>
-                <p className="text-sm text-slate-500 mt-1">Explore our catalog to add items before checking out.</p>
-              </div>
-              <Link href={"/collection" as any}>
-                <ButtonPrimary className="shadow-md">Explore Products →</ButtonPrimary>
-              </Link>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-              <div className="lg:col-span-7 xl:col-span-8">{renderLeft()}</div>
-
-              <div className="lg:col-span-5 xl:col-span-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 sm:p-7 shadow-xs sticky top-24 space-y-6">
-                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
-                  <h3 className="text-sm font-mono font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
-                    Order Summary ({items.length} {items.length === 1 ? "Item" : "Items"})
-                  </h3>
-                  <Link href="/cart" className="text-xs text-indigo-600 font-bold hover:underline">
-                    Edit Cart
-                  </Link>
-                </div>
-
-                <div className="divide-y divide-slate-100 dark:divide-slate-800/60 max-h-72 overflow-y-auto pr-1">
-                  {items.map(renderProduct)}
-                </div>
-
-                <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-2.5 text-xs text-slate-600 dark:text-slate-400 font-medium">
-                  <div className="flex justify-between">
-                    <span>Subtotal</span>
-                    <span className="font-bold text-slate-900 dark:text-slate-100">
-                      ${totals.subtotal.toFixed(2)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Estimated Shipping</span>
-                    <span className="font-bold text-slate-900 dark:text-slate-100">
-                      {totals.shippingCost === 0 ? "Free" : `$${totals.shippingCost.toFixed(2)}`}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Tax</span>
-                    <span className="font-bold text-slate-900 dark:text-slate-100">
-                      ${totals.tax.toFixed(2)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between font-extrabold text-slate-900 dark:text-slate-100 text-base pt-3 border-t border-slate-100 dark:border-slate-800">
-                    <span>Total Amount</span>
-                    <span className="text-indigo-600 dark:text-indigo-400">${totals.total.toFixed(2)}</span>
-                  </div>
-                </div>
-
-                {error && (
-                  <div className="p-3 rounded-xl bg-rose-50 text-rose-700 text-xs font-semibold border border-rose-200 flex items-center gap-2">
-                    ⚠️ {error}
-                  </div>
-                )}
-
-                <ButtonPrimary
-                  className="w-full !py-3 text-sm font-extrabold shadow-md shadow-indigo-500/20"
-                  onClick={handleConfirmOrder}
-                  disabled={submitting}
-                >
-                  {submitting ? "Placing Your Order..." : "Confirm & Place Order →"}
-                </ButtonPrimary>
-
-                <p className="text-[11px] text-slate-400 text-center flex items-center justify-center gap-1">
-                  🔒 256-bit Encrypted Checkout · 100% Guaranteed Delivery
-                </p>
-              </div>
-            </div>
-          )}
-        </main>
-      </div>
-    );
-  };
+        )}
+      </main>
+    </div>
+  );
+};
 
 export default CheckoutClient;

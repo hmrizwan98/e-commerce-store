@@ -71,57 +71,79 @@ export default async function AdminFinancePage({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Finance</h1>
-        <Link href={"/admin/settings" as any} className="text-sm font-medium hover:underline">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary-50 dark:bg-primary-950/40 border border-primary-200 dark:border-primary-800/60 text-primary-600 dark:text-primary-400 text-xs font-semibold uppercase tracking-wider mb-2">
+            💰 Revenue & Accounting
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+            Financial Dashboard
+          </h1>
+        </div>
+        <Link
+          href={"/admin/settings" as any}
+          className="inline-flex items-center justify-center px-4 py-2 rounded-full border border-slate-200/80 dark:border-slate-700/80 bg-white/80 dark:bg-slate-900/80 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-semibold shadow-sm transition-all"
+        >
           Commission &amp; Tax settings →
         </Link>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         {stats.map((s) => (
-          <div key={s.label} className={cardClass}>
-            <div className="text-sm text-neutral-500">{s.label}</div>
-            <div className="text-2xl font-semibold mt-1">{money(s.value)}</div>
+          <div
+            key={s.label}
+            className="p-6 rounded-3xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 shadow-xl shadow-slate-900/5 space-y-2 hover:border-slate-300 dark:hover:border-slate-700 transition-all"
+          >
+            <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">{s.label}</div>
+            <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">{money(s.value)}</div>
           </div>
         ))}
       </div>
 
-      <div className={cardClass}>
-        <h2 className="font-semibold mb-4">Transaction Ledger</h2>
+      <div className="p-6 sm:p-8 rounded-3xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 shadow-xl shadow-slate-900/5 space-y-5">
+        <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center justify-between">
+          <span>Transaction Ledger</span>
+          <span className="text-xs font-normal text-slate-400">Real-time payment history</span>
+        </h2>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm text-left">
             <thead>
-              <tr className="text-left border-b border-neutral-200 dark:border-neutral-800 text-neutral-500">
-                <th className="p-2">Order</th>
-                <th className="p-2">Type</th>
-                <th className="p-2">Amount</th>
-                <th className="p-2">Commission</th>
-                <th className="p-2">Method</th>
-                <th className="p-2">Status</th>
-                <th className="p-2">Date</th>
+              <tr className="border-b border-slate-200/80 dark:border-slate-800/80 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 bg-slate-50/50 dark:bg-slate-800/40">
+                <th className="p-3 pl-4">Order</th>
+                <th className="p-3">Type</th>
+                <th className="p-3">Amount</th>
+                <th className="p-3">Commission</th>
+                <th className="p-3">Method</th>
+                <th className="p-3">Status</th>
+                <th className="p-3 pr-4">Date</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-slate-200/60 dark:divide-slate-800/60">
               {ledger.map((t) => (
-                <tr key={t.id} className="border-b border-neutral-100 dark:border-neutral-800/60">
-                  <td className="p-2">
-                    <Link href={`/admin/orders/${t.orderId}` as any} className="hover:underline">
+                <tr key={t.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors">
+                  <td className="p-3 pl-4 font-mono text-xs">
+                    <Link href={`/admin/orders/${t.orderId}` as any} className="font-semibold text-primary-600 dark:text-primary-400 hover:underline">
                       {t.orderId.slice(0, 8)}…
                     </Link>
                   </td>
-                  <td className="p-2 capitalize">{t.type}</td>
-                  <td className="p-2">{money(t.amount)}</td>
-                  <td className="p-2">{t.commissionAmount ? money(t.commissionAmount) : "—"}</td>
-                  <td className="p-2 capitalize">{t.method.replace("_", " ")}</td>
-                  <td className="p-2 capitalize">{t.status}</td>
-                  <td className="p-2">{t.createdAt ? new Date(t.createdAt).toLocaleString() : ""}</td>
+                  <td className="p-3 capitalize text-slate-700 dark:text-slate-300 font-medium">{t.type}</td>
+                  <td className="p-3 font-semibold text-slate-900 dark:text-slate-100">{money(t.amount)}</td>
+                  <td className="p-3 text-slate-500 dark:text-slate-400 text-xs">{t.commissionAmount ? money(t.commissionAmount) : "—"}</td>
+                  <td className="p-3 capitalize text-slate-600 dark:text-slate-400 text-xs">{t.method.replace("_", " ")}</td>
+                  <td className="p-3">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 capitalize">
+                      {t.status}
+                    </span>
+                  </td>
+                  <td className="p-3 pr-4 text-slate-500 dark:text-slate-400 text-xs">{t.createdAt ? new Date(t.createdAt).toLocaleString() : ""}</td>
                 </tr>
               ))}
               {!ledger.length && (
                 <tr>
-                  <td colSpan={7} className="p-8 text-center text-neutral-500">
-                    No transactions yet. Payment/refund records appear here once orders are marked paid or refunded.
+                  <td colSpan={7} className="p-12 text-center text-slate-500 dark:text-slate-400">
+                    <div className="text-3xl mb-2">💳</div>
+                    <p className="font-medium">No transactions yet.</p>
+                    <p className="text-xs text-slate-400 mt-1">Payment and refund records appear here automatically once orders are processed.</p>
                   </td>
                 </tr>
               )}
@@ -130,24 +152,24 @@ export default async function AdminFinancePage({
         </div>
 
         {(nextHref || prevHref) && (
-          <div className="flex items-center justify-end gap-2 pt-4">
+          <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-200/60 dark:border-slate-800/60">
             <Link
               href={prevHref ?? "#"}
               aria-disabled={!prevHref}
-              className={`px-3 py-1.5 rounded-lg border border-neutral-300 dark:border-neutral-700 text-xs font-medium ${
-                !prevHref ? "pointer-events-none opacity-40" : "hover:bg-neutral-100 dark:hover:bg-neutral-800"
+              className={`px-3.5 py-1.5 rounded-full border border-slate-200/80 dark:border-slate-700/80 text-xs font-semibold transition-all ${
+                !prevHref ? "pointer-events-none opacity-40" : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200"
               }`}
             >
-              Previous
+              ← Previous
             </Link>
             <Link
               href={nextHref ?? "#"}
               aria-disabled={!nextHref}
-              className={`px-3 py-1.5 rounded-lg border border-neutral-300 dark:border-neutral-700 text-xs font-medium ${
-                !nextHref ? "pointer-events-none opacity-40" : "hover:bg-neutral-100 dark:hover:bg-neutral-800"
+              className={`px-3.5 py-1.5 rounded-full border border-slate-200/80 dark:border-slate-700/80 text-xs font-semibold transition-all ${
+                !nextHref ? "pointer-events-none opacity-40" : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200"
               }`}
             >
-              Next
+              Next →
             </Link>
           </div>
         )}

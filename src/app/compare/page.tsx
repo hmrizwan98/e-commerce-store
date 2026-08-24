@@ -124,8 +124,8 @@ const PageCompare = () => {
                     const attr = p.attributes.find((a) => a.name === name);
                     const values = attr
                       ? attr.values
-                          .map((v) => (typeof v === "string" ? v : v.label))
-                          .join(", ")
+                        .map((v) => (typeof v === "string" ? v : v.label))
+                        .join(", ")
                       : "—";
                     return (
                       <td key={p.id} className="p-4">

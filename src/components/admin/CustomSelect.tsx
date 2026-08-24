@@ -34,7 +34,7 @@ export default function CustomSelect<T extends string = string>({
     <div className={`relative w-full ${className}`}>
       <Listbox value={value} onChange={onChange} disabled={disabled}>
         <div className="relative">
-          <Listbox.Button className="w-full inline-flex items-center justify-between gap-2 px-3.5 py-2.5 text-xs font-bold rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 shadow-2xs hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
+          <Listbox.Button className="w-full inline-flex items-center justify-between gap-2 px-4 py-2.5 text-sm font-semibold rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 shadow-xs hover:border-primary-400 dark:hover:border-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
             <div className="flex items-center gap-2 min-w-0 truncate">
               {selectedOption?.dot && (
                 <span className={`w-2 h-2 rounded-full shrink-0 ${selectedOption.dot}`} />
@@ -42,30 +42,30 @@ export default function CustomSelect<T extends string = string>({
               {selectedOption?.icon && (
                 <span className="text-sm shrink-0">{selectedOption.icon}</span>
               )}
-              <span className="truncate capitalize font-semibold">
+              <span className="truncate font-semibold">
                 {selectedOption?.label || placeholder}
               </span>
             </div>
-            <ChevronDownIcon className="w-4 h-4 text-slate-400 shrink-0" />
+            <ChevronDownIcon className="w-4 h-4 text-slate-400 shrink-0 stroke-[2.5]" />
           </Listbox.Button>
 
           <Transition
             as={Fragment}
             leave="transition ease-in duration-100"
-            leaveFrom="opacity-100"
-            leaveTo="opacity-0"
+            leaveFrom="opacity-100 scale-100"
+            leaveTo="opacity-0 scale-95"
           >
-            <Listbox.Options className="absolute z-50 left-0 right-0 mt-1 py-1 max-h-60 overflow-auto rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl ring-1 ring-black/5 focus:outline-hidden text-xs">
+            <Listbox.Options className="absolute z-50 left-0 right-0 mt-1.5 py-1.5 max-h-60 overflow-auto rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl ring-1 ring-black/5 focus:outline-none text-xs sm:text-sm">
               {options.map((opt) => (
                 <Listbox.Option
                   key={opt.value}
                   value={opt.value}
                   className={({ active, selected }) =>
-                    `relative cursor-pointer select-none py-2.5 px-3.5 flex items-center justify-between transition-colors ${
+                    `relative cursor-pointer select-none py-2.5 px-4 flex items-center justify-between transition-colors ${
                       active
-                        ? "bg-indigo-50 dark:bg-slate-800/80 text-indigo-600 dark:text-indigo-400"
+                        ? "bg-primary-50 dark:bg-primary-950/60 text-primary-6000 dark:text-primary-400"
                         : "text-slate-700 dark:text-slate-300"
-                    } ${selected ? "font-bold bg-indigo-50/50 dark:bg-slate-800/40" : ""}`
+                    } ${selected ? "font-bold bg-primary-50/70 dark:bg-primary-950/40 text-primary-6000 dark:text-primary-400" : ""}`
                   }
                 >
                   {({ selected }) => (
@@ -75,9 +75,11 @@ export default function CustomSelect<T extends string = string>({
                           <span className={`w-2 h-2 rounded-full shrink-0 ${opt.dot}`} />
                         )}
                         {opt.icon && <span className="text-sm shrink-0">{opt.icon}</span>}
-                        <span className="truncate capitalize">{opt.label}</span>
+                        <span className="truncate">{opt.label}</span>
                       </div>
-                      {selected && <CheckIcon className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />}
+                      {selected && (
+                        <CheckIcon className="w-4 h-4 text-primary-6000 dark:text-primary-400 shrink-0 stroke-[2.5]" />
+                      )}
                     </>
                   )}
                 </Listbox.Option>

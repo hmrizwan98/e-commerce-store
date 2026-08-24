@@ -60,8 +60,11 @@ async function OverviewContent({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-6">
-          <h2 className="font-semibold mb-4">Visitors</h2>
+        <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 rounded-3xl p-6 shadow-xl shadow-slate-900/5 space-y-4">
+          <h2 className="font-bold text-slate-900 dark:text-slate-100 flex items-center justify-between">
+            <span>Visitors Trend</span>
+            <span className="text-xs font-normal text-slate-400">Unique visitors vs sessions</span>
+          </h2>
           <TrendLineChart
             data={trend}
             series={[
@@ -70,8 +73,11 @@ async function OverviewContent({
             ]}
           />
         </div>
-        <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-6">
-          <h2 className="font-semibold mb-4">Revenue &amp; Orders</h2>
+        <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 rounded-3xl p-6 shadow-xl shadow-slate-900/5 space-y-4">
+          <h2 className="font-bold text-slate-900 dark:text-slate-100 flex items-center justify-between">
+            <span>Revenue &amp; Orders Trend</span>
+            <span className="text-xs font-normal text-slate-400">Financial performance</span>
+          </h2>
           <TrendLineChart
             data={trend}
             series={[
@@ -93,11 +99,18 @@ export default function AdminAnalyticsOverviewPage({
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
-        <h1 className="text-2xl font-semibold">Analytics Overview</h1>
+        <div>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary-50 dark:bg-primary-950/40 border border-primary-200 dark:border-primary-800/60 text-primary-600 dark:text-primary-400 text-xs font-semibold uppercase tracking-wider mb-2">
+            📊 Performance Insights
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+            Analytics Overview
+          </h1>
+        </div>
         <DateRangeFilter />
       </div>
       <AnalyticsNav />
-      <Suspense fallback={<p className="text-sm text-neutral-500">Loading…</p>}>
+      <Suspense fallback={<p className="text-sm text-slate-500 py-6 text-center">Loading analytics data…</p>}>
         <OverviewContent searchParams={searchParams} />
       </Suspense>
     </div>
