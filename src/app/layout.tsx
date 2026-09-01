@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import "@/fonts/line-awesome-1.3.0/css/line-awesome.css";
 import "@/styles/index.scss";
@@ -93,14 +93,78 @@ async function computeThemeAndSettings(): Promise<{
   return { tenantId: tenant.id, theme, general, suspended: false, headerMenu, footerMenu };
 }
 
+export const viewport: Viewport = {
+  themeColor: "#4f46e5",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+};
+
 export async function generateMetadata(): Promise<Metadata> {
   const { tenantId, theme, general, suspended } = await resolveThemeAndSettings();
-  if (!tenantId) return { metadataBase: new URL(PLATFORM_SITE_URL), title: "Admin" };
+  if (!tenantId) {
+    return {
+      metadataBase: new URL(PLATFORM_SITE_URL),
+      title: {
+        default: "Tradez Glint Platform - Multi-Tenant E-Commerce SaaS for Pakistan & Global Brands",
+        template: "%s | Tradez Glint Platform",
+      },
+      description: "Launch your online store with local payments (JazzCash, EasyPaisa, COD), 6+ Pakistani courier tracking (PostEx, CallCourier, Trax, TCS, Leopard, M&P), isolated multi-tenant architecture, and Next.js 14 speed with 0% transaction fees.",
+      keywords: ["e-commerce SaaS", "Pakistan e-commerce", "multi-tenant store builder", "JazzCash payment gateway", "EasyPaisa payment", "PostEx tracking", "CallCourier tracking", "Trax tracking", "TCS tracking", "Leopard tracking", "M&P courier tracking", "WhatsApp order updates", "Tradez Glint"],
+      alternates: {
+        canonical: PLATFORM_SITE_URL,
+      },
+      openGraph: {
+        type: "website",
+        locale: "en_US",
+        url: PLATFORM_SITE_URL,
+        title: "Tradez Glint - Multi-Tenant E-Commerce SaaS for Pakistan & Global Brands",
+        description: "Launch your online store with local payments, 6+ courier tracking, isolated multi-tenant architecture, and Next.js 14 speed with 0% transaction fees.",
+        siteName: "Tradez Glint Platform",
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: "Tradez Glint - Multi-Tenant E-Commerce SaaS",
+        description: "Launch your online store with local payments, 6+ courier tracking, and Next.js 14 speed with 0% transaction fees.",
+      },
+      robots: {
+        index: true,
+        follow: true,
+      },
+    };
+  }
   if (suspended) return { title: "Store unavailable" };
 
+  const storeName = general.storeName || "Online Store";
+  const storeTitle = general.seoTitle || storeName;
+  const storeDesc = general.seoDescription || `Shop the latest quality products and exclusive deals at ${storeName}. Fast shipping, easy returns, and secure local payment options.`;
+  const storeLogo = theme.logos.logoLight || theme.logos.logoDark || theme.logos.favicon;
+
   return {
-    title: general.seoTitle || general.storeName,
-    description: general.seoDescription,
+    title: {
+      default: storeTitle,
+      template: `%s | ${general.storeName}`,
+    },
+    description: storeDesc,
+    keywords: [general.storeName, "online store", "e-commerce", "buy online"],
+    openGraph: {
+      type: "website",
+      locale: "en_US",
+      title: storeTitle,
+      description: storeDesc,
+      siteName: general.storeName,
+      images: storeLogo ? [{ url: storeLogo }] : undefined,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: storeTitle,
+      description: storeDesc,
+      images: storeLogo ? [storeLogo] : undefined,
+    },
+    robots: {
+      index: true,
+      follow: true,
+    },
     icons: theme.logos.favicon
       ? {
           icon: theme.logos.favicon,

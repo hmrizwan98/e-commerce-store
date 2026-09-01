@@ -73,7 +73,7 @@ function PakistanEcosystemSection() {
               </div>
             </div>
 
-            <div className="pt-4 border-t border-white/10 text-xs text-neutral-400 flex items-center gap-1.5">
+            <div className="pt-4 border-t border-white/10 text-xs text-neutral-300 flex items-center gap-1.5">
               <CheckCircleIcon className="w-4 h-4 text-emerald-400 shrink-0" />
               <span>Includes Couriers Next, TCS, PostEx, Trax, Leopards &amp; CallCourier</span>
             </div>
@@ -102,7 +102,7 @@ function PakistanEcosystemSection() {
               </div>
             </div>
 
-            <div className="pt-4 border-t border-white/10 text-xs text-neutral-400 flex items-center gap-1.5">
+            <div className="pt-4 border-t border-white/10 text-xs text-neutral-300 flex items-center gap-1.5">
               <CheckCircleIcon className="w-4 h-4 text-emerald-400 shrink-0" />
               <span>Direct WhatsApp Float Button + Tracking Link Pre-fills</span>
             </div>
@@ -137,7 +137,7 @@ function PakistanEcosystemSection() {
               </div>
             </div>
 
-            <div className="pt-4 border-t border-white/10 text-xs text-neutral-400 flex items-center gap-1.5">
+            <div className="pt-4 border-t border-white/10 text-xs text-neutral-300 flex items-center gap-1.5">
               <CheckCircleIcon className="w-4 h-4 text-emerald-400 shrink-0" />
               <span>PKR Storefront &amp; Tax Calculation pre-configured</span>
             </div>

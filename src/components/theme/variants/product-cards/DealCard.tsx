@@ -42,6 +42,7 @@ export default function DealCard({ data, className = "", productCardSettings }: 
         <Link
           href={getTenantHref(`/product/${slug}`) as any}
           className="absolute inset-0 z-[1]"
+          aria-label={name}
           onClick={() => trackEvent("product_click", { productId: data.id })}
         />
 

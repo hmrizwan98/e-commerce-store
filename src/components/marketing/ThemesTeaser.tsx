@@ -18,7 +18,7 @@ function ThemesTeaser() {
         <h2 className="text-3xl sm:text-4xl font-extrabold text-neutral-900 dark:text-white tracking-tight">
           Four themes, ready on day one
         </h2>
-        <p className="text-base text-neutral-600 dark:text-neutral-400 leading-relaxed">
+        <p className="text-base text-neutral-700 dark:text-neutral-300 leading-relaxed">
           Every store starts from a complete, production-ready theme - colors, typography, and homepage layout included, pre-configured for instant launch.
         </p>
       </div>
@@ -52,7 +52,7 @@ function ThemesTeaser() {
                 <h3 className="font-bold text-lg text-neutral-900 dark:text-white mb-2 tracking-tight group-hover:text-primary-6000 transition-colors">
                   {preset.name}
                 </h3>
-                <p className="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed mb-4">
+                <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed mb-4">
                   {preset.description}
                 </p>
               </div>

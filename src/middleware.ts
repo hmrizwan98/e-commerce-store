@@ -84,7 +84,7 @@ export function middleware(req: NextRequest) {
       maxAge: 60 * 60 * 6,
       path: "/",
     });
-    res.headers.set("X-Robots-Tag", "noindex");
+    res.headers.set("X-Robots-Tag", "index, follow");
     return res;
   }
 
@@ -165,6 +165,7 @@ export function middleware(req: NextRequest) {
   const isPlatformDomain =
     hostname === "localhost" ||
     hostname === "127.0.0.1" ||
+    hostname.endsWith(".vercel.app") ||
     (!!rootDomain && (hostname === rootDomain || hostname === `www.${rootDomain}`));
 
   if (isPlatformDomain) {
@@ -177,6 +178,7 @@ export function middleware(req: NextRequest) {
       if (pathname === "/") {
         res.cookies.delete(FRONTSTORE_COOKIE);
       }
+      res.headers.set("X-Robots-Tag", "index, follow");
       return res;
     }
   }

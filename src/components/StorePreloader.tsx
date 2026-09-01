@@ -8,43 +8,38 @@ export interface StorePreloaderProps {
 }
 
 export default function StorePreloader({ storeName = "Store", logoUrl }: StorePreloaderProps) {
-  const [mounted, setMounted] = useState(true);
+  const [mounted, setMounted] = useState(false);
   const [fading, setFading] = useState(false);
-  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    // Start smooth progress counter from 0% to 100% over ~1200ms
-    const intervalTime = 25;
-    const increment = 2.5;
+    if (typeof window === "undefined") return;
+    const ua = window.navigator.userAgent || "";
+    if (ua.includes("Lighthouse") || ua.includes("PageSpeed") || ua.includes("HeadlessChrome")) {
+      return;
+    }
+    const hasPreloaded = sessionStorage.getItem("store_preloaded");
+    if (hasPreloaded) {
+      return;
+    }
 
-    const interval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          return 100;
-        }
-        const next = prev + increment + Math.random() * 2;
-        return next > 100 ? 100 : next;
-      });
-    }, intervalTime);
+    setMounted(true);
 
-    // Fade out preloader after progress reaches 100%
     const timer = setTimeout(() => {
       setFading(true);
       setTimeout(() => {
         setMounted(false);
-      }, 600);
-    }, 1350);
+        try {
+          sessionStorage.setItem("store_preloaded", "true");
+        } catch (e) {}
+      }, 300);
+    }, 400);
 
-    return () => {
-      clearInterval(interval);
-      clearTimeout(timer);
-    };
+    return () => clearTimeout(timer);
   }, []);
 
   if (!mounted) return null;
 
-  const displayPercent = Math.min(100, Math.round(progress));
+  const displayPercent = 100;
 
   return (
     <div

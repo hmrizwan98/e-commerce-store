@@ -17,7 +17,7 @@ const Prices: FC<PricesProps> = ({
     <div className={`flex items-baseline gap-2 ${className}`}>
       <span className={contentClass}>${String(price)}</span>
       {compareAtPrice && compareAtPrice > price && (
-        <span className="text-xs text-slate-400 dark:text-neutral-500 line-through font-normal">
+        <span className="text-xs text-slate-600 dark:text-neutral-400 line-through font-normal">
           ${String(compareAtPrice)}
         </span>
       )}

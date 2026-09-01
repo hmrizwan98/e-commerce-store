@@ -21,7 +21,7 @@ export default function PricingTeaser() {
           </div>
           <div>
             <h2 className="font-extrabold text-xl text-neutral-900 dark:text-white tracking-tight">Everything included, one model</h2>
-            <p className="text-xs text-neutral-500 dark:text-neutral-400">Growth-aligned commission model — no flat license fee</p>
+            <p className="text-xs text-neutral-600 dark:text-neutral-300">Growth-aligned commission model — no flat license fee</p>
           </div>
         </div>
 

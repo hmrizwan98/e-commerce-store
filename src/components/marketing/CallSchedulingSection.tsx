@@ -21,7 +21,7 @@ export default function CallSchedulingSection() {
             Prefer to talk it through live?
           </h2>
 
-          <p className="text-base text-neutral-600 dark:text-neutral-400 leading-relaxed">
+          <p className="text-base text-neutral-700 dark:text-neutral-300 leading-relaxed">
             Schedule a 20–30 minute demo call. We&apos;ll walk you through Store Admin, Super Admin, and answer all technical and pricing questions directly.
           </p>
 

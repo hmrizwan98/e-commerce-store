@@ -31,7 +31,7 @@ function TestimonialsSection() {
         <h2 className="text-3xl sm:text-4xl font-extrabold text-neutral-900 dark:text-white tracking-tight">
           What store owners experience
         </h2>
-        <p className="text-xs text-neutral-400 dark:text-neutral-500 font-medium">
+        <p className="text-xs text-neutral-600 dark:text-neutral-300 font-medium">
           Illustrative examples of what stores can expect on the platform
         </p>
       </div>
@@ -58,7 +58,7 @@ function TestimonialsSection() {
               </div>
               <div>
                 <span className="block text-sm font-semibold text-neutral-900 dark:text-white">{item.role}</span>
-                <span className="block text-[11px] text-neutral-400">Verified Platform Merchant</span>
+                <span className="block text-[11px] text-neutral-600 dark:text-neutral-300">Verified Platform Merchant</span>
               </div>
             </div>
           </div>

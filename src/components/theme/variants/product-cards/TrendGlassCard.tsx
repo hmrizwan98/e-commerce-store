@@ -41,6 +41,7 @@ export default function TrendGlassCard({ data, className = "", productCardSettin
         <Link
           href={getTenantHref(`/product/${slug}`) as any}
           className="absolute inset-0 z-[1]"
+          aria-label={name}
           onClick={() => trackEvent("product_click", { productId: data.id })}
         />
 

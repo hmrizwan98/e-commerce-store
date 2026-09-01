@@ -20,6 +20,7 @@ const LikeButton: React.FC<LikeButtonProps> = ({
   return (
     <button
       className={`w-9 h-9 flex items-center justify-center rounded-full bg-white dark:bg-slate-900 text-neutral-700 dark:text-slate-200 nc-shadow-lg ${className}`}
+      aria-label="Add to wishlist"
       onClick={() => productId && toggle(productId)}
     >
       <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">

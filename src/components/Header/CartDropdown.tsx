@@ -34,6 +34,7 @@ export default function CartDropdown({ cartSettings }: CartDropdownProps) {
       {({ open, close }) => (
         <>
           <Popover.Button
+            aria-label="Shopping cart"
             className={`
                 ${open ? "" : "text-opacity-90"}
                  group w-10 h-10 sm:w-12 sm:h-12 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full inline-flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-opacity-75 relative`}
@@ -83,7 +84,7 @@ export default function CartDropdown({ cartSettings }: CartDropdownProps) {
               />
             </svg>
 
-            <Link className="block md:hidden absolute inset-0" href={getCartUrl() as any} />
+            <Link className="block md:hidden absolute inset-0" aria-label="View shopping cart" href={getCartUrl() as any} />
           </Popover.Button>
           <Transition
             as={Fragment}

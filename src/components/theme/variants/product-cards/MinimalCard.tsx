@@ -42,6 +42,7 @@ export default function MinimalCard({ data, className = "", productCardSettings 
         <Link
           href={getTenantHref(`/product/${slug}`) as any}
           className="absolute inset-0 z-[1]"
+          aria-label={name}
           onClick={() => trackEvent("product_click", { productId: data.id })}
         />
 
@@ -100,6 +101,7 @@ export default function MinimalCard({ data, className = "", productCardSettings 
                     <button
                       type="button"
                       className="nc-shadow-lg bg-white rounded-full w-9 h-9 flex items-center justify-center text-slate-900 hover:bg-slate-100 transition-colors"
+                      aria-label="Quick view"
                       onClick={(e) => {
                         e.preventDefault();
                         setShowModalQuickView(true);

@@ -1,18 +1,20 @@
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { ArrowRightIcon, SparklesIcon } from "@heroicons/react/24/outline";
 import HeroSection from "@/components/marketing/HeroSection";
 import PakistanEcosystemSection from "@/components/marketing/PakistanEcosystemSection";
-import ComparisonMatrix from "@/components/marketing/ComparisonMatrix";
 import FeatureGrid from "@/components/marketing/FeatureGrid";
-import StatsBand from "@/components/marketing/StatsBand";
-import DashboardPreview from "@/components/marketing/DashboardPreview";
-import ThemesTeaser from "@/components/marketing/ThemesTeaser";
-import VideoPlaceholder from "@/components/marketing/VideoPlaceholder";
-import TestimonialsSection from "@/components/marketing/TestimonialsSection";
-import FaqTeaser from "@/components/marketing/FaqTeaser";
-import PricingTeaser from "@/components/marketing/PricingTeaser";
-import CallSchedulingSection from "@/components/marketing/CallSchedulingSection";
+
+const ComparisonMatrix = dynamic(() => import("@/components/marketing/ComparisonMatrix"));
+const StatsBand = dynamic(() => import("@/components/marketing/StatsBand"));
+const DashboardPreview = dynamic(() => import("@/components/marketing/DashboardPreview"));
+const ThemesTeaser = dynamic(() => import("@/components/marketing/ThemesTeaser"));
+const VideoPlaceholder = dynamic(() => import("@/components/marketing/VideoPlaceholder"));
+const TestimonialsSection = dynamic(() => import("@/components/marketing/TestimonialsSection"));
+const FaqTeaser = dynamic(() => import("@/components/marketing/FaqTeaser"));
+const PricingTeaser = dynamic(() => import("@/components/marketing/PricingTeaser"));
+const CallSchedulingSection = dynamic(() => import("@/components/marketing/CallSchedulingSection"));
 
 export const metadata: Metadata = {
   title: "Tradez Glint Platform — The Complete Store Builder for Pakistan & Global Brands",

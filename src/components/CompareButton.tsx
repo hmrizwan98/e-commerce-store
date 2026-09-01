@@ -19,6 +19,7 @@ const CompareButton: React.FC<CompareButtonProps> = ({ className = "", productId
         active ? "text-primary-600" : "text-neutral-700 dark:text-slate-200"
       } ${className}`}
       title="Add to compare"
+      aria-label="Add to compare"
       onClick={() => toggle(productId)}
     >
       <ScaleIcon className="w-5 h-5" />

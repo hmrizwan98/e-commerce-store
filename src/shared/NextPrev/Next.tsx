@@ -23,6 +23,7 @@ const Next: FC<NextProps> = ({
         className={`${btnClassName} rounded-full flex items-center justify-center border-2 hover:border-slate-200 dark:hover:border-slate-600 border-transparent`}
         onClick={onClickNext}
         title="Next"
+        aria-label="Next slide"
         data-glide-dir=">"
       >
         <svg

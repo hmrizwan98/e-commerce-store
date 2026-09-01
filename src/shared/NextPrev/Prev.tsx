@@ -23,6 +23,7 @@ const Prev: FC<PrevProps> = ({
         className={`${btnClassName} rounded-full flex items-center justify-center border-2 hover:border-slate-200 dark:hover:border-slate-600 border-transparent `}
         onClick={onClickPrev}
         title="Prev"
+        aria-label="Previous slide"
         data-glide-dir="<"
       >
         <svg

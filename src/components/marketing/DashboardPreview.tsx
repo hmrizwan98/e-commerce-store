@@ -137,7 +137,7 @@ export default function DashboardPreview() {
           <h2 className="text-3xl sm:text-4xl font-extrabold text-neutral-900 dark:text-white tracking-tight leading-tight">
             Run your store from one dedicated panel
           </h2>
-          <p className="text-base text-neutral-600 dark:text-neutral-300 leading-relaxed">
+          <p className="text-base text-neutral-700 dark:text-neutral-300 leading-relaxed">
             Every store owner gets a dedicated, tenant-isolated Store Admin panel for day-to-day operations, paired with Super Admin control for platform operators.
           </p>
           <ul className="space-y-3.5 text-sm text-neutral-700 dark:text-neutral-300">

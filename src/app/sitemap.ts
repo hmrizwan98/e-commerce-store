@@ -23,7 +23,11 @@ const PLATFORM_ROUTES = [
  * noindex in their own page metadata instead).
  */
 export default function sitemap(): MetadataRoute.Sitemap {
+  const now = new Date();
   return PLATFORM_ROUTES.map((path) => ({
     url: `${PLATFORM_SITE_URL}${path}`,
+    lastModified: now,
+    changeFrequency: path === "" ? "daily" : "weekly",
+    priority: path === "" ? 1.0 : 0.8,
   }));
 }

@@ -499,12 +499,12 @@ export default async function HomeContent({ themeConfig: themeConfigOverride }: 
   const themeContainerClass = 'bg-[var(--background,white)] text-[var(--text,#111827)] min-h-screen';
 
   return (
-    <div className={`relative overflow-hidden nc-PageHome ${themeContainerClass}`}>
+    <main className={`relative overflow-hidden nc-PageHome ${themeContainerClass}`}>
       {renderHero()}
 
       <div className="container relative my-16 space-y-16 lg:space-y-24 lg:my-24">
         {renderedSections}
       </div>
-    </div>
+    </main>
   );
 }

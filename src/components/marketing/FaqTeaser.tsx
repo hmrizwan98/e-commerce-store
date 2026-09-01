@@ -12,7 +12,7 @@ export default function FaqTeaser() {
         <h2 className="text-3xl sm:text-4xl font-extrabold text-neutral-900 dark:text-white tracking-tight">
           Common questions
         </h2>
-        <p className="text-base text-neutral-600 dark:text-neutral-400">
+        <p className="text-base text-neutral-700 dark:text-neutral-300">
           Everything you need to know about store provisioning, themes, and platform hosting.
         </p>
       </div>

@@ -125,6 +125,7 @@ export default function SleekPillCard({ data, className = "", productCardSetting
         <Link
           href={getTenantHref(`/product/${slug}`) as any}
           className="absolute inset-0 z-[1]"
+          aria-label={name}
           onClick={() => trackEvent("product_click", { productId: id })}
         />
 

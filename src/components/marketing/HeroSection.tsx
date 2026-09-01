@@ -24,7 +24,7 @@ export default function HeroSection() {
         </h1>
 
         {/* Description */}
-        <p className="mt-6 text-base sm:text-xl text-neutral-600 dark:text-neutral-300 max-w-2xl mx-auto leading-relaxed">
+        <p className="mt-6 text-base sm:text-xl text-neutral-700 dark:text-neutral-300 max-w-2xl mx-auto leading-relaxed">
           Get fully isolated multi-tenant architecture, dedicated Store Admin &amp; Super Admin panels, 1-click WhatsApp order tracking link sharing, JazzCash / EasyPaisa / COD checkout, and Next.js 14 speed — all with 0% hidden transaction fees.
         </p>
 

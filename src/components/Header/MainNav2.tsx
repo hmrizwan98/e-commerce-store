@@ -67,7 +67,7 @@ const MainNav2: FC<MainNav2Props> = ({ className = "", logos, storeName }) => {
             className="border-none bg-transparent focus:outline-none focus:ring-0 w-full text-base"
             autoFocus
           />
-          <button type="button" onClick={() => setShowSearchForm(false)}>
+          <button type="button" onClick={() => setShowSearchForm(false)} aria-label="Close search">
             <XMarkIcon className="w-5 h-5" />
           </button>
         </div>
@@ -108,6 +108,7 @@ const MainNav2: FC<MainNav2Props> = ({ className = "", logos, storeName }) => {
             {!showSearchForm && (
               <button
                 className="hidden lg:flex w-10 h-10 sm:w-12 sm:h-12 rounded-full text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none items-center justify-center"
+                aria-label="Search"
                 onClick={() => setShowSearchForm(!showSearchForm)}
               >
                 {renderMagnifyingGlassIcon()}

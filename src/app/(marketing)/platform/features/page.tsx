@@ -106,7 +106,7 @@ export default function FeaturesPage() {
         <h1 className="text-4xl sm:text-5xl font-extrabold text-neutral-900 dark:text-white tracking-tight leading-tight">
           Everything you need to run a serious store
         </h1>
-        <p className="text-base sm:text-lg text-neutral-600 dark:text-neutral-400 max-w-2xl mx-auto leading-relaxed">
+        <p className="text-base sm:text-lg text-neutral-700 dark:text-neutral-300 max-w-2xl mx-auto leading-relaxed">
           Every store on the platform gets the complete feature suite below — no feature-gated tiers locking core tools away.
         </p>
       </div>
@@ -125,7 +125,7 @@ export default function FeaturesPage() {
                   <Icon className="w-6 h-6" />
                 </div>
                 <h2 className="font-bold text-xl text-neutral-900 dark:text-white mb-4 tracking-tight">{group.title}</h2>
-                <ul className="space-y-3 text-sm text-neutral-600 dark:text-neutral-400">
+                <ul className="space-y-3 text-sm text-neutral-700 dark:text-neutral-300">
                   {group.items.map((item) => (
                     <li key={item} className="flex items-start gap-2.5">
                       <CheckCircleIcon className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />

@@ -74,7 +74,7 @@ function FeatureGrid() {
         <h2 className="text-3xl sm:text-4xl font-extrabold text-neutral-900 dark:text-white tracking-tight">
           Everything you need to run a serious store
         </h2>
-        <p className="text-base sm:text-lg text-neutral-600 dark:text-neutral-400">
+        <p className="text-base sm:text-lg text-neutral-700 dark:text-neutral-300">
           Built from the ground up to give store owners full operational autonomy and platform operators total control.
         </p>
       </div>
@@ -90,7 +90,7 @@ function FeatureGrid() {
                 <Icon className="w-6 h-6" />
               </div>
               <h3 className="font-bold text-lg text-neutral-900 dark:text-white mb-2 tracking-tight">{title}</h3>
-              <p className="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed">{description}</p>
+              <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">{description}</p>
             </div>
           </div>
         ))}

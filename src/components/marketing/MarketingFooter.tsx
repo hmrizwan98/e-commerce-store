@@ -39,7 +39,7 @@ const COLUMNS: { title: string; links: { href: string; label: string }[] }[] = [
 
 export default function MarketingFooter() {
   return (
-    <footer className="border-t border-neutral-200/80 dark:border-neutral-800/80 bg-neutral-50/80 dark:bg-neutral-950 text-neutral-600 dark:text-neutral-400">
+    <footer className="border-t border-neutral-200/80 dark:border-neutral-800/80 bg-neutral-50/80 dark:bg-neutral-950 text-neutral-700 dark:text-neutral-300">
       <div className="container py-16 lg:py-20">
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-10 lg:gap-12">
           {/* Brand Col */}
@@ -52,7 +52,7 @@ export default function MarketingFooter() {
                 Tradez Glint <span className="text-primary-6000 font-extrabold">Platform</span>
               </span>
             </Link>
-            <p className="text-sm text-neutral-500 dark:text-neutral-400 max-w-sm leading-relaxed">
+            <p className="text-sm text-neutral-600 dark:text-neutral-300 max-w-sm leading-relaxed">
               Enterprise multi-tenant eCommerce SaaS platform. Launch your own store with dedicated Store Admin, tenant isolation, and Cloudinary media power.
             </p>
           </div>
@@ -81,7 +81,7 @@ export default function MarketingFooter() {
           </div>
         </div>
 
-        <div className="mt-14 pt-8 border-t border-neutral-200/60 dark:border-neutral-800/60 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-neutral-500 dark:text-neutral-400">
+        <div className="mt-14 pt-8 border-t border-neutral-200/60 dark:border-neutral-800/60 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-neutral-600 dark:text-neutral-300">
           <p>© {new Date().getFullYear()} Tradez Glint Platform. All rights reserved.</p>
           <p className="flex items-center gap-2 font-mono">
             <span>Powered by Next.js RSC & Cloudinary</span>

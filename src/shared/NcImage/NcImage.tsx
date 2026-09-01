@@ -17,12 +17,14 @@ const NcImage: FC<NcImageProps> = ({
 }) => {
   const isFillMode = Boolean(fill || (!width && !height));
 
+  const defaultSizes = args.sizes || "(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw";
+
   return (
     <div className={containerClassName}>
       {isFillMode ? (
-        <Image className={className} alt={alt} fill {...args} />
+        <Image className={className} alt={alt} fill sizes={defaultSizes} {...args} />
       ) : (
-        <Image className={className} alt={alt} width={width} height={height} {...args} />
+        <Image className={className} alt={alt} width={width} height={height} sizes={defaultSizes} {...args} />
       )}
     </div>
   );

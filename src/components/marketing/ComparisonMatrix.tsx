@@ -79,7 +79,7 @@ function ComparisonMatrix() {
         <h2 className="text-3xl sm:text-4xl font-extrabold text-neutral-900 dark:text-white tracking-tight">
           How we compare to generic store builders
         </h2>
-        <p className="text-base sm:text-lg text-neutral-600 dark:text-neutral-400">
+        <p className="text-base sm:text-lg text-neutral-700 dark:text-neutral-300">
           See why Pakistani brands and multi-store operators choose Tradez Glint over Shopify and WooCommerce.
         </p>
       </div>
@@ -124,7 +124,7 @@ function ComparisonMatrix() {
                 </td>
 
                 {/* Shopify Value */}
-                <td className="p-5 text-center text-neutral-600 dark:text-neutral-400">
+                <td className="p-5 text-center text-neutral-700 dark:text-neutral-300">
                   {typeof row.shopify === "boolean" ? (
                     row.shopify ? (
                       <div className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400">
@@ -141,7 +141,7 @@ function ComparisonMatrix() {
                 </td>
 
                 {/* WooCommerce Value */}
-                <td className="p-5 text-center text-neutral-600 dark:text-neutral-400">
+                <td className="p-5 text-center text-neutral-700 dark:text-neutral-300">
                   {typeof row.wooCommerce === "boolean" ? (
                     row.wooCommerce ? (
                       <div className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400">
