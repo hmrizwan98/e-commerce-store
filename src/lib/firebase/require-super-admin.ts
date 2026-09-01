@@ -1,5 +1,6 @@
 import "server-only";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { verifySessionCookie } from "./admin-auth";
 import { ADMIN_SESSION_COOKIE } from "./require-admin";
 
@@ -12,12 +13,12 @@ import { ADMIN_SESSION_COOKIE } from "./require-admin";
 export async function requireSuperAdmin() {
   const sessionCookie = cookies().get(ADMIN_SESSION_COOKIE)?.value;
   if (!sessionCookie) {
-    throw new Error("Unauthorized: no admin session");
+    redirect("/superadmin/login");
   }
   const decoded = await verifySessionCookie(sessionCookie);
   const role = decoded?.role;
   if (!decoded || (role !== "superadmin" && role !== "super_admin")) {
-    throw new Error("Unauthorized: not a super admin");
+    redirect("/superadmin/login");
   }
   return decoded;
 }

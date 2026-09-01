@@ -69,11 +69,22 @@ Your Order *#${orderNum}* has been confirmed by our team.
 We are currently packing your items for dispatch. You will receive another notification once your parcel is on its way!`;
 
     case "ORDER_DISPATCHED":
+      const trackingInfoText = order.trackingNumber
+        ? `\n📦 *Tracking / Consignment #:* ${order.trackingNumber}`
+        : "";
+      const courierText = order.courierName
+        ? `\n🚚 *Courier Provider:* ${order.courierName}`
+        : "";
+      const trackingPageLink = order.guestEmail
+        ? `\n\n🔍 *Track your order live on our store:* \nhttps://yourstore.com/order-tracking?orderNumber=${encodeURIComponent(orderNum)}&email=${encodeURIComponent(order.guestEmail)}`
+        : "";
+
       return `🚚 *Order Dispatched!*
 
 Hi *${customerName}*, your Order *#${orderNum}* is on its way to your address!
+${courierText}${trackingInfoText}
 
-📍 *Shipping To:* ${addressText}
+📍 *Shipping To:* ${addressText}${trackingPageLink}
 
 Get ready to receive your parcel soon! Thank you for choosing us.`;
 

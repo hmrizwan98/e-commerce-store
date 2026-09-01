@@ -30,11 +30,13 @@ export default function CustomSelect<T extends string = string>({
 }: CustomSelectProps<T>) {
   const selectedOption = options.find((opt) => opt.value === value) || options[0];
 
+  const containerClass = className.includes("w-") ? className : `w-full ${className}`;
+
   return (
-    <div className={`relative w-full ${className}`}>
+    <div className={`relative ${containerClass}`}>
       <Listbox value={value} onChange={onChange} disabled={disabled}>
         <div className="relative">
-          <Listbox.Button className="w-full inline-flex items-center justify-between gap-2 px-4 py-2.5 text-sm font-semibold rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 shadow-xs hover:border-primary-400 dark:hover:border-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
+          <Listbox.Button className="w-full inline-flex items-center justify-between gap-2 px-3 py-2 text-xs font-semibold rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 shadow-xs hover:border-indigo-400 dark:hover:border-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
             <div className="flex items-center gap-2 min-w-0 truncate">
               {selectedOption?.dot && (
                 <span className={`w-2 h-2 rounded-full shrink-0 ${selectedOption.dot}`} />

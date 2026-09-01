@@ -35,6 +35,8 @@ export interface Store {
   language?: string;
   themeId?: string;
   adminTheme?: string;
+  /** Controls whether the Store Assistant is enabled for this store (Super Admin setting). Defaults to true. */
+  assistantEnabled?: boolean;
   status: StoreStatus;
   subscription?: StoreSubscription;
   storageLimit?: number;

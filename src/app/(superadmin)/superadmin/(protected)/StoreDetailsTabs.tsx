@@ -158,7 +158,7 @@ const StoreDetailsTabs: React.FC<{
                 <span className="text-neutral-900 dark:text-white">{store.updatedAt ? new Date(store.updatedAt).toLocaleString() : "—"}</span>
               </div>
             </div>
-            <StoreStatusActions id={store.id} status={store.status} />
+            <StoreStatusActions id={store.id} status={store.status} assistantEnabled={store.assistantEnabled} />
           </div>
 
           {/* Quick Actions & Cloning */}

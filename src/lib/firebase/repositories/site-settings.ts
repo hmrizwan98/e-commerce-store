@@ -35,6 +35,9 @@ export const DEFAULT_SHIPPING_SETTINGS: ShippingSettings = {
   freeShippingThreshold: 100,
   estimateDaysMin: 3,
   estimateDaysMax: 7,
+  trackingEnabled: true,
+  trackingMode: "both",
+  defaultCourierName: "TCS",
 };
 
 export const DEFAULT_PAYMENT_SETTINGS: PaymentSettings = {

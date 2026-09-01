@@ -2,6 +2,8 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { ArrowRightIcon, SparklesIcon } from "@heroicons/react/24/outline";
 import HeroSection from "@/components/marketing/HeroSection";
+import PakistanEcosystemSection from "@/components/marketing/PakistanEcosystemSection";
+import ComparisonMatrix from "@/components/marketing/ComparisonMatrix";
 import FeatureGrid from "@/components/marketing/FeatureGrid";
 import StatsBand from "@/components/marketing/StatsBand";
 import DashboardPreview from "@/components/marketing/DashboardPreview";
@@ -13,22 +15,22 @@ import PricingTeaser from "@/components/marketing/PricingTeaser";
 import CallSchedulingSection from "@/components/marketing/CallSchedulingSection";
 
 export const metadata: Metadata = {
-  title: "Tradez Glint Platform — Enterprise Multi-Tenant eCommerce SaaS",
+  title: "Tradez Glint Platform — The Complete Store Builder for Pakistan & Global Brands",
   description:
-    "Launch and run your own online store on an enterprise-grade, multi-tenant eCommerce platform with dedicated Store Admin and Super Admin control, fast hosting, and a commission-based pricing model.",
+    "Launch and run your own online store on an enterprise-grade multi-tenant platform with native Pakistan couriers tracking (Couriers Next, TCS, PostEx, Trax, Leopards), WhatsApp order updates, JazzCash / EasyPaisa checkout, and Super Admin control.",
   openGraph: {
-    title: "Tradez Glint Platform — Enterprise Multi-Tenant eCommerce SaaS",
+    title: "Tradez Glint Platform — The Complete Store Builder for Pakistan & Global Brands",
     description:
-      "Launch and run your own online store on an enterprise-grade, multi-tenant eCommerce platform with dedicated Store Admin and Super Admin control.",
+      "Launch and run your own online store on an enterprise-grade multi-tenant platform with native Pakistan couriers tracking and 0% hidden transaction fees.",
     url: "/",
     siteName: "Tradez Glint",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Tradez Glint Platform — Enterprise Multi-Tenant eCommerce SaaS",
+    title: "Tradez Glint Platform — The Complete Store Builder for Pakistan & Global Brands",
     description:
-      "Launch and run your own online store on an enterprise-grade, multi-tenant eCommerce platform.",
+      "Launch and run your own online store with local payments, 6+ courier tracking, and Next.js 14 speed.",
   },
   alternates: { canonical: "/" },
 };
@@ -37,6 +39,8 @@ export default function PlatformHomePage() {
   return (
     <div className="space-y-4">
       <HeroSection />
+      <PakistanEcosystemSection />
+      <ComparisonMatrix />
       <FeatureGrid />
       <StatsBand />
       <DashboardPreview />

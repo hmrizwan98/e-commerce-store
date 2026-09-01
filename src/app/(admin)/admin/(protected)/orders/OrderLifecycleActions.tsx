@@ -15,6 +15,7 @@ import { buildOrderTimeline } from "@/lib/orders/order-timeline";
 import type { Order, ReturnStatus } from "@/types/order";
 import type { OrderActivityLog } from "@/types/order-activity-log";
 import type { OrderDocument, OrderDocumentType } from "@/types/order-document";
+import CustomSelect from "@/components/admin/CustomSelect";
 
 const RETURN_STATUSES: ReturnStatus[] = ["requested", "approved", "rejected", "received", "completed"];
 const DOCUMENT_TYPES: { type: OrderDocumentType; label: string }[] = [
@@ -53,6 +54,9 @@ const OrderLifecycleActions: React.FC<{
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [courierName, setCourierName] = useState(order.courierName ?? "");
+  const [trackingNum, setTrackingNum] = useState(order.trackingNumber ?? "");
+  const [trackingUrl, setTrackingUrl] = useState(order.trackingUrl ?? "");
+  const [trackingMode, setTrackingMode] = useState<"external" | "in_house">(order.trackingMode ?? "external");
   const [dispatchDate, setDispatchDate] = useState(toDateInputValue(order.dispatchDate));
   const [deliveryDate, setDeliveryDate] = useState(toDateInputValue(order.deliveryDate));
   const [internalNoteText, setInternalNoteText] = useState("");
@@ -113,20 +117,76 @@ const OrderLifecycleActions: React.FC<{
       </div>
 
       <div className={cardClass}>
-        <h2 className="font-semibold mb-4">Shipment information</h2>
-        <p className="text-sm text-neutral-500 mb-3">Tracking number: {order.trackingNumber ?? "—"}</p>
-        <div className="space-y-3">
+        <h2 className="font-semibold mb-4">Shipment & Delivery Details</h2>
+        <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Courier name</label>
-            <input
-              className={`${inputClass} w-full`}
-              value={courierName}
-              onChange={(e) => setCourierName(e.target.value)}
-            />
+            <label className="block text-xs font-mono font-bold uppercase tracking-wider text-slate-500 mb-1">Delivery Type</label>
+            <div className="flex gap-4 text-sm">
+              <label className="inline-flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="trackingMode"
+                  checked={trackingMode === "external"}
+                  onChange={() => setTrackingMode("external")}
+                  className="accent-indigo-600"
+                />
+                <span>3rd-Party Courier (TCS, PostEx, Trax, Leopards)</span>
+              </label>
+              <label className="inline-flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="trackingMode"
+                  checked={trackingMode === "in_house"}
+                  onChange={() => setTrackingMode("in_house")}
+                  className="accent-indigo-600"
+                />
+                <span>In-House Rider Delivery</span>
+              </label>
+            </div>
           </div>
+
+          <div className="grid sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-mono font-bold uppercase tracking-wider text-slate-500 mb-1">
+                {trackingMode === "external" ? "Courier Service Name" : "Delivery Provider / Rider"}
+              </label>
+              <input
+                className={`${inputClass} w-full`}
+                placeholder={trackingMode === "external" ? "e.g. TCS / PostEx / Trax" : "e.g. In-House Rider"}
+                value={courierName}
+                onChange={(e) => setCourierName(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-mono font-bold uppercase tracking-wider text-slate-500 mb-1">
+                Tracking / Consignment #
+              </label>
+              <input
+                className={`${inputClass} w-full font-mono font-bold`}
+                placeholder="e.g. 123456789"
+                value={trackingNum}
+                onChange={(e) => setTrackingNum(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {trackingMode === "external" && (
+            <div>
+              <label className="block text-xs font-mono font-bold uppercase tracking-wider text-slate-500 mb-1">
+                Direct Courier Tracking Web Link (Optional)
+              </label>
+              <input
+                className={`${inputClass} w-full font-mono text-xs`}
+                placeholder="https://www.tcsexpress.com/tracking?trackingNo=123456"
+                value={trackingUrl}
+                onChange={(e) => setTrackingUrl(e.target.value)}
+              />
+            </div>
+          )}
+
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium mb-1">Dispatch date</label>
+              <label className="block text-xs font-mono font-bold uppercase tracking-wider text-slate-500 mb-1">Dispatch Date</label>
               <input
                 type="date"
                 className={`${inputClass} w-full`}
@@ -135,7 +195,7 @@ const OrderLifecycleActions: React.FC<{
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Delivery date</label>
+              <label className="block text-xs font-mono font-bold uppercase tracking-wider text-slate-500 mb-1">Est. Delivery Date</label>
               <input
                 type="date"
                 className={`${inputClass} w-full`}
@@ -150,14 +210,17 @@ const OrderLifecycleActions: React.FC<{
               run(() =>
                 setShipmentDetails(order.id, {
                   courierName: courierName || undefined,
+                  trackingNumber: trackingNum || undefined,
+                  trackingUrl: trackingUrl || undefined,
+                  trackingMode,
                   dispatchDate: dispatchDate ? new Date(dispatchDate).getTime() : undefined,
                   deliveryDate: deliveryDate ? new Date(deliveryDate).getTime() : undefined,
                 })
               )
             }
-            className="px-4 py-2 text-sm rounded-lg border border-neutral-300 dark:border-neutral-700"
+            className="px-4 py-2 text-xs font-extrabold rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white transition-all"
           >
-            Save shipment info
+            Save Shipment Information
           </button>
         </div>
       </div>
@@ -305,17 +368,12 @@ const OrderLifecycleActions: React.FC<{
           <div>
             <p className="text-sm font-medium mb-2">Return status</p>
             <div className="flex gap-2">
-              <select
-                className={inputClass}
+              <CustomSelect
                 value={returnStatus}
-                onChange={(e) => setReturnStatus(e.target.value as ReturnStatus)}
-              >
-                {RETURN_STATUSES.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => setReturnStatus(val as ReturnStatus)}
+                options={RETURN_STATUSES.map((s) => ({ value: s, label: s.toUpperCase() }))}
+                className="w-44"
+              />
               <input
                 className={`${inputClass} flex-1`}
                 placeholder="Note (optional)"

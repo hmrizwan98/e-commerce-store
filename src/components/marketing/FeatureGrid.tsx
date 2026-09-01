@@ -25,45 +25,45 @@ const HIGHLIGHTS: Highlight[] = [
   },
   {
     icon: Cog6ToothIcon,
-    title: "Store Admin, built for daily operations",
+    title: "Native Pakistani Couriers (`/order-tracking`)",
     description:
-      "Products, inventory, orders, customers, finance, and a full CMS/Theme/Homepage builder - everything a store owner needs in one panel.",
+      "Integrated live order tracking for Couriers Next, TCS, PostEx, Trax, Leopards & CallCourier with visual step timeline.",
   },
   {
     icon: UserGroupIcon,
-    title: "Super Admin for platform operators",
+    title: "Super Admin Control & Impersonation",
     description:
-      "Provision new stores, manage domains, monitor every tenant, and oversee platform-wide revenue and payouts from a single control plane.",
+      "1-click store creation wizard, store cloning, and secure 1-click Store Owner impersonation with instant return.",
   },
   {
     icon: CloudIcon,
-    title: "Fast, reliable hosting",
+    title: "WhatsApp Order Updates & Chat",
     description:
-      "Built on Next.js Server Components with per-request rendering - your storefront stays fast without you managing any infrastructure.",
+      "Automated WhatsApp tracking link sharing, WhatsApp chat float button, and direct customer notification pre-fills.",
   },
   {
     icon: PhotoIcon,
     title: "Cloudinary-powered media",
     description:
-      "Every product photo, banner, and theme asset is automatically optimized and delivered through Cloudinary - no manual image work required.",
+      "Every product photo, banner, and theme asset is automatically optimized and delivered through Cloudinary CDN.",
   },
   {
     icon: ShieldCheckIcon,
     title: "Enterprise-grade security",
     description:
-      "Role-based access for Store Admins and Super Admins, tenant isolation enforced at the data layer, and a full audit trail on every sensitive action.",
+      "Role-based access for Store Admins and Super Admins, tenant isolation enforced at data layer, and full audit logs.",
   },
   {
     icon: BoltIcon,
-    title: "Optimized for performance",
+    title: "Next.js 14 App Router speed",
     description:
-      "Indexed queries, computed-not-duplicated analytics, and server-rendered pages keep every store fast as it grows.",
+      "Server-rendered pages, instant URL search filter state, and computed analytics keep every storefront fast as it grows.",
   },
   {
     icon: BanknotesIcon,
-    title: "Commission-based, aligned with your growth",
+    title: "0% Hidden Transaction Fees",
     description:
-      "No flat license fee locking you in - our commission model means we succeed only when your store sells.",
+      "No hidden commissions or forced app subscriptions locking you in — keep 100% of your store sales profits.",
   },
 ];
 

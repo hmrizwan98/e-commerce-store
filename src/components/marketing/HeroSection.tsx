@@ -10,22 +10,22 @@ export default function HeroSection() {
       <div className="container relative max-w-4xl mx-auto text-center px-4">
         {/* Eyebrow pill */}
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary-6000/20 bg-primary-6000/10 dark:bg-primary-6000/20 text-primary-700 dark:text-primary-300 text-xs sm:text-sm font-semibold mb-6 shadow-sm">
-          <span className="flex h-2 w-2 rounded-full bg-primary-6000 animate-pulse" />
+          <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
           <SparklesIcon className="w-4 h-4 text-primary-6000" />
-          <span>Enterprise Multi-Tenant eCommerce SaaS</span>
+          <span>The Complete Store Builder for Pakistan &amp; Global Brands</span>
         </div>
 
         {/* Headline */}
         <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-neutral-900 dark:text-white tracking-tight leading-[1.15]">
-          Launch your eCommerce store{" "}
+          Launch your online store{" "}
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-6000 via-indigo-600 to-cyan-500">
-            without technical complexity
+            with local payments &amp; 6+ courier tracking
           </span>
         </h1>
 
         {/* Description */}
         <p className="mt-6 text-base sm:text-xl text-neutral-600 dark:text-neutral-300 max-w-2xl mx-auto leading-relaxed">
-          Get fully isolated multi-tenant architecture, dedicated Store Admin & Super Admin panels, fast Next.js hosting, Cloudinary media optimization, and 4 production-ready starter themes — all on a growth-aligned commission model.
+          Get fully isolated multi-tenant architecture, dedicated Store Admin &amp; Super Admin panels, 1-click WhatsApp order tracking link sharing, JazzCash / EasyPaisa / COD checkout, and Next.js 14 speed — all with 0% hidden transaction fees.
         </p>
 
         {/* CTA Buttons */}
@@ -50,22 +50,22 @@ export default function HeroSection() {
         <div className="mt-12 pt-10 border-t border-neutral-200/60 dark:border-neutral-800/60 grid grid-cols-2 sm:grid-cols-4 gap-4 text-left">
           <div className="flex items-center gap-3 p-3 rounded-xl bg-white/50 dark:bg-neutral-900/50 border border-neutral-200/50 dark:border-neutral-800/50">
             <ShieldCheckIcon className="w-5 h-5 text-primary-6000 shrink-0" />
-            <span className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">Data Isolation</span>
+            <span className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">Tenant Data Isolation</span>
           </div>
 
           <div className="flex items-center gap-3 p-3 rounded-xl bg-white/50 dark:bg-neutral-900/50 border border-neutral-200/50 dark:border-neutral-800/50">
             <CloudIcon className="w-5 h-5 text-indigo-500 shrink-0" />
-            <span className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">Cloudinary CDN</span>
+            <span className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">6+ PK Couriers Sync</span>
           </div>
 
           <div className="flex items-center gap-3 p-3 rounded-xl bg-white/50 dark:bg-neutral-900/50 border border-neutral-200/50 dark:border-neutral-800/50">
             <BoltIcon className="w-5 h-5 text-cyan-500 shrink-0" />
-            <span className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">Next.js Speed</span>
+            <span className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">Next.js 14 Speed</span>
           </div>
 
           <div className="flex items-center gap-3 p-3 rounded-xl bg-white/50 dark:bg-neutral-900/50 border border-neutral-200/50 dark:border-neutral-800/50">
             <SparklesIcon className="w-5 h-5 text-amber-500 shrink-0" />
-            <span className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">4 Instant Themes</span>
+            <span className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">WhatsApp Order Share</span>
           </div>
         </div>
       </div>

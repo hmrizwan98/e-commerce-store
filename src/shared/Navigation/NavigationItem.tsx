@@ -2,7 +2,8 @@
 
 import { Popover, Transition } from '@/app/headlessui';
 import { ChevronDownIcon, ChevronUpIcon, ChevronRightIcon } from '@heroicons/react/24/solid';
-import React, { FC, Fragment, useState } from 'react';
+import React, { FC, Fragment, useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { Route } from '@/routers/types';
 import Link from 'next/link';
 
@@ -22,6 +23,11 @@ export interface NavigationItemProps {
 
 const NavigationItem: FC<NavigationItemProps> = ({ menuItem }) => {
   const [menuCurrentHovers, setMenuCurrentHovers] = useState<string[]>([]);
+  const pathname = usePathname();
+
+  useEffect(() => {
+    setMenuCurrentHovers([]);
+  }, [pathname]);
 
   const onMouseEnterMenu = (id: string) => {
     setMenuCurrentHovers((state) => [...state, id]);
@@ -209,6 +215,7 @@ const NavigationItem: FC<NavigationItemProps> = ({ menuItem }) => {
   const renderDropdownMenuNavlink = (item: NavItemType, isSelected = false) => {
     return (
       <Link
+        onClick={() => setMenuCurrentHovers([])}
         className={`group flex items-center justify-between px-3.5 py-2.5 text-sm rounded-xl transition-all duration-150 ${
           isSelected
             ? "bg-[#FAF5F5] dark:bg-neutral-800/90 font-bold text-neutral-900 dark:text-white"
@@ -241,6 +248,7 @@ const NavigationItem: FC<NavigationItemProps> = ({ menuItem }) => {
     return (
       <div className="flex items-center flex-shrink-0 h-full min-h-[44px]">
         <Link
+          onClick={() => setMenuCurrentHovers([])}
           className={`inline-flex items-center text-sm lg:text-[15px] font-semibold text-neutral-900 dark:text-slate-100 py-2 px-3 focus:outline-none transition-all ${
             isHover
               ? "border-b-2 border-neutral-900 dark:border-white pb-0.5"

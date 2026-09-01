@@ -92,10 +92,11 @@ export interface Order {
   internalNotes?: OrderNoteEntry[];
   customerNotes?: OrderNoteEntry[];
 
-  // Shipment Information - trackingNumber already exists above; courier name
-  // and dispatch/delivery dates are new, separate fields (never repurposing
-  // trackingNumber).
+  // Shipment Information - trackingNumber already exists above; courier name,
+  // tracking URL, tracking mode, and dispatch/delivery dates.
   courierName?: string;
+  trackingUrl?: string;
+  trackingMode?: "external" | "in_house";
   dispatchDate?: number;
   deliveryDate?: number;
 

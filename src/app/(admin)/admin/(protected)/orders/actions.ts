@@ -114,11 +114,17 @@ export async function setTrackingNumber(id: string, trackingNumber: string): Pro
   revalidatePath(`/admin/orders/${id}`);
 }
 
-// Shipment Information: courier name + dispatch/delivery dates, additive
-// alongside the existing trackingNumber field/action above.
+// Shipment Information: courier name, tracking number, tracking URL, tracking mode + dispatch/delivery dates.
 export async function setShipmentDetails(
   id: string,
-  details: { courierName?: string; dispatchDate?: number; deliveryDate?: number }
+  details: {
+    courierName?: string;
+    trackingNumber?: string;
+    trackingUrl?: string;
+    trackingMode?: "external" | "in_house";
+    dispatchDate?: number;
+    deliveryDate?: number;
+  }
 ): Promise<void> {
   const decoded = await requireAdmin();
   const col = await tenantCollection("orders");

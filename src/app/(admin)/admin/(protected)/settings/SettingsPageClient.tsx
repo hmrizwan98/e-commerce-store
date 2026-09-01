@@ -633,6 +633,61 @@ export default function SettingsPageClient({
               />
             </div>
           </div>
+
+          <div className="pt-6 border-t border-slate-100 dark:border-slate-800 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">Order Tracking Page</h3>
+                <p className="text-xs text-slate-500">Allow customers to track orders on your store web page (/order-tracking)</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className={`px-2.5 py-1 text-xs font-bold rounded-full transition-all ${
+                  (shipping.trackingEnabled ?? true)
+                    ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/80"
+                    : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700"
+                }`}>
+                  {(shipping.trackingEnabled ?? true) ? "Active (ON)" : "Disabled (OFF)"}
+                </span>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
+                    checked={shipping.trackingEnabled ?? true}
+                    onChange={(e) => setShipping({ ...shipping, trackingEnabled: e.target.checked })}
+                  />
+                  <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                </label>
+              </div>
+            </div>
+
+            {shipping.trackingEnabled !== false && (
+              <div className="grid sm:grid-cols-2 gap-4 pt-2">
+                <div>
+                  <label className={labelClass}>Default Delivery / Courier Provider</label>
+                  <input
+                    type="text"
+                    className={inputClass}
+                    placeholder="e.g. TCS, PostEx, Trax, Leopards"
+                    value={shipping.defaultCourierName ?? ""}
+                    onChange={(e) => setShipping({ ...shipping, defaultCourierName: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>Allowed Tracking Modes</label>
+                  <CustomSelect
+                    value={shipping.trackingMode ?? "both"}
+                    options={[
+                      { value: "both", label: "Both 3rd-Party Courier & In-House Delivery" },
+                      { value: "external_courier", label: "3rd-Party Courier Only" },
+                      { value: "in_house", label: "In-House Delivery Only" },
+                    ]}
+                    onChange={(val) => setShipping({ ...shipping, trackingMode: val as any })}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
           <SaveButton onClick={() => updateShippingSettings(shipping)} />
         </section>
       )}

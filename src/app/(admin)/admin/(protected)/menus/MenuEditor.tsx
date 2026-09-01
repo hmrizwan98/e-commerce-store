@@ -35,12 +35,12 @@ const MenuEditor: React.FC<{
           disabled={saving}
           className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
         >
-          {saving ? "Saving Menu Structure…" : "Save Menu Configuration"}
+          {saving ? `Saving ${menuId === "header" ? "Header" : "Footer"} Menu…` : `Save ${menuId === "header" ? "Header Navigation" : "Footer Navigation"}`}
         </button>
         {saved && (
           <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/50 px-3 py-1.5 rounded-xl border border-emerald-200/60">
             <CheckIcon className="w-4 h-4" />
-            Menu saved successfully!
+            {menuId === "header" ? "Header" : "Footer"} Menu saved successfully!
           </span>
         )}
       </div>

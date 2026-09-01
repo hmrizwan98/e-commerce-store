@@ -1,5 +1,6 @@
 import "server-only";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { verifySessionCookie, isAdminClaim } from "./admin-auth";
 import { requireCurrentTenant } from "@/lib/tenant/current";
 
@@ -19,16 +20,16 @@ export const ADMIN_SESSION_COOKIE = "admin_session";
 export async function requireAdmin() {
   const sessionCookie = cookies().get(ADMIN_SESSION_COOKIE)?.value;
   if (!sessionCookie) {
-    throw new Error("Unauthorized: no admin session");
+    redirect("/admin/login");
   }
   const decoded = await verifySessionCookie(sessionCookie);
   if (!decoded || !isAdminClaim(decoded)) {
-    throw new Error("Unauthorized: not an admin");
+    redirect("/admin/login");
   }
 
   const tenant = await requireCurrentTenant();
   if (decoded.tenantId !== tenant.id) {
-    throw new Error("Unauthorized: admin does not belong to this store");
+    redirect("/admin/login");
   }
 
   return decoded as typeof decoded & { tenantId: string };

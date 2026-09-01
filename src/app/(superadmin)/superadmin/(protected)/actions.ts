@@ -669,6 +669,17 @@ export async function triggerDeployment(storeId: string): Promise<void> {
   revalidateStoreList();
 }
 
+export async function toggleStoreAssistant(id: string, enabled: boolean): Promise<void> {
+  const decoded = await requireSuperAdmin();
+  await enforceRateLimit(decoded.uid);
+  await adminDb().collection(COLLECTION).doc(id).update({
+    assistantEnabled: enabled,
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+  revalidateStoreList();
+  await logStoreActivity(id, "updated", decoded.uid, { assistantEnabled: String(enabled) });
+}
+
 export async function setStoreStatus(id: string, status: StoreStatus): Promise<void> {
   const decoded = await requireSuperAdmin();
   await enforceRateLimit(decoded.uid);

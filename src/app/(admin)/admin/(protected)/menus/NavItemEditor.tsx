@@ -2,6 +2,7 @@
 
 import React from "react";
 import type { NavItem, NavLinkType } from "@/types/nav";
+import CustomSelect, { type CustomSelectOption } from "@/components/admin/CustomSelect";
 import {
   PlusIcon,
   TrashIcon,
@@ -39,6 +40,23 @@ interface Props {
 
 const inputClass =
   "px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-medium";
+
+const LINK_TYPE_OPTIONS: CustomSelectOption<NavLinkType>[] = [
+  { value: "manual", label: "🔗 External URL" },
+  { value: "page", label: "📄 Internal Page" },
+  { value: "product", label: "📦 Product" },
+  { value: "category", label: "🏷️ Category" },
+  { value: "brand", label: "🏬 Brand" },
+  { value: "anchor", label: "⚓ Anchor (#section)" },
+  { value: "email", label: "✉️ Email" },
+  { value: "phone", label: "📞 Phone" },
+];
+
+const SUBMENU_TYPE_OPTIONS: CustomSelectOption[] = [
+  { value: "none", label: "Single Link" },
+  { value: "dropdown", label: "Dropdown Menu" },
+  { value: "megaMenu", label: "Mega Menu" },
+];
 
 function hrefPrefix(linkType: NavLinkType | undefined): string {
   switch (linkType) {
@@ -83,6 +101,24 @@ const NavItemEditor: React.FC<Props> = ({ items, onChange, options, depth = 0 })
   };
 
   const setEntityRef = (index: number, linkType: NavLinkType, slug: string) => {
+    if (linkType === "page") {
+      if (slug === "order-tracking") {
+        update(index, { linkType, linkRefSlug: slug, href: "/order-tracking" });
+        return;
+      }
+      if (slug === "collection") {
+        update(index, { linkType, linkRefSlug: slug, href: "/collection" });
+        return;
+      }
+      if (slug === "contact") {
+        update(index, { linkType, linkRefSlug: slug, href: "/contact" });
+        return;
+      }
+      if (slug === "about") {
+        update(index, { linkType, linkRefSlug: slug, href: "/about" });
+        return;
+      }
+    }
     update(index, { linkType, linkRefSlug: slug, href: slug ? `${hrefPrefix(linkType)}${slug}` : "" });
   };
 
@@ -109,10 +145,45 @@ const NavItemEditor: React.FC<Props> = ({ items, onChange, options, depth = 0 })
     onChange([...items, emptyNavItem()]);
   };
 
+  const pageSelectOptions: CustomSelectOption[] = [
+    { value: "order-tracking", label: "🚚 Order Tracking (/order-tracking)" },
+    { value: "collection", label: "🛍️ All Products / Collection (/collection)" },
+    { value: "contact", label: "📞 Contact Us (/contact)" },
+    { value: "about", label: "ℹ️ About Us (/about)" },
+    ...options.pages.map((p) => ({ value: p.slug, label: `📄 ${p.title}` })),
+  ];
+
+  const productSelectOptions: CustomSelectOption[] = [
+    { value: "", label: "Select product…" },
+    ...options.products.map((p) => ({ value: p.slug, label: `📦 ${p.name}` })),
+  ];
+
+  const categorySelectOptions: CustomSelectOption[] = [
+    { value: "", label: "Select category…" },
+    ...options.categories.map((c) => ({ value: c.slug, label: `🏷️ ${c.name}` })),
+  ];
+
+  const brandSelectOptions: CustomSelectOption[] = [
+    { value: "", label: "Select brand…" },
+    ...options.brands.map((b) => ({ value: b.slug, label: `🏬 ${b.name}` })),
+  ];
+
   return (
     <div className="space-y-3">
       {items.map((item, index) => {
         const linkType: NavLinkType = item.linkType ?? "manual";
+
+        const currentPageValue =
+          item.linkRefSlug ??
+          (item.href === "/order-tracking"
+            ? "order-tracking"
+            : item.href === "/collection"
+            ? "collection"
+            : item.href === "/contact"
+            ? "contact"
+            : item.href === "/about"
+            ? "about"
+            : "");
 
         return (
           <div
@@ -120,12 +191,12 @@ const NavItemEditor: React.FC<Props> = ({ items, onChange, options, depth = 0 })
             className="border border-slate-200/80 dark:border-slate-800 rounded-2xl p-4 bg-slate-50/50 dark:bg-slate-900/60 shadow-2xs space-y-3"
             style={{ marginLeft: depth * 20 }}
           >
-            <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-2">
               {/* Item Name Input */}
-              <div className="flex items-center gap-2 flex-1 min-w-[200px]">
+              <div className="flex items-center gap-2 flex-1 min-w-[140px] max-w-[220px]">
                 <span className="text-slate-400 font-mono text-xs shrink-0">#{index + 1}</span>
                 <input
-                  className={`${inputClass} flex-1 font-bold`}
+                  className={`${inputClass} w-full font-bold`}
                   value={item.name}
                   placeholder="Navigation Label (e.g. Shop)"
                   onChange={(e) => update(index, { name: e.target.value })}
@@ -133,25 +204,17 @@ const NavItemEditor: React.FC<Props> = ({ items, onChange, options, depth = 0 })
               </div>
 
               {/* Link Type Selector */}
-              <select
-                className={`${inputClass} shrink-0 cursor-pointer`}
+              <CustomSelect<NavLinkType>
                 value={linkType}
-                onChange={(e) => setLinkType(index, e.target.value as NavLinkType)}
-              >
-                <option value="manual">🔗 External URL</option>
-                <option value="page">📄 Internal Page</option>
-                <option value="product">📦 Product</option>
-                <option value="category">🏷️ Category</option>
-                <option value="brand">🏬 Brand</option>
-                <option value="anchor">⚓ Anchor (#section)</option>
-                <option value="email">✉️ Email</option>
-                <option value="phone">📞 Phone</option>
-              </select>
+                onChange={(val) => setLinkType(index, val)}
+                options={LINK_TYPE_OPTIONS}
+                className="w-40 shrink-0"
+              />
 
               {/* Target Selector / Input */}
               {linkType === "manual" && (
                 <input
-                  className={`${inputClass} flex-1 min-w-[180px] font-mono`}
+                  className={`${inputClass} flex-1 min-w-[140px] font-mono`}
                   value={item.href}
                   placeholder="/path or https://..."
                   onChange={(e) => update(index, { href: e.target.value })}
@@ -159,63 +222,43 @@ const NavItemEditor: React.FC<Props> = ({ items, onChange, options, depth = 0 })
               )}
 
               {linkType === "page" && (
-                <select
-                  className={`${inputClass} flex-1 min-w-[180px] cursor-pointer`}
-                  value={item.linkRefSlug ?? ""}
-                  onChange={(e) => setEntityRef(index, "page", e.target.value)}
-                >
-                  <option value="">Select page…</option>
-                  {options.pages.map((p) => (
-                    <option key={p.slug} value={p.slug}>
-                      {p.title}
-                    </option>
-                  ))}
-                </select>
+                <CustomSelect
+                  value={currentPageValue}
+                  onChange={(val) => setEntityRef(index, "page", val)}
+                  options={pageSelectOptions}
+                  placeholder="Select page…"
+                  className="w-52 shrink-0"
+                />
               )}
 
               {linkType === "product" && (
-                <select
-                  className={`${inputClass} flex-1 min-w-[180px] cursor-pointer`}
+                <CustomSelect
                   value={item.linkRefSlug ?? ""}
-                  onChange={(e) => setEntityRef(index, "product", e.target.value)}
-                >
-                  <option value="">Select product…</option>
-                  {options.products.map((p) => (
-                    <option key={p.slug} value={p.slug}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(val) => setEntityRef(index, "product", val)}
+                  options={productSelectOptions}
+                  placeholder="Select product…"
+                  className="w-52 shrink-0"
+                />
               )}
 
               {linkType === "category" && (
-                <select
-                  className={`${inputClass} flex-1 min-w-[180px] cursor-pointer`}
+                <CustomSelect
                   value={item.linkRefSlug ?? ""}
-                  onChange={(e) => setEntityRef(index, "category", e.target.value)}
-                >
-                  <option value="">Select category…</option>
-                  {options.categories.map((c) => (
-                    <option key={c.slug} value={c.slug}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(val) => setEntityRef(index, "category", val)}
+                  options={categorySelectOptions}
+                  placeholder="Select category…"
+                  className="w-52 shrink-0"
+                />
               )}
 
               {linkType === "brand" && (
-                <select
-                  className={`${inputClass} flex-1 min-w-[180px] cursor-pointer`}
+                <CustomSelect
                   value={item.linkRefSlug ?? ""}
-                  onChange={(e) => setEntityRef(index, "brand", e.target.value)}
-                >
-                  <option value="">Select brand…</option>
-                  {options.brands.map((b) => (
-                    <option key={b.slug} value={b.slug}>
-                      {b.name}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(val) => setEntityRef(index, "brand", val)}
+                  options={brandSelectOptions}
+                  placeholder="Select brand…"
+                  className="w-52 shrink-0"
+                />
               )}
 
               {linkType === "anchor" && (
@@ -246,17 +289,14 @@ const NavItemEditor: React.FC<Props> = ({ items, onChange, options, depth = 0 })
               )}
 
               {/* Submenu Layout Type */}
-              <select
-                className={`${inputClass} shrink-0 cursor-pointer`}
+              <CustomSelect
                 value={item.type ?? "none"}
-                onChange={(e) =>
-                  update(index, { type: e.target.value === "none" ? undefined : (e.target.value as NavItem["type"]) })
+                onChange={(val) =>
+                  update(index, { type: val === "none" ? undefined : (val as NavItem["type"]) })
                 }
-              >
-                <option value="none">Single Link</option>
-                <option value="dropdown">Dropdown Menu</option>
-                <option value="megaMenu">Mega Menu</option>
-              </select>
+                options={SUBMENU_TYPE_OPTIONS}
+                className="w-36 shrink-0"
+              />
 
               {/* Options & Action Control Buttons */}
               <div className="flex items-center gap-2 shrink-0">

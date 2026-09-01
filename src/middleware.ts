@@ -118,10 +118,14 @@ export function middleware(req: NextRequest) {
     }
 
     if (previewSlug) {
-      requestHeaders.set(TENANT_SLUG_HEADER, previewSlug);
-      if (!req.nextUrl.pathname.startsWith("/api") && !req.nextUrl.pathname.startsWith("/superadmin")) {
+      const pathname = req.nextUrl.pathname;
+      const firstSegment = pathname === "/" ? "" : pathname.split("/").filter(Boolean)[0] || "";
+      const isPlatformRoute = pathname === "/" || pathname.startsWith("/platform") || PLATFORM_ROUTE_SLUGS.has(firstSegment);
+
+      if (!isPlatformRoute && !pathname.startsWith("/api") && !pathname.startsWith("/superadmin")) {
+        requestHeaders.set(TENANT_SLUG_HEADER, previewSlug);
         const url = req.nextUrl.clone();
-        url.pathname = `/store/${previewSlug}${req.nextUrl.pathname}`;
+        url.pathname = `/store/${previewSlug}${pathname}`;
         const res = NextResponse.redirect(url);
         res.cookies.set(FRONTSTORE_COOKIE, previewSlug, {
           httpOnly: true,
@@ -169,7 +173,11 @@ export function middleware(req: NextRequest) {
     if (pathname === "/" || PLATFORM_ROUTE_SLUGS.has(segment)) {
       const url = req.nextUrl.clone();
       url.pathname = pathname === "/" ? "/platform" : `/platform/${segment}`;
-      return NextResponse.rewrite(url, { request: { headers: requestHeaders } });
+      const res = NextResponse.rewrite(url, { request: { headers: requestHeaders } });
+      if (pathname === "/") {
+        res.cookies.delete(FRONTSTORE_COOKIE);
+      }
+      return res;
     }
   }
 

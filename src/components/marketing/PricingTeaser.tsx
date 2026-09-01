@@ -2,10 +2,10 @@ import Link from "next/link";
 import { CheckIcon, ArrowRightIcon, BanknotesIcon } from "@heroicons/react/24/outline";
 
 const TOP_INCLUDED = [
-  "Full Store Admin panel - products, orders, customers, finance, CMS",
-  "Theme Builder with 4 production-ready starter themes",
-  "Tenant-isolated data with enterprise security and audit logs",
-  "Cloudinary-backed media pipeline for every image",
+  "Full Store Admin panel — products, inventory, orders, customers, finance & settings",
+  "Native Pakistani Couriers tracking (`/order-tracking`) & 1-click WhatsApp order share",
+  "Pre-configured JazzCash, EasyPaisa, Bank Transfer & Cash on Delivery (COD)",
+  "Multi-tenant isolation, Custom Domain support & Cloudinary media CDN",
 ];
 
 export default function PricingTeaser() {

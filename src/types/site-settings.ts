@@ -103,6 +103,10 @@ export interface ShippingSettings {
   freeShippingThreshold?: number;
   estimateDaysMin?: number;
   estimateDaysMax?: number;
+  trackingEnabled?: boolean;
+  trackingMode?: "external_courier" | "in_house" | "both";
+  defaultCourierName?: string;
+  defaultCourierTrackingUrlTemplate?: string;
 }
 
 export interface PaymentMethodSetting {

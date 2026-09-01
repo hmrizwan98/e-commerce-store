@@ -46,10 +46,10 @@ const FEATURE_GROUPS: { title: string; icon: React.ComponentType<{ className?: s
     title: "Orders & Fulfillment",
     icon: TruckIcon,
     items: [
-      "Full order lifecycle: status history, shipment tracking, cancellations, refunds, returns",
-      "Order timeline merging status, payment, and fulfillment events",
-      "Invoice, packing slip, and shipping label architecture",
-      "Advanced order filtering and export",
+      "Native Pakistani Couriers tracking (`/order-tracking`): Couriers Next, TCS, PostEx, Trax, Leopards, CallCourier",
+      "Full order lifecycle: status history, shipment tracking, cancellations, refunds",
+      "Automated WhatsApp tracking link sharing & direct customer notifications",
+      "Printable invoices, packing slips, and consignment label details",
     ],
   },
   {

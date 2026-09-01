@@ -33,7 +33,9 @@ import {
   XMarkIcon,
   ChevronDoubleLeftIcon,
   ChevronDoubleRightIcon,
+  SparklesIcon,
 } from "@heroicons/react/24/outline";
+import StoreAssistantDrawer from "./assistant/StoreAssistantDrawer";
 
 interface NavItem {
   label: string;
@@ -113,6 +115,7 @@ export default function AdminShell({
   const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [assistantOpen, setAssistantOpen] = useState(false);
 
   const preset = getAdminThemePreset(adminTheme);
   const colorScale = generateColorScale(preset.accentColor);
@@ -290,7 +293,26 @@ export default function AdminShell({
       </div>
 
       {/* Navigation Group Items with Curved Notch Cutout */}
-      <nav className={`flex-1 overflow-y-auto py-4 pl-3 pr-0 space-y-5 ${preset.sidebarBg}`}>
+      <nav className={`flex-1 overflow-y-auto py-4 pl-3 pr-0 space-y-4 ${preset.sidebarBg}`}>
+        {/* Store Assistant Button */}
+        <div className="pr-3">
+          <button
+            type="button"
+            onClick={() => setAssistantOpen(true)}
+            className={`w-full relative flex items-center justify-between h-10 px-3.5 rounded-xl transition-all group cursor-pointer bg-gradient-to-r from-primary-6000/25 via-indigo-600/25 to-cyan-500/20 hover:from-primary-6000/40 hover:to-indigo-600/40 border border-primary-400/30 text-white shadow-xs ${
+              collapsed ? "justify-center px-0" : ""
+            }`}
+            title="Open Webriz Store Assistant"
+          >
+            <div className="flex items-center gap-2.5">
+              <SparklesIcon className="w-4 h-4 text-amber-400 shrink-0 animate-pulse" />
+              {!collapsed && (
+                <span className="text-xs font-extrabold tracking-tight text-white">Store Assistant</span>
+              )}
+            </div>
+          </button>
+        </div>
+
         {NAV_GROUPS.map((group, i) => (
           <div key={i}>
             {group.title && !collapsed && (
@@ -414,6 +436,15 @@ export default function AdminShell({
 
           {/* User Controls & Notifications in Header */}
           <div className="flex items-center gap-2 sm:gap-3">
+            <button
+              type="button"
+              onClick={() => setAssistantOpen(true)}
+              className="p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors text-amber-300 flex items-center justify-center relative"
+              title="Store Assistant"
+            >
+              <SparklesIcon className="w-5 h-5 animate-pulse" />
+            </button>
+
             <Link
               href="/admin/orders"
               className="relative p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors text-white flex items-center justify-center"
@@ -443,6 +474,26 @@ export default function AdminShell({
         {/* Dashboard Main View Area */}
         <main className="flex-1 p-4 md:p-6 overflow-y-auto overflow-x-hidden relative flex flex-col min-h-0">{children}</main>
       </div>
+
+      {/* Floating Action Button (Fixed Bottom-Right Position across every page) */}
+      {!assistantOpen && (
+        <button
+          type="button"
+          onClick={() => setAssistantOpen(true)}
+          aria-label="Open Store Assistant"
+          className="fixed bottom-6 right-6 z-40 flex items-center gap-2.5 px-4 py-3 rounded-full bg-gradient-to-r from-primary-6000 to-indigo-600 hover:from-primary-700 hover:to-indigo-700 text-white font-extrabold text-xs shadow-xl shadow-primary-6000/30 hover:scale-105 active:scale-95 transition-all border border-white/20 group cursor-pointer"
+        >
+          <SparklesIcon className="w-4 h-4 text-amber-300 animate-pulse group-hover:rotate-12 transition-transform" />
+          <span className="tracking-tight font-extrabold">Store Assistant</span>
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+          </span>
+        </button>
+      )}
+
+      {/* Store Assistant Slide-Over Drawer */}
+      <StoreAssistantDrawer isOpen={assistantOpen} onClose={() => setAssistantOpen(false)} />
     </div>
   );
 }
