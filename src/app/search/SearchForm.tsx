@@ -43,7 +43,9 @@ const SearchForm = () => {
           size=" w-11 h-11"
           type="submit"
         >
-          <i className="las la-arrow-right text-xl"></i>
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+          </svg>
         </ButtonCircle>
         <span className="absolute left-5 top-1/2 transform -translate-y-1/2 text-2xl md:left-6">
           <svg

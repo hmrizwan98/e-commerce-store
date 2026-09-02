@@ -16,6 +16,8 @@ import SectionGridFeatureItems from '@/components/SectionGridFeatureItems';
 import SectionMagazine5 from '@/app/blog/SectionMagazine5';
 import SectionBrands from '@/components/SectionBrands';
 import SectionSocialGallery from '@/components/SectionSocialGallery';
+import JsonLd from '@/components/seo/JsonLd';
+
 import {
   getFeaturedProducts,
   getNewArrivalProducts,
@@ -500,6 +502,11 @@ export default async function HomeContent({ themeConfig: themeConfigOverride }: 
 
   return (
     <main className={`relative overflow-hidden nc-PageHome ${themeContainerClass}`}>
+      <JsonLd
+        type="store"
+        name={tenant.slug || "Online Store"}
+        url={`https://${tenant.slug}.tradezglint.com`}
+      />
       {renderHero()}
 
       <div className="container relative my-16 space-y-16 lg:space-y-24 lg:my-24">

@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import "@/fonts/line-awesome-1.3.0/css/line-awesome.min.css";
 import "@/styles/index.scss";
 import "rc-slider/assets/index.css";
 import { headers } from "next/headers";

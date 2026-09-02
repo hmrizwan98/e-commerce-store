@@ -40,6 +40,7 @@ const NextPrev: FC<NextPrevProps> = ({
             onClickPrev();
           }}
           title="Prev"
+          aria-label="Previous slide"
           data-glide-dir="<"
           onMouseEnter={() => setFocus("left")}
         >
@@ -77,6 +78,7 @@ const NextPrev: FC<NextPrevProps> = ({
             onClickNext();
           }}
           title="Next"
+          aria-label="Next slide"
           data-glide-dir=">"
           onMouseEnter={() => setFocus("right")}
         >

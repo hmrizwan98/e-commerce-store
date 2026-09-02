@@ -1,4 +1,5 @@
 import React from "react";
+import Image from "next/image";
 import ButtonPrimary from "@/shared/Button/ButtonPrimary";
 import type { PageSectionConfig } from "@/types/page-section";
 import type { Route } from "next";
@@ -7,8 +8,15 @@ export default function PageSectionHero({ config }: { config: PageSectionConfig 
   return (
     <div className="relative rounded-3xl overflow-hidden bg-neutral-100 dark:bg-neutral-800 min-h-[320px] flex items-center">
       {config.image && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={config.image} alt="" className="absolute inset-0 w-full h-full object-cover" />
+        <Image
+          src={config.image}
+          alt={config.heading || "Hero section banner"}
+          fill
+          priority
+          sizes="100vw"
+          quality={85}
+          className="object-cover"
+        />
       )}
       <div className={`relative container py-16 ${config.image ? "text-white" : ""}`}>
         {config.subHeading && <p className="text-base sm:text-lg font-medium mb-3">{config.subHeading}</p>}

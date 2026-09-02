@@ -1,4 +1,5 @@
 import React from "react";
+import Image from "next/image";
 import ButtonPrimary from "@/shared/Button/ButtonPrimary";
 import type { PageSectionConfig } from "@/types/page-section";
 import type { Route } from "next";
@@ -19,9 +20,15 @@ export default function PageSectionImageText({ config }: { config: PageSectionCo
   );
 
   const imageBlock = config.image ? (
-    <div className="flex-1">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={config.image} alt="" className="w-full h-auto rounded-3xl object-cover" />
+    <div className="flex-1 relative w-full aspect-[4/3]">
+      <Image
+        src={config.image}
+        alt={config.heading || "Section image"}
+        fill
+        sizes="(max-width: 768px) 100vw, 50vw"
+        quality={80}
+        className="rounded-3xl object-cover"
+      />
     </div>
   ) : null;
 
