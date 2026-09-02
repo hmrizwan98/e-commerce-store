@@ -85,6 +85,8 @@ const SectionHero2: FC<SectionHero2Props> = ({
                     src={imgSrc}
                     alt="Hero slide"
                     priority={index === 0}
+                    loading={index === 0 ? "eager" : "lazy"}
+                    fetchPriority={index === 0 ? "high" : "low"}
                   />
                 </Link>
               ) : (
@@ -96,6 +98,8 @@ const SectionHero2: FC<SectionHero2Props> = ({
                     src={imgSrc}
                     alt="Hero slide"
                     priority={index === 0}
+                    loading={index === 0 ? "eager" : "lazy"}
+                    fetchPriority={index === 0 ? "high" : "low"}
                   />
                 </div>
               )}

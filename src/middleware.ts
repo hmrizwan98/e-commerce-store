@@ -119,10 +119,15 @@ export function middleware(req: NextRequest) {
 
     if (previewSlug) {
       const pathname = req.nextUrl.pathname;
+      if (pathname.startsWith("/api")) {
+        requestHeaders.set(TENANT_SLUG_HEADER, previewSlug);
+        return NextResponse.next({ request: { headers: requestHeaders } });
+      }
+
       const firstSegment = pathname === "/" ? "" : pathname.split("/").filter(Boolean)[0] || "";
       const isPlatformRoute = pathname === "/" || pathname.startsWith("/platform") || PLATFORM_ROUTE_SLUGS.has(firstSegment);
 
-      if (!isPlatformRoute && !pathname.startsWith("/api") && !pathname.startsWith("/superadmin")) {
+      if (!isPlatformRoute && !pathname.startsWith("/superadmin")) {
         requestHeaders.set(TENANT_SLUG_HEADER, previewSlug);
         const url = req.nextUrl.clone();
         url.pathname = `/store/${previewSlug}${pathname}`;

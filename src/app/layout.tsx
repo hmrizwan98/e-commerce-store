@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import "@/fonts/line-awesome-1.3.0/css/line-awesome.css";
+import "@/fonts/line-awesome-1.3.0/css/line-awesome.min.css";
 import "@/styles/index.scss";
 import "rc-slider/assets/index.css";
 import { headers } from "next/headers";
@@ -16,7 +16,7 @@ import { isPlatformDomainRequest } from "@/lib/tenant/platform-domain";
 import { FRONTSTORE_PREVIEW_HEADER } from "@/lib/tenant/constants";
 import { requestMemo } from "@/lib/request-cache";
 import { PLATFORM_SITE_URL } from "@/lib/marketing/site-url";
-import type { Theme } from "@/types/theme";
+import type { Theme, FontKey } from "@/types/theme";
 import type { GeneralSettings } from "@/types/site-settings";
 import type { NavItem } from "@/types/nav";
 
@@ -182,14 +182,17 @@ export default async function RootLayout({
 }) {
   const { tenantId, theme, general, suspended, headerMenu, footerMenu } = await resolveThemeAndSettings();
   const cssText = themeToCssText(theme);
-  const bodyFont = FONT_PRESETS[theme.typography.bodyFont ?? "poppins"];
-  const headingFont = FONT_PRESETS[theme.typography.headingFont ?? "poppins"];
+  const bodyFontKey = (theme.typography?.bodyFont as FontKey) ?? "poppins";
+  const headingFontKey = (theme.typography?.headingFont as FontKey) ?? "poppins";
+  const bodyFont = FONT_PRESETS[bodyFontKey] ?? FONT_PRESETS.poppins;
+  const headingFont = FONT_PRESETS[headingFontKey] ?? FONT_PRESETS.poppins;
+  const activeFontVariables = Array.from(new Set([bodyFont.variable, headingFont.variable])).join(" ");
 
   return (
     <html
       lang="en"
       dir=""
-      className={`${bodyFont.className} ${ALL_FONT_VARIABLES}`}
+      className={`${bodyFont.className} ${activeFontVariables}`}
     >
       <head>
         <style

@@ -97,6 +97,8 @@ const FullWidthImageHero: FC<FullWidthImageHeroProps> = ({
                     src={imgSrc}
                     alt="Hero slide"
                     priority={index === 0}
+                    loading={index === 0 ? "eager" : "lazy"}
+                    fetchPriority={index === 0 ? "high" : "low"}
                   />
                 </Link>
               ) : (
@@ -108,6 +110,8 @@ const FullWidthImageHero: FC<FullWidthImageHeroProps> = ({
                     src={imgSrc}
                     alt="Hero slide"
                     priority={index === 0}
+                    loading={index === 0 ? "eager" : "lazy"}
+                    fetchPriority={index === 0 ? "high" : "low"}
                   />
                 </div>
               )}
