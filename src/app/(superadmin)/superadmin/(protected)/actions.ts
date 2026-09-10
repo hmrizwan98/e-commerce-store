@@ -18,7 +18,7 @@ import { provisionCloudinaryMetadata } from "@/lib/firebase/services/cloudinary-
 import { provisionDeploymentMetadata } from "@/lib/firebase/services/deployment-provisioner";
 import { syncDomainSettings } from "@/lib/superadmin/domain-settings";
 import { getPlatformBaseUrl } from "@/lib/platform/base-url";
-import { buildTenantUrl } from "@/lib/platform/tenant-url";
+import { buildTenantUrl, buildTenantAdminUrl } from "@/lib/platform/tenant-url";
 import { getActiveDeploymentProvider } from "@/lib/deployment/provider-registry";
 import { logDeploymentEvent } from "@/lib/firebase/repositories/deployment-logs";
 import { deleteAllByPrefix } from "@/lib/cloudinary/delete";
@@ -198,7 +198,7 @@ async function provisionStoreShell(
       domains,
       domainSettings: syncDomainSettings(undefined, domains),
       websiteUrl: buildTenantUrl(getPlatformBaseUrl(), slug),
-      adminUrl: buildTenantUrl(getPlatformBaseUrl(), slug, "/admin"),
+      adminUrl: buildTenantAdminUrl(getPlatformBaseUrl(), slug),
       cloudinaryFolder: slug,
       themeId: input.themeId ?? DEFAULT_THEME.id,
       status: input.status ?? ("active" satisfies StoreStatus),
@@ -391,7 +391,7 @@ export async function createStore(input: StoreFormInput): Promise<CreateStoreRes
           .sendWelcomeEmail({
             storeName: input.brandName?.trim() || input.name,
             storeUrl: buildTenantUrl(platformBaseUrl, slug),
-            adminUrl: buildTenantUrl(platformBaseUrl, slug, "/admin"),
+            adminUrl: buildTenantAdminUrl(platformBaseUrl, slug),
             email: input.email!,
             temporaryPassword: adminTempPassword,
           })
@@ -527,7 +527,7 @@ export async function cloneStore(sourceStoreId: string, input: CloneStoreInput):
     .sendWelcomeEmail({
       storeName: input.name,
       storeUrl: buildTenantUrl(platformBaseUrl, slug),
-      adminUrl: buildTenantUrl(platformBaseUrl, slug, "/admin"),
+      adminUrl: buildTenantAdminUrl(platformBaseUrl, slug),
       email: input.email,
       temporaryPassword: adminTempPassword,
     })
@@ -764,7 +764,7 @@ export async function resendWelcomeEmail(storeId: string): Promise<ResetAdminPas
     .sendWelcomeEmail({
       storeName: store.brandName?.trim() || store.name,
       storeUrl: store.websiteUrl ?? buildTenantUrl(platformBaseUrl, store.slug),
-      adminUrl: store.adminUrl ?? buildTenantUrl(platformBaseUrl, store.slug, "/admin"),
+      adminUrl: store.adminUrl ?? buildTenantAdminUrl(platformBaseUrl, store.slug),
       email: store.email,
       temporaryPassword: newPassword,
     })

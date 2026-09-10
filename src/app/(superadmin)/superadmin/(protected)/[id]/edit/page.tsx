@@ -6,6 +6,7 @@ import { getRecentActivity } from "@/lib/firebase/repositories/store-activity-lo
 import { getDeploymentMetadataByStoreId } from "@/lib/firebase/repositories/deployment-metadata";
 import { getDeploymentLogs } from "@/lib/firebase/repositories/deployment-logs";
 import { getPlatformBaseUrl } from "@/lib/platform/base-url";
+import { getStoreAdminUrl } from "@/lib/platform/tenant-url";
 import { STATUS_BADGE_CLASS } from "@/lib/superadmin/status-badge";
 import StoreDetailsTabs from "../../StoreDetailsTabs";
 import { ArrowLeftIcon } from "@heroicons/react/24/outline";
@@ -42,12 +43,12 @@ export default async function EditStorePage({ params }: { params: { id: string }
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-mono text-neutral-500">
             <span>Tenant Slug: {store.slug} • Store ID: {store.id}</span>
             <a
-              href={`/store/${store.slug}/admin/login`}
+              href={getStoreAdminUrl(store, getPlatformBaseUrl())}
               target="_blank"
               rel="noreferrer"
               className="text-indigo-600 dark:text-indigo-400 hover:underline font-sans font-semibold inline-flex items-center gap-1"
             >
-              🔑 Open Store Admin Login (`/store/{store.slug}/admin/login`)
+              🔑 Open Store Admin Login ({getStoreAdminUrl(store, getPlatformBaseUrl())})
             </a>
           </div>
         </div>

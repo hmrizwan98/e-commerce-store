@@ -11,9 +11,9 @@ export const TENANT_SLUG_HEADER = "x-tenant-slug";
  * "no tenant because this is the platform's own marketing domain" (existing behavior)
  * from "no tenant because this specific /store/{slug} names an unknown store" (should 404).
  */
+export const TENANT_CUSTOM_DOMAIN_HEADER = "x-tenant-custom-domain";
+export const IS_ADMIN_HOST_HEADER = "x-is-admin-host";
+export const IS_SUPER_ADMIN_HOST_HEADER = "x-is-superadmin-host";
 export const FRONTSTORE_PREVIEW_HEADER = "x-frontstore-preview";
-
-/** Cookie recording which tenant a developer/tester is currently previewing via /store/{slug},
- * so plain internal links can be transparently redirected back under the correct prefix. */
 export const FRONTSTORE_COOKIE = "frontstore_tenant";
 

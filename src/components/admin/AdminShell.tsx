@@ -423,12 +423,21 @@ export default function AdminShell({
                 <Bars3Icon className="w-5 h-5" />
               </button>
               {(() => {
-                const tenantSlugMatch = pathname?.match(/\/store\/([^\/]+)/);
-                const storefrontUrl = tenantSlugMatch ? `/store/${tenantSlugMatch[1]}` : "/";
+                let storefrontUrl = "/";
+                if (typeof window !== "undefined") {
+                  const host = window.location.hostname;
+                  const tenantSlugMatch = window.location.pathname.match(/\/store\/([^\/]+)/);
+                  if (tenantSlugMatch) {
+                    storefrontUrl = `/store/${tenantSlugMatch[1]}`;
+                  } else if (host.startsWith("admin.")) {
+                    const storefrontHost = host.slice(6);
+                    storefrontUrl = `${window.location.protocol}//${storefrontHost}${window.location.port ? ":" + window.location.port : ""}/`;
+                  }
+                }
                 return (
-                  <Link href={storefrontUrl as any} className="text-xs font-semibold text-white/90 hover:text-white bg-white/15 hover:bg-white/25 px-3 py-1.5 rounded-lg transition-colors backdrop-blur-xs">
+                  <a href={storefrontUrl} className="text-xs font-semibold text-white/90 hover:text-white bg-white/15 hover:bg-white/25 px-3 py-1.5 rounded-lg transition-colors backdrop-blur-xs">
                     ← Storefront
-                  </Link>
+                  </a>
                 );
               })()}
             </div>

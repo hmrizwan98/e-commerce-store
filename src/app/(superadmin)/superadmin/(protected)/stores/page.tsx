@@ -7,6 +7,9 @@ import StoreRowActions from "../StoreRowActions";
 import type { StoreStatus } from "@/types/store";
 import { PlusIcon, MagnifyingGlassIcon, FunnelIcon } from "@heroicons/react/24/outline";
 
+import { getPlatformBaseUrl } from "@/lib/platform/base-url";
+import { getStorefrontUrl, getStoreAdminUrl } from "@/lib/platform/tenant-url";
+
 export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 20;
@@ -160,12 +163,12 @@ export default async function SuperAdminStoresPage({
                     {/* TEMPORARY (Phase 8A) - preview this store's storefront/admin by
                        path on the single current Vercel domain, no subdomain DNS needed. */}
                     <div className="mt-1 flex gap-2 font-sans">
-                      <Link href={`/store/${store.slug}` as any} target="_blank" className="text-primary-6000 hover:underline">
+                      <a href={getStorefrontUrl(store, getPlatformBaseUrl())} target="_blank" rel="noreferrer" className="text-primary-6000 hover:underline">
                         View storefront
-                      </Link>
-                      <Link href={`/store/${store.slug}/admin` as any} target="_blank" className="text-primary-6000 hover:underline">
+                      </a>
+                      <a href={getStoreAdminUrl(store, getPlatformBaseUrl())} target="_blank" rel="noreferrer" className="text-primary-6000 hover:underline">
                         Manage store
-                      </Link>
+                      </a>
                     </div>
                   </td>
                   <td className="p-4 text-neutral-600 dark:text-neutral-300 font-medium">{store.ownerName || "—"}</td>
