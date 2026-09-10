@@ -6,18 +6,18 @@ import { THEME_PRESETS } from "@/lib/themes/theme-presets";
 import { FONT_PRESETS } from "@/lib/theme/fonts";
 
 export const metadata: Metadata = {
-  title: "Themes — Tradez Glint Platform",
+  title: "Themes — Webriiz Platform",
   description: "Four production-ready storefront themes included with every store, installable at store creation.",
   openGraph: {
-    title: "Themes — Tradez Glint Platform",
+    title: "Themes — Webriiz Platform",
     description: "Four production-ready storefront themes included with every store, installable at store creation.",
     url: "/themes",
-    siteName: "Tradez Glint",
+    siteName: "Webriiz",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Themes — Tradez Glint Platform",
+    title: "Themes — Webriiz Platform",
     description: "Four production-ready storefront themes included with every store.",
   },
   alternates: { canonical: "/themes" },

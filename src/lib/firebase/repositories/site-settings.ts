@@ -22,7 +22,7 @@ import type {
 const COLLECTION = "siteSettings";
 
 export const DEFAULT_GENERAL_SETTINGS: GeneralSettings = {
-  storeName: "Tradz Glint",
+  storeName: "Webriiz",
   storeEmail: "support@example.com",
   currency: "PKR",
   currencySymbol: "Rs",
@@ -47,7 +47,7 @@ export const DEFAULT_PAYMENT_SETTINGS: PaymentSettings = {
 };
 
 export const DEFAULT_EMAIL_SETTINGS: EmailSettings = {
-  fromName: "Tradz Glint",
+  fromName: "Webriiz",
   fromEmail: "no-reply@example.com",
 };
 

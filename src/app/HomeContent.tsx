@@ -505,7 +505,7 @@ export default async function HomeContent({ themeConfig: themeConfigOverride }: 
       <JsonLd
         type="store"
         name={tenant.slug || "Online Store"}
-        url={`https://${tenant.slug}.tradezglint.com`}
+        url={`https://${tenant.slug}.webriiz.com`}
       />
       {renderHero()}
 

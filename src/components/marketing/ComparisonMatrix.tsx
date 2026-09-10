@@ -4,7 +4,7 @@ import { CheckIcon, XMarkIcon } from "@heroicons/react/24/outline";
 interface FeatureComparison {
   feature: string;
   category: string;
-  tradezGlint: string | boolean;
+  webriiz: string | boolean;
   shopify: string | boolean;
   wooCommerce: string | boolean;
 }
@@ -13,56 +13,56 @@ const COMPARISONS: FeatureComparison[] = [
   {
     feature: "Monthly Base Platform Fee",
     category: "Cost & Pricing",
-    tradezGlint: "Growth Aligned / Flat Low Fee",
+    webriiz: "Growth Aligned / Flat Low Fee",
     shopify: "$39 - $399 / mo",
     wooCommerce: "Free (Paid Hosting $25+/mo)",
   },
   {
     feature: "Transaction Fees",
     category: "Cost & Pricing",
-    tradezGlint: "0% Hidden Fees",
+    webriiz: "0% Hidden Fees",
     shopify: "0.5% - 2.0% per sale",
     wooCommerce: "Varies by plugin",
   },
   {
     feature: "Native Pakistani Couriers Tracking (`/order-tracking`)",
     category: "Pakistani Ecosystem",
-    tradezGlint: true,
+    webriiz: true,
     shopify: false,
     wooCommerce: false,
   },
   {
     feature: "Pre-configured JazzCash & EasyPaisa Checkout",
     category: "Pakistani Ecosystem",
-    tradezGlint: true,
+    webriiz: true,
     shopify: false,
     wooCommerce: false,
   },
   {
     feature: "Direct WhatsApp Order Notifications & Share",
     category: "Pakistani Ecosystem",
-    tradezGlint: true,
+    webriiz: true,
     shopify: "Requires $15/mo App",
     wooCommerce: "Requires Paid Plugin",
   },
   {
     feature: "Full Multi-Tenant Super Admin (`/superadmin`)",
     category: "Platform Architecture",
-    tradezGlint: true,
+    webriiz: true,
     shopify: "Plus Only ($2,000/mo)",
     wooCommerce: false,
   },
   {
     feature: "1-Click Store Impersonation & Cloning",
     category: "Platform Architecture",
-    tradezGlint: true,
+    webriiz: true,
     shopify: false,
     wooCommerce: false,
   },
   {
     feature: "Page Load Speed & Cloudinary CDN Optimization",
     category: "Performance",
-    tradezGlint: "Next.js 14 App Router + Cloudinary",
+    webriiz: "Next.js 14 App Router + Cloudinary",
     shopify: "Liquid Engine (Variable)",
     wooCommerce: "Slow PHP Server dependent",
   },
@@ -80,7 +80,7 @@ function ComparisonMatrix() {
           How we compare to generic store builders
         </h2>
         <p className="text-base sm:text-lg text-neutral-700 dark:text-neutral-300">
-          See why Pakistani brands and multi-store operators choose Tradez Glint over Shopify and WooCommerce.
+          See why Pakistani brands and multi-store operators choose Webriiz over Shopify and WooCommerce.
         </p>
       </div>
 
@@ -91,7 +91,7 @@ function ComparisonMatrix() {
             <tr className="border-b border-neutral-200/80 dark:border-neutral-800/80 bg-neutral-50/80 dark:bg-neutral-800/50">
               <th className="p-5 font-extrabold text-sm text-neutral-900 dark:text-white w-2/5">Platform Feature</th>
               <th className="p-5 font-black text-sm text-primary-600 dark:text-primary-400 bg-primary-50/50 dark:bg-primary-950/30 text-center w-1/5 border-x border-primary-200/60 dark:border-primary-800/60">
-                Tradez Glint (Us)
+                Webriiz (Us)
               </th>
               <th className="p-5 font-bold text-sm text-neutral-700 dark:text-neutral-300 text-center w-1/5">Shopify</th>
               <th className="p-5 font-bold text-sm text-neutral-700 dark:text-neutral-300 text-center w-1/5">WooCommerce</th>
@@ -104,10 +104,10 @@ function ComparisonMatrix() {
                   {row.feature}
                 </td>
 
-                {/* Tradez Glint Value */}
+                {/* Webriiz Value */}
                 <td className="p-5 text-center font-bold text-neutral-900 dark:text-white bg-primary-50/30 dark:bg-primary-950/20 border-x border-primary-200/40 dark:border-primary-900/40">
-                  {typeof row.tradezGlint === "boolean" ? (
-                    row.tradezGlint ? (
+                  {typeof row.webriiz === "boolean" ? (
+                    row.webriiz ? (
                       <div className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400">
                         <CheckIcon className="w-4 h-4 stroke-[3]" />
                       </div>
@@ -118,7 +118,7 @@ function ComparisonMatrix() {
                     )
                   ) : (
                     <span className="text-primary-700 dark:text-primary-300 font-extrabold text-xs sm:text-sm">
-                      {row.tradezGlint}
+                      {row.webriiz}
                     </span>
                   )}
                 </td>

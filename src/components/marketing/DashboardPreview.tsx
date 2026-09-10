@@ -25,7 +25,7 @@ function DashboardPreviewMockup() {
           </div>
           <div className="ml-3 px-3 py-1 rounded-md bg-neutral-200/60 dark:bg-neutral-800/60 text-[11px] font-mono text-neutral-600 dark:text-neutral-400 flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
-            store-admin.tradezglint.com
+            admin.webriiz.com
           </div>
         </div>
         <div className="flex items-center gap-2">

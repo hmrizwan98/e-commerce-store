@@ -3,19 +3,19 @@ import type { Metadata } from "next";
 import { SparklesIcon } from "@heroicons/react/24/outline";
 
 export const metadata: Metadata = {
-  title: "About — Tradez Glint Platform",
-  description: "About the Tradez Glint eCommerce SaaS platform.",
+  title: "About — Webriiz Platform",
+  description: "About the Webriiz eCommerce SaaS platform.",
   openGraph: {
-    title: "About — Tradez Glint Platform",
-    description: "About the Tradez Glint eCommerce SaaS platform.",
+    title: "About — Webriiz Platform",
+    description: "About the Webriiz eCommerce SaaS platform.",
     url: "/about",
-    siteName: "Tradez Glint",
+    siteName: "Webriiz",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "About — Tradez Glint Platform",
-    description: "About the Tradez Glint eCommerce SaaS platform.",
+    title: "About — Webriiz Platform",
+    description: "About the Webriiz eCommerce SaaS platform.",
   },
   alternates: { canonical: "/about" },
 };
@@ -29,7 +29,7 @@ export default function AboutPage() {
           <span>Our Platform Mission</span>
         </div>
         <h1 className="text-4xl sm:text-5xl font-extrabold text-neutral-900 dark:text-white tracking-tight leading-tight">
-          About Tradez Glint
+          About Webriiz
         </h1>
         <p className="text-base sm:text-lg text-neutral-600 dark:text-neutral-400 max-w-xl mx-auto leading-relaxed">
           Enterprise multi-tenant eCommerce engineering made accessible for growing retail brands.
@@ -38,7 +38,7 @@ export default function AboutPage() {
 
       <div className="p-8 sm:p-12 rounded-3xl border border-neutral-200/80 dark:border-neutral-800/80 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-sm shadow-xl shadow-neutral-900/5 prose dark:prose-invert max-w-none space-y-6">
         <p className="text-lg leading-relaxed text-neutral-700 dark:text-neutral-300 font-medium">
-          Tradez Glint is an enterprise-grade, multi-tenant eCommerce platform built for businesses that want a real online store without building or managing complex cloud infrastructure.
+          Webriiz is an enterprise-grade, multi-tenant eCommerce platform built for businesses that want a real online store without building or managing complex cloud infrastructure.
         </p>
         <p className="text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
           Every store on the platform runs on the same production-grade foundation: a dedicated Store Admin for day-to-day operations, a Super Admin control plane for platform oversight, tenant-isolated data, Cloudinary-backed media pipelines, and a commission-based pricing model aligned with store growth.

@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "Tradez Glint — Enterprise Multi-Tenant eCommerce SaaS";
+export const alt = "Webriiz — Enterprise Multi-Tenant eCommerce SaaS";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -22,7 +22,7 @@ export default function OpengraphImage() {
           fontWeight: 700,
         }}
       >
-        <div>Tradez Glint</div>
+        <div>Webriiz</div>
         <div style={{ fontSize: 28, fontWeight: 400, opacity: 0.8, marginTop: 20 }}>
           Enterprise Multi-Tenant eCommerce SaaS
         </div>

@@ -105,11 +105,11 @@ export async function generateMetadata(): Promise<Metadata> {
     return {
       metadataBase: new URL(PLATFORM_SITE_URL),
       title: {
-        default: "Tradez Glint Platform - Multi-Tenant E-Commerce SaaS for Pakistan & Global Brands",
-        template: "%s | Tradez Glint Platform",
+        default: "Webriiz Platform - Multi-Tenant E-Commerce SaaS for Pakistan & Global Brands",
+        template: "%s | Webriiz Platform",
       },
       description: "Launch your online store with local payments (JazzCash, EasyPaisa, COD), 6+ Pakistani courier tracking (PostEx, CallCourier, Trax, TCS, Leopard, M&P), isolated multi-tenant architecture, and Next.js 14 speed with 0% transaction fees.",
-      keywords: ["e-commerce SaaS", "Pakistan e-commerce", "multi-tenant store builder", "JazzCash payment gateway", "EasyPaisa payment", "PostEx tracking", "CallCourier tracking", "Trax tracking", "TCS tracking", "Leopard tracking", "M&P courier tracking", "WhatsApp order updates", "Tradez Glint"],
+      keywords: ["e-commerce SaaS", "Pakistan e-commerce", "multi-tenant store builder", "JazzCash payment gateway", "EasyPaisa payment", "PostEx tracking", "CallCourier tracking", "Trax tracking", "TCS tracking", "Leopard tracking", "M&P courier tracking", "WhatsApp order updates", "Webriiz"],
       alternates: {
         canonical: PLATFORM_SITE_URL,
       },
@@ -117,13 +117,13 @@ export async function generateMetadata(): Promise<Metadata> {
         type: "website",
         locale: "en_US",
         url: PLATFORM_SITE_URL,
-        title: "Tradez Glint - Multi-Tenant E-Commerce SaaS for Pakistan & Global Brands",
+        title: "Webriiz - Multi-Tenant E-Commerce SaaS for Pakistan & Global Brands",
         description: "Launch your online store with local payments, 6+ courier tracking, isolated multi-tenant architecture, and Next.js 14 speed with 0% transaction fees.",
-        siteName: "Tradez Glint Platform",
+        siteName: "Webriiz Platform",
       },
       twitter: {
         card: "summary_large_image",
-        title: "Tradez Glint - Multi-Tenant E-Commerce SaaS",
+        title: "Webriiz - Multi-Tenant E-Commerce SaaS",
         description: "Launch your online store with local payments, 6+ courier tracking, and Next.js 14 speed with 0% transaction fees.",
       },
       robots: {

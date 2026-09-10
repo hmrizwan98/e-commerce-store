@@ -4,18 +4,18 @@ import type { Metadata } from "next";
 import { BuildingStorefrontIcon, UserGroupIcon, ArrowRightIcon, KeyIcon } from "@heroicons/react/24/outline";
 
 export const metadata: Metadata = {
-  title: "Login — Tradez Glint Platform",
+  title: "Login — Webriiz Platform",
   description: "Choose where to sign in: Store Admin or Super Admin.",
   openGraph: {
-    title: "Login — Tradez Glint Platform",
+    title: "Login — Webriiz Platform",
     description: "Choose where to sign in: Store Admin or Super Admin.",
     url: "/login",
-    siteName: "Tradez Glint",
+    siteName: "Webriiz",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Login — Tradez Glint Platform",
+    title: "Login — Webriiz Platform",
     description: "Choose where to sign in: Store Admin or Super Admin.",
   },
   alternates: { canonical: "/login" },

@@ -96,7 +96,7 @@ export default function BookDemoModal() {
           <div className="relative space-y-6">
             <div className="flex items-center gap-2 text-xs font-bold font-mono tracking-wider uppercase text-sky-400">
               <SparklesIcon className="w-4 h-4 text-sky-400" />
-              <span>TRADEZ GLINT PLATFORM</span>
+              <span>WEB RIIZ PLATFORM</span>
             </div>
 
             <h2 id="book-demo-drawer-title" className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white leading-tight">

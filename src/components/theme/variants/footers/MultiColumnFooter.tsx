@@ -19,7 +19,7 @@ export interface FooterVariantProps {
 
 import FooterSocials from "@/components/FooterSocials";
 
-export default function MultiColumnFooter({ footerSettings, logos, storeName = "Tradz Glint", socialLinks }: FooterVariantProps) {
+export default function MultiColumnFooter({ footerSettings, logos, storeName = "Webriiz", socialLinks }: FooterVariantProps) {
   const footerItems = useMenu("footer");
   const showCopyright = footerSettings?.showCopyright ?? true;
   const showPaymentIcons = footerSettings?.showPaymentIcons ?? false;

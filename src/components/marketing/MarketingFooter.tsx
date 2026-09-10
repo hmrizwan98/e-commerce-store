@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { SparklesIcon } from "@heroicons/react/24/outline";
+import Image from "next/image";
 
 const COLUMNS: { title: string; links: { href: string; label: string }[] }[] = [
   {
@@ -45,11 +45,17 @@ export default function MarketingFooter() {
           {/* Brand Col */}
           <div className="lg:col-span-2 space-y-4">
             <Link href={"/" as any} className="inline-flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-primary-6000 to-indigo-500 flex items-center justify-center text-white shadow-sm">
-                <SparklesIcon className="w-4 h-4" />
+              <div className="relative w-8 h-8 rounded-lg overflow-hidden shadow-xs bg-neutral-900 flex items-center justify-center">
+                <Image
+                  src="/images/webriiz-logo.png"
+                  alt="Webriiz Logo"
+                  width={32}
+                  height={32}
+                  className="w-full h-full object-cover"
+                />
               </div>
               <span className="font-bold text-lg text-neutral-900 dark:text-white">
-                Tradez Glint <span className="text-primary-6000 font-extrabold">Platform</span>
+                webriiz <span className="text-primary-6000 font-extrabold">Platform</span>
               </span>
             </Link>
             <p className="text-sm text-neutral-600 dark:text-neutral-300 max-w-sm leading-relaxed">
@@ -82,7 +88,7 @@ export default function MarketingFooter() {
         </div>
 
         <div className="mt-14 pt-8 border-t border-neutral-200/60 dark:border-neutral-800/60 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-neutral-600 dark:text-neutral-300">
-          <p>© {new Date().getFullYear()} Tradez Glint Platform. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Webriiz Platform. All rights reserved.</p>
           <p className="flex items-center gap-2 font-mono">
             <span>Powered by Next.js RSC & Cloudinary</span>
           </p>

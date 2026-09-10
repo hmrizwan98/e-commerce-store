@@ -18,7 +18,7 @@ export interface FooterVariantProps {
 
 import FooterSocials from "@/components/FooterSocials";
 
-export default function MinimalFooter({ footerSettings, logos, storeName = "Tradz Glint", socialLinks }: FooterVariantProps) {
+export default function MinimalFooter({ footerSettings, logos, storeName = "Webriiz", socialLinks }: FooterVariantProps) {
   const footerItems = useMenu("footer");
   const copyrightText = footerSettings?.copyrightText || `© ${new Date().getFullYear()} ${storeName}. All rights reserved.`;
 

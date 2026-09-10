@@ -4,18 +4,18 @@ import type { Metadata } from "next";
 import { CheckIcon, ArrowRightIcon, BanknotesIcon, ShieldCheckIcon } from "@heroicons/react/24/outline";
 
 export const metadata: Metadata = {
-  title: "Pricing — Tradez Glint Platform",
-  description: "Commission-based pricing for the Tradez Glint eCommerce SaaS platform - no flat license fee.",
+  title: "Pricing — Webriiz Platform",
+  description: "Commission-based pricing for the Webriiz eCommerce SaaS platform - no flat license fee.",
   openGraph: {
-    title: "Pricing — Tradez Glint Platform",
-    description: "Commission-based pricing for the Tradez Glint eCommerce SaaS platform - no flat license fee.",
+    title: "Pricing — Webriiz Platform",
+    description: "Commission-based pricing for the Webriiz eCommerce SaaS platform - no flat license fee.",
     url: "/pricing",
-    siteName: "Tradez Glint",
+    siteName: "Webriiz",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Pricing — Tradez Glint Platform",
+    title: "Pricing — Webriiz Platform",
     description: "Commission-based pricing - no flat license fee.",
   },
   alternates: { canonical: "/pricing" },

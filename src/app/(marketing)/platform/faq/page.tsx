@@ -5,19 +5,19 @@ import AccordionInfo from "@/components/AccordionInfo";
 import { PLATFORM_FAQS } from "@/lib/marketing/faq-data";
 
 export const metadata: Metadata = {
-  title: "FAQ — Tradez Glint Platform",
-  description: "Frequently asked questions about the Tradez Glint eCommerce SaaS platform.",
+  title: "FAQ — Webriiz Platform",
+  description: "Frequently asked questions about the Webriiz eCommerce SaaS platform.",
   openGraph: {
-    title: "FAQ — Tradez Glint Platform",
-    description: "Frequently asked questions about the Tradez Glint eCommerce SaaS platform.",
+    title: "FAQ — Webriiz Platform",
+    description: "Frequently asked questions about the Webriiz eCommerce SaaS platform.",
     url: "/faq",
-    siteName: "Tradez Glint",
+    siteName: "Webriiz",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "FAQ — Tradez Glint Platform",
-    description: "Frequently asked questions about the Tradez Glint eCommerce SaaS platform.",
+    title: "FAQ — Webriiz Platform",
+    description: "Frequently asked questions about the Webriiz eCommerce SaaS platform.",
   },
   alternates: { canonical: "/faq" },
 };

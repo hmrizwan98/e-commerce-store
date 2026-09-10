@@ -17,20 +17,20 @@ const PricingTeaser = dynamic(() => import("@/components/marketing/PricingTeaser
 const CallSchedulingSection = dynamic(() => import("@/components/marketing/CallSchedulingSection"));
 
 export const metadata: Metadata = {
-  title: "Tradez Glint Platform — The Complete Store Builder for Pakistan & Global Brands",
+  title: "Webriiz Platform — The Complete Store Builder for Pakistan & Global Brands",
   description:
     "Launch and run your own online store on an enterprise-grade multi-tenant platform with native Pakistan couriers tracking (Couriers Next, TCS, PostEx, Trax, Leopards), WhatsApp order updates, JazzCash / EasyPaisa checkout, and Super Admin control.",
   openGraph: {
-    title: "Tradez Glint Platform — The Complete Store Builder for Pakistan & Global Brands",
+    title: "Webriiz Platform — The Complete Store Builder for Pakistan & Global Brands",
     description:
       "Launch and run your own online store on an enterprise-grade multi-tenant platform with native Pakistan couriers tracking and 0% hidden transaction fees.",
     url: "/",
-    siteName: "Tradez Glint",
+    siteName: "Webriiz",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Tradez Glint Platform — The Complete Store Builder for Pakistan & Global Brands",
+    title: "Webriiz Platform — The Complete Store Builder for Pakistan & Global Brands",
     description:
       "Launch and run your own online store with local payments, 6+ courier tracking, and Next.js 14 speed.",
   },

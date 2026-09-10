@@ -2,8 +2,8 @@ import React from "react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Terms of Service — Tradez Glint Platform",
-  description: "Terms of service for the Tradez Glint eCommerce SaaS platform website.",
+  title: "Terms of Service — Webriiz Platform",
+  description: "Terms of service for the Webriiz eCommerce SaaS platform website.",
   alternates: { canonical: "/terms" },
   robots: { index: false, follow: true },
 };
@@ -18,8 +18,8 @@ export default function PlatformTermsPage() {
 
       <div className="p-8 sm:p-12 rounded-3xl border border-neutral-200/80 dark:border-neutral-800/80 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-sm shadow-xl shadow-neutral-900/5 prose dark:prose-invert max-w-none">
         <p>
-          These terms govern your use of the Tradez Glint platform marketing website (this site). Terms governing an
-          individual store&apos;s storefront, and the commercial agreement between a store owner and Tradez Glint, are
+          These terms govern your use of the Webriiz platform marketing website (this site). Terms governing an
+          individual store&apos;s storefront, and the commercial agreement between a store owner and Webriiz, are
           addressed separately when you onboard — not on this page.
         </p>
         <h2>Use of this site</h2>

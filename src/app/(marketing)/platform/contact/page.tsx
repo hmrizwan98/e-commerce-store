@@ -4,19 +4,19 @@ import type { Metadata } from "next";
 import { EnvelopeIcon, SparklesIcon, CalendarIcon } from "@heroicons/react/24/outline";
 
 export const metadata: Metadata = {
-  title: "Contact — Tradez Glint Platform",
-  description: "Get in touch with the Tradez Glint eCommerce SaaS platform team.",
+  title: "Contact — Webriiz Platform",
+  description: "Get in touch with the Webriiz eCommerce SaaS platform team.",
   openGraph: {
-    title: "Contact — Tradez Glint Platform",
-    description: "Get in touch with the Tradez Glint eCommerce SaaS platform team.",
+    title: "Contact — Webriiz Platform",
+    description: "Get in touch with the Webriiz eCommerce SaaS platform team.",
     url: "/contact",
-    siteName: "Tradez Glint",
+    siteName: "Webriiz",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Contact — Tradez Glint Platform",
-    description: "Get in touch with the Tradez Glint eCommerce SaaS platform team.",
+    title: "Contact — Webriiz Platform",
+    description: "Get in touch with the Webriiz eCommerce SaaS platform team.",
   },
   alternates: { canonical: "/contact" },
 };
@@ -39,11 +39,11 @@ export default function PlatformContactPage() {
 
       <div className="p-8 sm:p-12 rounded-3xl border border-neutral-200/80 dark:border-neutral-800/80 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-sm shadow-xl shadow-neutral-900/5 space-y-6">
         <a
-          href="mailto:hello@tradezglint.com"
+          href="mailto:hello@webriiz.com"
           className="inline-flex items-center gap-3 px-8 py-4 rounded-full bg-gradient-to-r from-primary-6000 via-indigo-600 to-indigo-700 text-white font-extrabold text-base shadow-xl shadow-primary-6000/25 hover:shadow-primary-6000/40 hover:-translate-y-0.5 transition-all"
         >
           <EnvelopeIcon className="w-5 h-5" />
-          <span>hello@tradezglint.com</span>
+          <span>hello@webriiz.com</span>
         </a>
 
         <div className="pt-4 border-t border-neutral-100 dark:border-neutral-800 text-sm text-neutral-600 dark:text-neutral-400 flex items-center justify-center gap-2">

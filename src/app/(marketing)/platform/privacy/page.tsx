@@ -2,8 +2,8 @@ import React from "react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy — Tradez Glint Platform",
-  description: "Privacy policy for the Tradez Glint eCommerce SaaS platform website.",
+  title: "Privacy Policy — Webriiz Platform",
+  description: "Privacy policy for the Webriiz eCommerce SaaS platform website.",
   alternates: { canonical: "/privacy" },
   robots: { index: false, follow: true },
 };
@@ -18,7 +18,7 @@ export default function PlatformPrivacyPage() {
 
       <div className="p-8 sm:p-12 rounded-3xl border border-neutral-200/80 dark:border-neutral-800/80 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-sm shadow-xl shadow-neutral-900/5 prose dark:prose-invert max-w-none">
         <p>
-          This policy covers the Tradez Glint platform marketing website (this site) — information submitted through
+          This policy covers the Webriiz platform marketing website (this site) — information submitted through
           our Book a Demo and Contact forms, such as your name, email, company, and message. It does not cover any
           individual store built on the platform; each store maintains its own privacy policy for its customers.
         </p>

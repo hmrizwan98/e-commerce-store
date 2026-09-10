@@ -35,7 +35,7 @@ export interface FooterProps {
   socialLinks?: GeneralSettings["socialLinks"];
 }
 
-const Footer: React.FC<FooterProps> = ({ footerSettings, logos, storeName = "Tradz Glint", socialLinks }) => {
+const Footer: React.FC<FooterProps> = ({ footerSettings, logos, storeName = "Webriiz", socialLinks }) => {
   const isSuppressed = useChromeSuppressed();
   const footerItems = useMenu("footer");
   const widgetMenus: WidgetFooterMenu[] = footerItems.map((item) => ({

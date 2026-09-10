@@ -14,19 +14,19 @@ import {
 } from "@heroicons/react/24/outline";
 
 export const metadata: Metadata = {
-  title: "Features — Tradez Glint Platform",
-  description: "Everything included with every store on the Tradez Glint eCommerce SaaS platform.",
+  title: "Features — Webriiz Platform",
+  description: "Everything included with every store on the Webriiz eCommerce SaaS platform.",
   openGraph: {
-    title: "Features — Tradez Glint Platform",
-    description: "Everything included with every store on the Tradez Glint eCommerce SaaS platform.",
+    title: "Features — Webriiz Platform",
+    description: "Everything included with every store on the Webriiz eCommerce SaaS platform.",
     url: "/features",
-    siteName: "Tradez Glint",
+    siteName: "Webriiz",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Features — Tradez Glint Platform",
-    description: "Everything included with every store on the Tradez Glint eCommerce SaaS platform.",
+    title: "Features — Webriiz Platform",
+    description: "Everything included with every store on the Webriiz eCommerce SaaS platform.",
   },
   alternates: { canonical: "/features" },
 };

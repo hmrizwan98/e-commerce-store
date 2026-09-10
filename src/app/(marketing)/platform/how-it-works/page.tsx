@@ -4,19 +4,19 @@ import Link from "next/link";
 import { ArrowRightIcon, SparklesIcon } from "@heroicons/react/24/outline";
 
 export const metadata: Metadata = {
-  title: "How It Works — Tradez Glint Platform",
-  description: "How a store gets provisioned and run on the Tradez Glint eCommerce SaaS platform.",
+  title: "How It Works — Webriiz Platform",
+  description: "How a store gets provisioned and run on the Webriiz eCommerce SaaS platform.",
   openGraph: {
-    title: "How It Works — Tradez Glint Platform",
-    description: "How a store gets provisioned and run on the Tradez Glint eCommerce SaaS platform.",
+    title: "How It Works — Webriiz Platform",
+    description: "How a store gets provisioned and run on the Webriiz eCommerce SaaS platform.",
     url: "/how-it-works",
-    siteName: "Tradez Glint",
+    siteName: "Webriiz",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "How It Works — Tradez Glint Platform",
-    description: "How a store gets provisioned and run on the Tradez Glint eCommerce SaaS platform.",
+    title: "How It Works — Webriiz Platform",
+    description: "How a store gets provisioned and run on the Webriiz eCommerce SaaS platform.",
   },
   alternates: { canonical: "/how-it-works" },
 };

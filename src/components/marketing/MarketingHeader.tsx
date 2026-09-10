@@ -2,7 +2,8 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { Bars3Icon, XMarkIcon, SparklesIcon, ArrowRightIcon } from "@heroicons/react/24/outline";
+import Image from "next/image";
+import { Bars3Icon, XMarkIcon, ArrowRightIcon } from "@heroicons/react/24/outline";
 
 const NAV_LINKS: { href: string; label: string }[] = [
   { href: "/", label: "Home" },
@@ -22,11 +23,17 @@ export default function MarketingHeader() {
     <header className="sticky top-0 z-50 w-full border-b border-neutral-200/80 dark:border-neutral-800/80 bg-white/80 dark:bg-neutral-950/80 backdrop-blur-md transition-colors">
       <div className="container flex items-center justify-between h-16 sm:h-20">
         <Link href={"/" as any} className="flex items-center gap-2.5 group">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-primary-6000 to-indigo-500 flex items-center justify-center text-white shadow-md shadow-primary-6000/20 group-hover:scale-105 transition-transform">
-            <SparklesIcon className="w-5 h-5" />
+          <div className="relative w-9 h-9 rounded-xl overflow-hidden shadow-md shadow-primary-6000/20 group-hover:scale-105 transition-transform bg-neutral-900 flex items-center justify-center">
+            <Image
+              src="/images/webriiz-logo.png"
+              alt="Webriiz Logo"
+              width={36}
+              height={36}
+              className="w-full h-full object-cover"
+            />
           </div>
           <span className="font-bold text-lg sm:text-xl tracking-tight text-neutral-900 dark:text-white">
-            Tradez Glint <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-6000 via-indigo-600 to-cyan-500 font-extrabold">Platform</span>
+            webriiz <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-6000 via-indigo-600 to-cyan-500 font-extrabold">Platform</span>
           </span>
         </Link>
 

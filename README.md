@@ -1,4 +1,4 @@
-# Tradez Glint — Next.js 14 eCommerce Storefront + Admin Panel
+# Webriiz — Next.js 14 eCommerce Storefront + Admin Panel
 
 This repo is a Next.js 14 (App Router) storefront that has been migrated from
 a fully hardcoded demo (the "Ciseco" template) to a dynamic, Firebase-powered

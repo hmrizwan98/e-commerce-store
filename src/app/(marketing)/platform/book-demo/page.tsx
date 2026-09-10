@@ -4,19 +4,19 @@ import { SparklesIcon } from "@heroicons/react/24/outline";
 import BookDemoForm from "./BookDemoForm";
 
 export const metadata: Metadata = {
-  title: "Book a Demo — Tradez Glint Platform",
-  description: "Book a personalized demo of the Tradez Glint eCommerce SaaS platform.",
+  title: "Book a Demo — Webriiz Platform",
+  description: "Book a personalized demo of the Webriiz eCommerce SaaS platform.",
   openGraph: {
-    title: "Book a Demo — Tradez Glint Platform",
-    description: "Book a personalized demo of the Tradez Glint eCommerce SaaS platform.",
+    title: "Book a Demo — Webriiz Platform",
+    description: "Book a personalized demo of the Webriiz eCommerce SaaS platform.",
     url: "/book-demo",
-    siteName: "Tradez Glint",
+    siteName: "Webriiz",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Book a Demo — Tradez Glint Platform",
-    description: "Book a personalized demo of the Tradez Glint eCommerce SaaS platform.",
+    title: "Book a Demo — Webriiz Platform",
+    description: "Book a personalized demo of the Webriiz eCommerce SaaS platform.",
   },
   alternates: { canonical: "/book-demo" },
 };

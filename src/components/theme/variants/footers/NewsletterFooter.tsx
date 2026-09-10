@@ -22,7 +22,7 @@ export interface FooterVariantProps {
   socialLinks?: GeneralSettings["socialLinks"];
 }
 
-export default function NewsletterFooter({ footerSettings, logos, storeName = "Tradz Glint", socialLinks }: FooterVariantProps) {
+export default function NewsletterFooter({ footerSettings, logos, storeName = "Webriiz", socialLinks }: FooterVariantProps) {
   const footerItems = useMenu("footer");
   const [email, setEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
