@@ -29,6 +29,7 @@ export default function MarketingHeader() {
               alt="Webriiz Logo"
               width={36}
               height={36}
+              priority
               className="w-full h-full object-cover"
             />
           </div>

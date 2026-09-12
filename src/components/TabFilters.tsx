@@ -7,6 +7,7 @@ import ButtonThird from "@/shared/Button/ButtonThird";
 import ButtonClose from "@/shared/ButtonClose/ButtonClose";
 import Checkbox from "@/shared/Checkbox/Checkbox";
 import Slider from "rc-slider";
+import "rc-slider/assets/index.css";
 import Radio from "@/shared/Radio/Radio";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
 import MySwitch from "@/components/MySwitch";

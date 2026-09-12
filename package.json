@@ -55,5 +55,11 @@
     "postcss": "^8.4.31",
     "tailwindcss": "^3.3.5",
     "tsx": "^4.19.2"
-  }
+  },
+  "browserslist": [
+    "chrome >= 90",
+    "edge >= 90",
+    "firefox >= 88",
+    "safari >= 14"
+  ]
 }

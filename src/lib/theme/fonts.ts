@@ -1,5 +1,4 @@
 import {
-  Poppins,
   Inter,
   Montserrat,
   Roboto,
@@ -10,7 +9,10 @@ import {
   Raleway,
   Work_Sans,
 } from "next/font/google";
+import { poppins } from "./default-font";
 import type { FontKey } from "@/types/theme";
+
+export { poppins };
 
 /**
  * Curated Google Font list loaded via next/font (self-hosted, no runtime
@@ -18,7 +20,6 @@ import type { FontKey } from "@/types/theme";
  * typing an arbitrary font name, which would require a runtime <link> tag
  * and undermine the Lighthouse performance goal.
  */
-export const poppins = Poppins({ subsets: ["latin"], display: "swap", weight: ["300", "400", "500", "600", "700"], variable: "--font-poppins" });
 export const inter = Inter({ subsets: ["latin"], display: "swap", weight: ["400", "500", "600", "700"], variable: "--font-inter" });
 export const montserrat = Montserrat({ subsets: ["latin"], display: "swap", weight: ["400", "500", "600", "700"], variable: "--font-montserrat" });
 export const roboto = Roboto({ subsets: ["latin"], display: "swap", weight: ["400", "500", "700"], variable: "--font-roboto" });

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Checkbox from "@/shared/Checkbox/Checkbox";
 import Slider from "rc-slider";
+import "rc-slider/assets/index.css";
 import Radio from "@/shared/Radio/Radio";
 import MySwitch from "@/components/MySwitch";
 import { FILTER_COLORS, FILTER_SIZES, PRICE_RANGE, SORT_OPTIONS } from "@/lib/filters/constants";

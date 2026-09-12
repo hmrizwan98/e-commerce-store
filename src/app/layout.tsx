@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import "@/styles/index.scss";
-import "rc-slider/assets/index.css";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import ClientProviders from "./ClientProviders";
@@ -9,7 +8,7 @@ import { getActiveTheme, DEFAULT_THEME } from "@/lib/firebase/repositories/theme
 import { getGeneralSettings, DEFAULT_GENERAL_SETTINGS } from "@/lib/firebase/repositories/site-settings";
 import { getMenu } from "@/lib/firebase/repositories/menus";
 import { themeToCssText } from "@/lib/theme/css-variables";
-import { FONT_PRESETS, ALL_FONT_VARIABLES } from "@/lib/theme/fonts";
+import { poppins } from "@/lib/theme/default-font";
 import { getCurrentTenant } from "@/lib/tenant/current";
 import { isPlatformDomainRequest } from "@/lib/tenant/platform-domain";
 import { FRONTSTORE_PREVIEW_HEADER } from "@/lib/tenant/constants";
@@ -183,8 +182,16 @@ export default async function RootLayout({
   const cssText = themeToCssText(theme);
   const bodyFontKey = (theme.typography?.bodyFont as FontKey) ?? "poppins";
   const headingFontKey = (theme.typography?.headingFont as FontKey) ?? "poppins";
-  const bodyFont = FONT_PRESETS[bodyFontKey] ?? FONT_PRESETS.poppins;
-  const headingFont = FONT_PRESETS[headingFontKey] ?? FONT_PRESETS.poppins;
+
+  let bodyFont = { className: poppins.className, variable: poppins.variable };
+  let headingFont = { className: poppins.className, variable: poppins.variable };
+
+  if (bodyFontKey !== "poppins" || headingFontKey !== "poppins") {
+    const { FONT_PRESETS } = await import("@/lib/theme/fonts");
+    bodyFont = FONT_PRESETS[bodyFontKey] ?? bodyFont;
+    headingFont = FONT_PRESETS[headingFontKey] ?? headingFont;
+  }
+
   const activeFontVariables = Array.from(new Set([bodyFont.variable, headingFont.variable])).join(" ");
 
   return (

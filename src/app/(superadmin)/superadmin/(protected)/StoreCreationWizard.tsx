@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import ButtonPrimary from "@/shared/Button/ButtonPrimary";
 import { createStore, type StoreFormInput } from "./actions";
 import { slugify } from "@/lib/utils/slugify";
-import { getTenantStorefrontUrl, getTenantAdminUrl, buildTenantUrl } from "@/lib/platform/tenant-url";
+import { buildTenantUrl, buildTenantAdminUrl } from "@/lib/platform/tenant-url";
 import Link from "next/link";
 import type { StoreStatus } from "@/types/store";
 
@@ -43,8 +43,8 @@ const StoreCreationWizard: React.FC<{ platformBaseUrl: string }> = ({ platformBa
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
 
-  const storefrontUrl = slug ? getTenantStorefrontUrl(platformBaseUrl, slug) : "";
-  const adminUrl = slug ? getTenantAdminUrl(platformBaseUrl, slug) : "";
+  const storefrontUrl = slug ? buildTenantUrl(platformBaseUrl, slug) : "";
+  const adminUrl = slug ? buildTenantAdminUrl(platformBaseUrl, slug) : "";
 
   function validateStep(currentStep: number): string | null {
     if (currentStep === 0) {

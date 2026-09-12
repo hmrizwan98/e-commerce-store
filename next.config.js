@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   swcMinify: true,
+  compress: true,
   compiler: {
     removeConsole: process.env.NODE_ENV === "production" ? { exclude: ["error"] } : false,
   },
@@ -8,10 +9,14 @@ const nextConfig = {
     typedRoutes: true,
     optimizePackageImports: [
       "@heroicons/react",
+      "@heroicons/react/24/outline",
+      "@heroicons/react/24/solid",
+      "@heroicons/react/20/solid",
       "framer-motion",
       "@headlessui/react",
       "react-use",
       "recharts",
+      "react-hot-toast",
     ],
   },
   async headers() {

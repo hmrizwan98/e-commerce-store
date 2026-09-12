@@ -83,6 +83,17 @@ const ClientProviders: React.FC<ClientProvidersProps> = ({
     );
   }
 
+  if (!tenantId) {
+    return (
+      <TenantProvider tenantId="">
+        <MenuProvider headerItems={[]} footerItems={[]}>
+          {children}
+          <CommonClient />
+        </MenuProvider>
+      </TenantProvider>
+    );
+  }
+
   return (
     <TenantProvider tenantId={tenantId}>
       <MenuProvider headerItems={headerMenu} footerItems={footerMenu}>
