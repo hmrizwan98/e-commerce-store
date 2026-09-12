@@ -39,7 +39,7 @@ export interface ParsedHost {
  */
 export function parseHost(hostname: string, rootDomainInput?: string): ParsedHost {
   const normHost = normalizeHostname(hostname);
-  const rootDomain = normalizeHostname(rootDomainInput);
+  const rootDomain = normalizeHostname(rootDomainInput || process.env.NEXT_PUBLIC_ROOT_DOMAIN || (process.env.NODE_ENV === "production" ? "webriiz.com" : undefined));
 
   if (!normHost || normHost === "localhost" || normHost === "127.0.0.1") {
     return { type: "marketing" };

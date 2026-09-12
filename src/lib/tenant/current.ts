@@ -34,7 +34,7 @@ async function resolveCurrentTenant(): Promise<Store | null> {
   const headerSlug = hdrs.get(TENANT_SLUG_HEADER)?.trim() || null;
   const cookieSlug = cookies().get(FRONTSTORE_COOKIE)?.value?.trim() || null;
   const rawHost = normalizeHostname(hdrs.get("x-forwarded-host") || hdrs.get("host") || "");
-  const rootDomain = normalizeHostname(process.env.NEXT_PUBLIC_ROOT_DOMAIN);
+  const rootDomain = normalizeHostname(process.env.NEXT_PUBLIC_ROOT_DOMAIN || (process.env.NODE_ENV === "production" ? "webriiz.com" : undefined));
 
   // 1. Priority 1: Exact Custom Hostname / Domain Mapping (e.g. glamix.pk or admin.glamix.pk)
   let domainToQuery = customDomainHeader;

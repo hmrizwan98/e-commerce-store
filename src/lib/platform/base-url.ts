@@ -16,7 +16,7 @@ function normalizeDomain(value: string | undefined | null): string | null {
  * Never falls back to a placeholder/fake domain.
  */
 export function getPlatformBaseUrl(): string {
-  const rootDomain = normalizeDomain(process.env.NEXT_PUBLIC_ROOT_DOMAIN);
+  const rootDomain = normalizeDomain(process.env.NEXT_PUBLIC_ROOT_DOMAIN || (process.env.NODE_ENV === "production" ? "webriiz.com" : undefined));
   if (rootDomain) return `https://${rootDomain}`;
 
   const vercelDomain =

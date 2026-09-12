@@ -47,6 +47,6 @@ export function isPlatformDomainRequest(): boolean {
   const isLocalhostSubdomain = parts.length === 2 && parts[1] === "localhost";
   if (parts.length > 2 || isLocalhostSubdomain) return false; // {slug}.ROOT_DOMAIN or {slug}.localhost subdomain
 
-  const rootDomain = (process.env.NEXT_PUBLIC_ROOT_DOMAIN || "").trim().toLowerCase();
+  const rootDomain = (process.env.NEXT_PUBLIC_ROOT_DOMAIN || "webriiz.com").trim().toLowerCase();
   return !!rootDomain && (hostname === rootDomain || hostname === `www.${rootDomain}`);
 }

@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "seed": "tsx scripts/seed.ts",
-    "set-admin": "tsx scripts/set-admin-claim.ts"
+    "set-admin": "tsx scripts/set-admin-claim.ts",
+    "wipe-stores": "tsx scripts/wipe-all-stores.ts"
   },
   "dependencies": {
     "@glidejs/glide": "^3.6.0",

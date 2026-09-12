@@ -77,7 +77,7 @@ export function middleware(req: NextRequest) {
   // Parse hostname against platform root domain
   const rawHost = req.headers.get("x-forwarded-host") || req.headers.get("host") || "";
   const hostname = normalizeHostname(rawHost);
-  const rootDomain = normalizeHostname(process.env.NEXT_PUBLIC_ROOT_DOMAIN);
+  const rootDomain = normalizeHostname(process.env.NEXT_PUBLIC_ROOT_DOMAIN || (process.env.NODE_ENV === "production" ? "webriiz.com" : undefined));
 
   let parsed = parseHost(hostname, rootDomain);
 
@@ -187,6 +187,11 @@ export function middleware(req: NextRequest) {
 
   // 6. Platform Marketing Host (webriiz.com / www.webriiz.com / local dev without slug)
   if (pathname.startsWith("/superadmin")) {
+    if (rootDomain && !hostname.includes("localhost")) {
+      const superAdminUrl = new URL(req.url);
+      superAdminUrl.hostname = `superadmin.${rootDomain}`;
+      return NextResponse.redirect(superAdminUrl);
+    }
     return NextResponse.next({ request: { headers: requestHeaders } });
   }
 

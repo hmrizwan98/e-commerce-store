@@ -3,12 +3,17 @@ import SocialsList from "@/shared/SocialsList/SocialsList";
 import BackgroundSection from "@/components/BackgroundSection/BackgroundSection";
 import SectionPromo1 from "@/components/SectionPromo1";
 import ContactForm from "./ContactForm";
-import { getGeneralSettings } from "@/lib/firebase/repositories/site-settings";
+import { getGeneralSettings, DEFAULT_GENERAL_SETTINGS } from "@/lib/firebase/repositories/site-settings";
 
 export const dynamic = "force-dynamic";
 
 const PageContact = async () => {
-  const general = await getGeneralSettings();
+  let general = DEFAULT_GENERAL_SETTINGS;
+  try {
+    general = await getGeneralSettings();
+  } catch (err) {
+    console.warn("Contact page: site settings unavailable, using defaults.", err);
+  }
 
   const info = [
     {
