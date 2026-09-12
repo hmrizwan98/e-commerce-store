@@ -26,18 +26,18 @@ const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
   {
     title: "PLATFORM OVERVIEW",
     items: [
-      { href: "/superadmin", label: "Dashboard", icon: ChartBarIcon, exact: true },
-      { href: "/superadmin/stores", label: "Store Management", icon: BuildingStorefrontIcon },
-      { href: "/superadmin/new", label: "Create New Store", icon: PlusCircleIcon },
+      { href: "/", label: "Dashboard", icon: ChartBarIcon, exact: true },
+      { href: "/stores", label: "Store Management", icon: BuildingStorefrontIcon },
+      { href: "/new", label: "Create New Store", icon: PlusCircleIcon },
     ],
   },
   {
     title: "FINANCIALS",
-    items: [{ href: "/superadmin/finance", label: "Finance & Payouts", icon: BanknotesIcon }],
+    items: [{ href: "/finance", label: "Finance & Payouts", icon: BanknotesIcon }],
   },
   {
     title: "PUBLIC PLATFORM",
-    items: [{ href: "/platform", label: "Platform Marketing", icon: ArrowTopRightOnSquareIcon }],
+    items: [{ href: "https://webriiz.com", label: "Platform Marketing", icon: ArrowTopRightOnSquareIcon }],
   },
 ];
 
@@ -54,13 +54,14 @@ export default function SuperAdminShell({
 
   const handleLogout = async () => {
     await fetch("/api/admin/session", { method: "DELETE" });
-    router.push("/superadmin/login" as any);
+    router.push("/login" as any);
     router.refresh();
   };
 
   const isActive = (href: string, exact?: boolean) => {
-    if (exact) return pathname === href;
-    return pathname.startsWith(href);
+    const cleanPath = pathname.startsWith("/superadmin") ? (pathname.slice(11) || "/") : pathname;
+    if (exact) return cleanPath === href;
+    return cleanPath.startsWith(href);
   };
 
   return (

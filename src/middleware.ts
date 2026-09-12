@@ -94,13 +94,21 @@ export function middleware(req: NextRequest) {
   if (parsed.type === "superadmin") {
     requestHeaders.set(IS_SUPER_ADMIN_HOST_HEADER, "1");
 
+    // Strip duplicate /superadmin prefix from URL bar if present on superadmin subdomain
+    if (pathname.startsWith("/superadmin")) {
+      const cleanPath = pathname.slice(11) || "/";
+      const url = req.nextUrl.clone();
+      url.pathname = cleanPath;
+      return NextResponse.redirect(url);
+    }
+
     if (pathname === "/") {
       const url = req.nextUrl.clone();
       url.pathname = "/superadmin";
       return NextResponse.rewrite(url, { request: { headers: requestHeaders } });
     }
 
-    if (!pathname.startsWith("/superadmin") && !pathname.startsWith("/_next") && !pathname.startsWith("/api")) {
+    if (!pathname.startsWith("/_next") && !pathname.startsWith("/api")) {
       const url = req.nextUrl.clone();
       url.pathname = `/superadmin${pathname}`;
       return NextResponse.rewrite(url, { request: { headers: requestHeaders } });
@@ -188,8 +196,8 @@ export function middleware(req: NextRequest) {
   // 6. Platform Marketing Host (webriiz.com / www.webriiz.com / local dev without slug)
   if (pathname.startsWith("/superadmin")) {
     if (rootDomain && !hostname.includes("localhost")) {
-      const superAdminUrl = new URL(req.url);
-      superAdminUrl.hostname = `superadmin.${rootDomain}`;
+      const cleanPath = pathname.slice(11) || "/";
+      const superAdminUrl = new URL(cleanPath, `https://superadmin.${rootDomain}`);
       return NextResponse.redirect(superAdminUrl);
     }
     return NextResponse.next({ request: { headers: requestHeaders } });
