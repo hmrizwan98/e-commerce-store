@@ -165,10 +165,11 @@ export function middleware(req: NextRequest) {
       return NextResponse.redirect(new URL("/", req.url));
     }
 
-    // Direct /admin visits on storefront host -> redirect to dedicated Store Admin host if rootDomain is configured
+    // Direct /admin visits on storefront host -> redirect to dedicated Store Admin subdomain (admin-[slug].webriiz.com)
     if ((pathname === "/admin" || pathname.startsWith("/admin/")) && rootDomain && !hostname.includes("localhost")) {
       const adminUrl = new URL(req.url);
-      adminUrl.hostname = `admin.${parsed.slug}.${rootDomain}`;
+      adminUrl.hostname = `admin-${parsed.slug}.${rootDomain}`;
+      adminUrl.pathname = pathname === "/admin" ? "/" : pathname.slice(6);
       return NextResponse.redirect(adminUrl);
     }
 

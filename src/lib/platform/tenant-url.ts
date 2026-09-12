@@ -33,14 +33,14 @@ export function buildTenantUrl(baseUrl: string, slug: string, path = ""): string
 }
 
 /**
- * Builds a tenant's Store Admin subdomain URL by inserting `admin.{slug}.` before the platform base
- * URL's hostname (e.g. https://admin.glamix.webriiz.com).
+ * Builds a tenant's Store Admin subdomain URL using single-level wildcard SSL domain (e.g. https://admin-glamix.webriiz.com).
  */
 export function buildTenantAdminUrl(baseUrl: string, slug: string, path = ""): string {
   try {
     const url = new URL(baseUrl);
-    url.hostname = `admin.${slug}.${url.hostname}`;
-    return `${url.origin}${path}`;
+    url.hostname = `admin-${slug}.${url.hostname}`;
+    const cleanPath = path ? (path.startsWith("/") ? path : `/${path}`) : "";
+    return `${url.origin}${cleanPath}`;
   } catch {
     return `${baseUrl}/store/${slug}/admin${path}`;
   }

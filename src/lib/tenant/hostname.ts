@@ -70,7 +70,12 @@ export function parseHost(hostname: string, rootDomainInput?: string): ParsedHos
       sub = normHost.slice(0, -".127.0.0.1".length);
     }
 
-    if (sub.startsWith("admin.")) {
+    if (sub.startsWith("admin-")) {
+      const slug = sub.slice(6);
+      if (slug && slug !== "www" && slug !== "superadmin") {
+        return { type: "tenant-admin", slug };
+      }
+    } else if (sub.startsWith("admin.")) {
       const slug = sub.slice(6);
       if (slug && slug !== "www" && slug !== "superadmin") {
         return { type: "tenant-admin", slug };
