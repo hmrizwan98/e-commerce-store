@@ -480,4 +480,307 @@ export const KNOWLEDGE_REGISTRY: KnowledgeEntry[] = [
       "To manage all store configurations, go to Settings from the main sidebar.",
     exampleQuestions: ["Store settings kahan hain?", "Where are store configurations?"],
   },
+  {
+    id: "manage_collections",
+    title: "Product Collections",
+    category: "catalog",
+    keywords: [
+      "collection",
+      "collections",
+      "koleksn",
+      "product collection",
+      "collection kaise banaun",
+      "collection kesy bnani hy",
+      "create collection",
+      "new collection",
+    ],
+    navigationPath: ["Collections (direct URL - no sidebar link yet)"],
+    route: "/admin/collections",
+    actionLabel: "Open Collections",
+    instructionsUrdu:
+      "Collections abhi left sidebar mein nahi hain - inhe manage karne ke liye direct is URL par jayen: **/admin/collections**. Wahan **'Add Collection'** button se naya collection Name aur Slug ke sath bana sakte hain. Kisi product ko us collection mein shamil karne ke liye, us product ki **Edit Product** screen kholein aur **'Collections'** field mein us collection ko check karein.",
+    instructionsEnglish:
+      "Collections don't have a sidebar link yet - manage them directly at /admin/collections (create, rename, trash). To put a product inside a collection, open that product's Edit page and check it under the 'Collections' field.",
+    exampleQuestions: [
+      "Collection kaise banani hai?",
+      "Product ko collection mein kaise dalein?",
+      "Where do I manage collections?",
+    ],
+  },
+  {
+    id: "manage_suppliers",
+    title: "Suppliers",
+    category: "catalog",
+    keywords: [
+      "supplier",
+      "suppliers",
+      "vendor",
+      "vendors",
+      "supplier kaise add karun",
+      "supplier banana",
+      "create supplier",
+    ],
+    navigationPath: ["Suppliers (direct URL - no sidebar link yet)"],
+    route: "/admin/suppliers",
+    actionLabel: "Open Suppliers",
+    instructionsUrdu:
+      "Suppliers abhi left sidebar mein nahi hain - inhe manage karne ke liye direct is URL par jayen: **/admin/suppliers**. Naya supplier add karke, kisi product ko us supplier se link karne ke liye us product ki **Edit Product** screen mein **'Supplier'** dropdown se select karein.",
+    instructionsEnglish:
+      "Suppliers don't have a sidebar link yet - manage them directly at /admin/suppliers. After adding a supplier, link a product to it from that product's Edit page using the 'Supplier' dropdown.",
+    exampleQuestions: [
+      "Supplier kaise add karun?",
+      "Product ko supplier se link kaise karein?",
+      "Where do I manage suppliers?",
+    ],
+  },
+  {
+    id: "manage_announcements",
+    title: "Announcement Bars",
+    category: "appearance",
+    keywords: [
+      "announcement",
+      "announcements",
+      "announcement bar",
+      "top bar",
+      "notice bar",
+      "banner strip",
+      "announcement kaise lagayein",
+    ],
+    navigationPath: ["Appearance", "Customize Storefront", "Homepage builder (Announcement Bars link)"],
+    route: "/admin/announcements",
+    actionLabel: "Open Announcement Bars",
+    instructionsUrdu:
+      "Storefront ke top par ek slim announcement bar (jaise 'Free shipping over Rs 2000') dikhane ke liye **/admin/announcements** par jayen (ye link Homepage builder screen se bhi milta hai). **'Add announcement bar'** se text aur priority set karke Save karein - agar ek se zyada bar active hon to sabse high priority wala dikhta hai.",
+    instructionsEnglish:
+      "To show a slim announcement bar at the top of the storefront, go to /admin/announcements (also linked from the Homepage builder screen). Add a bar with text and priority - when multiple are active, only the highest-priority one shows.",
+    exampleQuestions: [
+      "Announcement bar kaise lagayein?",
+      "Top par notice kaise dikhayein?",
+      "Where do I manage the announcement bar?",
+    ],
+  },
+  {
+    id: "theme_editor",
+    title: "Theme Editor (Colors, Fonts, Layout)",
+    category: "appearance",
+    keywords: [
+      "theme editor",
+      "theme colors",
+      "theme colour",
+      "font family",
+      "brand color",
+      "typography",
+      "border radius",
+      "theme customize kaise karein",
+      "colors kaise change karein",
+    ],
+    navigationPath: ["Theme Editor (direct URL - no sidebar link yet)"],
+    route: "/admin/theme",
+    actionLabel: "Open Theme Editor",
+    instructionsUrdu:
+      "Ye **Theme Catalog** (jahan aap alag alag pre-built themes ke darmiyan switch karte hain) se alag hai. Apni CURRENT active theme ke colors, font, aur layout customize karne ke liye **/admin/theme** par jayen (abhi sidebar mein link nahi hai). Changes karke tab tak storefront par nazar nahi aayenge jab tak theme ko **Publish** na karein.",
+    instructionsEnglish:
+      "This is different from the Theme Catalog (which switches between different pre-built themes). To customize your CURRENT active theme's colors, fonts, and layout, go to /admin/theme (no sidebar link yet). Changes only go live on the storefront after you click Publish.",
+    exampleQuestions: [
+      "Theme editor kahan hai?",
+      "Theme ke colors kaise change karun?",
+      "Font family kaise badlein?",
+    ],
+  },
+  {
+    id: "change_password_store_admin",
+    title: "Change Your Store Admin Password",
+    category: "settings",
+    keywords: [
+      "password change",
+      "password badalna",
+      "apna password",
+      "new password set",
+      "change my password",
+      "update password",
+      "pasword",
+      "paswrd",
+    ],
+    navigationPath: ["Settings", "Security", "Change Password"],
+    route: "/admin/settings",
+    actionLabel: "Open Security Settings",
+    instructionsUrdu:
+      "Apne Store Admin account ka password (login karte hue) change karne ke liye **Settings → Security** tab par jayen. **Change Password** section mein apna current password aur naya password enter karke Save karein.",
+    instructionsEnglish:
+      "To change your own Store Admin password while logged in, go to Settings → Security tab, and use the Change Password section (enter your current password and a new one, then save).",
+    exampleQuestions: [
+      "Apna password kaise change karun?",
+      "How do I update my admin password?",
+    ],
+  },
+  {
+    id: "forgot_password",
+    title: "Forgot Password / Reset Password",
+    category: "general",
+    keywords: [
+      "forgot password",
+      "password reset",
+      "password bhool gaya",
+      "password yaad nahi",
+      "reset password",
+      "password recover",
+      "login nahi ho raha password",
+    ],
+    navigationPath: ["Admin Login page", "Forgot password?"],
+    route: "/admin/login",
+    actionLabel: "Open Login Page",
+    instructionsUrdu:
+      "Agar password yaad nahi hai to Store Admin **Login page** par jayen aur password field ke neeche **'Forgot password?'** link par click karein. Apna admin email enter karein - agar account exist karta hai to ek secure reset link email par bheja jayega. Us link par click karke naya password set karein aur wapas login karein.",
+    instructionsEnglish:
+      "If you forgot your password, go to the Store Admin Login page and click 'Forgot password?' below the password field. Enter your admin email - if the account exists, a secure reset link is emailed to it. Follow that link to set a new password, then sign in again.",
+    exampleQuestions: [
+      "Password reset kaise karun?",
+      "Password bhool gaya, kya karun?",
+      "How do I reset my password?",
+    ],
+  },
+  {
+    id: "platform_sender_email",
+    title: "Which Email Address Sends Platform Emails",
+    category: "general",
+    keywords: [
+      "email kis address se",
+      "sender email",
+      "which email sends",
+      "platform email",
+      "from email",
+      "email address bhejta",
+    ],
+    navigationPath: ["N/A - informational, configured by Super Admin"],
+    route: "/admin/settings",
+    actionLabel: "Open Settings",
+    instructionsUrdu:
+      "Webriiz platform ke emails (welcome email, password-setup/reset link) **support@webriiz.com** se bhejte hain. Ye Super Admin-level setting hai, Store Admin se change nahi hoti. (Note: aapke apne storefront ke customer-facing order emails alag hain - wo aapki apni Store Email Settings se bhejte hain, jo aap **Settings → Email** tab se set kar sakte hain.)",
+    instructionsEnglish:
+      "Webriiz platform emails (welcome email, password-setup/reset link) are sent from support@webriiz.com. This is a Super Admin-level setting and isn't changed from Store Admin. Your own storefront's customer-facing order emails are separate, sent from your own Store Email settings (Settings → Email tab).",
+    exampleQuestions: [
+      "Email kis address se jayegi?",
+      "Which email address do platform emails come from?",
+    ],
+  },
+  {
+    id: "welcome_email_after_store_creation",
+    title: "Welcome Email After Store Creation",
+    category: "general",
+    keywords: [
+      "store create hone ke baad email",
+      "welcome email",
+      "owner ko email",
+      "account email nahi mila",
+      "store banne ke baad",
+    ],
+    navigationPath: ["N/A - happens automatically when Super Admin creates the store"],
+    route: "/admin/login",
+    actionLabel: "Open Login Page",
+    instructionsUrdu:
+      "Jab Super Admin naya store create karta hai, store owner ko ek welcome email jati hai jisme store ka naam, Storefront URL, Store Admin URL, aur ek secure password-setup link hota hai (kabhi bhi plaintext password nahi bheja jata). Us link par click karke apna password set karein, phir Login page se sign in karein. Agar email na mile, spam folder check karein ya Super Admin se resend karwayein.",
+    instructionsEnglish:
+      "When Super Admin creates a new store, the owner gets a welcome email with the store name, Storefront URL, Store Admin URL, and a secure password-setup link (never a plaintext password). Click that link to set your password, then sign in from the Login page. If it doesn't arrive, check spam or ask your Super Admin to resend it.",
+    exampleQuestions: [
+      "Store create hone ke baad owner ko email kaise milegi?",
+      "How does the store owner receive their welcome email?",
+    ],
+  },
+  {
+    id: "custom_domain",
+    title: "Connecting a Custom Domain",
+    category: "general",
+    keywords: [
+      "custom domain",
+      "domain connect",
+      "apna domain",
+      "domain kaise lagayein",
+      "domain add",
+      "own domain",
+    ],
+    navigationPath: ["N/A - not self-service from Store Admin"],
+    route: "/admin/settings",
+    actionLabel: "Open Settings",
+    instructionsUrdu:
+      "Custom domain (jaise apnastore.com) connect karna Store Admin se khud self-service available nahi hai. Apne domain ka DNS apne provider (GoDaddy, Namecheap, etc.) se Webriiz par point karke, apne **Super Admin / platform support** se contact karein taake wo aapke store record mein domain add karein.",
+    instructionsEnglish:
+      "Connecting a custom domain (e.g. yourstore.com) is not currently self-service from Store Admin. Point your domain's DNS at Webriiz through your domain provider (GoDaddy, Namecheap, etc.), then contact your Super Admin / platform support to have the domain added to your store's record.",
+    exampleQuestions: [
+      "Custom domain kaise connect karun?",
+      "How do I connect my own domain?",
+    ],
+  },
+  {
+    id: "storefront_vs_admin_url",
+    title: "Storefront URL vs Store Admin URL",
+    category: "general",
+    keywords: [
+      "store admin url",
+      "storefront url",
+      "admin url kya hy",
+      "difference between storefront and admin",
+      "store ka link kya hy",
+      "my store url",
+    ],
+    navigationPath: ["N/A - informational"],
+    route: "/admin",
+    actionLabel: "Open Dashboard",
+    instructionsUrdu:
+      "**Storefront URL** wo link hai jo aapke customers dekhte hain (aapki public shopping site, jaise yourstore.webriiz.com). **Store Admin URL** wo separate, private link hai jahan sirf aap login karke apna store manage karte hain (jaise admin-yourstore.webriiz.com). Dono alag domains hain - customer ko kabhi bhi Admin URL nahi dena chahiye.",
+    instructionsEnglish:
+      "The Storefront URL is the public link your customers browse and shop from (e.g. yourstore.webriiz.com). The Store Admin URL is a separate, private link only you use to log in and manage your store (e.g. admin-yourstore.webriiz.com). They're different domains - never share the Admin URL with a customer.",
+    exampleQuestions: [
+      "Store Admin URL kya hai?",
+      "Storefront aur admin URL mein kya difference hai?",
+    ],
+  },
+  {
+    id: "order_delivered_lifecycle",
+    title: "What Happens When an Order Is Marked Delivered",
+    category: "sales",
+    keywords: [
+      "order delivered karne ke baad",
+      "delivered karne ke baad kya hota",
+      "order lifecycle",
+      "delivered status effect",
+      "after delivered",
+    ],
+    navigationPath: ["Sales", "Orders", "Order Detail"],
+    route: "/admin/orders",
+    actionLabel: "Open Orders",
+    instructionsUrdu:
+      "Jab aap order ko **Delivered** mark karte hain, ye order ki final/terminal state hai - is ke baad koi aur status change (Cancelled ke ilawa koi bhi) allow nahi hota. Order **Delivered** filter tab mein show hone lagta hai, aur customer apne **Order Tracking** page par 'Delivered' status aur poori activity history (Placed → Confirmed → Processing → Packed → Dispatched → Delivered) dekh sakta hai.",
+    instructionsEnglish:
+      "Marking an order Delivered is its final/terminal state - no further status change is allowed after it. The order then appears under the Delivered filter tab, and the customer sees 'Delivered' plus the full activity timeline (Placed → Confirmed → Processing → Packed → Dispatched → Delivered) on their Order Tracking page.",
+    exampleQuestions: [
+      "Order delivered karne ke baad kya hota hai?",
+      "What happens after I mark an order as delivered?",
+    ],
+  },
+  {
+    id: "customer_order_verification",
+    title: "How a Customer Tracks/Verifies Their Order",
+    category: "sales",
+    keywords: [
+      "customer order kaise verify",
+      "order verify karna",
+      "customer order tracking",
+      "customer ko order status",
+      "order tracking page",
+      "track order",
+      "customer order verify",
+      "order verify",
+    ],
+    navigationPath: ["Storefront", "Order Tracking page"],
+    route: "/admin/orders",
+    actionLabel: "Open Orders",
+    instructionsUrdu:
+      "Customer apna order storefront ke **Order Tracking** page par (order number aur apna email daal kar) khud verify kar sakta hai - wahan current status aur poori activity history dikhti hai. Aap khud Store Admin mein **Sales → Orders** kholkar us order ka number, customer details aur status verify kar sakte hain.",
+    instructionsEnglish:
+      "A customer can verify their own order on the storefront's Order Tracking page (by entering their order number and email) - it shows the current status and full activity history. From your side, open Sales → Orders in Store Admin to look up the same order's number, customer details, and status.",
+    exampleQuestions: [
+      "Customer ka order kaise verify karun?",
+      "Customer apna order kaise track karega?",
+    ],
+  },
 ];

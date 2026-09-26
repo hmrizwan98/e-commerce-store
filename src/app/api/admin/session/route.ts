@@ -72,9 +72,23 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      // Check tenantId matching current tenant
+      // Check tenantId matching current tenant - this MUST mirror requireCurrentTenant()'s
+      // strictness exactly (resolved + active tenant required), or a login can succeed here
+      // and then silently bounce back to /admin/login when the protected layout's
+      // requireCurrentTenant() throws for the same request a moment later (the tenant
+      // genuinely can't be resolved on this host, or the store is suspended) - the user
+      // never sees why. Failing here instead means the error is visible on the login page.
       const tenant = await getCurrentTenant();
-      if (tenant && decodedToken.tenantId !== tenant.id) {
+      if (!tenant) {
+        return NextResponse.json(
+          {
+            error:
+              "Could not determine which store this login belongs to. Please sign in from your store's own admin login page.",
+          },
+          { status: 403 }
+        );
+      }
+      if (decodedToken.tenantId !== tenant.id) {
         let targetSlug: string | null = null;
         let targetName: string | null = null;
         try {
@@ -97,6 +111,13 @@ export async function POST(req: NextRequest) {
           { status: 403 }
         );
       }
+
+      if (tenant.status !== "active") {
+        return NextResponse.json(
+          { error: "This store is currently suspended. Please contact support." },
+          { status: 403 }
+        );
+      }
     }
 
     const sessionCookie = await createSessionCookie(idToken);
@@ -109,7 +130,8 @@ export async function POST(req: NextRequest) {
     });
     return NextResponse.json({ ok: true });
   } catch (err: any) {
-    return NextResponse.json({ error: err?.message || "Invalid ID token" }, { status: 401 });
+    console.error("[admin/session] verifyIdToken failed:", err);
+    return NextResponse.json({ error: "Your session could not be verified. Please sign in again." }, { status: 401 });
   }
 }
 

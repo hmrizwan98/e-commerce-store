@@ -2,6 +2,10 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import toast from "react-hot-toast";
+import { EmailAuthProvider, reauthenticateWithCredential, updatePassword } from "firebase/auth";
+import { getFirebaseAuth } from "@/lib/firebase/client";
+import { mapFirebaseAuthError } from "@/lib/firebase/auth-errors";
 import AdminThemeSelector from "@/components/admin/AdminThemeSelector";
 import CustomSelect from "@/components/admin/CustomSelect";
 import { COUNTRY_OPTIONS, CURRENCY_OPTIONS, TIMEZONE_OPTIONS } from "@/lib/constants/location-options";
@@ -22,6 +26,7 @@ import {
   BellIcon,
   ArrowPathIcon,
   AdjustmentsHorizontalIcon,
+  KeyIcon,
 } from "@heroicons/react/24/outline";
 import {
   updateGeneralSettings,
@@ -140,6 +145,105 @@ function SectionHeader({
   );
 }
 
+/** Self-service authenticated password change - re-authenticates with the current
+ * password first (Firebase requires a "recent login" for updatePassword()) rather than
+ * relying on the admin session cookie, since that cookie's staleness isn't a proxy for
+ * how recently the underlying Firebase Auth credential was verified. */
+function ChangePasswordSection() {
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setSuccess(false);
+    if (newPassword.length < 6) {
+      setError("Please choose a password with at least 6 characters.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setError("New passwords do not match.");
+      return;
+    }
+    const user = getFirebaseAuth().currentUser;
+    if (!user?.email) {
+      setError("Your session could not be verified. Please sign in again.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const credential = EmailAuthProvider.credential(user.email, currentPassword);
+      await reauthenticateWithCredential(user, credential);
+      await updatePassword(user, newPassword);
+      setSuccess(true);
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (err: any) {
+      console.error("[ChangePasswordSection] failed:", err);
+      setError(mapFirebaseAuthError(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4 max-w-sm">
+      <div>
+        <label className={labelClass}>Current Password</label>
+        <input
+          type="password"
+          className={inputClass}
+          value={currentPassword}
+          onChange={(e) => setCurrentPassword(e.target.value)}
+          required
+        />
+      </div>
+      <div>
+        <label className={labelClass}>New Password</label>
+        <input
+          type="password"
+          className={inputClass}
+          value={newPassword}
+          onChange={(e) => setNewPassword(e.target.value)}
+          required
+        />
+      </div>
+      <div>
+        <label className={labelClass}>Confirm New Password</label>
+        <input
+          type="password"
+          className={inputClass}
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          required
+        />
+      </div>
+      {error && (
+        <p className="text-xs font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 p-3 rounded-xl border border-rose-200 dark:border-rose-900/60">
+          {error}
+        </p>
+      )}
+      {success && (
+        <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 p-3 rounded-xl border border-emerald-200 dark:border-emerald-900/60">
+          ✓ Password updated successfully.
+        </p>
+      )}
+      <button
+        type="submit"
+        disabled={loading}
+        className="px-6 py-2.5 rounded-full bg-primary-6000 hover:bg-primary-700 text-white text-xs font-bold shadow-lg shadow-primary-500/25 active:scale-95 transition-all disabled:opacity-50 cursor-pointer"
+      >
+        {loading ? "Updating..." : "Update Password"}
+      </button>
+    </form>
+  );
+}
+
 function SaveButton({ onClick }: { onClick: () => Promise<void> }) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -150,9 +254,14 @@ function SaveButton({ onClick }: { onClick: () => Promise<void> }) {
         onClick={async () => {
           setSaving(true);
           setSaved(false);
-          await onClick();
-          setSaving(false);
-          setSaved(true);
+          try {
+            await onClick();
+            setSaved(true);
+          } catch (err) {
+            toast.error(err instanceof Error ? err.message : "Failed to save changes.");
+          } finally {
+            setSaving(false);
+          }
         }}
         disabled={saving}
         className="px-6 py-2.5 rounded-full bg-primary-6000 hover:bg-primary-700 text-white text-xs font-bold shadow-lg shadow-primary-500/25 active:scale-95 transition-all disabled:opacity-50 cursor-pointer"
@@ -185,6 +294,7 @@ const TABS = [
   "Notifications",
   "Backup",
   "Advanced",
+  "Security",
 ] as const;
 type Tab = (typeof TABS)[number];
 
@@ -205,6 +315,7 @@ const TAB_ICONS: Record<Tab, React.ComponentType<{ className?: string }>> = {
   Notifications: BellIcon,
   Backup: ArrowPathIcon,
   Advanced: AdjustmentsHorizontalIcon,
+  Security: KeyIcon,
 };
 
 export default function SettingsPageClient({
@@ -875,6 +986,12 @@ export default function SettingsPageClient({
             />
             Show floating WhatsApp widget on store pages
           </label>
+          {whatsapp.enabled && !whatsapp.phoneNumber?.trim() && (
+            <p className="text-xs font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 p-3 rounded-xl border border-amber-200 dark:border-amber-900/60">
+              ⚠ The widget is enabled but no WhatsApp number is set - it won&apos;t appear on your storefront until you
+              add one below.
+            </p>
+          )}
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
               <label className={labelClass}>WhatsApp Number (Digits only with country code)</label>
@@ -1078,6 +1195,14 @@ export default function SettingsPageClient({
             </div>
           </div>
           <SaveButton onClick={() => updateAdvancedSettings(advanced)} />
+        </section>
+      )}
+
+      {/* Security Tab */}
+      {tab === "Security" && (
+        <section className={cardClass}>
+          <SectionHeader icon={KeyIcon} title="Change Password" subtitle="Update the password for your own admin account." />
+          <ChangePasswordSection />
         </section>
       )}
     </div>

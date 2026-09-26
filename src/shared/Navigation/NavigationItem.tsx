@@ -34,11 +34,7 @@ const NavigationItem: FC<NavigationItemProps> = ({ menuItem }) => {
   };
 
   const onMouseLeaveMenu = (id: string) => {
-    setMenuCurrentHovers((state) => {
-      return state.filter((item, index) => {
-        return item !== id && index < state.indexOf(id);
-      });
-    });
+    setMenuCurrentHovers((state) => state.filter((item) => item !== id));
   };
 
   // ===================== MENU MEGAMENU =====================
@@ -79,6 +75,7 @@ const NavigationItem: FC<NavigationItemProps> = ({ menuItem }) => {
               leaveFrom="opacity-100 translate-y-0 scale-100"
               leaveTo="opacity-0 translate-y-1 scale-95">
               <Popover.Panel
+                static
                 className="absolute left-1/2 -translate-x-1/2 z-50 w-64 sm:w-72 pt-3 transform sub-menu top-full">
                 {/* Pointer Caret */}
                 <div className="absolute top-1.5 left-1/2 -translate-x-1/2 w-3.5 h-3.5 rotate-45 bg-white dark:bg-neutral-900 border-t border-l border-neutral-200/80 dark:border-neutral-800 z-10" />
@@ -133,6 +130,7 @@ const NavigationItem: FC<NavigationItemProps> = ({ menuItem }) => {
               leaveFrom="opacity-100 translate-y-0 scale-100"
               leaveTo="opacity-0 translate-y-1 scale-95">
               <Popover.Panel
+                static
                 className="absolute left-1/2 -translate-x-1/2 z-50 w-64 sm:w-72 pt-3 transform sub-menu top-full">
                 {/* Pointer Caret */}
                 <div className="absolute top-1.5 left-1/2 -translate-x-1/2 w-3.5 h-3.5 rotate-45 bg-white dark:bg-neutral-900 border-t border-l border-neutral-200/80 dark:border-neutral-800 z-10" />
@@ -190,6 +188,7 @@ const NavigationItem: FC<NavigationItemProps> = ({ menuItem }) => {
               leaveFrom="opacity-100 translate-y-0"
               leaveTo="opacity-0 translate-y-1">
               <Popover.Panel
+                static
                 className="absolute top-0 z-50 w-56 pl-2 sub-menu left-full">
                 <ul className="relative grid p-2 space-y-1 text-sm bg-white dark:bg-slate-900 rounded-2xl shadow-xl ring-1 ring-black/5 dark:ring-white/10 border border-slate-100 dark:border-slate-800">
                   {item.children?.map((i) => {

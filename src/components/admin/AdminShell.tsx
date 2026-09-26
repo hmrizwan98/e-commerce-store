@@ -35,7 +35,14 @@ import {
   ChevronDoubleRightIcon,
   SparklesIcon,
 } from "@heroicons/react/24/outline";
-import StoreAssistantDrawer from "./assistant/StoreAssistantDrawer";
+import dynamic from "next/dynamic";
+
+// Code-split the assistant (its growing knowledge/troubleshooting registries + framer-motion
+// drawer) out of the main AdminShell bundle - only fetched once an admin actually opens it,
+// so it doesn't add to the initial admin page-load weight.
+const StoreAssistantDrawer = dynamic(() => import("./assistant/StoreAssistantDrawer"), {
+  ssr: false,
+});
 
 interface NavItem {
   label: string;

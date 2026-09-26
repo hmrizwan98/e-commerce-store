@@ -12,7 +12,7 @@ const labelClass = "block text-sm font-medium mb-1";
 
 const OwnerActions: React.FC<{ storeId: string }> = ({ storeId }) => {
   const [isPending, startTransition] = useTransition();
-  const [revealed, setRevealed] = useState<{ label: string; email: string; password: string } | null>(null);
+  const [revealed, setRevealed] = useState<{ label: string; email: string; emailSent: boolean } | null>(null);
   const [transferOpen, setTransferOpen] = useState(false);
   const [newOwnerName, setNewOwnerName] = useState("");
   const [newOwnerEmail, setNewOwnerEmail] = useState("");
@@ -27,7 +27,7 @@ const OwnerActions: React.FC<{ storeId: string }> = ({ storeId }) => {
     startTransition(async () => {
       try {
         const result = await resetStoreAdminPassword(storeId);
-        setRevealed({ label: "New password", email: result.adminEmail, password: result.newPassword });
+        setRevealed({ label: "Password reset link", email: result.adminEmail, emailSent: result.emailSent });
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Failed to reset password");
       }
@@ -38,7 +38,7 @@ const OwnerActions: React.FC<{ storeId: string }> = ({ storeId }) => {
     startTransition(async () => {
       try {
         const result = await resendWelcomeEmail(storeId);
-        setRevealed({ label: "New password (resent)", email: result.adminEmail, password: result.newPassword });
+        setRevealed({ label: "Welcome email (resent)", email: result.adminEmail, emailSent: result.emailSent });
         toast.success("Welcome email resent");
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Failed to resend welcome email");
@@ -61,7 +61,7 @@ const OwnerActions: React.FC<{ storeId: string }> = ({ storeId }) => {
     startTransition(async () => {
       try {
         const result = await transferOwnership(storeId, newOwnerEmail.trim(), newOwnerName.trim() || undefined);
-        setRevealed({ label: "New owner password", email: result.newOwnerEmail, password: result.newOwnerTempPassword });
+        setRevealed({ label: "Set-password email", email: result.newOwnerEmail, emailSent: result.emailSent });
         setTransferOpen(false);
         toast.success("Ownership transferred");
       } catch (err) {
@@ -75,8 +75,16 @@ const OwnerActions: React.FC<{ storeId: string }> = ({ storeId }) => {
       <div className="text-sm space-y-2">
         <div className="text-neutral-500">{revealed.email}</div>
         <div>
-          {revealed.label}:{" "}
-          <code className="px-2 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800">{revealed.password}</code>
+          {revealed.emailSent ? (
+            <span className="text-emerald-600 dark:text-emerald-400 font-medium">
+              ✓ {revealed.label} sent to this address.
+            </span>
+          ) : (
+            <span className="text-amber-600 dark:text-amber-400 font-medium">
+              ⚠ {revealed.label} could not be delivered (no email provider configured, or the send failed) - check
+              server logs.
+            </span>
+          )}
         </div>
         <button type="button" className="text-neutral-500 hover:underline" onClick={() => setRevealed(null)}>
           Done
@@ -145,8 +153,8 @@ const OwnerActions: React.FC<{ storeId: string }> = ({ storeId }) => {
         onClose={() => setResetConfirmOpen(false)}
         onConfirm={executeResetPassword}
         title="Reset Admin Password?"
-        message="Reset this store's admin password? The current password will stop working immediately and a new temporary password will be generated."
-        confirmText="Reset Password"
+        message="Send this store's admin a secure password reset link by email? They'll set their own new password by following it."
+        confirmText="Send Reset Link"
         variant="warning"
         isLoading={isPending}
       />

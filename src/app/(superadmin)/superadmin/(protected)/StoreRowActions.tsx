@@ -12,7 +12,7 @@ const StoreRowActions: React.FC<{ id: string; status: StoreStatus }> = ({ id, st
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [current, setCurrent] = useState(status);
-  const [resetResult, setResetResult] = useState<{ adminEmail: string; newPassword: string } | null>(null);
+  const [resetResult, setResetResult] = useState<{ adminEmail: string; emailSent: boolean } | null>(null);
 
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
   const [archiveConfirmOpen, setArchiveConfirmOpen] = useState(false);
@@ -74,10 +74,11 @@ const StoreRowActions: React.FC<{ id: string; status: StoreStatus }> = ({ id, st
       <div className="text-right text-xs space-y-1 bg-amber-500/10 p-2.5 rounded-xl border border-amber-500/30">
         <div className="text-neutral-500 font-mono">{resetResult.adminEmail}</div>
         <div>
-          Temp password:{" "}
-          <code className="px-1.5 py-0.5 rounded bg-amber-200 dark:bg-amber-900/60 font-mono font-bold text-amber-900 dark:text-amber-100">
-            {resetResult.newPassword}
-          </code>
+          {resetResult.emailSent ? (
+            <span className="text-emerald-700 dark:text-emerald-300 font-bold">✓ Reset link emailed</span>
+          ) : (
+            <span className="text-amber-700 dark:text-amber-300 font-bold">⚠ Email not delivered - check logs</span>
+          )}
         </div>
         <button
           type="button"

@@ -13,19 +13,9 @@ import { logTransaction } from "@/lib/firebase/repositories/transactions";
 import { getCommissionSettings } from "@/lib/firebase/repositories/site-settings";
 import { calculateCommission } from "@/lib/finance/commission";
 import { requireCurrentTenant } from "@/lib/tenant/current";
+import { ALLOWED_ORDER_STATUS_TRANSITIONS } from "@/lib/orders/order-status-transitions";
 import type { OrderStatus, PaymentStatus, ReturnStatus } from "@/types/order";
 import type { OrderDocumentType } from "@/types/order-document";
-
-const ALLOWED_ORDER_STATUS_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
-  pending: ["confirmed", "cancelled"],
-  confirmed: ["processing", "cancelled"],
-  processing: ["packed", "cancelled"],
-  packed: ["shipped", "cancelled"],
-  shipped: ["delivered", "cancelled"],
-  delivered: [],
-  cancelled: [],
-  refunded: [],
-};
 
 export async function updateOrderStatus(id: string, status: OrderStatus, note?: string): Promise<void> {
   const decoded = await requireAdmin();

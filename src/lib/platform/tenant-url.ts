@@ -47,6 +47,22 @@ export function buildTenantAdminUrl(baseUrl: string, slug: string, path = ""): s
 }
 
 /**
+ * Builds a password-reset/set-password action link on the STABLE root domain, never on a
+ * per-tenant admin-{slug}/admin.{slug} subdomain. Firebase Auth rejects
+ * generatePasswordResetLink()/sendPasswordResetEmail()'s actionCodeSettings.url with
+ * "Domain not allowlisted by project" for any hostname outside the project's Authorized
+ * Domains list - a finite, manually-configured list that can never contain every
+ * subdomain this platform provisions over time. The slug travels as a query param instead,
+ * so the shared /admin/reset-password page (reachable from the root domain - see
+ * middleware.ts's marketing-host fallthrough) can still redirect back to the right store
+ * after a successful reset.
+ */
+export function buildResetPasswordLinkUrl(baseUrl: string, slug: string): string {
+  const origin = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
+  return `${origin}/admin/reset-password?slug=${encodeURIComponent(slug)}`;
+}
+
+/**
  * Resolves the primary storefront URL for a store, respecting custom domains if configured.
  * E.g., https://glamix.pk if custom domain exists, else https://glamix.webriiz.com.
  */

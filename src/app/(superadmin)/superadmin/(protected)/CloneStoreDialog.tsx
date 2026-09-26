@@ -20,7 +20,7 @@ const CloneStoreDialog: React.FC<{ sourceStoreId: string; platformBaseUrl: strin
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [credentials, setCredentials] = useState<{ adminEmail: string; adminTempPassword: string } | null>(null);
+  const [credentials, setCredentials] = useState<{ adminEmail: string; emailSent?: boolean } | null>(null);
 
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
@@ -43,16 +43,20 @@ const CloneStoreDialog: React.FC<{ sourceStoreId: string; platformBaseUrl: strin
     return (
       <div className="p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 space-y-2 text-sm">
         <p className="text-neutral-500">
-          Store cloned. Share these one-time credentials with the new owner - this password
-          will not be shown again.
+          Store cloned. A secure password-setup link was {credentials.emailSent ? "" : "attempted to be "}emailed to
+          the new owner - they set their own password by following it. No password is ever shown here.
         </p>
         <div>
           <span className="font-medium">Admin email: </span>
           {credentials.adminEmail}
         </div>
         <div>
-          <span className="font-medium">Temporary password: </span>
-          <code className="px-2 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800">{credentials.adminTempPassword}</code>
+          <span className="font-medium">Email delivery: </span>
+          {credentials.emailSent ? (
+            <span className="text-emerald-600">✓ Sent</span>
+          ) : (
+            <span className="text-amber-600">⚠ Not confirmed - check email configuration, then use &quot;Resend welcome email&quot;</span>
+          )}
         </div>
         <ButtonPrimary onClick={() => router.push("/superadmin/stores" as any)}>Back to stores</ButtonPrimary>
       </div>

@@ -28,7 +28,7 @@ const StoreCreationWizard: React.FC<{ platformBaseUrl: string }> = ({ platformBa
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [credentials, setCredentials] = useState<{ adminEmail: string; adminTempPassword: string } | null>(null);
+  const [credentials, setCredentials] = useState<{ adminEmail: string } | null>(null);
 
   const [name, setName] = useState("");
   const [brandName, setBrandName] = useState("");
@@ -114,19 +114,14 @@ const StoreCreationWizard: React.FC<{ platformBaseUrl: string }> = ({ platformBa
           <h2 className="text-lg font-bold">Store Provisioned Successfully</h2>
         </div>
         <p className="text-sm text-neutral-500">
-          Your new tenant store is created. Share these one-time admin credentials with the store owner.
-          Password will not be displayed again.
+          Your new tenant store is created. A secure password-setup link is being emailed to the owner in the
+          background - they set their own password by following it. No password is ever shown here; if it doesn&apos;t
+          arrive, use &quot;Resend welcome email&quot; from the store&apos;s page.
         </p>
         <div className="p-4 rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 space-y-3 text-sm">
           <div>
             <span className="font-semibold text-neutral-600 dark:text-neutral-400">Admin Email: </span>
             <span className="font-mono text-neutral-900 dark:text-white font-medium">{credentials.adminEmail}</span>
-          </div>
-          <div>
-            <span className="font-semibold text-neutral-600 dark:text-neutral-400">Temporary Password: </span>
-            <code className="px-2 py-0.5 rounded bg-neutral-200 dark:bg-neutral-800 font-mono font-bold text-neutral-900 dark:text-white">
-              {credentials.adminTempPassword}
-            </code>
           </div>
         </div>
 

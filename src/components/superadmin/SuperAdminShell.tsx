@@ -13,6 +13,7 @@ import {
   XMarkIcon,
   ArrowRightOnRectangleIcon,
   ShieldCheckIcon,
+  Cog6ToothIcon,
 } from "@heroicons/react/24/outline";
 
 interface NavItem {
@@ -34,6 +35,10 @@ const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
   {
     title: "FINANCIALS",
     items: [{ href: "/finance", label: "Finance & Payouts", icon: BanknotesIcon }],
+  },
+  {
+    title: "PLATFORM",
+    items: [{ href: "/settings", label: "Platform Settings", icon: Cog6ToothIcon }],
   },
   {
     title: "PUBLIC PLATFORM",

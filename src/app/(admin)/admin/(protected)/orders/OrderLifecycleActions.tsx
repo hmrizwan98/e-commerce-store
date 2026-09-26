@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 import {
   setShipmentDetails,
   addInternalNote,
@@ -67,11 +68,35 @@ const OrderLifecycleActions: React.FC<{
   const [returnStatus, setReturnStatus] = useState<ReturnStatus>(order.returnStatus ?? "requested");
   const [returnNote, setReturnNote] = useState("");
 
+  // These fields are editable drafts, so they can't just read straight from the `order`
+  // prop the way OrderActions.tsx's status dropdowns do - but seeding them via useState()
+  // only ONCE means they never pick up a real server-side change (e.g. another admin
+  // editing the same order, or router.refresh() after an unrelated action on this same
+  // page) once the component has already mounted. Resync only when the underlying order
+  // doc actually changed (order.id or order.updatedAt), not on every render, so in-progress
+  // edits aren't clobbered by the component's own actions re-rendering with the same order.
+  const lastSyncedRef = useRef(`${order.id}:${order.updatedAt ?? 0}`);
+  useEffect(() => {
+    const key = `${order.id}:${order.updatedAt ?? 0}`;
+    if (key === lastSyncedRef.current) return;
+    lastSyncedRef.current = key;
+    setCourierName(order.courierName ?? "");
+    setTrackingNum(order.trackingNumber ?? "");
+    setTrackingUrl(order.trackingUrl ?? "");
+    setTrackingMode(order.trackingMode ?? "external");
+    setDispatchDate(toDateInputValue(order.dispatchDate));
+    setDeliveryDate(toDateInputValue(order.deliveryDate));
+    setReturnStatus(order.returnStatus ?? "requested");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [order.id, order.updatedAt]);
+
   const run = async (fn: () => Promise<void>) => {
     setBusy(true);
     try {
       await fn();
       router.refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Something went wrong. Please try again.");
     } finally {
       setBusy(false);
     }

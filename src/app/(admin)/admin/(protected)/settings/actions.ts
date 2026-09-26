@@ -5,6 +5,7 @@ import { tenantCollection } from "@/lib/firebase/tenant-scope";
 import { requireAdmin } from "@/lib/firebase/require-admin";
 import { stripUndefined } from "@/lib/firebase/repositories/utils";
 import { queueBackupExport, queueBackupImport } from "@/lib/firebase/services/backup-service";
+import { formatPhoneNumber } from "@/lib/notifications/whatsapp-service";
 import type {
   GeneralSettings,
   ShippingSettings,
@@ -57,8 +58,18 @@ export async function updateEmailSettings(settings: EmailSettings): Promise<void
 
 export async function updateWhatsAppSettings(settings: WhatsAppSettings): Promise<void> {
   await requireAdmin();
+  if (settings.enabled && !settings.phoneNumber?.trim()) {
+    throw new Error("Please enter a WhatsApp number before enabling the WhatsApp button.");
+  }
+  // Normalize server-side regardless of input source (client-side digit-stripping is a
+  // convenience, not a guarantee) so a malformed stored value can never produce a broken
+  // wa.me link on the storefront.
+  const normalized: WhatsAppSettings = {
+    ...settings,
+    phoneNumber: settings.phoneNumber ? formatPhoneNumber(settings.phoneNumber) : settings.phoneNumber,
+  };
   const col = await tenantCollection("siteSettings");
-  await col.doc("whatsapp").set(stripUndefined(settings), { merge: true });
+  await col.doc("whatsapp").set(stripUndefined(normalized), { merge: true });
   revalidateStorefront();
 }
 

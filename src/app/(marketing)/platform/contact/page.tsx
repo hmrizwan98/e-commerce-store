@@ -53,6 +53,13 @@ export default function PlatformContactPage() {
             Book a demo
           </Link>
         </div>
+
+        <div className="pt-4 border-t border-neutral-100 dark:border-neutral-800 text-sm text-neutral-600 dark:text-neutral-400">
+          <span>Already have a store? For account or technical support, email </span>
+          <a href="mailto:support@webriiz.com" className="font-bold text-primary-6000 hover:underline">
+            support@webriiz.com
+          </a>
+        </div>
       </div>
     </div>
   );

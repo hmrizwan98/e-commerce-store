@@ -2,7 +2,9 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 import { updateOrderStatus, updatePaymentStatus, setTrackingNumber } from "./actions";
+import { ALLOWED_ORDER_STATUS_TRANSITIONS } from "@/lib/orders/order-status-transitions";
 import type { Order, OrderStatus, PaymentStatus } from "@/types/order";
 import { formatPhoneNumber } from "@/lib/notifications/whatsapp-service";
 
@@ -37,10 +39,20 @@ const OrderActions: React.FC<{ order: Order }> = ({ order }) => {
     try {
       await fn();
       router.refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Something went wrong. Please try again.");
     } finally {
       setBusy(false);
     }
   };
+
+  // Only ever offer transitions that will actually succeed - previously all 8 statuses
+  // were always listed (e.g. "Refunded", which orderStatus never transitions into - that's
+  // the separate initiateRefund flow - or any option at all once an order is
+  // delivered/cancelled), so picking one of those silently failed with no feedback.
+  const availableStatusOptions = ORDER_STATUS_OPTIONS.filter(
+    (opt) => opt.value === order.orderStatus || ALLOWED_ORDER_STATUS_TRANSITIONS[order.orderStatus]?.includes(opt.value)
+  );
 
   const inputClass =
     "px-3 py-2 text-sm rounded-lg border border-neutral-300 dark:border-neutral-700 bg-transparent";
@@ -56,7 +68,7 @@ const OrderActions: React.FC<{ order: Order }> = ({ order }) => {
         <CustomSelect
           value={order.orderStatus}
           disabled={busy}
-          options={ORDER_STATUS_OPTIONS}
+          options={availableStatusOptions}
           onChange={(newStatus) => run(() => updateOrderStatus(order.id, newStatus))}
         />
       </div>

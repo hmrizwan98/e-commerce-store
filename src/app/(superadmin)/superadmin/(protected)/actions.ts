@@ -18,7 +18,7 @@ import { provisionCloudinaryMetadata } from "@/lib/firebase/services/cloudinary-
 import { provisionDeploymentMetadata } from "@/lib/firebase/services/deployment-provisioner";
 import { syncDomainSettings } from "@/lib/superadmin/domain-settings";
 import { getPlatformBaseUrl } from "@/lib/platform/base-url";
-import { buildTenantUrl, buildTenantAdminUrl } from "@/lib/platform/tenant-url";
+import { buildTenantUrl, buildTenantAdminUrl, buildResetPasswordLinkUrl } from "@/lib/platform/tenant-url";
 import { getActiveDeploymentProvider } from "@/lib/deployment/provider-registry";
 import { logDeploymentEvent } from "@/lib/firebase/repositories/deployment-logs";
 import { deleteAllByPrefix } from "@/lib/cloudinary/delete";
@@ -30,6 +30,11 @@ import {
   type ActionErrorCode,
 } from "@/lib/errors/action-error";
 import { createStageTimer } from "@/lib/errors/stage-timer";
+import {
+  getPlatformEmailSettings,
+  updatePlatformEmailSettings,
+  type PlatformEmailSettings,
+} from "@/lib/firebase/repositories/platform-settings";
 import type { StoreStatus } from "@/types/store";
 
 const HOSTNAME_PATTERN = /^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/i;
@@ -84,12 +89,23 @@ export interface StoreFormInput {
 }
 
 export type CreateStoreResult =
-  | { success: true; storeId: string; adminEmail: string; adminTempPassword: string }
+  | {
+      success: true;
+      storeId: string;
+      adminEmail: string;
+      /** Whether the welcome/set-password email was confirmed delivered - undefined when
+       * the send happens in the background (createStore()'s waitUntil) and isn't known yet
+       * by the time this resolves. Never includes a plaintext password - the owner sets
+       * their own via the emailed secure link (see /admin/reset-password). */
+      emailSent?: boolean;
+    }
   | { success: false; error: ActionError };
 
 export interface ResetAdminPasswordResult {
   adminEmail: string;
-  newPassword: string;
+  /** True if the email provider confirmed delivery - false means it only logged
+   * server-side (no RESEND_API_KEY configured) or the send attempt failed. */
+  emailSent: boolean;
 }
 
 function revalidateStoreList() {
@@ -305,7 +321,7 @@ export async function createStore(input: StoreFormInput): Promise<CreateStoreRes
     const message = err instanceof Error ? err.message : "Could not create the store.";
     return { success: false, error: toActionError(traceId, "PROVISION_SHELL", classifyShellError(message), message) };
   }
-  const { storeId, ref, storeDocRef, userRecord, adminTempPassword, slug } = shell;
+  const { storeId, ref, storeDocRef, userRecord, slug } = shell;
 
   // --- Synchronous critical path ends here: only what's required for the
   // store to exist and its owner to be able to log in. Everything below
@@ -386,15 +402,21 @@ export async function createStore(input: StoreFormInput): Promise<CreateStoreRes
           rootDomain: new URL(platformBaseUrl).host,
         }).then(() => stage("DEPLOYMENT_TRIGGERED", { storeId })),
         logStoreActivity(storeId, "created", decoded.uid).then(() => stage("ACTIVITY_LOGGED", { storeId })),
-        // Best-effort only - never blocks or fails background provisioning.
-        getWelcomeEmailService()
-          .sendWelcomeEmail({
+        // Best-effort only - never blocks or fails background provisioning. A secure
+        // one-time set-password link, never the plaintext adminTempPassword - the owner
+        // sets their own real password by following it (see /admin/reset-password).
+        (async () => {
+          const setPasswordLink = await adminAuth().generatePasswordResetLink(input.email!, {
+            url: buildResetPasswordLinkUrl(platformBaseUrl, slug),
+          });
+          return getWelcomeEmailService().sendWelcomeEmail({
             storeName: input.brandName?.trim() || input.name,
             storeUrl: buildTenantUrl(platformBaseUrl, slug),
             adminUrl: buildTenantAdminUrl(platformBaseUrl, slug),
             email: input.email!,
-            temporaryPassword: adminTempPassword,
-          })
+            setPasswordLink,
+          });
+        })()
           .catch((err) => console.error("[welcome-email] failed to send", err))
           .then(() => stage("WELCOME_EMAIL_SENT", { storeId })),
       ]);
@@ -417,7 +439,7 @@ export async function createStore(input: StoreFormInput): Promise<CreateStoreRes
     })()
   );
 
-  return { success: true, storeId, adminEmail: input.email, adminTempPassword };
+  return { success: true, storeId, adminEmail: input.email };
 }
 
 export interface CloneStoreInput {
@@ -442,7 +464,7 @@ export async function cloneStore(sourceStoreId: string, input: CloneStoreInput):
   const source = await getStoreById(sourceStoreId);
   if (!source) throw new Error("Source store not found.");
 
-  const { storeId, ref, storeDocRef, userRecord, adminTempPassword, slug } = await provisionStoreShell(
+  const { storeId, ref, storeDocRef, userRecord, slug } = await provisionStoreShell(
     {
       name: input.name,
       slug: input.slug,
@@ -523,17 +545,34 @@ export async function cloneStore(sourceStoreId: string, input: CloneStoreInput):
   revalidateStoreList();
   await logStoreActivity(storeId, "cloned", decoded.uid, { sourceStoreId });
 
-  await getWelcomeEmailService()
-    .sendWelcomeEmail({
-      storeName: input.name,
-      storeUrl: buildTenantUrl(platformBaseUrl, slug),
-      adminUrl: buildTenantAdminUrl(platformBaseUrl, slug),
-      email: input.email,
-      temporaryPassword: adminTempPassword,
-    })
-    .catch((err) => console.error("[welcome-email] failed to send", err));
+  let emailSent = false;
+  {
+    const setPasswordLink = await adminAuth()
+      .generatePasswordResetLink(input.email, {
+        url: buildResetPasswordLinkUrl(platformBaseUrl, slug),
+      })
+      .catch((err) => {
+        console.error("[welcome-email] failed to generate set-password link", err);
+        return null;
+      });
+    if (setPasswordLink) {
+      const { delivered } = await getWelcomeEmailService()
+        .sendWelcomeEmail({
+          storeName: input.name,
+          storeUrl: buildTenantUrl(platformBaseUrl, slug),
+          adminUrl: buildTenantAdminUrl(platformBaseUrl, slug),
+          email: input.email,
+          setPasswordLink,
+        })
+        .catch((err) => {
+          console.error("[welcome-email] failed to send", err);
+          return { delivered: false };
+        });
+      emailSent = delivered;
+    }
+  }
 
-  return { success: true, storeId, adminEmail: input.email, adminTempPassword };
+  return { success: true, storeId, adminEmail: input.email, emailSent };
 }
 
 export async function updateStore(id: string, input: StoreFormInput): Promise<void> {
@@ -730,6 +769,8 @@ export async function restoreStore(id: string, status: "active" | "suspended" = 
   await logStoreActivity(id, "restored", decoded.uid);
 }
 
+/** Emails a secure one-time set-password link (never a plaintext password) to the
+ * store's admin address - the admin sets their own new password by following it. */
 export async function resetStoreAdminPassword(storeId: string): Promise<ResetAdminPasswordResult> {
   const decoded = await requireSuperAdmin();
   await enforceRateLimit(decoded.uid);
@@ -737,17 +778,28 @@ export async function resetStoreAdminPassword(storeId: string): Promise<ResetAdm
   if (!store) throw new Error("Store not found.");
   if (!store.email) throw new Error("This store has no admin email on file.");
 
-  const userRecord = await adminAuth().getUserByEmail(store.email);
-  const newPassword = generateTempPassword();
-  await adminAuth().updateUser(userRecord.uid, { password: newPassword });
+  const platformBaseUrl = getPlatformBaseUrl();
+  const setPasswordLink = await adminAuth().generatePasswordResetLink(store.email, {
+    url: buildResetPasswordLinkUrl(platformBaseUrl, store.slug),
+  });
+  const { delivered } = await getWelcomeEmailService()
+    .sendWelcomeEmail({
+      storeName: store.brandName?.trim() || store.name,
+      storeUrl: store.websiteUrl ?? buildTenantUrl(platformBaseUrl, store.slug),
+      adminUrl: store.adminUrl ?? buildTenantAdminUrl(platformBaseUrl, store.slug),
+      email: store.email,
+      setPasswordLink,
+    })
+    .catch((err) => {
+      console.error("[reset-password] failed to send email", err);
+      return { delivered: false };
+    });
   await logStoreActivity(storeId, "password_reset", decoded.uid);
 
-  return { adminEmail: store.email, newPassword };
+  return { adminEmail: store.email, emailSent: delivered };
 }
 
-/** The original one-time temp password from creation was never persisted (reveal-once by
- * design), so "resending" the welcome email issues a fresh password, same as a manual reset,
- * then sends it through the same welcome-email service used at creation. */
+/** Emails a fresh secure set-password link, same delivery path as store creation. */
 export async function resendWelcomeEmail(storeId: string): Promise<ResetAdminPasswordResult> {
   const decoded = await requireSuperAdmin();
   await enforceRateLimit(decoded.uid);
@@ -755,33 +807,37 @@ export async function resendWelcomeEmail(storeId: string): Promise<ResetAdminPas
   if (!store) throw new Error("Store not found.");
   if (!store.email) throw new Error("This store has no admin email on file.");
 
-  const userRecord = await adminAuth().getUserByEmail(store.email);
-  const newPassword = generateTempPassword();
-  await adminAuth().updateUser(userRecord.uid, { password: newPassword });
-
   const platformBaseUrl = getPlatformBaseUrl();
-  await getWelcomeEmailService()
+  const setPasswordLink = await adminAuth().generatePasswordResetLink(store.email, {
+    url: buildResetPasswordLinkUrl(platformBaseUrl, store.slug),
+  });
+  const { delivered } = await getWelcomeEmailService()
     .sendWelcomeEmail({
       storeName: store.brandName?.trim() || store.name,
       storeUrl: store.websiteUrl ?? buildTenantUrl(platformBaseUrl, store.slug),
       adminUrl: store.adminUrl ?? buildTenantAdminUrl(platformBaseUrl, store.slug),
       email: store.email,
-      temporaryPassword: newPassword,
+      setPasswordLink,
     })
-    .catch((err) => console.error("[welcome-email] failed to resend", err));
+    .catch((err) => {
+      console.error("[welcome-email] failed to resend", err);
+      return { delivered: false };
+    });
 
   await logStoreActivity(storeId, "welcome_email_resent", decoded.uid);
-  return { adminEmail: store.email, newPassword };
+  return { adminEmail: store.email, emailSent: delivered };
 }
 
 export interface TransferOwnershipResult {
   newOwnerEmail: string;
-  newOwnerTempPassword: string;
+  /** True if the set-password email was confirmed delivered - see ResetAdminPasswordResult. */
+  emailSent: boolean;
 }
 
 /** Strips the old owner's admin access to this store immediately (claims cleared + sessions
- * revoked) and finds-or-creates a Firebase Auth user for the new owner with a fresh temp
- * password, so a transfer never leaves two people able to administer the same store. */
+ * revoked) and finds-or-creates a Firebase Auth user for the new owner, emailing them a secure
+ * set-password link (never a plaintext password) so a transfer never leaves two people able to
+ * administer the same store, nor a password anyone but the new owner ever sees. */
 export async function transferOwnership(
   storeId: string,
   newOwnerEmail: string,
@@ -807,15 +863,15 @@ export async function transferOwnership(
     }
   }
 
-  const newOwnerTempPassword = generateTempPassword();
+  const throwawayPassword = generateTempPassword();
   let newUser;
   try {
     newUser = await adminAuth().getUserByEmail(email);
-    await adminAuth().updateUser(newUser.uid, { password: newOwnerTempPassword });
+    await adminAuth().updateUser(newUser.uid, { password: throwawayPassword });
   } catch {
     newUser = await adminAuth().createUser({
       email,
-      password: newOwnerTempPassword,
+      password: throwawayPassword,
       displayName: newOwnerName || email,
     });
   }
@@ -833,7 +889,24 @@ export async function transferOwnership(
   revalidateStoreList();
   await logStoreActivity(storeId, "ownership_changed", decoded.uid, { from: store.email ?? "", to: email });
 
-  return { newOwnerEmail: email, newOwnerTempPassword };
+  const platformBaseUrl = getPlatformBaseUrl();
+  const setPasswordLink = await adminAuth().generatePasswordResetLink(email, {
+    url: buildResetPasswordLinkUrl(platformBaseUrl, store.slug),
+  });
+  const { delivered } = await getWelcomeEmailService()
+    .sendWelcomeEmail({
+      storeName: store.brandName?.trim() || store.name,
+      storeUrl: store.websiteUrl ?? buildTenantUrl(platformBaseUrl, store.slug),
+      adminUrl: store.adminUrl ?? buildTenantAdminUrl(platformBaseUrl, store.slug),
+      email,
+      setPasswordLink,
+    })
+    .catch((err) => {
+      console.error("[transferOwnership] failed to send set-password email", err);
+      return { delivered: false };
+    });
+
+  return { newOwnerEmail: email, emailSent: delivered };
 }
 
 /** Root-level collections keyed by a `storeId` FIELD rather than path-scoped under
@@ -1003,4 +1076,14 @@ export async function deleteStore(storeId: string, confirmSlug: string): Promise
   );
 
   return { success: true, storeId, warnings };
+}
+
+export async function getPlatformEmailSettingsAction(): Promise<PlatformEmailSettings> {
+  await requireSuperAdmin();
+  return getPlatformEmailSettings();
+}
+
+export async function updatePlatformEmailSettingsAction(settings: PlatformEmailSettings): Promise<void> {
+  await requireSuperAdmin();
+  await updatePlatformEmailSettings(settings);
 }

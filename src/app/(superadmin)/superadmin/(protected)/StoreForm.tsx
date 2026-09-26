@@ -17,7 +17,7 @@ const StoreForm: React.FC<{ mode: "create" | "edit"; store?: Store; platformBase
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [credentials, setCredentials] = useState<{ adminEmail: string; adminTempPassword: string } | null>(null);
+  const [credentials, setCredentials] = useState<{ adminEmail: string } | null>(null);
 
   const [name, setName] = useState(store?.name ?? "");
   const [slug, setSlug] = useState(store?.slug ?? "");
@@ -83,19 +83,13 @@ const StoreForm: React.FC<{ mode: "create" | "edit"; store?: Store; platformBase
       <div className={cardClass}>
         <h2 className="text-lg font-semibold">Store created</h2>
         <p className="text-sm text-neutral-500">
-          Share these one-time credentials with the store owner so they can sign in to their Admin Panel.
-          This password will not be shown again.
+          A secure password-setup link has been emailed to the store owner - they set their own password by
+          following it. No password is ever shown here.
         </p>
         <div className="space-y-2 text-sm">
           <div>
             <span className="font-medium">Admin email: </span>
             {credentials.adminEmail}
-          </div>
-          <div>
-            <span className="font-medium">Temporary password: </span>
-            <code className="px-2 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800">
-              {credentials.adminTempPassword}
-            </code>
           </div>
         </div>
         <ButtonPrimary onClick={() => router.push("/superadmin/stores" as any)}>Back to stores</ButtonPrimary>

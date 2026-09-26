@@ -61,6 +61,12 @@ export default function MarketingFooter() {
             <p className="text-sm text-neutral-600 dark:text-neutral-300 max-w-sm leading-relaxed">
               Enterprise multi-tenant eCommerce SaaS platform. Launch your own store with dedicated Store Admin, tenant isolation, and Cloudinary media power.
             </p>
+            <a
+              href="mailto:support@webriiz.com"
+              className="inline-block text-sm font-semibold text-primary-6000 hover:underline"
+            >
+              support@webriiz.com
+            </a>
           </div>
 
           {/* Links Grid */}

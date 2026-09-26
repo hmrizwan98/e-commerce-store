@@ -40,6 +40,33 @@ export interface KnowledgeEntry {
   exampleQuestions: string[];
 }
 
+/** A single diagnostic step in a TroubleshootingEntry's checklist - rendered as a plain
+ * "Check" line, not a yes/no form control (the assistant can't inspect the merchant's
+ * actual settings from a stateless text query, only tell them what to go verify). */
+export interface TroubleshootingCheck {
+  urdu: string;
+  english: string;
+}
+
+export interface TroubleshootingEntry {
+  id: string;
+  title: string;
+  /** Same substring-scoring keyword model as KnowledgeEntry, but matched only when the
+   * query also carries "something's wrong" framing (see hasProblemFraming in
+   * intent-matcher.ts) - so "WhatsApp kaise configure karun" (how-to) and "WhatsApp button
+   * nahi aa raha" (troubleshooting) resolve to different registries despite sharing the
+   * word "whatsapp". */
+  keywords: string[];
+  symptomUrdu: string;
+  symptomEnglish: string;
+  checklist: TroubleshootingCheck[];
+  fixUrdu: string;
+  fixEnglish: string;
+  route?: string;
+  actionLabel?: string;
+  exampleQuestions: string[];
+}
+
 export interface LiveStoreStats {
   productCount?: number;
   categoryCount?: number;
@@ -54,11 +81,15 @@ export interface LiveStoreStats {
   customerCount?: number;
 }
 
+export type AssistantLanguage = "urdu" | "english";
+
 export interface ResolvedIntent {
   intentId: string;
-  type: "knowledge" | "live_stat" | "greeting" | "unknown";
+  type: "knowledge" | "troubleshooting" | "live_stat" | "greeting" | "unknown";
   confidence: number;
+  language: AssistantLanguage;
   knowledge?: KnowledgeEntry;
+  troubleshooting?: TroubleshootingEntry;
   statKey?: keyof LiveStoreStats;
   customResponse?: {
     textUrdu: string;
