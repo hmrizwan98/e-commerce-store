@@ -28,7 +28,7 @@ export default function CustomSelect<T extends string = string>({
   className = "",
   placeholder = "Select option",
 }: CustomSelectProps<T>) {
-  const selectedOption = options.find((opt) => opt.value === value) || options[0];
+  const selectedOption = options.find((opt) => opt.value === value);
 
   const containerClass = className.includes("w-") ? className : `w-full ${className}`;
 
@@ -36,7 +36,7 @@ export default function CustomSelect<T extends string = string>({
     <div className={`relative ${containerClass}`}>
       <Listbox value={value} onChange={onChange} disabled={disabled}>
         <div className="relative">
-          <Listbox.Button className="w-full inline-flex items-center justify-between gap-2 px-3 py-2 text-xs font-semibold rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 shadow-xs hover:border-indigo-400 dark:hover:border-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
+          <Listbox.Button className="w-full inline-flex items-center justify-between gap-2 px-3.5 py-2.5 text-xs font-semibold rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 shadow-xs hover:border-indigo-400 dark:hover:border-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
             <div className="flex items-center gap-2 min-w-0 truncate">
               {selectedOption?.dot && (
                 <span className={`w-2 h-2 rounded-full shrink-0 ${selectedOption.dot}`} />
@@ -45,7 +45,7 @@ export default function CustomSelect<T extends string = string>({
                 <span className="text-sm shrink-0">{selectedOption.icon}</span>
               )}
               <span className="truncate font-semibold">
-                {selectedOption?.label || placeholder}
+                {selectedOption?.label || (value === "" && placeholder ? placeholder : options[0]?.label || placeholder)}
               </span>
             </div>
             <ChevronDownIcon className="w-4 h-4 text-slate-400 shrink-0 stroke-[2.5]" />

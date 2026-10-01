@@ -10,7 +10,28 @@ import Link from "next/link";
 import type { StoreStatus } from "@/types/store";
 
 import AdminThemeSelector from "@/components/admin/AdminThemeSelector";
+import CustomSelect from "@/components/admin/CustomSelect";
 import { COUNTRY_OPTIONS, CURRENCY_OPTIONS, TIMEZONE_OPTIONS } from "@/lib/constants/location-options";
+
+const CURRENCY_SELECT_OPTIONS = CURRENCY_OPTIONS.map((c) => ({
+  value: c.code,
+  label: `${c.code} (${c.symbol}) — ${c.name}`,
+}));
+
+const COUNTRY_SELECT_OPTIONS = COUNTRY_OPTIONS.map((c) => ({
+  value: c.name,
+  label: `${c.flag} ${c.name}`,
+}));
+
+const TIMEZONE_SELECT_OPTIONS = TIMEZONE_OPTIONS.map((t) => ({
+  value: t.value,
+  label: t.label,
+}));
+
+const STATUS_SELECT_OPTIONS = [
+  { value: "active", label: "Active" },
+  { value: "suspended", label: "Suspended" },
+];
 
 const STEPS = ["Store Details", "Owner Account", "Review & Create"] as const;
 
@@ -97,8 +118,14 @@ const StoreCreationWizard: React.FC<{ platformBaseUrl: string }> = ({ platformBa
     setError(null);
     try {
       const result = await createStore(payload);
-      if (result.success) setCredentials(result);
-      else setError(`${result.error.message} (${result.error.code}, trace ${result.error.traceId})`);
+      if (result?.success) {
+        setCredentials(result);
+      } else {
+        const errMsg = result?.error?.message || "Store creation failed. Please try again.";
+        const errCode = result?.error?.code ? ` (${result.error.code})` : "";
+        const trace = result?.error?.traceId ? `, trace ${result.error.traceId}` : "";
+        setError(`${errMsg}${errCode}${trace}`);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
@@ -219,44 +246,23 @@ const StoreCreationWizard: React.FC<{ platformBaseUrl: string }> = ({ platformBa
             <label className={labelClass}>Brand name (optional)</label>
             <input className={inputClass} value={brandName} onChange={(e) => setBrandName(e.target.value)} />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className={labelClass}>Currency</label>
-              <select className={inputClass} value={currency} onChange={(e) => setCurrency(e.target.value)}>
-                {CURRENCY_OPTIONS.map((c) => (
-                  <option key={c.code} value={c.code}>
-                    {c.code} ({c.symbol}) — {c.name}
-                  </option>
-                ))}
-              </select>
+              <CustomSelect value={currency} onChange={setCurrency} options={CURRENCY_SELECT_OPTIONS} />
             </div>
             <div>
               <label className={labelClass}>Country</label>
-              <select className={inputClass} value={country} onChange={(e) => setCountry(e.target.value)}>
-                {COUNTRY_OPTIONS.map((c) => (
-                  <option key={c.name} value={c.name}>
-                    {c.flag} {c.name}
-                  </option>
-                ))}
-              </select>
+              <CustomSelect value={country} onChange={setCountry} options={COUNTRY_SELECT_OPTIONS} />
             </div>
-            <div>
+            <div className="sm:col-span-2">
               <label className={labelClass}>Timezone</label>
-              <select className={inputClass} value={timezone} onChange={(e) => setTimezone(e.target.value)}>
-                {TIMEZONE_OPTIONS.map((t) => (
-                  <option key={t.value} value={t.value}>
-                    {t.label}
-                  </option>
-                ))}
-              </select>
+              <CustomSelect value={timezone} onChange={setTimezone} options={TIMEZONE_SELECT_OPTIONS} />
             </div>
           </div>
           <div>
             <label className={labelClass}>Status</label>
-            <select className={inputClass} value={status} onChange={(e) => setStatus(e.target.value as StoreStatus)}>
-              <option value="active">Active</option>
-              <option value="suspended">Suspended</option>
-            </select>
+            <CustomSelect value={status} onChange={(val) => setStatus(val as StoreStatus)} options={STATUS_SELECT_OPTIONS} />
           </div>
 
           <div className="pt-2 border-t border-slate-200 dark:border-slate-800">
