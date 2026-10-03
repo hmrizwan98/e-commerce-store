@@ -50,7 +50,7 @@ const ProductQuickView: FC<ProductQuickViewProps> = ({
   const [qualitySelected, setQualitySelected] = useState(1);
   const productHref = `/product/${slug}` as Route;
 
-  const notifyAddTocart = () => {
+  const notifyAddTocart = (e?: { currentTarget?: EventTarget | null }) => {
     if (product.hasVariants && !matchedVariant) {
       toast.error("This option isn't available - please choose another.");
       return;
@@ -60,7 +60,16 @@ const ProductQuickView: FC<ProductQuickViewProps> = ({
       return;
     }
     const variantLabel = Object.values(selections).join(" / ");
-    addToCart({ product, matchedVariant, activeImage, activePrice, activeStock, variantLabel, quantity: qualitySelected });
+    addToCart({
+      product,
+      matchedVariant,
+      activeImage,
+      activePrice,
+      activeStock,
+      variantLabel,
+      quantity: qualitySelected,
+      source: e?.currentTarget instanceof Element ? e.currentTarget : null,
+    });
     toast.custom(
       (t) => (
         <NotifyAddTocart

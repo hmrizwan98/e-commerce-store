@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import toast from "react-hot-toast";
@@ -151,11 +151,37 @@ export default function AdminShell({
     setCollapsed(false);
   }, []);
 
-  const playNotificationChime = () => {
+  // One shared AudioContext, unlocked on the admin's first click/keypress - browsers
+  // create audio contexts "suspended" until the page has had a user gesture, so a context
+  // created fresh at chime time (as before) often played nothing.
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const getAudioContext = (): AudioContext | null => {
+    if (audioCtxRef.current) return audioCtxRef.current;
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContextClass) return null;
+    audioCtxRef.current = new AudioContextClass();
+    return audioCtxRef.current;
+  };
+
+  useEffect(() => {
+    const unlock = () => {
+      const ctx = getAudioContext();
+      if (ctx && ctx.state === "suspended") ctx.resume().catch(() => {});
+    };
+    window.addEventListener("pointerdown", unlock);
+    window.addEventListener("keydown", unlock);
+    return () => {
+      window.removeEventListener("pointerdown", unlock);
+      window.removeEventListener("keydown", unlock);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const playNotificationChime = async () => {
     try {
-      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-      if (!AudioContextClass) return;
-      const ctx = new AudioContextClass();
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      if (ctx.state === "suspended") await ctx.resume();
       const now = ctx.currentTime;
 
       // Tone 1 (E5 659.25Hz)
@@ -182,7 +208,7 @@ export default function AdminShell({
       osc2.start(now + 0.12);
       osc2.stop(now + 0.65);
     } catch {
-      // Audio context policy fallback
+      // Audio blocked by the browser - the toast still shows.
     }
   };
 
@@ -215,9 +241,11 @@ export default function AdminShell({
     }
   }, [pathname]);
 
-  useEffect(() => {
-    let prevIds: string[] = [];
+  // Kept across client-side navigations (a ref, not a per-effect local) so moving between
+  // admin pages doesn't reset the baseline and miss an order that arrived in between.
+  const knownPendingIdsRef = useRef<string[] | null>(null);
 
+  useEffect(() => {
     const fetchPending = async () => {
       try {
         const res = await fetch("/api/admin/pending-orders");
@@ -229,14 +257,18 @@ export default function AdminShell({
           const unviewed = pendingIds.filter((id) => !viewedIds.includes(id));
           setUnreadCount(unviewed.length);
 
-          if (prevIds.length > 0) {
-            const newlyAdded = pendingIds.filter((id) => !prevIds.includes(id));
+          // null = first poll of this session: just record the baseline. Previously the
+          // check was `prevIds.length > 0`, so a store with ZERO pending orders never
+          // chimed for its next order (the first new order only became the baseline).
+          const known = knownPendingIdsRef.current;
+          if (known) {
+            const newlyAdded = pendingIds.filter((id) => !known.includes(id));
             if (newlyAdded.length > 0) {
               toast.success(`🔔 ${newlyAdded.length} new order(s) received!`, { duration: 6000 });
               playNotificationChime();
             }
           }
-          prevIds = pendingIds;
+          knownPendingIdsRef.current = pendingIds;
         }
       } catch {}
     };
@@ -244,6 +276,9 @@ export default function AdminShell({
     fetchPending();
     const interval = setInterval(fetchPending, 10000);
     return () => clearInterval(interval);
+    // Re-polls on navigation so the unread badge updates right after viewing an order;
+    // the new-order baseline lives in knownPendingIdsRef, so this doesn't reset it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
 
   useEffect(() => {

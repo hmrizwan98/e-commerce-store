@@ -45,7 +45,10 @@ async function resolveCurrentTenant(): Promise<Store | null> {
   }
 
   if (domainToQuery) {
-    const byDomain = await adminDb().collection("stores").where("domains", "array-contains", domainToQuery).limit(1).get();
+    // www.<domain> normally redirects to <domain> at the hosting layer; if a request still
+    // arrives on www (e.g. that redirect isn't set up), resolve it to the same store.
+    const candidates = domainToQuery.startsWith("www.") ? [domainToQuery, domainToQuery.slice(4)] : [domainToQuery];
+    const byDomain = await adminDb().collection("stores").where("domains", "array-contains-any", candidates).limit(1).get();
     if (!byDomain.empty) {
       const store = docData<Store>(byDomain.docs[0]);
       if (store && store.status !== "archived") return store;

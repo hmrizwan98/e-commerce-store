@@ -6,7 +6,9 @@ import { tenantCollection } from "@/lib/firebase/tenant-scope";
 import { docData, stripUndefined } from "./utils";
 import { safeQuery } from "./safe-query";
 import { computeOrderTotals } from "@/lib/checkout/totals";
-import { getShippingSettings, getGeneralSettings, getPaymentSettings } from "./site-settings";
+import { getShippingSettings, getGeneralSettings, getPaymentSettings, getEmailSettings } from "./site-settings";
+import { getActiveTheme } from "./themes";
+import { isValidEmail } from "@/lib/notifications/email-service";
 import { waitUntil } from "@vercel/functions";
 import { runOrderVerification } from "./order-verifications";
 import { requiresCodVerification } from "@/lib/orders/verification/engine";
@@ -382,6 +384,11 @@ export async function createGuestOrder(input: CreateGuestOrderInput): Promise<Cr
       ? await tenantCollection("orderVerifications")
       : null;
     const orderRef = ordersCol.doc(result.orderId);
+    // Started here (tenant scope needs the request), awaited in the background below.
+    const brandPromise = Promise.all([getEmailSettings(), getActiveTheme()]).catch((err) => {
+      console.error("[order-email] could not load store branding", err);
+      return null;
+    });
     waitUntil(
       (async () => {
         const order = docData<Order>(await orderRef.get());
@@ -394,7 +401,18 @@ export async function createGuestOrder(input: CreateGuestOrderInput): Promise<Cr
                 console.error(`[order-verification] failed for order ${result.orderId}`, err)
               )
             : null,
-          sendOrderConfirmationEmail(order, general),
+          brandPromise.then((branding) => {
+            const [emailSettings, theme] = branding ?? [];
+            return sendOrderConfirmationEmail(order, {
+              currency: general,
+              brand: {
+                storeName: general.storeName || emailSettings?.fromName || "Our Store",
+                logoUrl: theme?.logos?.logoLight || theme?.logos?.logoDark || undefined,
+                primaryColor: theme?.colors?.primary,
+                replyTo: [emailSettings?.supportEmail, emailSettings?.fromEmail, general.storeEmail].find((e) => isValidEmail(e)),
+              },
+            });
+          }),
           sendWhatsAppNotification("ORDER_PLACED", order, general),
         ]);
       })().catch((err) => console.error("[Order Notification Trigger Error]:", err))

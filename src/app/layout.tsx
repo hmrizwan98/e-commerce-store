@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import "@/styles/index.scss";
 import { headers } from "next/headers";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import ClientProviders from "./ClientProviders";
 import { CurrencyProvider } from "@/lib/currency/CurrencyContext";
 import { getActiveTheme, DEFAULT_THEME } from "@/lib/firebase/repositories/themes";
@@ -11,6 +11,7 @@ import { getMenu } from "@/lib/firebase/repositories/menus";
 import { themeToCssText } from "@/lib/theme/css-variables";
 import { poppins } from "@/lib/theme/default-font";
 import { getCurrentTenant } from "@/lib/tenant/current";
+import { getCustomDomainRedirect } from "@/lib/domains/redirect";
 import { isPlatformDomainRequest } from "@/lib/tenant/platform-domain";
 import { FRONTSTORE_PREVIEW_HEADER } from "@/lib/tenant/constants";
 import { requestMemo } from "@/lib/request-cache";
@@ -180,6 +181,13 @@ export default async function RootLayout({
   params: any;
 }) {
   const { tenantId, theme, general, suspended, headerMenu, footerMenu } = await resolveThemeAndSettings();
+  // A store with a live custom domain: visitors on its default {slug}.ROOT_DOMAIN /
+  // admin-{slug}.ROOT_DOMAIN address go to the same page on the custom domain.
+  // getCurrentTenant() is request-memoized - no extra read.
+  if (tenantId && !suspended) {
+    const customDomainRedirect = getCustomDomainRedirect(await getCurrentTenant());
+    if (customDomainRedirect) redirect(customDomainRedirect);
+  }
   const cssText = themeToCssText(theme);
   const bodyFontKey = (theme.typography?.bodyFont as FontKey) ?? "poppins";
   const headingFontKey = (theme.typography?.headingFont as FontKey) ?? "poppins";

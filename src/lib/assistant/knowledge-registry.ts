@@ -368,9 +368,9 @@ export const KNOWLEDGE_REGISTRY: KnowledgeEntry[] = [
     route: "/admin/orders",
     actionLabel: "Open Orders",
     instructionsUrdu:
-      "Orders dekhne aur process karne ke liye **Sales → Orders** par jayen. Har order par status badlein (Processing, Dispatched, Delivered), tracking consignment ID add karein aur customer ko WhatsApp updates bhejain.",
+      "Orders dekhne aur process karne ke liye **Sales → Orders** par jayen. Har order par status badlein (Confirmed, Processing, Packed, Dispatched, Delivered), tracking/consignment number add karein aur customer ko WhatsApp updates bhejain. **COD orders** pehle order page ke **Order Verification** card se Confirm karne zaroori hain - us se pehle status aage nahi badhega aur courier/shipment details save nahi hongi. Order page par customer ki **Delivery Preference** (Home ya Office 9 AM-5 PM) bhi nazar aati hai.",
     instructionsEnglish:
-      "To view and fulfill customer orders, go to Sales → Orders. Update order statuses, assign tracking consignment numbers, and generate tracking links.",
+      "To view and fulfill orders, go to Sales → Orders. Update statuses (Confirmed, Processing, Packed, Dispatched, Delivered), add tracking/consignment numbers and send WhatsApp updates. COD orders must first be confirmed from the Order Verification card on the order page - until then the status can't move forward and shipment details can't be saved. The order page also shows the customer's Delivery Preference (Home, or Office 9 AM-5 PM).",
     exampleQuestions: ["Orders kahan dikhte hain?", "Consignment number kaise enter karun?"],
   },
   {
@@ -698,13 +698,13 @@ export const KNOWLEDGE_REGISTRY: KnowledgeEntry[] = [
       "domain add",
       "own domain",
     ],
-    navigationPath: ["N/A - not self-service from Store Admin"],
+    navigationPath: ["Settings", "Domain"],
     route: "/admin/settings",
     actionLabel: "Open Settings",
     instructionsUrdu:
-      "Custom domain (jaise apnastore.com) connect karna Store Admin se khud self-service available nahi hai. Apne domain ka DNS apne provider (GoDaddy, Namecheap, etc.) se Webriiz par point karke, apne **Super Admin / platform support** se contact karein taake wo aapke store record mein domain add karein.",
+      "**Settings → Domain** kholein aur apna domain likhein (jaise apnastore.com), phir **Add domain** dabayein. Screen par jo DNS records aayenge (TXT, A aur CNAME) unhein apne domain provider (Namecheap, GoDaddy, PKNIC waghaira) ki DNS settings mein bilkul waise hi add karein, phir **Check status** dabayein. Har step ka status nazar aayega. DNS update hone mein kuch minute se 24-48 ghante lag sakte hain. Connect hone ke baad aapka store apnastore.com par aur Store Admin admin.apnastore.com par khulega, purana address khud naye domain par chala jayega, aur SSL (https) free milega. Domain hatana ho to wahin **Disconnect domain** dabayein.",
     instructionsEnglish:
-      "Connecting a custom domain (e.g. yourstore.com) is not currently self-service from Store Admin. Point your domain's DNS at Webriiz through your domain provider (GoDaddy, Namecheap, etc.), then contact your Super Admin / platform support to have the domain added to your store's record.",
+      "Open **Settings → Domain**, enter your domain (e.g. yourstore.com) and press **Add domain**. Add the DNS records shown (TXT, A and CNAME) at your domain provider (Namecheap, GoDaddy, PKNIC...) exactly as listed, then press **Check status** - each step's progress is shown. DNS changes can take from a few minutes up to 24-48 hours. Once connected, your store opens at yourstore.com and Store Admin at admin.yourstore.com, your old address redirects to the new domain, and HTTPS (SSL) is free and automatic. To remove it, use **Disconnect domain** on the same page.",
     exampleQuestions: [
       "Custom domain kaise connect karun?",
       "How do I connect my own domain?",
@@ -775,12 +775,126 @@ export const KNOWLEDGE_REGISTRY: KnowledgeEntry[] = [
     route: "/admin/orders",
     actionLabel: "Open Orders",
     instructionsUrdu:
-      "Customer apna order storefront ke **Order Tracking** page par (order number aur apna email daal kar) khud verify kar sakta hai - wahan current status aur poori activity history dikhti hai. Aap khud Store Admin mein **Sales → Orders** kholkar us order ka number, customer details aur status verify kar sakte hain.",
+      "Customer apna order storefront ke **Order Tracking** page par khud track kar sakta hai: **order number** ke saath checkout par diya hua **email ya phone number** daalein (phone kisi bhi format mein chalega, jaise 0300-1234567 ya +92 300 1234567). Email dena zaroori nahi - sirf phone wale customers bhi track kar sakte hain. Order place hone ke baad 'Track Order Status' button seedha isi page par le jata hai, aur 'Dispatched' WhatsApp message mein bhi tracking link hota hai. Aap khud **Sales → Orders** mein order dekh sakte hain.",
     instructionsEnglish:
-      "A customer can verify their own order on the storefront's Order Tracking page (by entering their order number and email) - it shows the current status and full activity history. From your side, open Sales → Orders in Store Admin to look up the same order's number, customer details, and status.",
+      "Customers track their own order on the storefront's Order Tracking page by entering the order number plus the email OR phone number they gave at checkout (any phone format works, e.g. 0300-1234567 or +92 300 1234567). Email is optional - phone-only customers can track too. The 'Track Order Status' button after checkout opens this page directly, and the 'Dispatched' WhatsApp message includes a tracking link. You can look up the same order under Sales → Orders.",
     exampleQuestions: [
       "Customer ka order kaise verify karun?",
       "Customer apna order kaise track karega?",
+    ],
+  },
+  {
+    id: "cod_order_verification",
+    title: "COD Order Verification (Confirm / Reject)",
+    category: "sales",
+    keywords: [
+      "cod verification",
+      "order verification card",
+      "order confirm kaise karun",
+      "order reject",
+      "fake order",
+      "risk level",
+      "high risk order",
+      "call customer",
+      "rto",
+      "order cancel reason",
+    ],
+    navigationPath: ["Sales", "Orders", "Open an order", "Order Verification"],
+    route: "/admin/orders",
+    actionLabel: "Open Orders",
+    instructionsUrdu:
+      "Har naye **Cash on Delivery** order par order page ke upar **Order Verification** card aata hai. Is mein risk level (LOW / MEDIUM / HIGH), mashwara (Confirm, Customer ko call karein, ya Manual review) aur wajah likhi hoti hai - jaise pehla order, address adhoora, ya pichle RTO. Ye sirf mashwara hai, faisla aap ka hai.\n\n1. **Call Customer** ya **WhatsApp Customer** (free, message pehle se likha hota hai) se customer se tasdeeq karein.\n2. **Confirm Order** dabayein aur list se note chunein (jaise 'Customer confirmed on call'), ya 'Other' chun kar khud likhein.\n3. Order jaali ho to **Reject Order** dabayein - wajah chunna zaroori hai. Order cancel ho jayega.\n\nConfirm hone se pehle order Processing/Packed/Shipped nahi ho sakta aur courier details save nahi hongi. Order Status dropdown se cancel karna ho to Cancel box mein wajah likhna zaroori hai. Prepaid (bank transfer / JazzCash) orders par ye card nahi aata.",
+    instructionsEnglish:
+      "Every new Cash on Delivery order shows an Order Verification card on the order page with a risk level (LOW / MEDIUM / HIGH), a recommendation (Confirm, Call the customer, or Manual review) and the reasons - e.g. first order, incomplete address, previous RTOs. It is advice only; you decide.\n\n1. Use Call Customer or WhatsApp Customer (free, pre-written message) to check with the customer.\n2. Press Confirm Order and pick a note from the list (e.g. 'Customer confirmed on call'), or choose 'Other' and type one.\n3. If it's not genuine, press Reject Order - a reason is required - and the order is cancelled.\n\nUntil it's confirmed, the order can't move to Processing/Packed/Shipped and courier details can't be saved. Cancelling from the status controls also needs a reason. Prepaid (bank transfer / JazzCash) orders don't get this card.",
+    exampleQuestions: [
+      "COD order kaise confirm karun?",
+      "Order verification card kya hai?",
+      "Fake order kaise reject karun?",
+      "Order processing par kyun nahi ja raha?",
+    ],
+  },
+  {
+    id: "new_order_sound",
+    title: "New Order Sound Alert",
+    category: "sales",
+    keywords: [
+      "new order sound",
+      "order notification sound",
+      "order aane par awaz",
+      "order par awaz",
+      "awaz nahi",
+      "awaz",
+      "sound nahi aa rahi",
+      "sound",
+      "sound nahi",
+      "nahi bajti",
+      "nahi bajta",
+      "chime",
+      "order alert",
+      "ding",
+      "notification bell",
+    ],
+    navigationPath: ["Store Admin (any page)"],
+    route: "/admin/orders",
+    actionLabel: "Open Orders",
+    instructionsUrdu:
+      "Jab Store Admin khula ho to har naye order par **'New order received'** notification aata hai aur ek chhoti si awaz bajti hai (har ~10 second mein naye orders check hote hain). Browser ke qaide ki wajah se awaz tabhi bajegi jab aap ne admin page par **kam az kam ek dafa click** kiya ho - page kholte hi kahin bhi ek click kar dein. Computer/phone ki awaz band na ho, aur browser tab mute na ho. Ye feature bilkul free hai.",
+    instructionsEnglish:
+      "While Store Admin is open, every new order shows a 'New order received' notification and plays a short chime (new orders are checked about every 10 seconds). Browsers only allow sound after you've clicked somewhere on the admin page at least once - click anywhere after opening it. Make sure your device volume is on and the browser tab isn't muted. This feature is free.",
+    exampleQuestions: [
+      "Naye order par awaz kyun nahi aa rahi?",
+      "Order aane ka pata kaise chalega?",
+    ],
+  },
+  {
+    id: "store_currency",
+    title: "Store Currency (Rs / $)",
+    category: "settings",
+    keywords: [
+      "currency",
+      "rs",
+      "rupees",
+      "rupay",
+      "dollar",
+      "prices mein",
+      "price symbol",
+      "$ ki jagah",
+      "price symbol",
+      "currency change",
+      "pkr",
+    ],
+    navigationPath: ["Settings", "General", "Currency"],
+    route: "/admin/settings",
+    actionLabel: "Open Settings",
+    instructionsUrdu:
+      "Store ki currency **Settings → General** mein set hoti hai (Currency aur Currency Symbol, jaise PKR / Rs.). Jo yahan set ho wahi har jagah dikhta hai: products, cart, checkout, order tracking, order emails, WhatsApp messages aur Store Admin ke orders, dashboard, analytics aur finance. Symbol badalne ke baad Save Changes dabayein.",
+    instructionsEnglish:
+      "Your store's currency is set under Settings → General (Currency and Currency Symbol, e.g. PKR / Rs.). Whatever you set there is used everywhere: products, cart, checkout, order tracking, order emails, WhatsApp messages and Store Admin orders, dashboard, analytics and finance. Press Save Changes after changing it.",
+    exampleQuestions: ["Currency kaise badlun?", "Prices mein $ ki jagah Rs kaise dikhaun?"],
+  },
+  {
+    id: "order_confirmation_email",
+    title: "Order Confirmation Email to Customers",
+    category: "settings",
+    keywords: [
+      "order email",
+      "order confirmation email",
+      "customer email",
+      "email kis naam se jati",
+      "reply email",
+      "email logo",
+      "support email",
+    ],
+    navigationPath: ["Settings", "Email"],
+    route: "/admin/settings",
+    actionLabel: "Open Settings",
+    instructionsUrdu:
+      "Jab customer checkout par apna email deta hai to use order confirmation email jati hai - **aap ke store ke naam, logo aur theme color ke saath** (Webriiz ke naam se nahi), jis mein products, total aur delivery address hota hai. Customer email ka **reply karega to wo aap ke store ke email par aayega** - is ke liye **Settings → Email** mein 'Support Email Address' set karein (warna store ka email use hota hai). Email checkout par optional hai; jo customer email na de use email nahi jati.",
+    instructionsEnglish:
+      "When a customer gives their email at checkout, they get an order confirmation email branded with your store's name, logo and theme colour (not Webriiz), listing the products, total and delivery address. When the customer replies, it goes to your store's email - set 'Support Email Address' under Settings → Email (otherwise the store email is used). Email is optional at checkout; customers who don't give one don't get the email.",
+    exampleQuestions: [
+      "Customer ko order ki email kis naam se jati hai?",
+      "Customer email ka reply kahan aayega?",
     ],
   },
 ];

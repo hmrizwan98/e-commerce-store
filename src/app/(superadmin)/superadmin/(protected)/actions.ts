@@ -21,6 +21,7 @@ import { getPlatformBaseUrl } from "@/lib/platform/base-url";
 import { buildTenantUrl, buildTenantAdminUrl, buildResetPasswordLinkUrl } from "@/lib/platform/tenant-url";
 import { getActiveDeploymentProvider } from "@/lib/deployment/provider-registry";
 import { logDeploymentEvent } from "@/lib/firebase/repositories/deployment-logs";
+import { attachDomainToProvider, detachDomainFromProvider } from "@/lib/domains/custom-domain-service";
 import { deleteAllByPrefix } from "@/lib/cloudinary/delete";
 import {
   generateTraceId,
@@ -420,6 +421,9 @@ export async function createStore(input: StoreFormInput): Promise<CreateStoreRes
               rootDomain: host,
             }).then(() => stage("DEPLOYMENT_TRIGGERED", { storeId })),
             logStoreActivity(storeId, "created", decoded.uid).then(() => stage("ACTIVITY_LOGGED", { storeId })),
+            syncProviderDomains(storeId, [], Array.from(new Set((input.domains ?? []).map((d) => d.trim().toLowerCase()).filter(Boolean)))).catch((err) =>
+              console.error(`[createStore] provider domain sync failed for ${storeId}`, err)
+            ),
             (async () => {
               const setPasswordLink = await generateSetPasswordLink(input.email!, platformBaseUrl, slug);
               return getWelcomeEmailService().sendWelcomeEmail({
@@ -593,6 +597,28 @@ export async function cloneStore(sourceStoreId: string, input: CloneStoreInput):
   return { success: true, storeId, adminEmail: input.email, emailSent };
 }
 
+/** Keeps the hosting provider in step with a store's domains[] after Super Admin edits:
+ * newly added domains (+ admin./www.) are attached, removed ones detached. Best-effort and
+ * logged to the store's deployment log - a provider hiccup never blocks saving the store.
+ * No-op when the provider isn't configured. */
+async function syncProviderDomains(storeId: string, before: string[], after: string[]): Promise<void> {
+  const provider = getActiveDeploymentProvider();
+  if (!provider.isConfigured()) return;
+  for (const hostname of after.filter((d) => !before.includes(d))) {
+    const result = await attachDomainToProvider(hostname);
+    await logDeploymentEvent(
+      storeId,
+      result.ok ? "info" : "warning",
+      result.ok ? `Connected ${hostname} (and admin.${hostname}) to hosting.` : `Could not connect ${hostname} to hosting: ${result.error}`,
+      provider.id
+    ).catch(() => {});
+  }
+  for (const hostname of before.filter((d) => !after.includes(d))) {
+    await detachDomainFromProvider(hostname);
+    await logDeploymentEvent(storeId, "info", `Disconnected ${hostname} from hosting.`, provider.id).catch(() => {});
+  }
+}
+
 export async function updateStore(id: string, input: StoreFormInput): Promise<void> {
   const decoded = await requireSuperAdmin();
   await enforceRateLimit(decoded.uid);
@@ -624,6 +650,9 @@ export async function updateStore(id: string, input: StoreFormInput): Promise<vo
     });
   revalidateStoreList();
   await logStoreActivity(id, "updated", decoded.uid);
+  await syncProviderDomains(id, before?.domains ?? [], domains).catch((err) =>
+    console.error(`[updateStore] provider domain sync failed for ${id}`, err)
+  );
   if (input.themeId && before && input.themeId !== before.themeId) {
     // No theme picker UI exists yet - this only gives the log type a real trigger for
     // when theme selection ships; StoreFormInput.themeId isn't set from any form today.
@@ -677,7 +706,14 @@ export async function removeDomain(storeId: string, hostname: string): Promise<v
   await adminDb()
     .collection(COLLECTION)
     .doc(storeId)
-    .update({ domains, domainSettings, updatedAt: FieldValue.serverTimestamp() });
+    .update({
+      domains,
+      domainSettings,
+      // A Store Admin self-service domain being removed by Super Admin: clear that request too.
+      ...(store.customDomainRequest?.hostname === hostname ? { customDomainRequest: FieldValue.delete() } : {}),
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+  await detachDomainFromProvider(hostname).catch((err) => console.error(`[removeDomain] detach failed for ${hostname}`, err));
   await logStoreActivity(storeId, "domain_removed", decoded.uid, { hostname });
   revalidateStoreList();
 }

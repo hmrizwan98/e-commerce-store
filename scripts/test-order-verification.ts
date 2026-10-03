@@ -168,3 +168,43 @@ test("10. existing order status lifecycle is unchanged", () => {
     refunded: [],
   });
 });
+
+// --- Order tracking links (WhatsApp "dispatched" message) ---
+import { buildOrderTrackingUrl } from "../src/lib/orders/tracking-url";
+import { getReliableStorefrontUrl } from "../src/lib/platform/tenant-url";
+import { buildWhatsAppMessageText } from "../src/lib/notifications/whatsapp-service";
+
+test("tracking link uses the store URL and email, else phone", () => {
+  assert.equal(
+    buildOrderTrackingUrl("https://glamix.webriiz.com/", { orderNumber: "ORD-1", guestEmail: "a@b.com" }),
+    "https://glamix.webriiz.com/order-tracking?orderNumber=ORD-1&contact=a%40b.com"
+  );
+  assert.equal(
+    buildOrderTrackingUrl("https://glamix.webriiz.com", { orderNumber: "ORD-1", guestEmail: "", shippingAddress: { phone: "0300-1234567" } }),
+    "https://glamix.webriiz.com/order-tracking?orderNumber=ORD-1&contact=0300-1234567"
+  );
+  assert.equal(buildOrderTrackingUrl(undefined, { orderNumber: "ORD-1", guestEmail: "a@b.com" }), null);
+  assert.equal(buildOrderTrackingUrl("https://x.webriiz.com", { orderNumber: "ORD-1" }), null);
+});
+
+test("reliable storefront URL only uses a connected custom domain", () => {
+  const base = "https://webriiz.com";
+  assert.equal(getReliableStorefrontUrl({ slug: "glamix" }, base), "https://glamix.webriiz.com");
+  assert.equal(
+    getReliableStorefrontUrl({ slug: "glamix", domains: ["glamix.pk"], domainSettings: { "glamix.pk": { isPrimary: true, dnsStatus: "pending", sslStatus: "pending" } } }, base),
+    "https://glamix.webriiz.com"
+  );
+  assert.equal(
+    getReliableStorefrontUrl({ slug: "glamix", domains: ["glamix.pk"], domainSettings: { "glamix.pk": { isPrimary: true, dnsStatus: "verified", sslStatus: "active" } } }, base),
+    "https://glamix.pk"
+  );
+});
+
+test("dispatched WhatsApp message has a real tracking link (no yourstore.com)", () => {
+  const order = { orderNumber: "ORD-9", guestEmail: "", shippingAddress: { phone: "03001234567" } } as any;
+  const withUrl = buildWhatsAppMessageText("ORDER_DISPATCHED", order, null, "https://test.webriiz.com");
+  assert.ok(withUrl.includes("https://test.webriiz.com/order-tracking?orderNumber=ORD-9&contact=03001234567"));
+  assert.ok(!withUrl.includes("yourstore.com"));
+  const withoutUrl = buildWhatsAppMessageText("ORDER_DISPATCHED", order, null);
+  assert.ok(!withoutUrl.includes("order-tracking") && !withoutUrl.includes("yourstore.com"));
+});

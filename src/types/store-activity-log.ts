@@ -12,6 +12,8 @@ export type StoreActivityAction =
   | "cloned"
   | "impersonated"
   | "domain_removed"
+  | "domain_requested"
+  | "domain_connected"
   | "domain_reverified"
   | "primary_domain_changed"
   | "deployment_status_changed"

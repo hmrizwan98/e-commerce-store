@@ -22,8 +22,7 @@ import ProductStatus from "@/components/ProductStatus";
 import { useProductOptions } from "@/hooks/useProductOptions";
 import { recordRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import RecentlyViewedSection from "@/components/RecentlyViewedSection";
-import { useAppDispatch } from "@/utils/hooks/store";
-import { addItem } from "@/store/slices/cartSlice";
+import { useAddToCart } from "@/hooks/useAddToCart";
 import { trackEvent } from "@/lib/analytics/track";
 import type { Product, ProductVariant } from "@/types/product";
 import type { Review } from "@/types/review";
@@ -79,25 +78,19 @@ const ProductDetailClient: React.FC<ProductDetailClientProps> = ({
 
   const thumbnails = product.images.slice(1, 3);
 
-  const dispatch = useAppDispatch();
+  const addToCart = useAddToCart();
 
-  const notifyAddTocart = () => {
-    dispatch(
-      addItem({
-        item: {
-          productId: product.id,
-          variantId: matchedVariant?.id,
-          slug: product.slug,
-          name: product.name,
-          image: activeImage || product.images[0],
-          price: activePrice,
-          variantLabel: [variantLabel, sizeSelected].filter(Boolean).join(" / ") || undefined,
-          maxStock: activeStock,
-        },
-        quantity: qualitySelected,
-      })
-    );
-    trackEvent("add_to_cart", { productId: product.id, value: activePrice * qualitySelected });
+  const notifyAddTocart = (e?: { currentTarget?: EventTarget | null }) => {
+    addToCart({
+      product,
+      matchedVariant,
+      activeImage,
+      activePrice,
+      activeStock,
+      variantLabel: [variantLabel, sizeSelected].filter(Boolean).join(" / "),
+      quantity: qualitySelected,
+      source: e?.currentTarget instanceof Element ? e.currentTarget : null,
+    });
     toast.custom(
       (t) => (
         <NotifyAddTocart

@@ -211,7 +211,7 @@ const CheckoutClient: React.FC<CheckoutClientProps> = ({
             ) : null}
 
             <div className="flex items-center gap-3 pt-2">
-              <Link href={`/order-tracking?orderNumber=${confirmedOrder.orderNumber}&email=${encodeURIComponent(email)}` as any}>
+              <Link href={`/order-tracking?orderNumber=${confirmedOrder.orderNumber}&contact=${encodeURIComponent(email.trim() || phone.trim())}` as any}>
                 <ButtonPrimary className="text-xs !py-2.5">Track Order Status</ButtonPrimary>
               </Link>
               <Link href={"/collection" as any}>

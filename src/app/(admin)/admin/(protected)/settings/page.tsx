@@ -18,6 +18,9 @@ import {
 } from "@/lib/firebase/repositories/site-settings";
 import { getBackupHistory } from "@/lib/firebase/repositories/backup-history";
 import SettingsPageClient from "./SettingsPageClient";
+import { requireCurrentTenant } from "@/lib/tenant/current";
+import { getStoreById } from "@/lib/firebase/repositories/stores";
+import { getCustomDomainView } from "@/lib/domains/custom-domain-service";
 
 export const dynamic = "force-dynamic";
 
@@ -39,6 +42,7 @@ export default async function AdminSettingsPage() {
     backupHistory,
     commission,
     tax,
+    store,
   ] = await Promise.all([
     getGeneralSettings(),
     getShippingSettings(),
@@ -56,6 +60,8 @@ export default async function AdminSettingsPage() {
     getBackupHistory(),
     getCommissionSettings(),
     getTaxSettings(),
+    // Fresh read (not the request-memoized tenant) so the domain status is current.
+    requireCurrentTenant().then((t) => getStoreById(t.id)),
   ]);
 
   return (
@@ -88,6 +94,7 @@ export default async function AdminSettingsPage() {
         backupHistory={backupHistory}
         commission={commission}
         tax={tax}
+        domain={getCustomDomainView(store ?? (await requireCurrentTenant()))}
       />
     </div>
   );

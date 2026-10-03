@@ -1,4 +1,4 @@
-import type { DomainSetting } from "./domain-settings";
+import type { CustomDomainRequest, DomainSetting } from "./domain-settings";
 
 export type StoreStatus = "active" | "suspended" | "archived";
 export type StoreTemplate = "empty" | "demo";
@@ -25,6 +25,8 @@ export interface Store {
   /** DNS/SSL/primary/redirect metadata per hostname in `domains`, keyed by hostname - additive,
    * kept in sync with `domains` by src/lib/superadmin/domain-settings.ts. Never used for tenant resolution. */
   domainSettings?: Record<string, DomainSetting>;
+  /** Store Admin's self-service custom domain (see src/lib/domains/custom-domain-service.ts). */
+  customDomainRequest?: CustomDomainRequest;
   logo?: string;
   email?: string;
   ownerName?: string;

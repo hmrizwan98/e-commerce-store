@@ -20,6 +20,8 @@ import { logTransaction } from "@/lib/firebase/repositories/transactions";
 import { getCommissionSettings } from "@/lib/firebase/repositories/site-settings";
 import { calculateCommission } from "@/lib/finance/commission";
 import { requireCurrentTenant } from "@/lib/tenant/current";
+import { getPlatformBaseUrl } from "@/lib/platform/base-url";
+import { getReliableStorefrontUrl } from "@/lib/platform/tenant-url";
 import { ALLOWED_ORDER_STATUS_TRANSITIONS } from "@/lib/orders/order-status-transitions";
 import type { Order, OrderStatus, PaymentStatus, ReturnStatus } from "@/types/order";
 import type { OrderVerificationDecision } from "@/types/order-verification";
@@ -112,7 +114,9 @@ export async function updateOrderStatus(id: string, status: OrderStatus, note?: 
       if (status === "confirmed") {
         await sendWhatsAppNotification("ORDER_CONFIRMED", order);
       } else if (status === "shipped" || status === "packed") {
-        await sendWhatsAppNotification("ORDER_DISPATCHED", order);
+        // The store's real storefront (custom domain or {slug}.webriiz.com) for the tracking link.
+        const storefrontUrl = getReliableStorefrontUrl(await requireCurrentTenant(), getPlatformBaseUrl());
+        await sendWhatsAppNotification("ORDER_DISPATCHED", order, undefined, storefrontUrl);
       } else if (status === "delivered") {
         await sendWhatsAppNotification("ORDER_DELIVERED", order);
       }

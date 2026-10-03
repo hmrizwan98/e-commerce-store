@@ -17,3 +17,8 @@ export const IS_SUPER_ADMIN_HOST_HEADER = "x-is-superadmin-host";
 export const FRONTSTORE_PREVIEW_HEADER = "x-frontstore-preview";
 export const FRONTSTORE_COOKIE = "frontstore_tenant";
 
+
+/** The path+query the visitor actually requested on a platform subdomain (before any
+ * admin-host rewrite) - lets the root layout redirect {slug}.ROOT_DOMAIN visitors to the
+ * same page on the store's own custom domain. Set only by middleware.ts. */
+export const ORIGINAL_PATH_HEADER = "x-webriiz-original-path";

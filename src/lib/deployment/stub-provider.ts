@@ -4,6 +4,8 @@ import type {
   DeploymentProviderId,
   DomainVerificationResult,
   DeploymentTriggerResult,
+  ProviderDomainStatus,
+  ProviderDomainOpResult,
 } from "./provider";
 
 /** Shared stub factory - same shape as src/lib/payments/stub-provider.ts. Every
@@ -19,6 +21,21 @@ export function createStubDeploymentProvider(id: DeploymentProviderId, displayNa
     },
     async triggerDeployment(): Promise<DeploymentTriggerResult> {
       return { success: false, message: notImplemented };
+    },
+    isConfigured() {
+      return false;
+    },
+    async addDomain(): Promise<ProviderDomainOpResult> {
+      return { ok: false, error: notImplemented };
+    },
+    async getDomainStatus(): Promise<ProviderDomainStatus> {
+      return { attached: false, verified: false, misconfigured: true, verification: [], error: notImplemented };
+    },
+    async verifyDomainChallenge(): Promise<ProviderDomainOpResult> {
+      return { ok: false, error: notImplemented };
+    },
+    async removeDomain(): Promise<ProviderDomainOpResult> {
+      return { ok: false, error: notImplemented };
     },
   };
 }

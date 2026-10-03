@@ -8,6 +8,8 @@ const MAX_ATTEMPTS: Record<string, number> = {
   "superadmin-sensitive": 20,
   checkout: 10,
   tracking: 15,
+  // Custom domain add/check/remove - each check does DNS + hosting-provider calls.
+  "custom-domain": 30,
 };
 
 export interface RateLimitResult {

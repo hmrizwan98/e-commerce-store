@@ -27,7 +27,10 @@ import {
   ArrowPathIcon,
   AdjustmentsHorizontalIcon,
   KeyIcon,
+  LinkIcon,
 } from "@heroicons/react/24/outline";
+import CustomDomainPanel from "./CustomDomainPanel";
+import type { CustomDomainView } from "@/lib/domains/custom-domain-service";
 import {
   updateGeneralSettings,
   updateShippingSettings,
@@ -279,6 +282,7 @@ function SaveButton({ onClick }: { onClick: () => Promise<void> }) {
 
 const TABS = [
   "General",
+  "Domain",
   "Branding",
   "Localization",
   "SEO",
@@ -300,6 +304,7 @@ type Tab = (typeof TABS)[number];
 
 const TAB_ICONS: Record<Tab, React.ComponentType<{ className?: string }>> = {
   General: Cog6ToothIcon,
+  Domain: LinkIcon,
   Branding: PaintBrushIcon,
   Localization: GlobeAltIcon,
   SEO: MagnifyingGlassIcon,
@@ -335,6 +340,7 @@ export default function SettingsPageClient({
   backupHistory,
   commission: initialCommission,
   tax: initialTax,
+  domain,
 }: {
   general: GeneralSettings;
   shipping: ShippingSettings;
@@ -352,6 +358,7 @@ export default function SettingsPageClient({
   backupHistory: BackupRecord[];
   commission: CommissionSettings;
   tax: TaxSettings;
+  domain: CustomDomainView;
 }) {
   const [tab, setTab] = useState<Tab>("General");
 
@@ -1195,6 +1202,17 @@ export default function SettingsPageClient({
             </div>
           </div>
           <SaveButton onClick={() => updateAdvancedSettings(advanced)} />
+        </section>
+      )}
+
+      {tab === "Domain" && (
+        <section className={cardClass}>
+          <SectionHeader
+            icon={LinkIcon}
+            title="Custom Domain"
+            subtitle="Connect your own domain - your store and Store Admin move to it, with free HTTPS."
+          />
+          <CustomDomainPanel initial={domain} />
         </section>
       )}
 

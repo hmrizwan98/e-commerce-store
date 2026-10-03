@@ -170,7 +170,7 @@ export function resolveIntent(query: string): ResolvedIntent {
   const isPendingQuery = normalized.includes("pending");
 
   // Check pending order query (e.g. "mujhy ye pta rkna hy is waqt me kitny order pending me hyn")
-  if (hasOrderWord && (isPendingQuery || hasCountIndicator || normalized.includes("receive") || normalized.includes("aye")) && !hasActionVerb) {
+  if (hasOrderWord && (isPendingQuery || hasCountIndicator || normalized.includes("receive") || hasWord(normalized, "aye")) && !hasActionVerb) {
     return {
       intentId: "stat_pendingOrderCount",
       type: "live_stat",

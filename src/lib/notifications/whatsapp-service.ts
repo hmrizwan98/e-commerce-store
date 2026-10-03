@@ -1,6 +1,7 @@
 import { formatMoney, type CurrencySettings } from "@/lib/currency/format";
 import { getGeneralSettings } from "@/lib/firebase/repositories/site-settings";
 import type { Order } from "@/types/order";
+import { buildOrderTrackingUrl } from "@/lib/orders/tracking-url";
 
 /**
  * Clean and format phone numbers into international format without + (e.g. 03001234567 -> 923001234567)
@@ -35,7 +36,9 @@ export interface SendWhatsAppResult {
 export function buildWhatsAppMessageText(
   type: WhatsAppNotificationType,
   order: Partial<Order> & { orderNumber: string },
-  currency?: CurrencySettings | null
+  currency?: CurrencySettings | null,
+  /** The store's storefront URL - enables the tracking link in "dispatched" messages. */
+  storefrontUrl?: string | null
 ): string {
   const customerName = order.guestName || order.shippingAddress?.fullName || "Valued Customer";
   const orderNum = order.orderNumber;
@@ -77,9 +80,10 @@ We are currently packing your items for dispatch. You will receive another notif
       const courierText = order.courierName
         ? `\n🚚 *Courier Provider:* ${order.courierName}`
         : "";
-      const trackingPageLink = order.guestEmail
-        ? `\n\n🔍 *Track your order live on our store:* \nhttps://yourstore.com/order-tracking?orderNumber=${encodeURIComponent(orderNum)}&email=${encodeURIComponent(order.guestEmail)}`
-        : "";
+      // Previously a hardcoded https://yourstore.com placeholder (never a working link),
+      // and only for customers who gave an email.
+      const trackingUrl = buildOrderTrackingUrl(storefrontUrl, order);
+      const trackingPageLink = trackingUrl ? `\n\n🔍 *Track your order live on our store:* \n${trackingUrl}` : "";
 
       return `🚚 *Order Dispatched!*
 
@@ -111,11 +115,12 @@ Thank you for shopping with us!`;
 export async function sendWhatsAppNotification(
   type: WhatsAppNotificationType,
   order: Partial<Order> & { orderNumber: string; shippingAddress?: any },
-  currency?: CurrencySettings | null
+  currency?: CurrencySettings | null,
+  storefrontUrl?: string | null
 ): Promise<SendWhatsAppResult> {
   const rawPhone = order.shippingAddress?.phone || (order as any).guestPhone || "";
   const phone = formatPhoneNumber(rawPhone);
-  const messageText = buildWhatsAppMessageText(type, order, currency);
+  const messageText = buildWhatsAppMessageText(type, order, currency, storefrontUrl);
   const encodedText = encodeURIComponent(messageText);
   const waLink = phone ? `https://wa.me/${phone}?text=${encodedText}` : "";
 

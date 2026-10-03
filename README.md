@@ -2130,3 +2130,64 @@ idempotent. No real/existing store was touched.
 - No confirmation email or cooling-off period before the Auth user is
   deleted - the type-the-slug gate is the only safeguard, matching the
   bar set by every other destructive action in this panel.
+## Custom Domains (Store Admin Self-Service)
+
+Store owners connect their own domain from **Store Admin → Settings → Domain**. Once
+connected, the storefront opens at `mystore.com`, the Store Admin at `admin.mystore.com`,
+`www.mystore.com` redirects to `mystore.com`, HTTPS is automatic, and the default
+`{slug}.webriiz.com` / `admin-{slug}.webriiz.com` addresses redirect to the new domain.
+
+### Flow
+1. **Add domain** – the owner enters `mystore.com`. It's validated (no platform
+   subdomains, IPs, `admin.` hosts; already-connected domains are rejected) and saved as
+   `store.customDomainRequest` with a random ownership token. **Nothing is attached or
+   routed yet.**
+2. **DNS records** – the page lists exactly what to add at their registrar:
+   `TXT _webriiz-verify → webriiz-verify=<token>` (ownership), `A @ → 76.76.21.21`
+   (apex; a CNAME for a subdomain domain), `CNAME www` and `CNAME admin → cname.vercel-dns.com`
+   (values come from Vercel's API when available).
+3. **Check status** runs every step and stores the result (`lastCheck`):
+   1. ownership – the TXT record, looked up via public DNS (1.1.1.1 / 8.8.8.8);
+   2. hosting – `mystore.com`, `admin.mystore.com` and a `www` 308 redirect are added to the
+      Vercel project (`POST /v10/projects/{id}/domains`, idempotent);
+   3. DNS – Vercel's `verified` flag + `GET /v6/domains/{domain}/config` `misconfigured`;
+      extra Vercel TXT challenges (domain used on another Vercel account) are shown to the
+      owner as additional records;
+   4. SSL – a real HTTPS request to both hosts must succeed and be served by Vercel.
+4. **Active** – the domain joins `store.domains` (tenant routing), becomes primary with
+   `dnsStatus: verified` / `sslStatus: active`, and `websiteUrl` / `adminUrl` switch over.
+   Re-checking later and failing drops the status back to pending, which stops the
+   redirects and links until it passes again.
+5. **Disconnect** – detaches all three hosts from Vercel and puts the store back on its
+   default addresses.
+
+### Code map
+| Piece | File |
+|---|---|
+| Rules: validation, DNS records, apex detection, live-domain check | `src/lib/domains/custom-domain.ts` (pure) |
+| Ownership TXT lookup, HTTPS probe | `src/lib/domains/dns-check.ts` |
+| Request / check / activate / remove | `src/lib/domains/custom-domain-service.ts` |
+| Vercel REST integration | `src/lib/deployment/providers/vercel.ts` (+ `provider-registry.ts`) |
+| Default-address → custom-domain redirect | `src/lib/domains/redirect.ts`, called from `src/app/layout.tsx`; path forwarded by `middleware.ts` (`x-webriiz-original-path`) |
+| Store Admin UI / actions | `settings/CustomDomainPanel.tsx`, `settings/domain-actions.ts` |
+| Super Admin | adding/removing a domain on a store also attaches/detaches it on Vercel; **Re-verify** uses the real check |
+
+### Setup (one time, platform owner)
+1. Set `VERCEL_API_TOKEN`, `VERCEL_PROJECT_ID` (and `VERCEL_TEAM_ID` if the project is in a
+   team) in Vercel → Project → Settings → Environment Variables (Production), then redeploy.
+   Without them the Domain page still verifies ownership but says custom domains aren't
+   switched on yet.
+2. If the Firebase **browser API key** has HTTP-referrer restrictions (Google Cloud →
+   Credentials), allow store domains (or remove the restriction) - otherwise Store Admin
+   sign-in fails on `admin.<custom domain>`.
+3. Vercel plans limit how many domains a project can hold - check your plan before
+   onboarding many stores.
+
+### Security notes
+- A domain only starts routing to a store after its owner proves control with the
+  per-request TXT token, so no store can claim someone else's domain.
+- Store Admin actions run as the signed-in admin of the store on that host (`requireAdmin`)
+  and are rate-limited (`custom-domain` bucket). Errors shown to owners never include raw
+  provider responses.
+- Admin sessions are per-host cookies: after connecting, the admin signs in once on
+  `admin.<domain>`.

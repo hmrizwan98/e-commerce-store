@@ -45,7 +45,7 @@ export function useProductDetailState(product: Product, variants: ProductVariant
   const thumbnails = product.images.slice(1, 3);
   const addToCart = useAddToCart();
 
-  const notifyAddTocart = () => {
+  const notifyAddTocart = (e?: { currentTarget?: EventTarget | null }) => {
     addToCart({
       product,
       matchedVariant,
@@ -54,6 +54,7 @@ export function useProductDetailState(product: Product, variants: ProductVariant
       activeStock,
       variantLabel: [variantLabel, sizeSelected].filter(Boolean).join(" / "),
       quantity: qualitySelected,
+      source: e?.currentTarget instanceof Element ? e.currentTarget : null,
     });
     toast.custom(
       (t) => (

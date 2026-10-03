@@ -1,4 +1,14 @@
+import React from "react";
 import Link from "next/link";
+import {
+  ArchiveBoxIcon,
+  CheckBadgeIcon,
+  CheckIcon,
+  ClipboardDocumentListIcon,
+  Cog6ToothIcon,
+  HomeIcon,
+  TruckIcon,
+} from "@heroicons/react/24/outline";
 import { headers } from "next/headers";
 import Label from "@/components/Label/Label";
 import Input from "@/shared/Input/Input";
@@ -6,6 +16,7 @@ import ButtonPrimary from "@/shared/Button/ButtonPrimary";
 import { getOrderByOrderNumber } from "@/lib/firebase/repositories/orders";
 import { getShippingSettings, getGeneralSettings } from "@/lib/firebase/repositories/site-settings";
 import { formatMoney } from "@/lib/currency/format";
+import { normalizePhone } from "@/lib/orders/verification/phone";
 import { checkRateLimit } from "@/lib/firebase/rate-limit";
 import { getCurrentTenant } from "@/lib/tenant/current";
 import type { Order, OrderStatus } from "@/types/order";
@@ -21,6 +32,15 @@ const STATUS_LABELS: Record<string, string> = {
   delivered: "Delivered",
   cancelled: "Cancelled",
   refunded: "Refunded",
+};
+
+const STEP_ICONS: Record<string, typeof TruckIcon> = {
+  pending: ClipboardDocumentListIcon,
+  confirmed: CheckBadgeIcon,
+  processing: Cog6ToothIcon,
+  packed: ArchiveBoxIcon,
+  shipped: TruckIcon,
+  delivered: HomeIcon,
 };
 
 const ORDER_STEPS: OrderStatus[] = [
@@ -56,22 +76,40 @@ function resolveCourierUrl(courierName?: string, trackingNumber?: string, custom
   return null;
 }
 
+/** Order number + the email OR phone given at checkout. Phones are compared after
+ * normalization (0300-1234567 == +92 300 1234567); unparseable numbers fall back to a
+ * digits-only comparison, and need at least 7 digits so a short guess can't match. */
+function orderMatchesContact(order: Order, contact: string): boolean {
+  if (contact.includes("@")) {
+    return !!order.guestEmail && order.guestEmail.trim().toLowerCase() === contact.toLowerCase();
+  }
+  const orderPhone = order.shippingAddress?.phone ?? "";
+  const a = normalizePhone(contact);
+  const b = normalizePhone(orderPhone);
+  if (a.isValid && b.isValid) return a.digits === b.digits;
+  const digitsA = contact.replace(/\D/g, "");
+  return digitsA.length >= 7 && digitsA === orderPhone.replace(/\D/g, "");
+}
+
 const OrderTrackingPage = async ({
   searchParams,
 }: {
-  searchParams: { orderNumber?: string; email?: string };
+  searchParams: { orderNumber?: string; contact?: string; email?: string };
 }) => {
   const [shippingSettings, general] = await Promise.all([getShippingSettings(), getGeneralSettings()]);
   const isTrackingEnabled = shippingSettings.trackingEnabled ?? true;
 
   const orderNumber = searchParams.orderNumber?.trim();
-  const email = searchParams.email?.trim();
-  const searched = Boolean(orderNumber && email);
+  // One "email or phone" field - checkout's email is optional, so a customer who only gave
+  // a phone number must still be able to track. `email` is the older param name, kept so
+  // existing links (thank-you page, WhatsApp messages) keep working.
+  const contact = (searchParams.contact ?? searchParams.email)?.trim();
+  const searched = Boolean(orderNumber && contact);
 
   let isRateLimited = false;
   let order: Order | null = null;
 
-  if (isTrackingEnabled && searched && orderNumber && email) {
+  if (isTrackingEnabled && searched && orderNumber && contact) {
     const reqHeaders = headers();
     const ip = reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() || reqHeaders.get("x-real-ip") || "anonymous";
     const tenant = await getCurrentTenant();
@@ -85,8 +123,7 @@ const OrderTrackingPage = async ({
     }
   }
 
-  const matched =
-    order && order.guestEmail?.toLowerCase() === email?.toLowerCase() ? order : null;
+  const matched = order && contact && orderMatchesContact(order, contact) ? order : null;
 
   // Calculate current step index for visual timeline
   const currentStepIndex = matched
@@ -125,7 +162,7 @@ const OrderTrackingPage = async ({
           Track Your Order
         </h1>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
-          Enter your order number and email address below to view live tracking details.
+          Enter your order number and the email or phone number used at checkout.
         </p>
       </div>
 
@@ -142,13 +179,14 @@ const OrderTrackingPage = async ({
             />
           </div>
           <div className="sm:col-span-2">
-            <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Email Address</Label>
+            <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Email or Phone Number</Label>
             <Input
               className="mt-1.5"
-              type="email"
-              name="email"
-              defaultValue={email}
-              placeholder="you@example.com"
+              type="text"
+              name="contact"
+              defaultValue={contact}
+              placeholder="you@example.com or 0300 1234567"
+              autoComplete="email tel"
               required
             />
           </div>
@@ -167,7 +205,7 @@ const OrderTrackingPage = async ({
 
         {searched && !isRateLimited && !matched && (
           <div className="mt-6 p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200/60 dark:border-rose-800/60 text-xs text-rose-700 dark:text-rose-300 font-medium text-center">
-            No order found matching order number <span className="font-mono font-bold">{orderNumber}</span> and email <span className="font-bold">{email}</span>.
+            No order found matching order number <span className="font-mono font-bold">{orderNumber}</span> and <span className="font-bold">{contact}</span>.
           </div>
         )}
       </div>
@@ -188,7 +226,7 @@ const OrderTrackingPage = async ({
               </div>
 
               <div className="text-right">
-                <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-400">Current Status</span>
+                <span className="block text-xs font-mono font-bold uppercase tracking-wider text-slate-400">Current Status</span>
                 <div className="mt-1 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 text-xs font-extrabold uppercase tracking-wide">
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                   {STATUS_LABELS[matched.orderStatus] ?? matched.orderStatus}
@@ -196,49 +234,62 @@ const OrderTrackingPage = async ({
               </div>
             </div>
 
-            {/* Visual Step Timeline */}
+            {/* Visual Step Timeline - fills up to the current step on load, steps pop in one by
+                one, and the current step pulses (animations defined in globals.css, disabled
+                under prefers-reduced-motion). Colors follow the store's theme primary. */}
             {currentStepIndex !== -1 && (
-              <div className="py-8">
-                <div className="relative flex items-center justify-between max-w-xl mx-auto">
-                  {/* Connecting Line */}
-                  <div className="absolute top-1/2 left-0 right-0 -translate-y-1/2 h-1 bg-slate-100 dark:bg-slate-800 z-0 rounded-full" />
+              <div className="pt-10 pb-4">
+                <div className="relative max-w-2xl mx-auto">
+                  <div className="absolute top-4 sm:top-5 left-[8.33%] right-[8.33%] h-1 rounded-full bg-slate-100 dark:bg-slate-800" />
                   <div
-                    className="absolute top-1/2 left-0 -translate-y-1/2 h-1 bg-primary-600 transition-all duration-500 z-0 rounded-full"
-                    style={{
-                      width: `${(currentStepIndex / (ORDER_STEPS.length - 1)) * 100}%`,
-                    }}
+                    className="track-fill absolute top-4 sm:top-5 left-[8.33%] h-1 rounded-full bg-gradient-to-r from-primary-500 to-primary-600"
+                    style={{ width: `${(currentStepIndex / (ORDER_STEPS.length - 1)) * 83.34}%` }}
                   />
-
-                  {ORDER_STEPS.map((step, idx) => {
-                    const isPassed = idx <= currentStepIndex;
-                    const isCurrent = idx === currentStepIndex;
-                    return (
-                      <div key={step} className="relative z-10 flex flex-col items-center">
-                        <div
-                          className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-extrabold transition-all ${
-                            isCurrent
-                              ? "bg-primary-600 text-white ring-4 ring-primary-100 dark:ring-primary-950/60 scale-110 shadow-md"
-                              : isPassed
-                              ? "bg-primary-600 text-white"
-                              : "bg-slate-100 dark:bg-slate-800 text-slate-400 border border-slate-200 dark:border-slate-700"
-                          }`}
+                  <ol className="relative grid grid-cols-6">
+                    {ORDER_STEPS.map((step, idx) => {
+                      const isPassed = idx < currentStepIndex;
+                      const isCurrent = idx === currentStepIndex;
+                      const Icon = STEP_ICONS[step];
+                      return (
+                        <li
+                          key={step}
+                          className="step-pop flex flex-col items-center text-center"
+                          style={{ animationDelay: `${idx * 110}ms` }}
                         >
-                          {isPassed ? "✓" : idx + 1}
-                        </div>
-                        <span
-                          className={`text-[11px] font-bold mt-2 text-center max-w-[70px] ${
-                            isCurrent
-                              ? "text-primary-600 dark:text-primary-400 font-black"
-                              : isPassed
-                              ? "text-slate-900 dark:text-slate-200"
-                              : "text-slate-400 dark:text-slate-600"
-                          }`}
-                        >
-                          {STATUS_LABELS[step]}
-                        </span>
-                      </div>
-                    );
-                  })}
+                          <div className="relative">
+                            {isCurrent && (
+                              <span className="absolute inset-0 rounded-full bg-primary-500/40 animate-ping" aria-hidden />
+                            )}
+                            <div
+                              className={`relative w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all ${
+                                isCurrent
+                                  ? "bg-primary-600 text-white shadow-lg shadow-primary-500/30 ring-4 ring-primary-100 dark:ring-primary-900/60"
+                                  : isPassed
+                                  ? "bg-primary-600 text-white"
+                                  : "bg-white dark:bg-slate-900 text-slate-400 border-2 border-slate-200 dark:border-slate-700"
+                              }`}
+                            >
+                              {isPassed ? <CheckIcon className="w-4 h-4 sm:w-5 sm:h-5" strokeWidth={3} /> : <Icon className="w-4 h-4 sm:w-5 sm:h-5" />}
+                            </div>
+                          </div>
+                          <span
+                            className={`text-[9px] sm:text-xs font-bold mt-2 sm:mt-3 leading-tight px-0.5 ${
+                              isCurrent
+                                ? "text-primary-600 dark:text-primary-400"
+                                : isPassed
+                                ? "text-slate-800 dark:text-slate-200"
+                                : "text-slate-400 dark:text-slate-500"
+                            }`}
+                          >
+                            {STATUS_LABELS[step]}
+                          </span>
+                          {isCurrent && (
+                            <span className="mt-1 text-[8px] sm:text-[10px] font-semibold uppercase tracking-wider text-primary-500">Current</span>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ol>
                 </div>
               </div>
             )}

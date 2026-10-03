@@ -36,6 +36,9 @@ module.exports = {
           400: customColors("--c-primary-400"),
           500: customColors("--c-primary-500"),
           6000: customColors("--c-primary-600"),
+          // Alias - many components use the standard Tailwind step name "primary-600";
+          // without it those classes silently produced no color at all.
+          600: customColors("--c-primary-600"),
           700: customColors("--c-primary-700"),
           800: customColors("--c-primary-800"),
           900: customColors("--c-primary-900"),
@@ -48,6 +51,9 @@ module.exports = {
           400: customColors("--c-secondary-400"),
           500: customColors("--c-secondary-500"),
           6000: customColors("--c-secondary-600"),
+          // Alias - many components use the standard Tailwind step name "secondary-600";
+          // without it those classes silently produced no color at all.
+          600: customColors("--c-secondary-600"),
           700: customColors("--c-secondary-700"),
           800: customColors("--c-secondary-800"),
           900: customColors("--c-secondary-900"),

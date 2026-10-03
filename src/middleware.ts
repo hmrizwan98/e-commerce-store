@@ -6,6 +6,7 @@ import {
   IS_SUPER_ADMIN_HOST_HEADER,
   FRONTSTORE_PREVIEW_HEADER,
   FRONTSTORE_COOKIE,
+  ORIGINAL_PATH_HEADER,
 } from "@/lib/tenant/constants";
 import { normalizeHostname, parseHost } from "@/lib/tenant/hostname";
 
@@ -36,6 +37,7 @@ export function middleware(req: NextRequest) {
   requestHeaders.delete(TENANT_CUSTOM_DOMAIN_HEADER);
   requestHeaders.delete(IS_ADMIN_HOST_HEADER);
   requestHeaders.delete(IS_SUPER_ADMIN_HOST_HEADER);
+  requestHeaders.delete(ORIGINAL_PATH_HEADER);
 
   const pathname = req.nextUrl.pathname;
 
@@ -121,6 +123,7 @@ export function middleware(req: NextRequest) {
   if (parsed.type === "tenant-admin" && parsed.slug) {
     requestHeaders.set(TENANT_SLUG_HEADER, parsed.slug);
     requestHeaders.set(IS_ADMIN_HOST_HEADER, "1");
+    requestHeaders.set(ORIGINAL_PATH_HEADER, pathname + req.nextUrl.search);
 
     if (pathname === "/") {
       const url = req.nextUrl.clone();
@@ -160,6 +163,7 @@ export function middleware(req: NextRequest) {
   // 4. Platform Tenant Storefront Host ({slug}.webriiz.com)
   if (parsed.type === "tenant-storefront" && parsed.slug) {
     requestHeaders.set(TENANT_SLUG_HEADER, parsed.slug);
+    requestHeaders.set(ORIGINAL_PATH_HEADER, pathname + req.nextUrl.search);
 
     if (pathname.startsWith("/platform")) {
       return NextResponse.redirect(new URL("/", req.url));

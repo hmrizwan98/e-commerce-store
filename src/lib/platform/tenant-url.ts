@@ -1,4 +1,4 @@
-import { normalizeHostname } from "@/lib/tenant/hostname";
+import { getActivePrimaryCustomDomain } from "@/lib/domains/custom-domain";
 
 /**
  * Helper functions to construct tenant URLs cleanly across server and client components.
@@ -62,32 +62,29 @@ export function buildResetPasswordLinkUrl(baseUrl: string, slug: string): string
   return `${origin}/admin/reset-password?slug=${encodeURIComponent(slug)}`;
 }
 
-/**
- * Resolves the primary storefront URL for a store, respecting custom domains if configured.
- * E.g., https://glamix.pk if custom domain exists, else https://glamix.webriiz.com.
- */
-export function getStorefrontUrl(
-  store: { slug: string; domains?: string[]; websiteUrl?: string },
-  baseUrl: string
-): string {
-  const customDomain = (store.domains ?? []).find((d) => !d.startsWith("admin."));
-  if (customDomain) {
-    return `https://${normalizeHostname(customDomain)}`;
-  }
-  return store.websiteUrl || buildTenantUrl(baseUrl, store.slug);
-}
+type StoreUrlInput = {
+  slug: string;
+  domains?: string[];
+  domainSettings?: Record<string, { isPrimary?: boolean; dnsStatus?: string; sslStatus?: string; redirectPlatformSubdomain?: boolean }>;
+};
 
 /**
- * Resolves the primary Store Admin URL for a store, respecting custom domains if configured.
- * E.g., https://admin.glamix.pk if custom domain exists, else https://admin.glamix.webriiz.com.
+ * The store's storefront URL: its custom domain once that is live (primary, DNS-verified,
+ * SSL-active - see getActivePrimaryCustomDomain), otherwise its {slug}.ROOT_DOMAIN address,
+ * which always works. Never returns a domain that isn't connected yet.
  */
-export function getStoreAdminUrl(
-  store: { slug: string; domains?: string[]; adminUrl?: string },
-  baseUrl: string
-): string {
-  const customDomain = (store.domains ?? []).find((d) => !d.startsWith("admin."));
-  if (customDomain) {
-    return `https://admin.${normalizeHostname(customDomain)}`;
-  }
-  return store.adminUrl || buildTenantAdminUrl(baseUrl, store.slug);
+export function getStorefrontUrl(store: StoreUrlInput, baseUrl: string): string {
+  const live = getActivePrimaryCustomDomain(store);
+  return live ? `https://${live.hostname}` : buildTenantUrl(baseUrl, store.slug);
+}
+
+/** Store Admin URL - admin.<custom domain> once live, otherwise admin-{slug}.ROOT_DOMAIN. */
+export function getStoreAdminUrl(store: StoreUrlInput, baseUrl: string): string {
+  const live = getActivePrimaryCustomDomain(store);
+  return live ? `https://admin.${live.hostname}` : buildTenantAdminUrl(baseUrl, store.slug);
+}
+
+/** Storefront URL for links sent to customers (e.g. WhatsApp tracking links). */
+export function getReliableStorefrontUrl(store: StoreUrlInput, baseUrl: string): string {
+  return getStorefrontUrl(store, baseUrl);
 }

@@ -35,6 +35,7 @@ export default function CartDropdown({ cartSettings }: CartDropdownProps) {
         <>
           <Popover.Button
             aria-label="Shopping cart"
+            data-cart-icon
             className={`
                 ${open ? "" : "text-opacity-90"}
                  group w-10 h-10 sm:w-12 sm:h-12 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full inline-flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-opacity-75 relative`}
