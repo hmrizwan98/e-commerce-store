@@ -11,6 +11,8 @@ import {
 } from "@/lib/orders/order-analytics";
 import OrderActions from "../OrderActions";
 import OrderLifecycleActions from "../OrderLifecycleActions";
+import OrderVerificationCard from "../OrderVerificationCard";
+import { ensureOrderVerification } from "@/lib/firebase/repositories/order-verifications";
 
 import Link from "next/link";
 import { ArrowLeftIcon } from "@heroicons/react/24/outline";
@@ -33,6 +35,19 @@ export default async function AdminOrderDetailPage({ params }: { params: { id: s
     getGeneralSettings(),
   ]);
   if (!order) notFound();
+  // COD only - evaluated once and persisted, so this is a single doc read on later views.
+  const verification = await ensureOrderVerification(order);
+  // Mirrors getCodFulfillmentBlock() for the UI; the server actions enforce it regardless.
+  const fulfillmentBlockedReason =
+    verification?.status === "pending"
+      ? "Approve this COD order in the Order Verification card before fulfilling it."
+      : verification?.status === "rejected"
+        ? "This COD order was rejected during verification."
+        : null;
+  const amountLabel =
+    (general.currency || "").toUpperCase() === "PKR"
+      ? `Rs ${order.total.toLocaleString("en-PK")}`
+      : `${general.currencySymbol || general.currency || ""} ${order.total.toFixed(2)}`.trim();
 
   return (
     <>
@@ -140,11 +155,25 @@ export default async function AdminOrderDetailPage({ params }: { params: { id: s
               </div>
             </div>
 
-            <OrderLifecycleActions order={order} activity={activity} documents={documents} />
+            <OrderLifecycleActions
+              order={order}
+              activity={activity}
+              documents={documents}
+              fulfillmentBlockedReason={fulfillmentBlockedReason}
+            />
           </div>
 
           {/* Right Sidebar Column (5 Columns) */}
           <div className="lg:col-span-5 space-y-6">
+            {verification && (
+              <OrderVerificationCard
+                order={order}
+                verification={verification}
+                storeName={general.storeName || "our store"}
+                amountLabel={amountLabel}
+              />
+            )}
+
             {/* Manage Order Card */}
             <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-xs h-fit">
               <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
@@ -153,7 +182,7 @@ export default async function AdminOrderDetailPage({ params }: { params: { id: s
                   {order.paymentMethod.replace("_", " ")}
                 </span>
               </div>
-              <OrderActions order={order} />
+              <OrderActions order={order} fulfillmentBlockedReason={fulfillmentBlockedReason} />
             </div>
 
             {/* Order Analytics Card */}

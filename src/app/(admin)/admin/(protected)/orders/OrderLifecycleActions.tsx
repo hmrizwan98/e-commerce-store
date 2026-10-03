@@ -11,6 +11,7 @@ import {
   initiateRefund,
   updateReturnStatus,
   requestOrderDocument,
+  type OrderActionResult,
 } from "./actions";
 import { buildOrderTimeline } from "@/lib/orders/order-timeline";
 import type { Order, ReturnStatus } from "@/types/order";
@@ -51,7 +52,10 @@ const OrderLifecycleActions: React.FC<{
   order: Order;
   activity: OrderActivityLog[];
   documents: OrderDocument[];
-}> = ({ order, activity, documents }) => {
+  /** Set while a COD order's verification isn't approved - fulfillment steps are blocked
+   * server-side too (see orders/actions.ts's assertCodFulfillmentAllowed). */
+  fulfillmentBlockedReason?: string | null;
+}> = ({ order, activity, documents, fulfillmentBlockedReason }) => {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [courierName, setCourierName] = useState(order.courierName ?? "");
@@ -90,10 +94,14 @@ const OrderLifecycleActions: React.FC<{
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [order.id, order.updatedAt]);
 
-  const run = async (fn: () => Promise<void>) => {
+  const run = async (fn: () => Promise<void | OrderActionResult>) => {
     setBusy(true);
     try {
-      await fn();
+      const result = await fn();
+      if (result && !result.ok) {
+        toast.error(result.error);
+        return;
+      }
       router.refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Something went wrong. Please try again.");
@@ -229,8 +237,11 @@ const OrderLifecycleActions: React.FC<{
               />
             </div>
           </div>
+          {fulfillmentBlockedReason && (
+            <p className="text-xs font-semibold text-amber-600 dark:text-amber-400">{fulfillmentBlockedReason}</p>
+          )}
           <button
-            disabled={busy}
+            disabled={busy || !!fulfillmentBlockedReason}
             onClick={() =>
               run(() =>
                 setShipmentDetails(order.id, {
@@ -243,7 +254,7 @@ const OrderLifecycleActions: React.FC<{
                 })
               )
             }
-            className="px-4 py-2 text-xs font-extrabold rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white transition-all"
+            className="px-4 py-2 text-xs font-extrabold rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Save Shipment Information
           </button>
@@ -348,8 +359,9 @@ const OrderLifecycleActions: React.FC<{
                 disabled={busy || !isCancellable || !cancelReason.trim()}
                 onClick={() =>
                   run(async () => {
-                    await cancelOrder(order.id, cancelReason);
-                    setCancelReason("");
+                    const result = await cancelOrder(order.id, cancelReason);
+                    if (result.ok) setCancelReason("");
+                    return result;
                   })
                 }
                 className="px-4 py-2 text-sm rounded-lg border border-red-300 text-red-600 dark:border-red-800"
@@ -437,9 +449,9 @@ const OrderLifecycleActions: React.FC<{
           {DOCUMENT_TYPES.map(({ type, label }) => (
             <button
               key={type}
-              disabled={busy}
+              disabled={busy || (type !== "invoice" && !!fulfillmentBlockedReason)}
               onClick={() => run(() => requestOrderDocument(order.id, type))}
-              className="px-4 py-2 text-sm rounded-lg border border-neutral-300 dark:border-neutral-700"
+              className="px-4 py-2 text-sm rounded-lg border border-neutral-300 dark:border-neutral-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {label}
             </button>

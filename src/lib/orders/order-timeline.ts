@@ -21,6 +21,8 @@ const ACTIVITY_LABELS: Record<OrderActivityLog["action"], string> = {
   refund_issued: "Refund issued",
   return_updated: "Return status updated",
   document_queued: "Document queued",
+  verification_approved: "COD verification approved",
+  verification_rejected: "COD verification rejected",
 };
 
 export function buildOrderTimeline(order: Order, activity: OrderActivityLog[]): OrderTimelineEvent[] {

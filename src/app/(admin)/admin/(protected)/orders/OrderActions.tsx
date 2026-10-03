@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { updateOrderStatus, updatePaymentStatus, setTrackingNumber } from "./actions";
+import { updateOrderStatus, updatePaymentStatus, setTrackingNumber, type OrderActionResult } from "./actions";
 import { ALLOWED_ORDER_STATUS_TRANSITIONS } from "@/lib/orders/order-status-transitions";
 import type { Order, OrderStatus, PaymentStatus } from "@/types/order";
 import { formatPhoneNumber } from "@/lib/notifications/whatsapp-service";
@@ -29,15 +29,22 @@ const PAYMENT_STATUS_OPTIONS: CustomSelectOption<PaymentStatus>[] = [
   { value: "refunded", label: "Refunded", icon: "↩️" },
 ];
 
-const OrderActions: React.FC<{ order: Order }> = ({ order }) => {
+const OrderActions: React.FC<{ order: Order; fulfillmentBlockedReason?: string | null }> = ({
+  order,
+  fulfillmentBlockedReason,
+}) => {
   const router = useRouter();
   const [tracking, setTracking] = useState(order.trackingNumber ?? "");
   const [busy, setBusy] = useState(false);
 
-  const run = async (fn: () => Promise<void>) => {
+  const run = async (fn: () => Promise<void | OrderActionResult>) => {
     setBusy(true);
     try {
-      await fn();
+      const result = await fn();
+      if (result && !result.ok) {
+        toast.error(result.error);
+        return;
+      }
       router.refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Something went wrong. Please try again.");
@@ -50,8 +57,13 @@ const OrderActions: React.FC<{ order: Order }> = ({ order }) => {
   // were always listed (e.g. "Refunded", which orderStatus never transitions into - that's
   // the separate initiateRefund flow - or any option at all once an order is
   // delivered/cancelled), so picking one of those silently failed with no feedback.
+  // An unapproved COD verification offers no status change here: advancing is blocked, and
+  // cancelling needs a reason, which this dropdown can't collect - the Verification card's
+  // Reject or the Cancel order box are used instead (both enforced server-side too).
   const availableStatusOptions = ORDER_STATUS_OPTIONS.filter(
-    (opt) => opt.value === order.orderStatus || ALLOWED_ORDER_STATUS_TRANSITIONS[order.orderStatus]?.includes(opt.value)
+    (opt) =>
+      opt.value === order.orderStatus ||
+      (!fulfillmentBlockedReason && ALLOWED_ORDER_STATUS_TRANSITIONS[order.orderStatus]?.includes(opt.value))
   );
 
   const inputClass =
@@ -71,6 +83,11 @@ const OrderActions: React.FC<{ order: Order }> = ({ order }) => {
           options={availableStatusOptions}
           onChange={(newStatus) => run(() => updateOrderStatus(order.id, newStatus))}
         />
+        {fulfillmentBlockedReason && (
+          <p className="text-[11px] text-amber-600 dark:text-amber-400 font-semibold pt-1.5">
+            {fulfillmentBlockedReason} To cancel, use Reject Order or the Cancel order box with a reason.
+          </p>
+        )}
       </div>
 
       <div>
@@ -96,9 +113,9 @@ const OrderActions: React.FC<{ order: Order }> = ({ order }) => {
             onChange={(e) => setTracking(e.target.value)}
           />
           <button
-            disabled={busy}
+            disabled={busy || !!fulfillmentBlockedReason}
             onClick={() => run(() => setTrackingNumber(order.id, tracking))}
-            className="px-4 py-2 text-xs font-extrabold rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white transition-all cursor-pointer shrink-0 shadow-xs"
+            className="px-4 py-2 text-xs font-extrabold rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white transition-all cursor-pointer shrink-0 shadow-xs disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Save
           </button>

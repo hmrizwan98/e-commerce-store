@@ -7,6 +7,13 @@ import { requireAdmin } from "@/lib/firebase/require-admin";
 import { stripUndefined } from "@/lib/firebase/repositories/utils";
 import { getOrderById } from "@/lib/firebase/repositories/orders";
 import { logOrderActivity } from "@/lib/firebase/repositories/order-activity-logs";
+import {
+  OrderStateConflictError,
+  commitOrderStatusChange,
+  getCodFulfillmentBlock,
+  getVerificationRefs,
+  isCodVerificationPending,
+} from "@/lib/firebase/repositories/order-verifications";
 import { queueInvoice, queuePackingSlip, queueShippingLabel } from "@/lib/firebase/services/order-document-service";
 import { queueOrderExport } from "@/lib/firebase/services/order-bulk-service";
 import { logTransaction } from "@/lib/firebase/repositories/transactions";
@@ -14,50 +21,108 @@ import { getCommissionSettings } from "@/lib/firebase/repositories/site-settings
 import { calculateCommission } from "@/lib/finance/commission";
 import { requireCurrentTenant } from "@/lib/tenant/current";
 import { ALLOWED_ORDER_STATUS_TRANSITIONS } from "@/lib/orders/order-status-transitions";
-import type { OrderStatus, PaymentStatus, ReturnStatus } from "@/types/order";
+import type { Order, OrderStatus, PaymentStatus, ReturnStatus } from "@/types/order";
+import type { OrderVerificationDecision } from "@/types/order-verification";
 import type { OrderDocumentType } from "@/types/order-document";
 
-export async function updateOrderStatus(id: string, status: OrderStatus, note?: string): Promise<void> {
-  const decoded = await requireAdmin();
-  const order = await getOrderById(id);
-  if (!order) throw new Error("Order not found.");
+/** COD Order Verification: cancelling through the existing controls (status dropdown or
+ * Cancel box) is the admin's decision too - it's recorded on a still-pending verification
+ * in the SAME transaction as the order write (see commitOrderStatusChange()). */
+function statusDrivenRejection(adminUid: string, reason?: string): OrderVerificationDecision {
+  return {
+    decision: "rejected",
+    reason: reason?.trim() || "Cancelled via order status",
+    source: "order_status",
+    decisionBy: adminUid,
+    decisionAt: Date.now(),
+  };
+}
 
-  const currentStatus = order.orderStatus;
-  if (currentStatus === status) {
-    return;
-  }
+/** Returned (not thrown) by the order actions COD verification gates: Next.js replaces a
+ * thrown Server Action error's message with a generic one in production. */
+export type OrderActionResult = { ok: true } | { ok: false; error: string };
 
-  const allowedNext = ALLOWED_ORDER_STATUS_TRANSITIONS[currentStatus] || [];
-  if (!allowedNext.includes(status)) {
-    throw new Error(`Cannot transition order status from "${currentStatus}" to "${status}".`);
-  }
+/** A message that is safe to show the admin as-is. Anything else is logged and replaced
+ * with a generic message, so raw server/Firebase errors never reach the UI. */
+class OrderActionError extends Error {}
 
-  const col = await tenantCollection("orders");
-  await col
-    .doc(id)
-    .update({
-      orderStatus: status,
-      statusHistory: FieldValue.arrayUnion({ status, at: Date.now(), note: note ?? null }),
-      updatedAt: FieldValue.serverTimestamp(),
-    });
-  await logOrderActivity(id, "status_changed", decoded.uid, { status });
-
-  // Trigger WhatsApp notification for status transition
+async function runOrderAction(label: string, fn: () => Promise<void>): Promise<OrderActionResult> {
   try {
-    const { sendWhatsAppNotification } = await import("@/lib/notifications/whatsapp-service");
-    if (status === "confirmed") {
-      await sendWhatsAppNotification("ORDER_CONFIRMED", order);
-    } else if (status === "shipped" || status === "packed") {
-      await sendWhatsAppNotification("ORDER_DISPATCHED", order);
-    } else if (status === "delivered") {
-      await sendWhatsAppNotification("ORDER_DELIVERED", order);
-    }
+    await fn();
+    return { ok: true };
   } catch (err) {
-    console.error("[WhatsApp Status Update Trigger Error]:", err);
+    if (err instanceof OrderActionError || err instanceof OrderStateConflictError) {
+      return { ok: false, error: err.message };
+    }
+    console.error(`[${label}] failed`, err);
+    return { ok: false, error: "Something went wrong. Please try again." };
   }
+}
 
-  revalidatePath("/admin/orders");
-  revalidatePath(`/admin/orders/${id}`);
+/** Blocks a fulfillment step (status advance, shipment/courier details, packing slip/
+ * shipping label) until a COD order is approved in the Order Verification card. */
+async function assertCodFulfillmentAllowed(order: Order): Promise<void> {
+  const blocked = await getCodFulfillmentBlock(order);
+  if (blocked) throw new OrderActionError(blocked);
+}
+
+const COD_CANCEL_REASON_REQUIRED = "A cancellation reason is required for COD orders awaiting verification.";
+
+async function requireOrder(id: string): Promise<Order> {
+  const order = await getOrderById(id);
+  if (!order) throw new OrderActionError("Order not found.");
+  return order;
+}
+
+export async function updateOrderStatus(id: string, status: OrderStatus, note?: string): Promise<OrderActionResult> {
+  const decoded = await requireAdmin();
+  return runOrderAction("updateOrderStatus", async () => {
+    const order = await requireOrder(id);
+
+    const currentStatus = order.orderStatus;
+    if (currentStatus === status) {
+      return;
+    }
+
+    const allowedNext = ALLOWED_ORDER_STATUS_TRANSITIONS[currentStatus] || [];
+    if (!allowedNext.includes(status)) {
+      throw new OrderActionError(`Cannot transition order status from "${currentStatus}" to "${status}".`);
+    }
+
+    if (status !== "cancelled") await assertCodFulfillmentAllowed(order);
+    else if (!note?.trim() && (await isCodVerificationPending(order))) throw new OrderActionError(COD_CANCEL_REASON_REQUIRED);
+
+    const { verificationDecided } = await commitOrderStatusChange(await getVerificationRefs(), id, {
+      expectedStatus: currentStatus,
+      orderUpdate: {
+        orderStatus: status,
+        statusHistory: FieldValue.arrayUnion({ status, at: Date.now(), note: note ?? null }),
+        updatedAt: FieldValue.serverTimestamp(),
+      },
+      decision: status === "cancelled" ? statusDrivenRejection(decoded.uid, note) : undefined,
+    });
+    await logOrderActivity(id, "status_changed", decoded.uid, { status });
+    if (verificationDecided) {
+      await logOrderActivity(id, "verification_rejected", decoded.uid, { source: "order_status" });
+    }
+
+    // Trigger WhatsApp notification for status transition
+    try {
+      const { sendWhatsAppNotification } = await import("@/lib/notifications/whatsapp-service");
+      if (status === "confirmed") {
+        await sendWhatsAppNotification("ORDER_CONFIRMED", order);
+      } else if (status === "shipped" || status === "packed") {
+        await sendWhatsAppNotification("ORDER_DISPATCHED", order);
+      } else if (status === "delivered") {
+        await sendWhatsAppNotification("ORDER_DELIVERED", order);
+      }
+    } catch (err) {
+      console.error("[WhatsApp Status Update Trigger Error]:", err);
+    }
+
+    revalidatePath("/admin/orders");
+    revalidatePath(`/admin/orders/${id}`);
+  });
 }
 
 export async function updatePaymentStatus(id: string, status: PaymentStatus, note?: string): Promise<void> {
@@ -94,14 +159,17 @@ export async function updatePaymentStatus(id: string, status: PaymentStatus, not
   revalidatePath(`/admin/orders/${id}`);
 }
 
-export async function setTrackingNumber(id: string, trackingNumber: string): Promise<void> {
+export async function setTrackingNumber(id: string, trackingNumber: string): Promise<OrderActionResult> {
   const decoded = await requireAdmin();
-  const col = await tenantCollection("orders");
-  await col
-    .doc(id)
-    .update({ trackingNumber, updatedAt: FieldValue.serverTimestamp() });
-  await logOrderActivity(id, "shipment_updated", decoded.uid, { field: "trackingNumber" });
-  revalidatePath(`/admin/orders/${id}`);
+  return runOrderAction("setTrackingNumber", async () => {
+    await assertCodFulfillmentAllowed(await requireOrder(id));
+    const col = await tenantCollection("orders");
+    await col
+      .doc(id)
+      .update({ trackingNumber, updatedAt: FieldValue.serverTimestamp() });
+    await logOrderActivity(id, "shipment_updated", decoded.uid, { field: "trackingNumber" });
+    revalidatePath(`/admin/orders/${id}`);
+  });
 }
 
 // Shipment Information: courier name, tracking number, tracking URL, tracking mode + dispatch/delivery dates.
@@ -115,15 +183,18 @@ export async function setShipmentDetails(
     dispatchDate?: number;
     deliveryDate?: number;
   }
-): Promise<void> {
+): Promise<OrderActionResult> {
   const decoded = await requireAdmin();
-  const col = await tenantCollection("orders");
-  await col.doc(id).update({
-    ...stripUndefined(details),
-    updatedAt: FieldValue.serverTimestamp(),
+  return runOrderAction("setShipmentDetails", async () => {
+    await assertCodFulfillmentAllowed(await requireOrder(id));
+    const col = await tenantCollection("orders");
+    await col.doc(id).update({
+      ...stripUndefined(details),
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+    await logOrderActivity(id, "shipment_updated", decoded.uid, { field: "shipmentDetails" });
+    revalidatePath(`/admin/orders/${id}`);
   });
-  await logOrderActivity(id, "shipment_updated", decoded.uid, { field: "shipmentDetails" });
-  revalidatePath(`/admin/orders/${id}`);
 }
 
 export async function addInternalNote(id: string, text: string): Promise<void> {
@@ -153,26 +224,34 @@ export async function addCustomerNote(id: string, text: string): Promise<void> {
 // symmetrically restoring it would mean this module writes to products/variants
 // docs, taking on Inventory's write-responsibility rather than just avoiding its
 // files. Adjust stock manually via the Inventory page if a cancellation warrants it.
-export async function cancelOrder(id: string, reason: string): Promise<void> {
+export async function cancelOrder(id: string, reason: string): Promise<OrderActionResult> {
   const decoded = await requireAdmin();
-  const order = await getOrderById(id);
-  if (!order) throw new Error("Order not found.");
-  if (order.orderStatus === "cancelled") throw new Error("This order is already cancelled.");
-  if (order.orderStatus === "delivered") throw new Error("A delivered order cannot be cancelled.");
+  return runOrderAction("cancelOrder", async () => {
+    const order = await requireOrder(id);
+    if (order.orderStatus === "cancelled") throw new OrderActionError("This order is already cancelled.");
+    if (order.orderStatus === "delivered") throw new OrderActionError("A delivered order cannot be cancelled.");
+    if (!reason?.trim() && (await isCodVerificationPending(order))) throw new OrderActionError(COD_CANCEL_REASON_REQUIRED);
 
-  const now = Date.now();
-  const col = await tenantCollection("orders");
-  await col.doc(id).update({
-    orderStatus: "cancelled" satisfies OrderStatus,
-    cancellationReason: reason,
-    cancelledAt: now,
-    cancelledBy: decoded.uid,
-    statusHistory: FieldValue.arrayUnion({ status: "cancelled", at: now, note: reason }),
-    updatedAt: FieldValue.serverTimestamp(),
+    const now = Date.now();
+    const { verificationDecided } = await commitOrderStatusChange(await getVerificationRefs(), id, {
+      expectedStatus: order.orderStatus,
+      orderUpdate: {
+        orderStatus: "cancelled" satisfies OrderStatus,
+        cancellationReason: reason,
+        cancelledAt: now,
+        cancelledBy: decoded.uid,
+        statusHistory: FieldValue.arrayUnion({ status: "cancelled", at: now, note: reason }),
+        updatedAt: FieldValue.serverTimestamp(),
+      },
+      decision: statusDrivenRejection(decoded.uid, reason),
+    });
+    await logOrderActivity(id, "cancelled", decoded.uid, { reason });
+    if (verificationDecided) {
+      await logOrderActivity(id, "verification_rejected", decoded.uid, { source: "order_status" });
+    }
+    revalidatePath("/admin/orders");
+    revalidatePath(`/admin/orders/${id}`);
   });
-  await logOrderActivity(id, "cancelled", decoded.uid, { reason });
-  revalidatePath("/admin/orders");
-  revalidatePath(`/admin/orders/${id}`);
 }
 
 // Refund Workflow - order-side state only, same no-stock-touch rationale as
@@ -228,13 +307,20 @@ export async function updateReturnStatus(id: string, status: ReturnStatus, note?
 // Invoice / Packing Slip / Shipping Label Architecture - queues a record only,
 // no PDF rendering engine exists yet (see order-document-service.ts). The
 // existing "Print invoice" window.print() button is untouched.
-export async function requestOrderDocument(id: string, type: OrderDocumentType, note?: string): Promise<void> {
+export async function requestOrderDocument(
+  id: string,
+  type: OrderDocumentType,
+  note?: string
+): Promise<OrderActionResult> {
   const decoded = await requireAdmin();
-  if (type === "invoice") await queueInvoice(id, note);
-  else if (type === "packing_slip") await queuePackingSlip(id, note);
-  else await queueShippingLabel(id, note);
-  await logOrderActivity(id, "document_queued", decoded.uid, { type });
-  revalidatePath(`/admin/orders/${id}`);
+  return runOrderAction("requestOrderDocument", async () => {
+    if (type !== "invoice") await assertCodFulfillmentAllowed(await requireOrder(id));
+    if (type === "invoice") await queueInvoice(id, note);
+    else if (type === "packing_slip") await queuePackingSlip(id, note);
+    else await queueShippingLabel(id, note);
+    await logOrderActivity(id, "document_queued", decoded.uid, { type });
+    revalidatePath(`/admin/orders/${id}`);
+  });
 }
 
 // Order Export Architecture - queues a record only, no CSV engine exists yet

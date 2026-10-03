@@ -6,7 +6,9 @@ export type OrderActivityAction =
   | "cancelled"
   | "refund_issued"
   | "return_updated"
-  | "document_queued";
+  | "document_queued"
+  | "verification_approved"
+  | "verification_rejected";
 
 /** Per-store order audit trail - tenant-scoped: stores/{storeId}/orderActivityLogs/{id}.
  * Mirrors productActivityLogs' exact shape. */

@@ -7,6 +7,9 @@ import { docData, stripUndefined } from "./utils";
 import { safeQuery } from "./safe-query";
 import { computeOrderTotals } from "@/lib/checkout/totals";
 import { getShippingSettings, getGeneralSettings, getPaymentSettings } from "./site-settings";
+import { waitUntil } from "@vercel/functions";
+import { runOrderVerification } from "./order-verifications";
+import { requiresCodVerification } from "@/lib/orders/verification/engine";
 import type { Order, OrderItem, OrderAddress, OrderStatus, PaymentMethod, PaymentStatus, ReturnStatus } from "@/types/order";
 
 /**
@@ -362,6 +365,25 @@ export async function createGuestOrder(input: CreateGuestOrderInput): Promise<Cr
 
     return { orderId: orderRef.id, orderNumber };
   });
+
+  // COD Order Verification (advisory only - never confirms/rejects by itself). Evaluated
+  // once after the response is sent (waitUntil) so checkout stays fast; refs are resolved
+  // here, inside the request's tenant scope. An idempotent replay hits the existing
+  // verification and is a no-op. If this fails, the admin order page evaluates it lazily.
+  if (requiresCodVerification(input.paymentMethod)) {
+    try {
+      const verificationsCol = await tenantCollection("orderVerifications");
+      const orderRef = ordersCol.doc(result.orderId);
+      waitUntil(
+        (async () => {
+          const order = docData<Order>(await orderRef.get());
+          if (order) await runOrderVerification(order, { ordersCol, verificationsCol });
+        })().catch((err) => console.error(`[order-verification] failed for order ${result.orderId}`, err))
+      );
+    } catch (err) {
+      console.error("[order-verification] could not schedule verification", err);
+    }
+  }
 
   // Async dispatch notifications (Email & WhatsApp)
   try {
