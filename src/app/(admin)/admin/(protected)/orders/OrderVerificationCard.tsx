@@ -4,7 +4,8 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import CustomSelect, { type CustomSelectOption } from "@/components/admin/CustomSelect";
-import { REJECTION_REASONS } from "@/lib/orders/verification/engine";
+import { useFormatMoney } from "@/lib/currency/CurrencyContext";
+import { CONFIRMATION_NOTES, REJECTION_REASONS } from "@/lib/orders/verification/engine";
 import { buildVerificationWhatsAppLink, normalizePhone } from "@/lib/orders/verification/phone";
 import { approveOrderVerification, rejectOrderVerification, type VerificationActionResult } from "./verification-actions";
 import type { Order } from "@/types/order";
@@ -42,6 +43,8 @@ const SEVERITY_ICONS: Record<VerificationReasonSeverity, string> = {
   critical: "⛔",
 };
 
+const CONFIRMATION_OPTIONS: CustomSelectOption<string>[] = CONFIRMATION_NOTES.map((n) => ({ value: n.code, label: n.label }));
+
 const REJECTION_OPTIONS: CustomSelectOption<OrderRejectionReasonCode>[] = REJECTION_REASONS.map((r) => ({
   value: r.code,
   label: r.label,
@@ -62,9 +65,11 @@ const OrderVerificationCard: React.FC<{
   amountLabel: string;
 }> = ({ order, verification, storeName, amountLabel }) => {
   const router = useRouter();
+  const formatMoney = useFormatMoney();
   const [busy, setBusy] = useState(false);
   const [mode, setMode] = useState<"confirm" | "reject" | null>(null);
-  const [confirmNote, setConfirmNote] = useState("");
+  const [confirmCode, setConfirmCode] = useState("");
+  const [confirmOther, setConfirmOther] = useState("");
   const [rejectCode, setRejectCode] = useState<OrderRejectionReasonCode | "">("");
   const [rejectOther, setRejectOther] = useState("");
 
@@ -85,6 +90,10 @@ const OrderVerificationCard: React.FC<{
   const h = verification.history;
   const isPending = verification.status === "pending";
   const status = STATUS_LABELS[verification.status];
+  // Optional - but "Other" needs its text.
+  const confirmBlocked = confirmCode === "other" && confirmOther.trim().length < 3;
+  const confirmNote =
+    confirmCode === "other" ? confirmOther.trim() : CONFIRMATION_NOTES.find((n) => n.code === confirmCode)?.label ?? "";
   const rejectBlocked = !rejectCode || (rejectCode === "other" && rejectOther.trim().length < 3);
 
   const run = async (fn: () => Promise<VerificationActionResult>, success: string) => {
@@ -176,7 +185,7 @@ const OrderVerificationCard: React.FC<{
           </div>
           <p className="text-[11px] text-slate-500 mt-1.5" suppressHydrationWarning>
             Last order: {formatDateTime(h.lastOrderAt)}
-            {h.averageOrderValue ? ` · Avg delivered order: ${h.averageOrderValue.toFixed(2)}` : ""}
+            {h.averageOrderValue ? ` · Avg delivered order: ${formatMoney(h.averageOrderValue)}` : ""}
           </p>
         </div>
 
@@ -232,19 +241,29 @@ const OrderVerificationCard: React.FC<{
         {isPending && mode === "confirm" && (
           <div className="space-y-2 pt-1">
             <label className={labelClass}>Confirmation note (optional)</label>
-            <input
-              className={inputClass}
-              placeholder="e.g. Customer confirmed on call"
-              value={confirmNote}
-              maxLength={500}
-              onChange={(e) => setConfirmNote(e.target.value)}
+            <CustomSelect<string>
+              value={confirmCode}
+              disabled={busy}
+              options={CONFIRMATION_OPTIONS}
+              placeholder="Select how it was confirmed"
+              onChange={setConfirmCode}
             />
+            {confirmCode === "other" && (
+              <textarea
+                className={inputClass}
+                rows={2}
+                maxLength={500}
+                placeholder="Describe how the order was confirmed"
+                value={confirmOther}
+                onChange={(e) => setConfirmOther(e.target.value)}
+              />
+            )}
             <div className="flex gap-2">
               <button
                 type="button"
-                disabled={busy}
+                disabled={busy || confirmBlocked}
                 onClick={() => run(() => approveOrderVerification(order.id, confirmNote), "Order verified and confirmed")}
-                className="flex-1 px-4 py-2.5 text-sm font-extrabold rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white transition-all cursor-pointer shadow-xs disabled:opacity-50"
+                className="flex-1 px-4 py-2.5 text-sm font-extrabold rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white transition-all cursor-pointer shadow-xs disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {busy ? "Confirming..." : "Confirm Order"}
               </button>

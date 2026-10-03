@@ -1,5 +1,7 @@
 "use client";
 
+import { useFormatMoney } from "@/lib/currency/CurrencyContext";
+
 import React, { useState } from "react";
 import Link from "next/link";
 import { getTenantHref } from "@/utils/getTenantHref";
@@ -15,6 +17,7 @@ import { safeImageSrc } from "@/utils/safeImageSrc";
 import { aspectRatioClass, type ProductCardVariantProps } from "./ProductCardVariantProps";
 
 export default function TrendGlassCard({ data, className = "", productCardSettings }: ProductCardVariantProps) {
+  const formatMoney = useFormatMoney();
   const { name, price, compareAtPrice, shortDescription, description, badge, images, slug, rating, numberOfReviews } = data;
   const image = safeImageSrc(images[0]);
   const secondaryImage = images[1] ? safeImageSrc(images[1]) : undefined;
@@ -126,17 +129,17 @@ export default function TrendGlassCard({ data, className = "", productCardSettin
               <div>
                 {compareAtPrice && compareAtPrice > price && (
                   <span className="text-xs text-slate-400 line-through font-medium me-1.5">
-                    Rs {compareAtPrice.toLocaleString()}
+                    {formatMoney(compareAtPrice)}
                   </span>
                 )}
                 <span className="text-lg font-extrabold text-slate-900 dark:text-white tracking-tight">
-                  Rs {price.toLocaleString()}
+                  {formatMoney(price)}
                 </span>
               </div>
 
               {savingsAmount && (
                 <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded-full">
-                  Save Rs {savingsAmount.toLocaleString()}
+                  Save {formatMoney(savingsAmount)}
                 </span>
               )}
             </div>

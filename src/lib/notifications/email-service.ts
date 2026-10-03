@@ -1,14 +1,18 @@
+import { formatMoney, type CurrencySettings } from "@/lib/currency/format";
 import type { Order } from "@/types/order";
 
 /**
  * Builds HTML template for order confirmation email
  */
-export function buildOrderEmailHtml(order: Partial<Order> & { orderNumber: string }): string {
+export function buildOrderEmailHtml(
+  order: Partial<Order> & { orderNumber: string },
+  currency?: CurrencySettings | null
+): string {
   const customerName = order.guestName || order.shippingAddress?.fullName || "Valued Customer";
   const items = order.items || [];
-  const subtotal = order.subtotal ? order.subtotal.toFixed(2) : "0.00";
-  const shippingCost = order.shippingCost ? order.shippingCost.toFixed(2) : "Free";
-  const total = order.total ? order.total.toFixed(2) : "0.00";
+  const subtotal = formatMoney(order.subtotal ?? 0, currency);
+  const shippingCost = order.shippingCost ? formatMoney(order.shippingCost, currency) : "Free";
+  const total = formatMoney(order.total ?? 0, currency);
   const address = order.shippingAddress;
 
   const itemRowsHtml = items
@@ -23,7 +27,7 @@ export function buildOrderEmailHtml(order: Partial<Order> & { orderNumber: strin
         x${item.quantity}
       </td>
       <td style="padding: 12px 0; border-bottom: 1px solid #f1f5f9; text-align: right; font-weight: bold; color: #0f172a; font-size: 14px;">
-        $${(item.unitPrice * item.quantity).toFixed(2)}
+        ${formatMoney(item.unitPrice * item.quantity, currency)}
       </td>
     </tr>
   `
@@ -70,15 +74,15 @@ export function buildOrderEmailHtml(order: Partial<Order> & { orderNumber: strin
         <div style="margin-top: 20px; padding-top: 16px; border-top: 2px solid #f1f5f9;">
           <div style="display: flex; justify-content: space-between; font-size: 14px; color: #475569; margin-bottom: 6px;">
             <span>Subtotal</span>
-            <span>$${subtotal}</span>
+            <span>${subtotal}</span>
           </div>
           <div style="display: flex; justify-content: space-between; font-size: 14px; color: #475569; margin-bottom: 6px;">
             <span>Shipping</span>
-            <span>$${shippingCost}</span>
+            <span>${shippingCost}</span>
           </div>
           <div style="display: flex; justify-content: space-between; font-size: 18px; font-weight: 800; color: #0f172a; margin-top: 12px; padding-top: 12px; border-top: 1px solid #e2e8f0;">
             <span>Total Paid</span>
-            <span style="color: #4f46e5;">$${total}</span>
+            <span style="color: #4f46e5;">${total}</span>
           </div>
         </div>
 
@@ -113,7 +117,8 @@ export function buildOrderEmailHtml(order: Partial<Order> & { orderNumber: strin
  * Sends order confirmation email via SMTP / Resend / SendGrid or logs payload if no provider is configured
  */
 export async function sendOrderConfirmationEmail(
-  order: Partial<Order> & { orderNumber: string; guestEmail?: string }
+  order: Partial<Order> & { orderNumber: string; guestEmail?: string },
+  currency?: CurrencySettings | null
 ): Promise<{ success: boolean; message: string }> {
   const recipientEmail = order.guestEmail || order.shippingAddress?.fullName;
 
@@ -122,7 +127,7 @@ export async function sendOrderConfirmationEmail(
     return { success: false, message: "No recipient email address." };
   }
 
-  const html = buildOrderEmailHtml(order);
+  const html = buildOrderEmailHtml(order, currency);
 
   // Check for RESEND_API_KEY or SMTP credentials
   const resendApiKey = process.env.RESEND_API_KEY;

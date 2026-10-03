@@ -1,5 +1,6 @@
 "use client";
 
+import { useFormatMoney } from "@/lib/currency/CurrencyContext";
 import React from "react";
 import Link from "next/link";
 import ButtonPrimary from "@/shared/Button/ButtonPrimary";
@@ -18,6 +19,7 @@ export interface LuxeHeroProps {
 }
 
 export default function LuxeHero({ data, presetId, banner }: LuxeHeroProps) {
+  const formatMoney = useFormatMoney();
   const defaults = getThemeDefaultAssets(presetId).hero;
   const slide = data?.[0] ?? {
     heading: defaults.heading ?? "Dive Into A World Of Endless Fashion Possibilities",
@@ -105,7 +107,7 @@ export default function LuxeHero({ data, presetId, banner }: LuxeHeroProps) {
           <div className="absolute -bottom-6 -left-6 bg-white dark:bg-stone-900 p-4 rounded-2xl shadow-xl border border-stone-200 dark:border-stone-800 max-w-xs space-y-1">
             <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-600">NEW ARRIVAL</span>
             <p className="font-serif text-sm font-bold text-stone-900 dark:text-stone-100">Silk Couture Trench Coat</p>
-            <p className="text-xs text-stone-500 font-semibold">$1,490 • Limited Edition</p>
+            <p className="text-xs text-stone-500 font-semibold">{formatMoney(1490)} • Limited Edition</p>
           </div>
         </div>
       </div>

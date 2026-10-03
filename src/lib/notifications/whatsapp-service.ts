@@ -1,3 +1,4 @@
+import { formatMoney, type CurrencySettings } from "@/lib/currency/format";
 import { getGeneralSettings } from "@/lib/firebase/repositories/site-settings";
 import type { Order } from "@/types/order";
 
@@ -33,11 +34,12 @@ export interface SendWhatsAppResult {
  */
 export function buildWhatsAppMessageText(
   type: WhatsAppNotificationType,
-  order: Partial<Order> & { orderNumber: string }
+  order: Partial<Order> & { orderNumber: string },
+  currency?: CurrencySettings | null
 ): string {
   const customerName = order.guestName || order.shippingAddress?.fullName || "Valued Customer";
   const orderNum = order.orderNumber;
-  const totalAmount = order.total ? order.total.toFixed(2) : "0.00";
+  const totalAmount = formatMoney(order.total ?? 0, currency);
   const itemsText = order.items
     ? order.items.map((i) => `• ${i.name} (x${i.quantity})`).join("\n")
     : "Items in order";
@@ -55,7 +57,7 @@ Your Order *#${orderNum}* has been received.
 📦 *Order Details:*
 ${itemsText}
 
-💰 *Total Amount:* $${totalAmount}
+💰 *Total Amount:* ${totalAmount}
 📍 *Delivery Address:* ${addressText}
 
 We are processing your order and will send you another update once confirmed. Thank you for shopping with us!`;
@@ -108,11 +110,12 @@ Thank you for shopping with us!`;
  */
 export async function sendWhatsAppNotification(
   type: WhatsAppNotificationType,
-  order: Partial<Order> & { orderNumber: string; shippingAddress?: any }
+  order: Partial<Order> & { orderNumber: string; shippingAddress?: any },
+  currency?: CurrencySettings | null
 ): Promise<SendWhatsAppResult> {
   const rawPhone = order.shippingAddress?.phone || (order as any).guestPhone || "";
   const phone = formatPhoneNumber(rawPhone);
-  const messageText = buildWhatsAppMessageText(type, order);
+  const messageText = buildWhatsAppMessageText(type, order, currency);
   const encodedText = encodeURIComponent(messageText);
   const waLink = phone ? `https://wa.me/${phone}?text=${encodedText}` : "";
 

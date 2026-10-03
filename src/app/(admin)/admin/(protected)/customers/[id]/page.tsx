@@ -1,4 +1,6 @@
+import { formatMoney } from "@/lib/currency/format";
 import React from "react";
+import { getGeneralSettings } from "@/lib/firebase/repositories/site-settings";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getCustomerAddresses, resolveCustomerForDisplay } from "@/lib/firebase/repositories/customers";
@@ -23,24 +25,25 @@ export default async function AdminCustomerDetailPage({ params }: { params: { id
   const { customer, materialized } = resolved;
   const isGuest = customer.status === "guest";
 
-  const [addresses, orders, reviews, activity, gdprHistory, isSubscribed] = await Promise.all([
+  const [addresses, orders, reviews, activity, gdprHistory, isSubscribed, general] = await Promise.all([
     materialized ? getCustomerAddresses(customer.uid) : Promise.resolve([]),
     isGuest ? getOrdersByGuestEmail(customer.email) : getOrdersByUserId(customer.uid),
     isGuest ? Promise.resolve([]) : getReviewsByUserId(customer.uid),
     materialized ? getRecentCustomerActivity(customer.uid) : Promise.resolve([]),
     materialized ? getGdprRequestHistory(customer.uid) : Promise.resolve([]),
     isNewsletterSubscriber(customer.email),
+    getGeneralSettings(),
   ]);
 
   const analytics = computeCustomerAnalytics(orders, reviews.length);
   const segments = computeCustomerSegments(customer, analytics, isSubscribed);
-  const timeline = buildCustomerTimeline(customer, orders, reviews, activity);
+  const timeline = buildCustomerTimeline(customer, orders, reviews, activity, general);
 
   const stats: { label: string; value: string }[] = [
     { label: "Total Orders", value: String(analytics.totalOrders) },
-    { label: "Total Spend", value: `$${analytics.totalSpend.toFixed(2)}` },
-    { label: "Avg Order Value", value: `$${analytics.avgOrderValue.toFixed(2)}` },
-    { label: "Lifetime Value", value: `$${analytics.lifetimeValue.toFixed(2)}` },
+    { label: "Total Spend", value: formatMoney(analytics.totalSpend, general) },
+    { label: "Avg Order Value", value: formatMoney(analytics.avgOrderValue, general) },
+    { label: "Lifetime Value", value: formatMoney(analytics.lifetimeValue, general) },
     { label: "Last Purchase", value: analytics.lastPurchaseAt ? new Date(analytics.lastPurchaseAt).toLocaleDateString() : "—" },
     { label: "Total Reviews", value: String(analytics.totalReviews) },
   ];
@@ -117,7 +120,7 @@ export default async function AdminCustomerDetailPage({ params }: { params: { id
                   {o.orderNumber}
                 </Link>
                 <span className="capitalize text-neutral-500">{o.orderStatus}</span>
-                <span>${o.total.toFixed(2)}</span>
+                <span>{formatMoney(o.total, general)}</span>
               </div>
             ))}
           </div>

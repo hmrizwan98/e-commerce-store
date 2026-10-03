@@ -1,4 +1,6 @@
+import { formatMoney, type CurrencySettings } from "@/lib/currency/format";
 import React from "react";
+import { getGeneralSettings } from "@/lib/firebase/repositories/site-settings";
 import Link from "next/link";
 import { getStoreFinancialSummary } from "@/lib/firebase/services/finance-service";
 import { getTransactionLedgerPage, type TransactionLedgerCursor } from "@/lib/firebase/repositories/transactions";
@@ -10,8 +12,8 @@ export const dynamic = "force-dynamic";
 const cardClass =
   "bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-6";
 
-function money(n: number): string {
-  return `$${n.toFixed(2)}`;
+function money(n: number, currency: CurrencySettings): string {
+  return formatMoney(n, currency);
 }
 
 /** Stack of {createdAt,id} cursors, one per page already visited - Next pushes the current
@@ -46,10 +48,11 @@ export default async function AdminFinancePage({
   const cursorStack = parseCursorStack(searchParams.cursor);
   const startAfter = cursorStack.length ? cursorStack[cursorStack.length - 1] : undefined;
 
-  const [summary, ledgerPage, reportHistory] = await Promise.all([
+  const [summary, ledgerPage, reportHistory, general] = await Promise.all([
     getStoreFinancialSummary(),
     getTransactionLedgerPage({ startAfter }),
     getFinanceReportHistory(),
+    getGeneralSettings(),
   ]);
   const { transactions: ledger, hasMore } = ledgerPage;
   const lastTxn = ledger.length ? ledger[ledger.length - 1] : undefined;
@@ -95,7 +98,7 @@ export default async function AdminFinancePage({
             className="p-6 rounded-3xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 shadow-xl shadow-slate-900/5 space-y-2 hover:border-slate-300 dark:hover:border-slate-700 transition-all"
           >
             <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">{s.label}</div>
-            <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">{money(s.value)}</div>
+            <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">{money(s.value, general)}</div>
           </div>
         ))}
       </div>
@@ -127,8 +130,8 @@ export default async function AdminFinancePage({
                     </Link>
                   </td>
                   <td className="p-3 capitalize text-slate-700 dark:text-slate-300 font-medium">{t.type}</td>
-                  <td className="p-3 font-semibold text-slate-900 dark:text-slate-100">{money(t.amount)}</td>
-                  <td className="p-3 text-slate-500 dark:text-slate-400 text-xs">{t.commissionAmount ? money(t.commissionAmount) : "—"}</td>
+                  <td className="p-3 font-semibold text-slate-900 dark:text-slate-100">{money(t.amount, general)}</td>
+                  <td className="p-3 text-slate-500 dark:text-slate-400 text-xs">{t.commissionAmount ? money(t.commissionAmount, general) : "—"}</td>
                   <td className="p-3 capitalize text-slate-600 dark:text-slate-400 text-xs">{t.method.replace("_", " ")}</td>
                   <td className="p-3">
                     <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 capitalize">

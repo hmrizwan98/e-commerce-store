@@ -1,5 +1,6 @@
 "use client";
 
+import { useFormatMoney } from "@/lib/currency/CurrencyContext";
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -17,6 +18,7 @@ export interface MinimalCartPageProps extends CartClientProps {
 }
 
 export default function MinimalCartPage({ shippingFlatRate, freeShippingThreshold, taxRatePercent, taxInclusive }: MinimalCartPageProps) {
+  const formatMoney = useFormatMoney();
   const { items, totals, setQuantity, remove } = useCartPageState({ shippingFlatRate, freeShippingThreshold, taxRatePercent, taxInclusive });
 
   const renderProduct = (item: CartItem) => {
@@ -89,19 +91,19 @@ export default function MinimalCartPage({ shippingFlatRate, freeShippingThreshol
                 <div className="mt-6 text-sm text-[var(--muted)] divide-y divide-[var(--border)]">
                   <div className="flex justify-between pb-4">
                     <span>Subtotal</span>
-                    <span className="font-semibold text-[var(--heading)]">${totals.subtotal.toFixed(2)}</span>
+                    <span className="font-semibold text-[var(--heading)]">{formatMoney(totals.subtotal)}</span>
                   </div>
                   <div className="flex justify-between py-4">
                     <span>Shipping estimate</span>
-                    <span className="font-semibold text-[var(--heading)]">{totals.shippingCost === 0 ? "Free" : `$${totals.shippingCost.toFixed(2)}`}</span>
+                    <span className="font-semibold text-[var(--heading)]">{totals.shippingCost === 0 ? "Free" : formatMoney(totals.shippingCost)}</span>
                   </div>
                   <div className="flex justify-between py-4">
                     <span>Tax estimate</span>
-                    <span className="font-semibold text-[var(--heading)]">${totals.tax.toFixed(2)}</span>
+                    <span className="font-semibold text-[var(--heading)]">{formatMoney(totals.tax)}</span>
                   </div>
                   <div className="flex justify-between font-semibold text-[var(--heading)] text-base pt-4">
                     <span>Order total</span>
-                    <span>${totals.total.toFixed(2)}</span>
+                    <span>{formatMoney(totals.total)}</span>
                   </div>
                 </div>
                 <ButtonPrimary href="/checkout" className="mt-8 w-full">

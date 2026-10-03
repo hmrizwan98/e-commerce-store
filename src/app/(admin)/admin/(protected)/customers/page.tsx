@@ -1,4 +1,6 @@
+import { formatMoney } from "@/lib/currency/format";
 import React from "react";
+import { getGeneralSettings } from "@/lib/firebase/repositories/site-settings";
 import Link from "next/link";
 import {
   getCustomersPage,
@@ -54,10 +56,11 @@ export default async function AdminCustomersPage({
   // them again on every page would duplicate every guest across the whole list, so they
   // only appear alongside page 1 (identical to today's behavior, which always showed them
   // since there was only ever one page).
-  const [{ customers, hasMore }, guests, totalCount] = await Promise.all([
+  const [{ customers, hasMore }, guests, totalCount, general] = await Promise.all([
     getCustomersPage({ startAfter }),
     isFirstPage ? getGuestCustomers() : Promise.resolve([] as GuestCustomer[]),
     getCustomerCount(),
+    getGeneralSettings(),
   ]);
 
   const lastCustomer = customers.length ? customers[customers.length - 1] : undefined;
@@ -143,7 +146,7 @@ export default async function AdminCustomersPage({
                     </span>
                   </td>
                   <td className="p-4 text-slate-700 dark:text-slate-300 font-medium">{r.orderCount}</td>
-                  <td className="p-4 font-semibold text-slate-900 dark:text-slate-100">${r.totalSpend.toFixed(2)}</td>
+                  <td className="p-4 font-semibold text-slate-900 dark:text-slate-100">{formatMoney(r.totalSpend, general)}</td>
                   <td className="p-4 pr-6 text-slate-500 dark:text-slate-400 text-xs">
                     {r.createdAt ? new Date(r.createdAt).toLocaleDateString() : "—"}
                   </td>

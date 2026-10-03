@@ -1,4 +1,5 @@
 import React, { Suspense } from "react";
+import { getGeneralSettings } from "@/lib/firebase/repositories/site-settings";
 import AnalyticsNav from "@/components/admin/analytics/AnalyticsNav";
 import DateRangeFilter from "@/components/admin/analytics/DateRangeFilter";
 import StatCard from "@/components/admin/analytics/StatCard";
@@ -21,6 +22,7 @@ async function OverviewContent({
 }: {
   searchParams: { range?: string; from?: string; to?: string };
 }) {
+  const currency = await getGeneralSettings();
   const range = resolveDateRange(searchParams.range, searchParams.from, searchParams.to);
 
   const [visitors, funnel, trend, activeUsers, newsletterSubscribers] = await Promise.all([
@@ -51,7 +53,7 @@ async function OverviewContent({
         <StatCard label="Add To Cart" value={funnel.addToCart} />
         <StatCard label="Checkout Started" value={funnel.checkoutStarted} />
         <StatCard label="Orders" value={funnel.orders} />
-        <StatCard label="Revenue" value={formatCurrency(funnel.revenue)} />
+        <StatCard label="Revenue" value={formatCurrency(funnel.revenue, currency)} />
         <StatCard label="Conversion Rate" value={formatPercent(funnel.conversionRate)} />
         <StatCard label="Wishlist Adds" value={funnel.wishlistAdds} />
         <StatCard label="Compare Adds" value={funnel.compareAdds} />

@@ -1,5 +1,7 @@
 "use client";
 
+import { useFormatMoney } from "@/lib/currency/CurrencyContext";
+
 import React, { useState } from "react";
 import Link from "next/link";
 import { getTenantHref } from "@/utils/getTenantHref";
@@ -17,6 +19,7 @@ import { safeImageSrc } from "@/utils/safeImageSrc";
 import { aspectRatioClass, type ProductCardVariantProps } from "./ProductCardVariantProps";
 
 export default function DealCard({ data, className = "", productCardSettings }: ProductCardVariantProps) {
+  const formatMoney = useFormatMoney();
   const { name, price, compareAtPrice, shortDescription, description, badge, images, slug, rating, numberOfReviews } = data;
   const image = safeImageSrc(images[0]);
   const secondaryImage = images[1] ? safeImageSrc(images[1]) : undefined;
@@ -50,7 +53,7 @@ export default function DealCard({ data, className = "", productCardSettings }: 
         <div className="flex items-center justify-between text-xs font-semibold text-slate-500 mb-2.5 px-0.5">
           {compareAtPrice ? (
             <span className="text-[11px] font-medium text-slate-400">
-              Original: <span className="line-through">Rs {compareAtPrice.toLocaleString()}</span>
+              Original: <span className="line-through">{formatMoney(compareAtPrice)}</span>
             </span>
           ) : (
             <span className="text-[11px] font-medium text-slate-400">In Stock</span>
@@ -126,11 +129,11 @@ export default function DealCard({ data, className = "", productCardSettings }: 
             <div>
               {compareAtPrice && compareAtPrice > price && (
                 <div className="text-[11px] text-slate-400 line-through font-medium">
-                  Rs {compareAtPrice.toLocaleString()}
+                  {formatMoney(compareAtPrice)}
                 </div>
               )}
               <div className="text-base font-extrabold text-slate-900 dark:text-white">
-                Rs {price.toLocaleString()}
+                {formatMoney(price)}
               </div>
             </div>
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { useFormatMoney } from "@/lib/currency/CurrencyContext";
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -10,6 +11,7 @@ import { getCartUrl } from "@/utils/getCartUrl";
 import type { CartDrawerPanelProps } from "./StandardCartDrawer";
 
 export default function CompactCartDrawer({ items, subtotal, onRemove, close }: CartDrawerPanelProps) {
+  const formatMoney = useFormatMoney();
   return (
     <div className="relative bg-[var(--card)] border-2 border-[var(--border)]">
       <div className="max-h-[60vh] p-4 overflow-y-auto hiddenScrollbar">
@@ -47,7 +49,7 @@ export default function CompactCartDrawer({ items, subtotal, onRemove, close }: 
       <div className="bg-[var(--surface)] p-4 border-t-2 border-[var(--border)]">
         <p className="flex justify-between font-black text-[var(--heading)] uppercase text-sm">
           <span>Subtotal</span>
-          <span>${subtotal.toFixed(2)}</span>
+          <span>{formatMoney(subtotal)}</span>
         </p>
         <div className="flex gap-2 mt-3">
           <ButtonSecondary href={getCartUrl() as any} onClick={close} className="flex-1 uppercase font-bold tracking-wider text-xs py-2.5 border-2 border-[var(--border)]">

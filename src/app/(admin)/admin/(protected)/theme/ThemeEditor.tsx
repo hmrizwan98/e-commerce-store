@@ -1,5 +1,7 @@
 "use client";
 
+import { useFormatMoney } from "@/lib/currency/CurrencyContext";
+
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { HexColorPicker } from "react-colorful";
@@ -1010,6 +1012,7 @@ const ThemeEditor: React.FC<{ themes: Theme[]; activeThemeId: string; defaultThe
   activeThemeId,
   defaultTheme,
 }) => {
+  const formatMoney = useFormatMoney();
   const [allThemes, setAllThemes] = useState<Theme[]>(initialThemes);
   const [activeId, setActiveId] = useState(activeThemeId);
   const initialTheme = initialThemes.find((t) => t.id === activeThemeId) ?? defaultTheme;
@@ -1427,7 +1430,7 @@ const ThemeEditor: React.FC<{ themes: Theme[]; activeThemeId: string; defaultThe
                   </div>
                   <div className="p-2 text-xs text-[var(--text)]">
                     <p className="font-medium truncate">Product name</p>
-                    <p className="text-[var(--muted)]">$49.00</p>
+                    <p className="text-[var(--muted)]">{formatMoney(49)}</p>
                   </div>
                 </div>
               </div>

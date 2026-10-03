@@ -1,5 +1,6 @@
 "use client";
 
+import { useFormatMoney } from "@/lib/currency/CurrencyContext";
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -8,6 +9,7 @@ import Prices from "@/components/Prices";
 import type { CartDrawerPanelProps } from "./StandardCartDrawer";
 
 export default function MinimalCartDrawer({ items, subtotal, onRemove, close }: CartDrawerPanelProps) {
+  const formatMoney = useFormatMoney();
   return (
     <div className="relative bg-[var(--card)]">
       <div className="max-h-[60vh] p-6 overflow-y-auto hiddenScrollbar">
@@ -54,7 +56,7 @@ export default function MinimalCartDrawer({ items, subtotal, onRemove, close }: 
       <div className="p-6 border-t border-[var(--border)]">
         <p className="flex justify-between text-sm text-[var(--heading)]">
           <span className="uppercase tracking-widest text-xs text-[var(--muted)] self-center">Subtotal</span>
-          <span className="font-serif">${subtotal.toFixed(2)}</span>
+          <span className="font-serif">{formatMoney(subtotal)}</span>
         </p>
         <div className="mt-4 grid grid-cols-2 gap-3">
           <Link

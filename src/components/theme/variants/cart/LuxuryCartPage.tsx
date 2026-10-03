@@ -1,5 +1,6 @@
 "use client";
 
+import { useFormatMoney } from "@/lib/currency/CurrencyContext";
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -15,6 +16,7 @@ export interface LuxuryCartPageProps extends CartClientProps {
 }
 
 export default function LuxuryCartPage({ shippingFlatRate, freeShippingThreshold, taxRatePercent, taxInclusive }: LuxuryCartPageProps) {
+  const formatMoney = useFormatMoney();
   const { items, totals, setQuantity, remove } = useCartPageState({ shippingFlatRate, freeShippingThreshold, taxRatePercent, taxInclusive });
 
   const renderProduct = (item: CartItem) => {
@@ -72,19 +74,19 @@ export default function LuxuryCartPage({ shippingFlatRate, freeShippingThreshold
                 <div className="mt-6 text-sm text-[var(--muted)] space-y-4">
                   <div className="flex justify-between">
                     <span>Subtotal</span>
-                    <span className="text-[var(--heading)]">${totals.subtotal.toFixed(2)}</span>
+                    <span className="text-[var(--heading)]">{formatMoney(totals.subtotal)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Shipping</span>
-                    <span className="text-[var(--heading)]">{totals.shippingCost === 0 ? "Complimentary" : `$${totals.shippingCost.toFixed(2)}`}</span>
+                    <span className="text-[var(--heading)]">{totals.shippingCost === 0 ? "Complimentary" : formatMoney(totals.shippingCost)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Tax</span>
-                    <span className="text-[var(--heading)]">${totals.tax.toFixed(2)}</span>
+                    <span className="text-[var(--heading)]">{formatMoney(totals.tax)}</span>
                   </div>
                   <div className="flex justify-between font-serif text-lg text-[var(--heading)] pt-4 border-t border-[var(--border)]">
                     <span>Total</span>
-                    <span>${totals.total.toFixed(2)}</span>
+                    <span>{formatMoney(totals.total)}</span>
                   </div>
                 </div>
                 <Link

@@ -1,5 +1,6 @@
 "use client";
 
+import { useFormatMoney } from "@/lib/currency/CurrencyContext";
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -16,6 +17,7 @@ export interface BoldCartPageProps extends CartClientProps {
 }
 
 export default function BoldCartPage({ shippingFlatRate, freeShippingThreshold, taxRatePercent, taxInclusive, itemLayout = "compact" }: BoldCartPageProps) {
+  const formatMoney = useFormatMoney();
   const { items, totals, setQuantity, remove } = useCartPageState({ shippingFlatRate, freeShippingThreshold, taxRatePercent, taxInclusive });
   const compact = itemLayout === "compact";
 
@@ -71,19 +73,19 @@ export default function BoldCartPage({ shippingFlatRate, freeShippingThreshold, 
                 <div className="mt-6 text-sm font-medium text-[var(--muted)] divide-y divide-[var(--border)]">
                   <div className="flex justify-between pb-4">
                     <span>Subtotal</span>
-                    <span className="font-bold text-[var(--heading)]">${totals.subtotal.toFixed(2)}</span>
+                    <span className="font-bold text-[var(--heading)]">{formatMoney(totals.subtotal)}</span>
                   </div>
                   <div className="flex justify-between py-4">
                     <span>Shipping</span>
-                    <span className="font-bold text-[var(--heading)]">{totals.shippingCost === 0 ? "Free" : `$${totals.shippingCost.toFixed(2)}`}</span>
+                    <span className="font-bold text-[var(--heading)]">{totals.shippingCost === 0 ? "Free" : formatMoney(totals.shippingCost)}</span>
                   </div>
                   <div className="flex justify-between py-4">
                     <span>Tax</span>
-                    <span className="font-bold text-[var(--heading)]">${totals.tax.toFixed(2)}</span>
+                    <span className="font-bold text-[var(--heading)]">{formatMoney(totals.tax)}</span>
                   </div>
                   <div className="flex justify-between font-black text-[var(--heading)] text-xl pt-4">
                     <span>Total</span>
-                    <span>${totals.total.toFixed(2)}</span>
+                    <span>{formatMoney(totals.total)}</span>
                   </div>
                 </div>
                 <ButtonPrimary href="/checkout" className="mt-8 w-full uppercase font-bold tracking-wider">

@@ -1,5 +1,6 @@
 "use client";
 
+import { useFormatMoney } from "@/lib/currency/CurrencyContext";
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -18,6 +19,7 @@ export interface CartDrawerPanelProps {
 
 /** Byte-identical to CartDropdown's own pre-theming JSX - the drawer's default, un-themed panel. */
 export default function StandardCartDrawer({ items, subtotal, onRemove, close }: CartDrawerPanelProps) {
+  const formatMoney = useFormatMoney();
   return (
     <div className="relative bg-white dark:bg-neutral-800">
       <div className="max-h-[60vh] p-5 overflow-y-auto hiddenScrollbar">
@@ -71,7 +73,7 @@ export default function StandardCartDrawer({ items, subtotal, onRemove, close }:
             <span>Subtotal</span>
             <span className="block text-sm text-slate-500 dark:text-slate-400 font-normal">Shipping and taxes calculated at checkout.</span>
           </span>
-          <span className="">${subtotal.toFixed(2)}</span>
+          <span className="">{formatMoney(subtotal)}</span>
         </p>
         <div className="flex space-x-2 mt-5">
           <ButtonSecondary href={getCartUrl() as any} className="flex-1 border border-slate-200 dark:border-slate-700" onClick={close}>

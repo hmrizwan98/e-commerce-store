@@ -5,6 +5,7 @@ import { getInventoryProducts } from "@/lib/firebase/repositories/products";
 import { getOrderStats, getTopSellingProducts, getRevenueTrend, searchAdminOrders } from "@/lib/firebase/repositories/orders";
 import { getCustomerCount } from "@/lib/firebase/repositories/customers";
 import { getGeneralSettings } from "@/lib/firebase/repositories/site-settings";
+import { formatMoney } from "@/lib/currency/format";
 import { getCurrentTenant } from "@/lib/tenant/current";
 import {
   CurrencyDollarIcon,
@@ -101,7 +102,7 @@ export default async function AdminDashboardPage() {
           <div className="space-y-1">
             <span className="text-[11px] font-bold uppercase tracking-wider font-mono text-slate-400">TOTAL REVENUE</span>
             <div className="text-3xl font-extrabold text-slate-900 dark:text-white">
-              ${orderStats.totalRevenue.toFixed(2)}
+              {formatMoney(orderStats.totalRevenue, general)}
             </div>
             <span className="text-xs text-emerald-600 font-medium flex items-center gap-1">
               <CheckCircleIcon className="w-3.5 h-3.5" /> From paid orders
@@ -266,7 +267,7 @@ export default async function AdminDashboardPage() {
                       </span>
                     </td>
                     <td className="py-3 px-3 text-right font-mono font-extrabold text-slate-900 dark:text-white">
-                      ${o.total.toFixed(2)}
+                      {formatMoney(o.total, general)}
                     </td>
                     <td className="py-3 px-3 text-right">
                       <Link
@@ -362,7 +363,7 @@ export default async function AdminDashboardPage() {
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-extrabold text-base text-slate-900 dark:text-white">Revenue (Last 14 Days)</h2>
             <span className="text-xs font-mono font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded-lg">
-              Total: ${orderStats.totalRevenue.toFixed(0)}
+              Total: {formatMoney(orderStats.totalRevenue, general)}
             </span>
           </div>
 
@@ -373,7 +374,7 @@ export default async function AdminDashboardPage() {
                   <div
                     className="w-full bg-indigo-600 rounded-t-md hover:bg-indigo-500 transition-colors"
                     style={{ height: `${Math.max(4, (p.revenue / maxRevenue) * 100)}%` }}
-                    title={`${p.date}: $${p.revenue.toFixed(2)}`}
+                    title={`${p.date}: ${formatMoney(p.revenue, general)}`}
                   />
                 </div>
               ))}
@@ -399,7 +400,7 @@ export default async function AdminDashboardPage() {
                 <div key={p.productId} className="flex justify-between items-center py-3 text-xs">
                   <span className="font-bold text-slate-900 dark:text-white truncate max-w-[200px]">{p.name}</span>
                   <span className="text-slate-500 font-mono font-semibold">
-                    {p.quantitySold} sold · <span className="text-emerald-600 dark:text-emerald-400 font-bold">${p.revenue.toFixed(2)}</span>
+                    {p.quantitySold} sold · <span className="text-emerald-600 dark:text-emerald-400 font-bold">{formatMoney(p.revenue, general)}</span>
                   </span>
                 </div>
               ))}

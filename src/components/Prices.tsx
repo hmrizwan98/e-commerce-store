@@ -1,4 +1,7 @@
+"use client";
+
 import React, { FC } from "react";
+import { useFormatMoney } from "@/lib/currency/CurrencyContext";
 
 export interface PricesProps {
   className?: string;
@@ -13,12 +16,13 @@ const Prices: FC<PricesProps> = ({
   compareAtPrice,
   contentClass = "text-base font-bold text-[var(--heading,#0f172a)] dark:text-white",
 }) => {
+  const formatMoney = useFormatMoney();
   return (
     <div className={`flex items-baseline gap-2 ${className}`}>
-      <span className={contentClass}>${String(price)}</span>
+      <span className={contentClass}>{formatMoney(price)}</span>
       {compareAtPrice && compareAtPrice > price && (
         <span className="text-xs text-slate-600 dark:text-neutral-400 line-through font-normal">
-          ${String(compareAtPrice)}
+          {formatMoney(compareAtPrice)}
         </span>
       )}
     </div>

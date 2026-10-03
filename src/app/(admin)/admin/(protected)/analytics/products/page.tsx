@@ -1,10 +1,12 @@
 import React, { Suspense } from "react";
+import { getGeneralSettings } from "@/lib/firebase/repositories/site-settings";
 import AnalyticsNav from "@/components/admin/analytics/AnalyticsNav";
 import DateRangeFilter from "@/components/admin/analytics/DateRangeFilter";
 import BreakdownTable from "@/components/admin/analytics/BreakdownTable";
 import BreakdownBarChart from "@/components/admin/analytics/BreakdownBarChart";
 import { resolveDateRange, formatDateRangeLabel } from "@/lib/analytics/date-range";
 import { formatCurrency } from "@/lib/analytics/format";
+import type { CurrencySettings } from "@/lib/currency/format";
 import {
   getMostViewedProducts,
   getMostPurchasedProducts,
@@ -22,14 +24,24 @@ export const dynamic = "force-dynamic";
 
 const cardClass = "bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-6";
 
-function ProductStatTable({ title, stats, showRevenue }: { title: string; stats: ProductStat[]; showRevenue?: boolean }) {
+function ProductStatTable({
+  title,
+  stats,
+  showRevenue,
+  currency,
+}: {
+  title: string;
+  stats: ProductStat[];
+  showRevenue?: boolean;
+  currency?: CurrencySettings;
+}) {
   return (
     <div className={cardClass}>
       <h2 className="font-semibold mb-4">{title}</h2>
       <BreakdownTable
         columns={showRevenue ? ["Product", "Count", "Revenue"] : ["Product", "Count"]}
         rows={stats.map((s) =>
-          showRevenue ? [s.name, s.count, formatCurrency(s.revenue ?? 0)] : [s.name, s.count]
+          showRevenue ? [s.name, s.count, formatCurrency(s.revenue ?? 0, currency)] : [s.name, s.count]
         )}
       />
     </div>
@@ -41,6 +53,7 @@ async function ProductsContent({
 }: {
   searchParams: { range?: string; from?: string; to?: string };
 }) {
+  const currency = await getGeneralSettings();
   const range = resolveDateRange(searchParams.range, searchParams.from, searchParams.to);
   const [
     mostViewed,
@@ -71,7 +84,7 @@ async function ProductsContent({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <ProductStatTable title="Most Viewed Products" stats={mostViewed} />
         <ProductStatTable title="Most Purchased Products" stats={mostPurchased} />
-        <ProductStatTable title="Highest Revenue Products" stats={highestRevenue} showRevenue />
+        <ProductStatTable title="Highest Revenue Products" stats={highestRevenue} showRevenue currency={currency} />
         <ProductStatTable title="Most Added To Cart" stats={mostAddedToCart} />
         <ProductStatTable title="Most Wishlisted Products" stats={mostWishlisted} />
         <ProductStatTable title="Most Compared Products" stats={mostCompared} />

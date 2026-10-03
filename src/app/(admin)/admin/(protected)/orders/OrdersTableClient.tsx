@@ -1,5 +1,7 @@
 "use client";
 
+import { useFormatMoney } from "@/lib/currency/CurrencyContext";
+
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { EyeIcon } from "@heroicons/react/24/outline";
@@ -65,6 +67,7 @@ function renderStatusBadge(status: string) {
 }
 
 export default function OrdersTableClient({ orders }: OrdersTableClientProps) {
+  const formatMoney = useFormatMoney();
   const [viewedIds, setViewedIds] = useState<string[]>([]);
 
   useEffect(() => {
@@ -168,7 +171,7 @@ export default function OrdersTableClient({ orders }: OrdersTableClientProps) {
                   </td>
 
                   <td className="px-6 py-4 whitespace-nowrap font-extrabold text-slate-900 dark:text-slate-100 text-sm">
-                    ${o.total.toFixed(2)}
+                    {formatMoney(o.total)}
                   </td>
 
                   <td className="px-6 py-4 whitespace-nowrap">

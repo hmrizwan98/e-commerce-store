@@ -1,11 +1,13 @@
 "use client";
-import React, { FC, useState } from "react";
+import React, { FC, useEffect, useState } from "react";
 import ButtonPrimary from "@/shared/Button/ButtonPrimary";
 import LikeButton from "@/components/LikeButton";
 import { StarIcon } from "@heroicons/react/24/solid";
 import BagIcon from "@/components/BagIcon";
 import NcInputNumber from "@/components/NcInputNumber";
-import type { Product } from "@/types/product";
+import type { Product, ProductVariant } from "@/types/product";
+import { useAddToCart } from "@/hooks/useAddToCart";
+import { getQuickViewVariants } from "@/app/product/actions";
 import Prices from "@/components/Prices";
 import toast from "react-hot-toast";
 import NotifyAddTocart from "./NotifyAddTocart";
@@ -25,11 +27,38 @@ const ProductQuickView2: FC<ProductQuickView2Props> = ({
   product,
 }) => {
   const { name, images, rating, numberOfReviews, badge, slug } = product;
-  const { selections, selectAttribute, activePrice } = useProductOptions(product);
+  // Product cards don't carry variants - load them so a variant product is added to the
+  // cart with its real variant (id/price/stock), the same as on the product page.
+  const [variants, setVariants] = useState<ProductVariant[]>([]);
+  const [variantsReady, setVariantsReady] = useState(!product.hasVariants);
+  useEffect(() => {
+    if (!product.hasVariants) return;
+    let alive = true;
+    getQuickViewVariants(product.id)
+      .then((v) => alive && setVariants(v))
+      .catch(() => {})
+      .finally(() => alive && setVariantsReady(true));
+    return () => {
+      alive = false;
+    };
+  }, [product.id, product.hasVariants]);
+  const { selections, selectAttribute, matchedVariant, activeImage, activePrice, activeStock, isOutOfStock } =
+    useProductOptions(product, variants);
+  const addToCart = useAddToCart();
   const [qualitySelected, setQualitySelected] = useState(1);
   const productHref = `/product/${slug}` as Route;
 
   const notifyAddTocart = () => {
+    if (product.hasVariants && !matchedVariant) {
+      toast.error("This option isn't available - please choose another.");
+      return;
+    }
+    if (isOutOfStock) {
+      toast.error("This item is out of stock.");
+      return;
+    }
+    const variantLabel = Object.values(selections).join(" / ");
+    addToCart({ product, matchedVariant, activeImage, activePrice, activeStock, variantLabel, quantity: qualitySelected });
     toast.custom(
       (t) => (
         <NotifyAddTocart
@@ -138,6 +167,7 @@ const ProductQuickView2: FC<ProductQuickView2Props> = ({
           <ButtonPrimary
             className="flex-1 flex-shrink-0"
             onClick={notifyAddTocart}
+            disabled={!variantsReady}
           >
             <BagIcon className="hidden sm:inline-block w-5 h-5 mb-0.5" />
             <span className="ml-3">Add to cart</span>

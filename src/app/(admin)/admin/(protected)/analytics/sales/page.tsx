@@ -1,4 +1,5 @@
 import React, { Suspense } from "react";
+import { getGeneralSettings } from "@/lib/firebase/repositories/site-settings";
 import AnalyticsNav from "@/components/admin/analytics/AnalyticsNav";
 import DateRangeFilter from "@/components/admin/analytics/DateRangeFilter";
 import StatCard from "@/components/admin/analytics/StatCard";
@@ -14,6 +15,7 @@ async function SalesContent({
 }: {
   searchParams: { range?: string; from?: string; to?: string };
 }) {
+  const currency = await getGeneralSettings();
   const range = resolveDateRange(searchParams.range, searchParams.from, searchParams.to);
   const [sales, funnel, trend] = await Promise.all([
     getSalesOverview(range),
@@ -26,12 +28,12 @@ async function SalesContent({
       <p className="text-sm text-neutral-500">{formatDateRangeLabel(range)}</p>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Revenue" value={formatCurrency(sales.revenue)} />
+        <StatCard label="Revenue" value={formatCurrency(sales.revenue, currency)} />
         <StatCard label="Orders" value={sales.orders} />
-        <StatCard label="Taxes" value={formatCurrency(sales.tax)} />
-        <StatCard label="Shipping" value={formatCurrency(sales.shipping)} />
-        <StatCard label="Refunds" value={formatCurrency(sales.refunds)} />
-        <StatCard label="Average Order Value" value={formatCurrency(sales.avgOrderValue)} />
+        <StatCard label="Taxes" value={formatCurrency(sales.tax, currency)} />
+        <StatCard label="Shipping" value={formatCurrency(sales.shipping, currency)} />
+        <StatCard label="Refunds" value={formatCurrency(sales.refunds, currency)} />
+        <StatCard label="Average Order Value" value={formatCurrency(sales.avgOrderValue, currency)} />
         <StatCard label="Average Basket Size" value={`${sales.avgBasketSize} items`} />
         <StatCard label="Conversion Rate" value={`${funnel.conversionRate}%`} />
       </div>

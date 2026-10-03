@@ -73,3 +73,96 @@ export function SkeletonDashboardPage() {
     </div>
   );
 }
+
+const detailCard = "bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-xs";
+
+/** Order detail skeleton - same card layout as orders/[id]/page.tsx (header card, then a
+ * 7/5 two-column grid: items / address / timeline on the left, verification + manage order
+ * on the right) so the page doesn't jump when it loads. */
+export function SkeletonOrderDetailPage() {
+  return (
+    <div className="w-full space-y-6">
+      <div className={`${detailCard} flex flex-col sm:flex-row sm:items-center justify-between gap-4`}>
+        <div className="space-y-3">
+          <div className="flex items-center gap-3">
+            <SkeletonBar className="h-7 w-40 rounded-xl" />
+            <SkeletonBar className="h-4 w-28" />
+          </div>
+          <SkeletonBar className="h-8 w-64" />
+        </div>
+        <SkeletonBar className="h-7 w-36 rounded-full" />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="lg:col-span-7 space-y-6">
+          <div className={detailCard}>
+            <div className="flex justify-between mb-5">
+              <SkeletonBar className="h-5 w-36" />
+              <SkeletonBar className="h-4 w-28" />
+            </div>
+            {Array.from({ length: 2 }).map((_, i) => (
+              <div key={i} className="flex justify-between items-center py-3.5">
+                <div className="space-y-2">
+                  <SkeletonBar className="h-4 w-48" />
+                  <SkeletonBar className="h-3 w-32" />
+                </div>
+                <SkeletonBar className="h-4 w-20" />
+              </div>
+            ))}
+            <div className="mt-4 pt-4 space-y-3">
+              <SkeletonBar className="h-3 w-full" />
+              <SkeletonBar className="h-3 w-full" />
+              <SkeletonBar className="h-5 w-full" />
+            </div>
+          </div>
+          <div className={detailCard}>
+            <SkeletonBar className="h-5 w-56 mb-4" />
+            <div className="p-4 rounded-2xl border border-slate-100 dark:border-slate-800 space-y-2.5">
+              <SkeletonBar className="h-4 w-40" />
+              <SkeletonBar className="h-3 w-32" />
+              <SkeletonBar className="h-3 w-64" />
+              <SkeletonBar className="h-3 w-48" />
+            </div>
+          </div>
+          <div className={detailCard}>
+            <SkeletonBar className="h-5 w-48 mb-4" />
+            <SkeletonBar className="h-11 w-full rounded-xl" />
+          </div>
+        </div>
+
+        <div className="lg:col-span-5 space-y-6">
+          <div className={detailCard}>
+            <div className="flex justify-between mb-5">
+              <SkeletonBar className="h-5 w-40" />
+              <SkeletonBar className="h-6 w-28 rounded-lg" />
+            </div>
+            <SkeletonBar className="h-7 w-32 rounded-full mb-3" />
+            <SkeletonBar className="h-4 w-64 mb-4" />
+            <div className="p-4 rounded-2xl border border-slate-100 dark:border-slate-800 space-y-2.5 mb-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <SkeletonBar key={i} className="h-3 w-full" />
+              ))}
+            </div>
+            <div className="grid grid-cols-4 gap-2 mb-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <SkeletonBar key={i} className="h-12 rounded-xl" />
+              ))}
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <SkeletonBar className="h-11 rounded-xl" />
+              <SkeletonBar className="h-11 rounded-xl" />
+            </div>
+          </div>
+          <div className={detailCard}>
+            <SkeletonBar className="h-5 w-36 mb-5" />
+            <div className="space-y-4">
+              <SkeletonBar className="h-10 w-full rounded-xl" />
+              <SkeletonBar className="h-10 w-full rounded-xl" />
+              <SkeletonBar className="h-10 w-full rounded-xl" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -8,6 +8,9 @@ import { formatPhoneNumber } from "@/lib/notifications/whatsapp-service";
 import CheckoutClient from "./CheckoutClient";
 
 export const dynamic = "force-dynamic";
+// Headroom for the placeGuestOrder Server Action (it runs under this route) - the
+// platform default is 10s, and a cut-off response breaks the "Thank you" screen.
+export const maxDuration = 60;
 
 const CheckoutPage = async () => {
   const [shipping, general, paymentSettings, whatsappSettings] = await Promise.all([

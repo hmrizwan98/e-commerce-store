@@ -31,6 +31,8 @@ export interface OrderAddress {
   state?: string;
   postalCode?: string;
   country: string;
+  /** Checkout's "Delivery Preference" - office = deliver 9 AM - 5 PM. */
+  addressType?: "home" | "office";
 }
 
 export interface OrderStatusHistoryEntry {

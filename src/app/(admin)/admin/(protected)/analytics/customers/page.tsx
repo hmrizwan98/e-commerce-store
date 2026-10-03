@@ -1,4 +1,5 @@
 import React, { Suspense } from "react";
+import { getGeneralSettings } from "@/lib/firebase/repositories/site-settings";
 import AnalyticsNav from "@/components/admin/analytics/AnalyticsNav";
 import DateRangeFilter from "@/components/admin/analytics/DateRangeFilter";
 import StatCard from "@/components/admin/analytics/StatCard";
@@ -14,6 +15,7 @@ async function CustomersContent({
 }: {
   searchParams: { range?: string; from?: string; to?: string };
 }) {
+  const currency = await getGeneralSettings();
   const range = resolveDateRange(searchParams.range, searchParams.from, searchParams.to);
   const customers = await getCustomerAnalytics(range);
 
@@ -24,8 +26,8 @@ async function CustomersContent({
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard label="New Customers" value={customers.newCustomers} />
         <StatCard label="Returning Customers" value={customers.returningCustomers} />
-        <StatCard label="Average Order Value" value={formatCurrency(customers.avgOrderValue)} />
-        <StatCard label="Customer Lifetime Value" value={formatCurrency(customers.avgCustomerLifetimeValue)} sublabel="average, all time" />
+        <StatCard label="Average Order Value" value={formatCurrency(customers.avgOrderValue, currency)} />
+        <StatCard label="Customer Lifetime Value" value={formatCurrency(customers.avgCustomerLifetimeValue, currency)} sublabel="average, all time" />
         <StatCard label="Repeat Purchase Rate" value={`${customers.repeatPurchaseRate}%`} sublabel="all time" />
         <StatCard label="Total Customers" value={customers.totalCustomers} sublabel="all time" />
       </div>
@@ -34,7 +36,7 @@ async function CustomersContent({
         <h2 className="font-semibold mb-4">Top Spending Customers</h2>
         <BreakdownTable
           columns={["Customer", "Orders", "Total Spent"]}
-          rows={customers.topSpenders.map((c) => [c.name || c.email, c.orderCount, formatCurrency(c.totalSpent)])}
+          rows={customers.topSpenders.map((c) => [c.name || c.email, c.orderCount, formatCurrency(c.totalSpent, currency)])}
         />
       </div>
     </div>

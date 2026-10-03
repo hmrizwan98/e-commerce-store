@@ -1,5 +1,6 @@
 "use client";
 
+import { useFormatMoney } from "@/lib/currency/CurrencyContext";
 import { useEffect, useState, useRef } from "react";
 import Prices from "@/components/Prices";
 import ButtonPrimary from "@/shared/Button/ButtonPrimary";
@@ -33,11 +34,13 @@ const CheckoutClient: React.FC<CheckoutClientProps> = ({
   paymentSettings,
   storeWhatsappNumber,
 }) => {
+  const formatMoney = useFormatMoney();
   const items = useAppSelector((state) => state.cart.items);
   const dispatch = useAppDispatch();
 
+  // "Review" = every step saved and collapsed, waiting on "Confirm & Place Order".
   const [tabActive, setTabActive] = useState<
-    "ContactInfo" | "ShippingAddress" | "PaymentMethod"
+    "ContactInfo" | "ShippingAddress" | "PaymentMethod" | "Review"
   >("ContactInfo");
 
   const [phone, setPhone] = useState("");
@@ -145,6 +148,7 @@ const CheckoutClient: React.FC<CheckoutClientProps> = ({
           state: shipping.state || undefined,
           postalCode: shipping.postalCode || undefined,
           country: shipping.country,
+          addressType: shipping.addressType,
         },
         paymentMethod,
         paymentTransactionRef: transactionRef || undefined,
@@ -163,7 +167,7 @@ const CheckoutClient: React.FC<CheckoutClientProps> = ({
 
   if (confirmedOrder) {
     const waText = encodeURIComponent(
-      `🛒 *New Order Confirmation*\n\nHi Store Team! I just placed Order *#${confirmedOrder.orderNumber}* on your website.\n\n👤 *Name:* ${shipping.fullName}\n📞 *Phone:* ${phone}\n📍 *Address:* ${[shipping.line1, shipping.city].filter(Boolean).join(", ")}\n💰 *Total Amount:* $${totals.total.toFixed(2)}\n\nPlease confirm my order. Thank you!`
+      `🛒 *New Order Confirmation*\n\nHi Store Team! I just placed Order *#${confirmedOrder.orderNumber}* on your website.\n\n👤 *Name:* ${shipping.fullName}\n📞 *Phone:* ${phone}\n📍 *Address:* ${[shipping.line1, shipping.city].filter(Boolean).join(", ")}\n💰 *Total Amount:* ${formatMoney(totals.total)}\n\nPlease confirm my order. Thank you!`
     );
     const waUrl = storeWhatsappNumber ? `https://wa.me/${storeWhatsappNumber}?text=${waText}` : "";
 
@@ -313,7 +317,10 @@ const CheckoutClient: React.FC<CheckoutClientProps> = ({
               setTabActive("PaymentMethod");
               handleScrollToEl("PaymentMethod");
             }}
-            onCloseActive={() => setTabActive("PaymentMethod")}
+            onCloseActive={() => {
+              setTabActive("Review");
+              handleScrollToEl("OrderSummary");
+            }}
           />
         </div>
       </div>
@@ -358,7 +365,12 @@ const CheckoutClient: React.FC<CheckoutClientProps> = ({
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             <div className="lg:col-span-7 xl:col-span-8">{renderLeft()}</div>
 
-            <div className="lg:col-span-5 xl:col-span-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 sm:p-7 shadow-xs sticky top-24 space-y-6">
+            <div
+              id="OrderSummary"
+              className={`lg:col-span-5 xl:col-span-4 bg-white dark:bg-slate-900 border rounded-2xl p-6 sm:p-7 shadow-xs sticky top-24 space-y-6 scroll-mt-24 transition-colors ${
+                tabActive === "Review" ? "border-indigo-400 dark:border-indigo-600" : "border-slate-200 dark:border-slate-800"
+              }`}
+            >
               <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
                 <h3 className="text-sm font-mono font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
                   Order Summary ({items.length} {items.length === 1 ? "Item" : "Items"})
@@ -376,24 +388,24 @@ const CheckoutClient: React.FC<CheckoutClientProps> = ({
                 <div className="flex justify-between">
                   <span>Subtotal</span>
                   <span className="font-bold text-slate-900 dark:text-slate-100">
-                    ${totals.subtotal.toFixed(2)}
+                    {formatMoney(totals.subtotal)}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span>Estimated Shipping</span>
                   <span className="font-bold text-slate-900 dark:text-slate-100">
-                    {totals.shippingCost === 0 ? "Free" : `$${totals.shippingCost.toFixed(2)}`}
+                    {totals.shippingCost === 0 ? "Free" : formatMoney(totals.shippingCost)}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span>Tax</span>
                   <span className="font-bold text-slate-900 dark:text-slate-100">
-                    ${totals.tax.toFixed(2)}
+                    {formatMoney(totals.tax)}
                   </span>
                 </div>
                 <div className="flex justify-between font-extrabold text-slate-900 dark:text-slate-100 text-base pt-3 border-t border-slate-100 dark:border-slate-800">
                   <span>Total Amount</span>
-                  <span className="text-indigo-600 dark:text-indigo-400">${totals.total.toFixed(2)}</span>
+                  <span className="text-indigo-600 dark:text-indigo-400">{formatMoney(totals.total)}</span>
                 </div>
               </div>
 

@@ -5,6 +5,7 @@
  * omitted - no reliable customer-linked data source exists for either yet (see
  * Customer.lastLoginAt's doc comment and CustomerAnalytics.wishlistCount). */
 
+import { formatMoney, type CurrencySettings } from "@/lib/currency/format";
 import type { Customer } from "@/types/customer";
 import type { Order } from "@/types/order";
 import type { Review } from "@/types/review";
@@ -32,7 +33,8 @@ export function buildCustomerTimeline(
   customer: Customer,
   orders: Order[],
   reviews: Review[],
-  activity: CustomerActivityLog[]
+  activity: CustomerActivityLog[],
+  currency?: CurrencySettings
 ): CustomerTimelineEvent[] {
   const events: CustomerTimelineEvent[] = [];
 
@@ -42,7 +44,7 @@ export function buildCustomerTimeline(
 
   orders.forEach((o) => {
     if (o.createdAt) {
-      events.push({ at: o.createdAt, label: `Order ${o.orderNumber} placed`, kind: "order", note: `$${o.total.toFixed(2)}` });
+      events.push({ at: o.createdAt, label: `Order ${o.orderNumber} placed`, kind: "order", note: formatMoney(o.total, currency) });
     }
     o.paymentStatusHistory?.forEach((h) => {
       events.push({

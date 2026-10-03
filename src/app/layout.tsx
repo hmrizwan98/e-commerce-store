@@ -4,6 +4,7 @@ import "@/styles/index.scss";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import ClientProviders from "./ClientProviders";
+import { CurrencyProvider } from "@/lib/currency/CurrencyContext";
 import { getActiveTheme, DEFAULT_THEME } from "@/lib/firebase/repositories/themes";
 import { getGeneralSettings, DEFAULT_GENERAL_SETTINGS } from "@/lib/firebase/repositories/site-settings";
 import { getMenu } from "@/lib/firebase/repositories/menus";
@@ -209,29 +210,31 @@ export default async function RootLayout({
         />
       </head>
       <body className="bg-[var(--background,white)] text-base dark:bg-neutral-900 text-[var(--text,#111827)] dark:text-neutral-200">
-        <ClientProviders
-          headerSettings={theme.header}
-          footerSettings={theme.footer}
-          storeName={general.storeName}
-          tenantId={tenantId ?? ""}
-          popupConfig={(theme as any).popup}
-          themePresetId={(theme as any).presetId}
-          cartSettings={(theme as any).cart}
-          announcementBarSettings={(theme as any).announcementBar}
-          headerMenu={headerMenu as any}
-          footerMenu={footerMenu as any}
-          logos={theme.logos}
-          socialLinks={general.socialLinks}
-        >
-          {suspended ? (
-            <div className="flex min-h-[60vh] flex-col items-center justify-center gap-2 px-6 text-center">
-              <h1 className="text-2xl font-semibold">This store is currently unavailable</h1>
-              <p className="text-neutral-500">Please check back later.</p>
-            </div>
-          ) : (
-            children
-          )}
-        </ClientProviders>
+        <CurrencyProvider currency={general.currency} currencySymbol={general.currencySymbol}>
+          <ClientProviders
+            headerSettings={theme.header}
+            footerSettings={theme.footer}
+            storeName={general.storeName}
+            tenantId={tenantId ?? ""}
+            popupConfig={(theme as any).popup}
+            themePresetId={(theme as any).presetId}
+            cartSettings={(theme as any).cart}
+            announcementBarSettings={(theme as any).announcementBar}
+            headerMenu={headerMenu as any}
+            footerMenu={footerMenu as any}
+            logos={theme.logos}
+            socialLinks={general.socialLinks}
+          >
+            {suspended ? (
+              <div className="flex min-h-[60vh] flex-col items-center justify-center gap-2 px-6 text-center">
+                <h1 className="text-2xl font-semibold">This store is currently unavailable</h1>
+                <p className="text-neutral-500">Please check back later.</p>
+              </div>
+            ) : (
+              children
+            )}
+          </ClientProviders>
+        </CurrencyProvider>
       </body>
     </html>
   );

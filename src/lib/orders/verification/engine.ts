@@ -33,6 +33,16 @@ export const REJECTION_REASONS: { code: OrderRejectionReasonCode; label: string 
   { code: "other", label: "Other" },
 ];
 
+/** Preset confirmation notes for the Verification card's Confirm action - "other" lets the
+ * admin type their own. The resolved label/text is what's stored as the decision reason. */
+export const CONFIRMATION_NOTES: { code: string; label: string }[] = [
+  { code: "confirmed_call", label: "Customer confirmed on call" },
+  { code: "confirmed_whatsapp", label: "Customer confirmed on WhatsApp" },
+  { code: "returning_customer", label: "Returning customer - trusted" },
+  { code: "address_verified", label: "Address and phone verified" },
+  { code: "other", label: "Other" },
+];
+
 /** Validates a reject request - returns the final human-readable reason, or an error. */
 export function resolveRejectionReason(
   code: string | undefined,

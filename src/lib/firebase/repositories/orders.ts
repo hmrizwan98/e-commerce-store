@@ -344,7 +344,11 @@ export async function createGuestOrder(input: CreateGuestOrderInput): Promise<Cr
         shippingCost: totals.shippingCost,
         tax: totals.tax,
         total: totals.total,
-        shippingAddress: input.shippingAddress,
+        shippingAddress: {
+          ...input.shippingAddress,
+          // Only the two known values are stored (client input is never trusted as-is).
+          addressType: input.shippingAddress.addressType === "office" ? "office" : input.shippingAddress.addressType === "home" ? "home" : undefined,
+        },
         paymentMethod: input.paymentMethod,
         paymentStatus: input.paymentMethod === "cod" ? "unpaid" : "proof_submitted",
         paymentTransactionRef: input.paymentTransactionRef || undefined,
@@ -366,45 +370,37 @@ export async function createGuestOrder(input: CreateGuestOrderInput): Promise<Cr
     return { orderId: orderRef.id, orderNumber };
   });
 
-  // COD Order Verification (advisory only - never confirms/rejects by itself). Evaluated
-  // once after the response is sent (waitUntil) so checkout stays fast; refs are resolved
-  // here, inside the request's tenant scope. An idempotent replay hits the existing
-  // verification and is a no-op. If this fails, the admin order page evaluates it lazily.
-  if (requiresCodVerification(input.paymentMethod)) {
-    try {
-      const verificationsCol = await tenantCollection("orderVerifications");
-      const orderRef = ordersCol.doc(result.orderId);
-      waitUntil(
-        (async () => {
-          const order = docData<Order>(await orderRef.get());
-          if (order) await runOrderVerification(order, { ordersCol, verificationsCol });
-        })().catch((err) => console.error(`[order-verification] failed for order ${result.orderId}`, err))
-      );
-    } catch (err) {
-      console.error("[order-verification] could not schedule verification", err);
-    }
-  }
-
-  // Async dispatch notifications (Email & WhatsApp)
+  // Post-order work runs AFTER the response is sent (waitUntil), from the order exactly as
+  // saved: COD verification (advisory only - never confirms/rejects by itself) plus the
+  // confirmation email/WhatsApp. Keeping it off the response path is what keeps checkout
+  // well inside the serverless time limit - when the response itself ran past it, the
+  // platform cut the stream mid-way and the customer saw an error right after "Thank you".
+  // Refs/settings are resolved here, inside the request's tenant scope. If verification
+  // fails, the admin order page evaluates it lazily.
   try {
-    const orderData = {
-      orderNumber: result.orderNumber,
-      guestName: input.guestName,
-      guestEmail: input.guestEmail,
-      items: input.items.map((i) => ({ ...i, name: i.productId, unitPrice: 0, quantity: i.quantity, lineTotal: 0 })),
-      shippingAddress: input.shippingAddress,
-      total: 0,
-    };
-    // Dynamically import notification helpers to prevent server bundle cycles
-    const { sendOrderConfirmationEmail } = await import("@/lib/notifications/email-service");
-    const { sendWhatsAppNotification } = await import("@/lib/notifications/whatsapp-service");
-
-    await Promise.allSettled([
-      sendOrderConfirmationEmail(orderData as any),
-      sendWhatsAppNotification("ORDER_PLACED", orderData as any),
-    ]);
+    const verificationsCol = requiresCodVerification(input.paymentMethod)
+      ? await tenantCollection("orderVerifications")
+      : null;
+    const orderRef = ordersCol.doc(result.orderId);
+    waitUntil(
+      (async () => {
+        const order = docData<Order>(await orderRef.get());
+        if (!order) return;
+        const { sendOrderConfirmationEmail } = await import("@/lib/notifications/email-service");
+        const { sendWhatsAppNotification } = await import("@/lib/notifications/whatsapp-service");
+        await Promise.allSettled([
+          verificationsCol
+            ? runOrderVerification(order, { ordersCol, verificationsCol }).catch((err) =>
+                console.error(`[order-verification] failed for order ${result.orderId}`, err)
+              )
+            : null,
+          sendOrderConfirmationEmail(order, general),
+          sendWhatsAppNotification("ORDER_PLACED", order, general),
+        ]);
+      })().catch((err) => console.error("[Order Notification Trigger Error]:", err))
+    );
   } catch (err) {
-    console.error("[Order Notification Trigger Error]:", err);
+    console.error("[Order post-processing] could not schedule", err);
   }
 
   return result;

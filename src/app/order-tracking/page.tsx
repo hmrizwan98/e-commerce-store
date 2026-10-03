@@ -4,7 +4,8 @@ import Label from "@/components/Label/Label";
 import Input from "@/shared/Input/Input";
 import ButtonPrimary from "@/shared/Button/ButtonPrimary";
 import { getOrderByOrderNumber } from "@/lib/firebase/repositories/orders";
-import { getShippingSettings } from "@/lib/firebase/repositories/site-settings";
+import { getShippingSettings, getGeneralSettings } from "@/lib/firebase/repositories/site-settings";
+import { formatMoney } from "@/lib/currency/format";
 import { checkRateLimit } from "@/lib/firebase/rate-limit";
 import { getCurrentTenant } from "@/lib/tenant/current";
 import type { Order, OrderStatus } from "@/types/order";
@@ -60,7 +61,7 @@ const OrderTrackingPage = async ({
 }: {
   searchParams: { orderNumber?: string; email?: string };
 }) => {
-  const shippingSettings = await getShippingSettings();
+  const [shippingSettings, general] = await Promise.all([getShippingSettings(), getGeneralSettings()]);
   const isTrackingEnabled = shippingSettings.trackingEnabled ?? true;
 
   const orderNumber = searchParams.orderNumber?.trim();
@@ -318,22 +319,22 @@ const OrderTrackingPage = async ({
                       <span className="font-semibold text-slate-900 dark:text-slate-100">{item.name}</span>
                       <span className="text-xs text-slate-400 block">Qty: {item.quantity}</span>
                     </div>
-                    <span className="font-mono font-bold text-slate-900 dark:text-slate-100">${item.lineTotal.toFixed(2)}</span>
+                    <span className="font-mono font-bold text-slate-900 dark:text-slate-100">{formatMoney(item.lineTotal, general)}</span>
                   </div>
                 ))}
               </div>
               <div className="border-t border-slate-200 dark:border-slate-700 pt-3 mt-2 space-y-1.5 text-xs text-slate-600 dark:text-slate-400">
                 <div className="flex justify-between">
                   <span>Subtotal</span>
-                  <span className="font-mono">${matched.subtotal.toFixed(2)}</span>
+                  <span className="font-mono">{formatMoney(matched.subtotal, general)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Shipping</span>
-                  <span className="font-mono">${matched.shippingCost.toFixed(2)}</span>
+                  <span className="font-mono">{formatMoney(matched.shippingCost, general)}</span>
                 </div>
                 <div className="flex justify-between font-bold text-sm text-slate-900 dark:text-slate-100 pt-2 border-t border-slate-100 dark:border-slate-800">
                   <span>Total Paid / COD</span>
-                  <span className="font-mono">${matched.total.toFixed(2)}</span>
+                  <span className="font-mono">{formatMoney(matched.total, general)}</span>
                 </div>
               </div>
             </div>

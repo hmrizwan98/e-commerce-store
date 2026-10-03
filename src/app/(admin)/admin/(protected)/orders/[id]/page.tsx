@@ -18,6 +18,7 @@ import Link from "next/link";
 import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 
 import { getGeneralSettings } from "@/lib/firebase/repositories/site-settings";
+import { formatMoney } from "@/lib/currency/format";
 
 export const dynamic = "force-dynamic";
 
@@ -44,10 +45,7 @@ export default async function AdminOrderDetailPage({ params }: { params: { id: s
       : verification?.status === "rejected"
         ? "This COD order was rejected during verification."
         : null;
-  const amountLabel =
-    (general.currency || "").toUpperCase() === "PKR"
-      ? `Rs ${order.total.toLocaleString("en-PK")}`
-      : `${general.currencySymbol || general.currency || ""} ${order.total.toFixed(2)}`.trim();
+  const amountLabel = formatMoney(order.total, general);
 
   return (
     <>
@@ -87,7 +85,7 @@ export default async function AdminOrderDetailPage({ params }: { params: { id: s
             <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-xs">
               <h2 className="text-base font-extrabold text-slate-900 dark:text-slate-100 mb-4 flex items-center justify-between">
                 <span>Order Items ({order.items.length})</span>
-                <span className="text-xs font-mono text-slate-400">Subtotal: ${order.subtotal.toFixed(2)}</span>
+                <span className="text-xs font-mono text-slate-400">Subtotal: {formatMoney(order.subtotal, general)}</span>
               </h2>
               <div className="divide-y divide-slate-100 dark:divide-slate-800">
                 {order.items.map((item, i) => (
@@ -95,25 +93,25 @@ export default async function AdminOrderDetailPage({ params }: { params: { id: s
                     <div>
                       <p className="font-bold text-slate-900 dark:text-slate-100 text-sm">{item.name}</p>
                       <p className="text-slate-500 font-mono mt-0.5">
-                        Qty: <span className="font-bold text-slate-700 dark:text-slate-300">{item.quantity}</span> · ${item.unitPrice.toFixed(2)} each
+                        Qty: <span className="font-bold text-slate-700 dark:text-slate-300">{item.quantity}</span> · {formatMoney(item.unitPrice, general)} each
                       </p>
                     </div>
-                    <p className="font-extrabold text-slate-900 dark:text-slate-100 text-sm font-mono">${item.lineTotal.toFixed(2)}</p>
+                    <p className="font-extrabold text-slate-900 dark:text-slate-100 text-sm font-mono">{formatMoney(item.lineTotal, general)}</p>
                   </div>
                 ))}
               </div>
               <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 space-y-2 text-xs">
                 <div className="flex justify-between text-slate-600 dark:text-slate-400">
                   <span>Items Subtotal</span>
-                  <span className="font-mono font-semibold">${order.subtotal.toFixed(2)}</span>
+                  <span className="font-mono font-semibold">{formatMoney(order.subtotal, general)}</span>
                 </div>
                 <div className="flex justify-between text-slate-600 dark:text-slate-400">
                   <span>Shipping Cost</span>
-                  <span className="font-mono font-semibold">${order.shippingCost.toFixed(2)}</span>
+                  <span className="font-mono font-semibold">{formatMoney(order.shippingCost, general)}</span>
                 </div>
                 <div className="flex justify-between text-slate-900 dark:text-slate-100 font-extrabold text-sm border-t border-slate-200 dark:border-slate-800 pt-3">
                   <span>Total Amount</span>
-                  <span className="font-mono text-indigo-600 dark:text-indigo-400">${order.total.toFixed(2)}</span>
+                  <span className="font-mono text-indigo-600 dark:text-indigo-400">{formatMoney(order.total, general)}</span>
                 </div>
               </div>
             </div>
@@ -134,6 +132,13 @@ export default async function AdminOrderDetailPage({ params }: { params: { id: s
                   {order.shippingAddress.postalCode}
                 </p>
                 <p className="font-bold text-indigo-600 dark:text-indigo-400">{order.shippingAddress.country}</p>
+                {order.shippingAddress.addressType && (
+                  <p className="font-semibold text-slate-600 dark:text-slate-400">
+                    {order.shippingAddress.addressType === "office"
+                      ? "🏢 Office / Commercial delivery (9 AM - 5 PM)"
+                      : "🏠 Home delivery (all day)"}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -265,8 +270,8 @@ export default async function AdminOrderDetailPage({ params }: { params: { id: s
               <tr key={idx}>
                 <td className="py-2.5 px-3 font-semibold text-slate-800">{item.name}</td>
                 <td className="py-2.5 px-3 text-center font-mono">{item.quantity}</td>
-                <td className="py-2.5 px-3 text-right font-mono">${item.unitPrice.toFixed(2)}</td>
-                <td className="py-2.5 px-3 text-right font-mono font-bold">${item.lineTotal.toFixed(2)}</td>
+                <td className="py-2.5 px-3 text-right font-mono">{formatMoney(item.unitPrice, general)}</td>
+                <td className="py-2.5 px-3 text-right font-mono font-bold">{formatMoney(item.lineTotal, general)}</td>
               </tr>
             ))}
           </tbody>
@@ -276,15 +281,15 @@ export default async function AdminOrderDetailPage({ params }: { params: { id: s
           <div className="w-60 space-y-1.5 border-t border-slate-300 pt-3">
             <div className="flex justify-between text-slate-600">
               <span>Subtotal:</span>
-              <span className="font-mono">${order.subtotal.toFixed(2)}</span>
+              <span className="font-mono">{formatMoney(order.subtotal, general)}</span>
             </div>
             <div className="flex justify-between text-slate-600">
               <span>Shipping Fee:</span>
-              <span className="font-mono">${order.shippingCost.toFixed(2)}</span>
+              <span className="font-mono">{formatMoney(order.shippingCost, general)}</span>
             </div>
             <div className="flex justify-between text-slate-900 font-extrabold text-sm border-t-2 border-slate-900 pt-2">
               <span>Total Amount:</span>
-              <span className="font-mono">${order.total.toFixed(2)}</span>
+              <span className="font-mono">{formatMoney(order.total, general)}</span>
             </div>
           </div>
         </div>

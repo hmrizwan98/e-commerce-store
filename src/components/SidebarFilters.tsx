@@ -1,5 +1,6 @@
 "use client";
 
+import { useFormatMoney } from "@/lib/currency/CurrencyContext";
 import React, { useState, useEffect } from "react";
 import Checkbox from "@/shared/Checkbox/Checkbox";
 import Slider from "rc-slider";
@@ -24,6 +25,7 @@ const SidebarFilters = ({
   availableSizes = FILTER_SIZES,
   showHeader = true,
 }: SidebarFiltersProps) => {
+  const formatMoney = useFormatMoney();
   const { filters, applyFilters, clearAll } = useFilterParams();
 
   // Dynamic Categories from props (or fallbacks)
@@ -219,7 +221,7 @@ const SidebarFilters = ({
               Min Price
             </label>
             <div className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-1.5 flex items-center justify-between text-xs font-bold text-slate-900 dark:text-slate-100">
-              <span>${rangePrices[0]}</span>
+              <span>{formatMoney(rangePrices[0])}</span>
             </div>
           </div>
           <div>
@@ -227,7 +229,7 @@ const SidebarFilters = ({
               Max Price
             </label>
             <div className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-1.5 flex items-center justify-between text-xs font-bold text-slate-900 dark:text-slate-100">
-              <span>${rangePrices[1]}</span>
+              <span>{formatMoney(rangePrices[1])}</span>
             </div>
           </div>
         </div>

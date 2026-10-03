@@ -1,4 +1,6 @@
+import { formatMoney } from "@/lib/currency/format";
 import React from "react";
+import { getGeneralSettings } from "@/lib/firebase/repositories/site-settings";
 import Link from "next/link";
 import Image from "next/image";
 import { searchAdminProducts, type AdminProductsCursor } from "@/lib/firebase/repositories/products";
@@ -40,12 +42,14 @@ export default async function AdminProductsPage({
   const cursorStack = parseCursorStack(searchParams.cursor);
   const startAfter = cursorStack.length ? cursorStack[cursorStack.length - 1] : undefined;
 
+  const generalPromise = getGeneralSettings();
   const { products, total, hasMore } = await searchAdminProducts({
     q: searchParams.q,
     status: searchParams.status as any,
     trashed,
     startAfter,
   });
+  const general = await generalPromise;
 
   const lastProduct = products.length ? products[products.length - 1] : undefined;
   const lastCursorValue: string | number | undefined = searchParams.q ? lastProduct?.nameLower : lastProduct?.updatedAt;
@@ -216,10 +220,10 @@ export default async function AdminProductsPage({
 
                     {/* Price */}
                     <td className="py-3.5 px-4 font-mono font-extrabold text-slate-900 dark:text-white text-sm">
-                      ${p.price.toFixed(2)}
+                      {formatMoney(p.price, general)}
                       {p.compareAtPrice ? (
                         <span className="block text-[11px] text-slate-400 line-through font-normal">
-                          ${p.compareAtPrice.toFixed(2)}
+                          {formatMoney(p.compareAtPrice, general)}
                         </span>
                       ) : null}
                     </td>

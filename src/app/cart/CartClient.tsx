@@ -1,5 +1,6 @@
 "use client";
 
+import { useFormatMoney } from "@/lib/currency/CurrencyContext";
 import { NoSymbolIcon, CheckIcon } from "@heroicons/react/24/outline";
 import NcInputNumber from "@/components/NcInputNumber";
 import Prices from "@/components/Prices";
@@ -24,6 +25,7 @@ const CartClient: React.FC<CartClientProps> = ({
   taxRatePercent,
   taxInclusive,
 }) => {
+  const formatMoney = useFormatMoney();
   const items = useAppSelector((state) => state.cart.items);
   const dispatch = useAppDispatch();
 
@@ -180,24 +182,24 @@ const CartClient: React.FC<CartClientProps> = ({
                   <div className="flex justify-between pb-4">
                     <span>Subtotal</span>
                     <span className="font-semibold text-slate-900 dark:text-slate-200">
-                      ${totals.subtotal.toFixed(2)}
+                      {formatMoney(totals.subtotal)}
                     </span>
                   </div>
                   <div className="flex justify-between py-4">
                     <span>Shipping estimate</span>
                     <span className="font-semibold text-slate-900 dark:text-slate-200">
-                      {totals.shippingCost === 0 ? "Free" : `$${totals.shippingCost.toFixed(2)}`}
+                      {totals.shippingCost === 0 ? "Free" : formatMoney(totals.shippingCost)}
                     </span>
                   </div>
                   <div className="flex justify-between py-4">
                     <span>Tax estimate</span>
                     <span className="font-semibold text-slate-900 dark:text-slate-200">
-                      ${totals.tax.toFixed(2)}
+                      {formatMoney(totals.tax)}
                     </span>
                   </div>
                   <div className="flex justify-between font-semibold text-slate-900 dark:text-slate-200 text-base pt-4">
                     <span>Order total</span>
-                    <span>${totals.total.toFixed(2)}</span>
+                    <span>{formatMoney(totals.total)}</span>
                   </div>
                 </div>
                 <ButtonPrimary href="/checkout" className="mt-8 w-full">
