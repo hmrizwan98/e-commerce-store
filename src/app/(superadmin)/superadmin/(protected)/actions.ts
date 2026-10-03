@@ -107,11 +107,36 @@ export interface ResetAdminPasswordResult {
   /** True if the email provider confirmed delivery - false means it only logged
    * server-side (no RESEND_API_KEY configured) or the send attempt failed. */
   emailSent: boolean;
+  /** Set when the reset link itself couldn't be generated - nothing was emailed. */
+  error?: string;
 }
 
 function revalidateStoreList() {
-  revalidatePath("/superadmin");
-  revalidatePath("/superadmin/stores");
+  try {
+    revalidatePath("/superadmin");
+    revalidatePath("/superadmin/stores");
+    revalidatePath("/stores");
+    revalidatePath("/");
+  } catch (err) {
+    console.error("[revalidateStoreList] revalidation error (ignored):", err);
+  }
+}
+
+/** Builds the set-password link emailed to a store admin, pointing DIRECTLY at Webriiz's own
+ * /admin/reset-password page (ResetPasswordForm.tsx reads ?oobCode= and calls
+ * confirmPasswordReset()). generatePasswordResetLink() is deliberately called WITHOUT
+ * actionCodeSettings: passing a continue URL makes Firebase validate its host against the
+ * project's Authorized Domains (auth/unauthorized-continue-uri when missing), and the link it
+ * returns lands on Firebase's own hosted reset page rather than ours anyway. Only the
+ * one-time oobCode is taken from Firebase's link. */
+async function generateSetPasswordLink(email: string, platformBaseUrl: string, slug: string): Promise<string> {
+  const firebaseLink = await adminAuth().generatePasswordResetLink(email);
+  const oobCode = new URL(firebaseLink).searchParams.get("oobCode");
+  if (!oobCode) throw new Error("Firebase did not return a password reset code.");
+  const link = new URL(buildResetPasswordLinkUrl(platformBaseUrl, slug));
+  link.searchParams.set("mode", "resetPassword");
+  link.searchParams.set("oobCode", oobCode);
+  return link.toString();
 }
 
 function generateTempPassword(): string {
@@ -396,9 +421,7 @@ export async function createStore(input: StoreFormInput): Promise<CreateStoreRes
             }).then(() => stage("DEPLOYMENT_TRIGGERED", { storeId })),
             logStoreActivity(storeId, "created", decoded.uid).then(() => stage("ACTIVITY_LOGGED", { storeId })),
             (async () => {
-              const setPasswordLink = await adminAuth().generatePasswordResetLink(input.email!, {
-                url: buildResetPasswordLinkUrl(platformBaseUrl, slug),
-              });
+              const setPasswordLink = await generateSetPasswordLink(input.email!, platformBaseUrl, slug);
               return getWelcomeEmailService().sendWelcomeEmail({
                 storeName: input.brandName?.trim() || input.name,
                 storeUrl: buildTenantUrl(platformBaseUrl, slug),
@@ -545,10 +568,7 @@ export async function cloneStore(sourceStoreId: string, input: CloneStoreInput):
 
   let emailSent = false;
   {
-    const setPasswordLink = await adminAuth()
-      .generatePasswordResetLink(input.email, {
-        url: buildResetPasswordLinkUrl(platformBaseUrl, slug),
-      })
+    const setPasswordLink = await generateSetPasswordLink(input.email, platformBaseUrl, slug)
       .catch((err) => {
         console.error("[welcome-email] failed to generate set-password link", err);
         return null;
@@ -777,9 +797,20 @@ export async function resetStoreAdminPassword(storeId: string): Promise<ResetAdm
   if (!store.email) throw new Error("This store has no admin email on file.");
 
   const platformBaseUrl = getPlatformBaseUrl();
-  const setPasswordLink = await adminAuth().generatePasswordResetLink(store.email, {
-    url: buildResetPasswordLinkUrl(platformBaseUrl, store.slug),
-  });
+  let setPasswordLink: string;
+  try {
+    setPasswordLink = await generateSetPasswordLink(store.email, platformBaseUrl, store.slug);
+  } catch (err) {
+    // Returned, not thrown - Next.js replaces a thrown Server Action error's message with a
+    // generic one in production, which hid the real Firebase failure from the Super Admin.
+    console.error("[reset-password] failed to generate set-password link", err);
+    const code = (err as { code?: string })?.code;
+    return {
+      adminEmail: store.email,
+      emailSent: false,
+      error: `Could not generate the password reset link${code ? ` (${code})` : ""}. No email was sent.`,
+    };
+  }
   const { delivered } = await getWelcomeEmailService()
     .sendWelcomeEmail({
       storeName: store.brandName?.trim() || store.name,
@@ -806,9 +837,20 @@ export async function resendWelcomeEmail(storeId: string): Promise<ResetAdminPas
   if (!store.email) throw new Error("This store has no admin email on file.");
 
   const platformBaseUrl = getPlatformBaseUrl();
-  const setPasswordLink = await adminAuth().generatePasswordResetLink(store.email, {
-    url: buildResetPasswordLinkUrl(platformBaseUrl, store.slug),
-  });
+  let setPasswordLink: string;
+  try {
+    setPasswordLink = await generateSetPasswordLink(store.email, platformBaseUrl, store.slug);
+  } catch (err) {
+    // Returned, not thrown - Next.js replaces a thrown Server Action error's message with a
+    // generic one in production, which hid the real Firebase failure from the Super Admin.
+    console.error("[welcome-email] failed to generate set-password link", err);
+    const code = (err as { code?: string })?.code;
+    return {
+      adminEmail: store.email,
+      emailSent: false,
+      error: `Could not generate the password reset link${code ? ` (${code})` : ""}. No email was sent.`,
+    };
+  }
   const { delivered } = await getWelcomeEmailService()
     .sendWelcomeEmail({
       storeName: store.brandName?.trim() || store.name,
@@ -888,9 +930,7 @@ export async function transferOwnership(
   await logStoreActivity(storeId, "ownership_changed", decoded.uid, { from: store.email ?? "", to: email });
 
   const platformBaseUrl = getPlatformBaseUrl();
-  const setPasswordLink = await adminAuth().generatePasswordResetLink(email, {
-    url: buildResetPasswordLinkUrl(platformBaseUrl, store.slug),
-  });
+  const setPasswordLink = await generateSetPasswordLink(email, platformBaseUrl, store.slug);
   const { delivered } = await getWelcomeEmailService()
     .sendWelcomeEmail({
       storeName: store.brandName?.trim() || store.name,

@@ -27,6 +27,10 @@ const OwnerActions: React.FC<{ storeId: string }> = ({ storeId }) => {
     startTransition(async () => {
       try {
         const result = await resetStoreAdminPassword(storeId);
+        if (result.error) {
+          toast.error(result.error);
+          return;
+        }
         setRevealed({ label: "Password reset link", email: result.adminEmail, emailSent: result.emailSent });
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Failed to reset password");
@@ -38,6 +42,10 @@ const OwnerActions: React.FC<{ storeId: string }> = ({ storeId }) => {
     startTransition(async () => {
       try {
         const result = await resendWelcomeEmail(storeId);
+        if (result.error) {
+          toast.error(result.error);
+          return;
+        }
         setRevealed({ label: "Welcome email (resent)", email: result.adminEmail, emailSent: result.emailSent });
         toast.success("Welcome email resent");
       } catch (err) {

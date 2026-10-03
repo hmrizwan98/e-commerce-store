@@ -29,7 +29,18 @@ const ResetPasswordForm = ({
   // at the stable root domain, never at that store's own admin-{slug} subdomain, so the slug
   // travels as a query param instead and is used only to redirect back to the right store's
   // login page after a successful reset.
-  const slug = searchParams.get("slug");
+  // Firebase's own "Forgot password?" emails (custom action URL) carry the original link's
+  // query inside continueUrl instead, so fall back to the slug found there.
+  const slug =
+    searchParams.get("slug") ||
+    (() => {
+      try {
+        const continueUrl = searchParams.get("continueUrl");
+        return continueUrl ? new URL(continueUrl).searchParams.get("slug") : null;
+      } catch {
+        return null;
+      }
+    })();
   const effectiveLoginPath = slug
     ? `https://admin-${slug}.${typeof window !== "undefined" ? window.location.host : ""}/admin/login`
     : loginPath;
