@@ -17,6 +17,7 @@ import {
   BellIcon,
 } from "@heroicons/react/24/outline";
 import NotificationBell from "./NotificationBell";
+import { useSuperAdminUnread } from "./useSuperAdminUnread";
 
 interface NavItem {
   href: string;
@@ -61,6 +62,7 @@ export default function SuperAdminShell({
   const router = useRouter();
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const unread = useSuperAdminUnread();
 
   const handleLogout = async () => {
     await fetch("/api/admin/session", { method: "DELETE" });
@@ -137,6 +139,11 @@ export default function SuperAdminShell({
                       >
                         <Icon className={`w-5 h-5 ${active ? "text-primary-400" : "text-neutral-400"}`} />
                         <span>{item.label}</span>
+                        {item.href === "/notifications" && unread > 0 && (
+                          <span className="ml-auto min-w-[20px] h-5 px-1.5 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center" aria-label={`${unread} unread`}>
+                            {unread > 99 ? "99+" : unread}
+                          </span>
+                        )}
                       </Link>
                     );
                   })}
@@ -187,7 +194,7 @@ export default function SuperAdminShell({
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
-            <NotificationBell />
+            <NotificationBell count={unread} />
             {email && <span className="text-xs font-semibold text-white/90 bg-white/15 px-3 py-1.5 rounded-lg">{email}</span>}
           </div>
         </header>

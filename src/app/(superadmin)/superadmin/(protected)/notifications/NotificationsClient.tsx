@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { markAllNotificationsReadAction, resolveBackupRequestAction, setNotificationReadAction } from "./actions";
 import type { SuperAdminNotification } from "@/types/superadmin-notification";
+import SoundToggle from "@/components/notifications/SoundToggle";
 
 const STATUS_CLASS: Record<string, string> = {
   pending: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800",
@@ -36,6 +37,7 @@ export default function NotificationsClient({
       else {
         if (success) toast.success(success);
         router.refresh();
+        window.dispatchEvent(new Event("webriiz:notifications-changed"));
       }
     } finally {
       setBusy(null);
@@ -64,14 +66,17 @@ export default function NotificationsClient({
             </Link>
           ))}
         </div>
-        <button
-          type="button"
-          disabled={busy !== null}
-          onClick={() => run("all", () => markAllNotificationsReadAction(), "All marked as read.")}
-          className="text-xs font-bold text-indigo-600 hover:underline disabled:opacity-50"
-        >
-          Mark all as read
-        </button>
+        <div className="flex flex-wrap items-center gap-4">
+          <SoundToggle />
+          <button
+            type="button"
+            disabled={busy !== null}
+            onClick={() => run("all", () => markAllNotificationsReadAction(), "All marked as read.")}
+            className="text-xs font-bold text-indigo-600 hover:underline disabled:opacity-50"
+          >
+            Mark all as read
+          </button>
+        </div>
       </div>
 
       {notifications.length === 0 ? (

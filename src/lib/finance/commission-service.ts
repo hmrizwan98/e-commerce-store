@@ -3,10 +3,14 @@ import { AggregateField, FieldValue } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase/admin";
 import { docData, stripUndefined } from "@/lib/firebase/repositories/utils";
 import { createSuperAdminNotification, setNotificationStatus } from "@/lib/firebase/repositories/superadmin-notifications";
+import { createStoreNotificationInTx } from "@/lib/firebase/repositories/store-notifications";
+import { buildCommissionDecisionNotification } from "@/lib/notifications/store-notification-model";
+import { formatMoney } from "@/lib/currency/format";
 import {
   NO_COMMISSION,
   calculateOrderCommission,
   commissionReturnedOnRefund,
+  describePolicy,
   policyFromLegacySettings,
   round2,
   samePolicy,
@@ -196,7 +200,11 @@ export async function resolveCommissionChangeRequest(input: {
   const reqRef = adminDb().collection(REQUESTS).doc(input.requestId);
   const pre = docData<CommissionChangeRequest>(await reqRef.get());
   if (!pre) return { ok: false, error: "Request not found." };
-  const previous = await getEffectiveCommissionPolicy(pre.storeId);
+  const [previous, general] = await Promise.all([
+    getEffectiveCommissionPolicy(pre.storeId),
+    storeRef(pre.storeId).collection("siteSettings").doc("general").get(),
+  ]);
+  const currency = (general.data() ?? {}) as { currency?: string; currencySymbol?: string };
   const note = (input.note ?? "").trim();
   try {
     await adminDb().runTransaction(async (tx) => {
@@ -234,6 +242,19 @@ export async function resolveCommissionChangeRequest(input: {
           createdAt: FieldValue.serverTimestamp(),
         });
       }
+      // The store to notify comes from the request document itself (read in this
+      // transaction), never from the caller - so the decision can only reach its own store.
+      createStoreNotificationInTx(
+        tx,
+        req.storeId,
+        buildCommissionDecisionNotification({
+          requestId: req.id,
+          approved: input.approve,
+          proposedLabel: describePolicy(req.proposed, (n) => formatMoney(n, currency)),
+          note: note || undefined,
+          decidedBy: "Webriiz platform team",
+        })
+      );
       tx.update(reqRef, {
         status: input.approve ? "approved" : "rejected",
         resolvedBy: input.actor.email || input.actor.uid,

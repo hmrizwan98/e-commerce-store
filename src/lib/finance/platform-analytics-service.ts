@@ -139,10 +139,51 @@ function earliest(sources: { orderTimes: number[]; entries: LedgerEntry[] }[], f
   return min;
 }
 
-// Short per-instance cache: the dashboard refreshes every 30 s; several open tabs or quick
-// filter flips shouldn't each re-read every store.
+// Short per-instance cache: several open tabs or quick filter flips within 15 s share one result.
 const cache = new Map<string, { at: number; data: PlatformAnalytics }>();
 const CACHE_MS = 15000;
+
+/**
+ * Per-store cache keyed by a cheap "has anything changed?" fingerprint: the newest order
+ * `updatedAt` (every order create / status / payment / tracking / verification write sets it)
+ * and the newest ledger entry. Checking it costs 2 single-document reads per store; a store's
+ * orders + ledger for the range are only re-read when its fingerprint (or the range start,
+ * the store doc's status/name/commission policy) changed. Entries also expire after 10 min as
+ * a safety net (e.g. a deleted order doesn't change the fingerprint).
+ */
+type StoreResult = Awaited<ReturnType<typeof analyseStore>>;
+const storeCache = new Map<string, { fingerprint: string; at: number; result: StoreResult }>();
+const STORE_CACHE_MS = 10 * 60 * 1000;
+
+async function storeFingerprint(store: Store, from: number): Promise<string> {
+  const ref = adminDb().collection("stores").doc(store.id);
+  const [lastOrder, lastEntry] = await Promise.all([
+    ref.collection("orders").orderBy("updatedAt", "desc").limit(1).select("updatedAt").get(),
+    ref.collection("transactions").orderBy("createdAt", "desc").limit(1).select("createdAt").get(),
+  ]);
+  const ms = (snap: FirebaseFirestore.QuerySnapshot, field: string) => snap.docs[0]?.get(field)?.toMillis?.() ?? 0;
+  return [
+    from,
+    ms(lastOrder, "updatedAt"),
+    ms(lastEntry, "createdAt"),
+    store.status,
+    store.brandName ?? store.name,
+    JSON.stringify(store.commissionPolicy ?? null),
+  ].join("|");
+}
+
+async function analyseStoreCached(store: Store, from: number, to: number, range: AnalyticsRange): Promise<StoreResult> {
+  const key = `${store.id}|${range}`;
+  const fingerprint = await storeFingerprint(store, from);
+  const hit = storeCache.get(key);
+  if (hit && hit.fingerprint === fingerprint && Date.now() - hit.at < STORE_CACHE_MS) {
+    // Same data; only drop order times that slid out of a rolling window.
+    return { ...hit.result, orderTimes: hit.result.orderTimes.filter((t) => t >= from && t <= to) };
+  }
+  const result = await analyseStore(store, from, to);
+  storeCache.set(key, { fingerprint, at: Date.now(), result });
+  return result;
+}
 
 export async function getPlatformAnalytics(opts: { range: AnalyticsRange; storeId?: string | null }): Promise<PlatformAnalytics> {
   const range = ANALYTICS_RANGES.includes(opts.range) ? opts.range : "30d";
@@ -158,10 +199,11 @@ export async function getPlatformAnalytics(opts: { range: AnalyticsRange; storeI
     .filter((s): s is Store => s !== null && s.status !== "archived");
   const selected = storeId ? allStoreDocs.filter((s) => s.id === storeId) : allStoreDocs;
 
-  // Bounded concurrency - each store is a few small, range-limited reads.
-  const results: Awaited<ReturnType<typeof analyseStore>>[] = [];
+  // Bounded concurrency - each store is 2 tiny fingerprint reads, plus its range-limited
+  // orders/ledger only when something changed.
+  const results: StoreResult[] = [];
   for (let i = 0; i < selected.length; i += 8) {
-    results.push(...(await Promise.all(selected.slice(i, i + 8).map((s) => analyseStore(s, from, to)))));
+    results.push(...(await Promise.all(selected.slice(i, i + 8).map((s) => analyseStoreCached(s, from, to, range)))));
   }
 
   const totalsMap = new Map<string, CurrencyTotals>();

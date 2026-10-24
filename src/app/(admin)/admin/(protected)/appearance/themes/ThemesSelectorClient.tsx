@@ -21,90 +21,109 @@ export interface ThemesSelectorClientProps {
 
 const PRESET_META: Record<
   string,
-  { tag: string; title: string; description: string; industry: string }
+  { tag: string; title: string; description: string; industry: string; highlights: string[] }
 > = {
   "premium-luxury": {
     tag: "Editorial & Luxe",
     title: "Premium Luxury",
-    description: "High-end editorial design with serif typography, translucent header overlays, and curated product grids.",
-    industry: "Fashion, Beauty & Luxury",
+    description: "Elegant serif headings, a see-through header over a big hero image and spacious, curated product grids.",
+    industry: "Fashion, beauty & luxury",
+    highlights: ["Serif headings", "Image-led hero", "Spacious grid"],
   },
   "modern-minimal": {
     tag: "Clean & Modern",
-    title: "Modern Minimalist",
-    description: "Ultra-clean design system with crisp sans-serif typography, centered header, and high-density product grid.",
-    industry: "General Ecommerce & Apparel",
+    title: "Modern Minimal",
+    description: "Crisp sans-serif type, a centred header and a compact grid that shows more products per screen.",
+    industry: "General stores & apparel",
+    highlights: ["Sans-serif type", "Centred header", "Dense grid"],
   },
 };
 
-function ThemePreviewFrame({ presetId }: { presetId: ThemePresetId }) {
+const FALLBACK_META = {
+  tag: "Theme",
+  title: "",
+  description: "A storefront theme preset.",
+  industry: "Any store",
+  highlights: [] as string[],
+};
+
+const metaFor = (p: SystemThemeConfig) => {
+  const m = PRESET_META[p.presetId] ?? FALLBACK_META;
+  return { ...m, title: m.title || p.name };
+};
+
+const humanize = (v?: string) => (v ? v.replace(/[-_]/g, " ") : "-");
+
+/** Renders the real storefront home page (via the customizer preview route) scaled down to
+ * fit its box at any width: a 1280px-wide "desktop" viewport is scaled to the container. */
+function ThemePreviewFrame({ presetId, className = "h-64 sm:h-72" }: { presetId: ThemePresetId; className?: string }) {
   const [visible, setVisible] = useState(false);
   const [iframeLoaded, setIframeLoaded] = useState(false);
+  const [box, setBox] = useState({ w: 0, h: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
+  const VIEWPORT = 1280;
+  const CHROME = 28;
 
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    const observer = new IntersectionObserver(
+    const io = new IntersectionObserver(
       (entries) => {
         if (entries[0]?.isIntersecting) {
           setVisible(true);
-          observer.disconnect();
+          io.disconnect();
         }
       },
       { rootMargin: "200px" }
     );
-    observer.observe(el);
-    return () => observer.disconnect();
+    io.observe(el);
+    const ro = new ResizeObserver(([entry]) => setBox({ w: entry.contentRect.width, h: entry.contentRect.height }));
+    ro.observe(el);
+    return () => {
+      io.disconnect();
+      ro.disconnect();
+    };
   }, []);
 
-  const isLuxury = presetId === "premium-luxury";
+  const scale = box.w ? box.w / VIEWPORT : 0.25;
+  const frameHeight = box.h ? Math.max(0, box.h - CHROME) / scale : 1200;
 
   return (
-    <div ref={containerRef} className="relative h-64 sm:h-72 w-full overflow-hidden bg-slate-50 dark:bg-slate-950 pointer-events-none">
-      {/* Browser Chrome Header Mockup */}
-      <div className="absolute top-0 inset-x-0 h-7 bg-slate-200/90 dark:bg-slate-800/90 z-20 flex items-center px-3 justify-between border-b border-slate-300/80 dark:border-slate-700/80 backdrop-blur-md">
+    <div ref={containerRef} className={`relative w-full overflow-hidden bg-slate-50 dark:bg-slate-950 pointer-events-none ${className}`}>
+      {/* Browser chrome mock-up */}
+      <div className="absolute top-0 inset-x-0 h-7 bg-slate-200/90 dark:bg-slate-800/90 z-20 flex items-center px-3 justify-between border-b border-slate-300/80 dark:border-slate-700/80">
         <div className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-rose-400/90 shadow-2xs" />
-          <span className="w-2.5 h-2.5 rounded-full bg-amber-400/90 shadow-2xs" />
-          <span className="w-2.5 h-2.5 rounded-full bg-emerald-400/90 shadow-2xs" />
+          <span className="w-2.5 h-2.5 rounded-full bg-rose-400/90" />
+          <span className="w-2.5 h-2.5 rounded-full bg-amber-400/90" />
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-400/90" />
         </div>
-        <div className="px-3 py-0.5 rounded-full bg-white/70 dark:bg-slate-900/70 border border-slate-300/50 dark:border-slate-700/50 text-[10px] font-mono text-slate-500 dark:text-slate-400 flex items-center gap-1">
-          <span className="text-emerald-500">🔒</span> store.domain.com
+        <div className="px-3 py-0.5 rounded-full bg-white/70 dark:bg-slate-900/70 border border-slate-300/50 dark:border-slate-700/50 text-[10px] font-mono text-slate-500 dark:text-slate-400">
+          your-store.com
         </div>
         <div className="w-10" />
       </div>
 
-      {/* Fallback Mockup Graphics (Visible before/during iframe load) */}
+      {/* Skeleton while the live preview loads */}
       {!iframeLoaded && (
-        <div className="absolute inset-0 pt-7 p-4 bg-gradient-to-b from-slate-100 via-slate-50 to-white dark:from-slate-900 dark:to-slate-950 flex flex-col justify-between">
-          <div className="flex items-center justify-between pb-2 border-b border-slate-200/60 dark:border-slate-800/60">
-            <div className="h-4 w-24 bg-slate-300/80 dark:bg-slate-700/80 rounded-md animate-pulse" />
+        <div className="absolute inset-0 pt-10 px-4 pb-4 flex flex-col gap-3" aria-hidden="true">
+          <div className="flex items-center justify-between">
+            <div className="h-3.5 w-20 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
             <div className="flex gap-2">
-              <div className="h-3 w-12 bg-slate-200 dark:bg-slate-800 rounded-full" />
-              <div className="h-3 w-12 bg-slate-200 dark:bg-slate-800 rounded-full" />
-              <div className="h-3 w-12 bg-slate-200 dark:bg-slate-800 rounded-full" />
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-2.5 w-10 bg-slate-200 dark:bg-slate-800 rounded-full" />
+              ))}
             </div>
           </div>
-          <div className="flex-1 my-3 rounded-2xl bg-gradient-to-r from-slate-200/70 via-slate-100 to-slate-200/70 dark:from-slate-800/70 dark:to-slate-900/70 p-4 flex flex-col justify-center items-start gap-2 border border-slate-200/60 dark:border-slate-800/60">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-500">
-              {isLuxury ? "Timeless Style Redefined" : "Modern Minimalist Design"}
-            </span>
-            <div className="h-5 w-40 bg-slate-400/50 dark:bg-slate-600/50 rounded-lg animate-pulse" />
-            <div className="h-3 w-56 bg-slate-300/60 dark:bg-slate-700/60 rounded-md" />
-          </div>
-          <div className="grid grid-cols-3 gap-2">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-16 rounded-xl bg-slate-200/60 dark:bg-slate-800/60 border border-slate-200/40 dark:border-slate-700/40 p-2 space-y-1">
-                <div className="h-8 rounded-lg bg-slate-300/50 dark:bg-slate-700/50" />
-                <div className="h-2 w-3/4 bg-slate-300/80 dark:bg-slate-600/80 rounded" />
-              </div>
+          <div className="flex-1 rounded-xl bg-slate-200/70 dark:bg-slate-800/70 animate-pulse" />
+          <div className="grid grid-cols-4 gap-2">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-10 rounded-lg bg-slate-200/70 dark:bg-slate-800/70" />
             ))}
           </div>
         </div>
       )}
 
-      {visible && (
+      {visible && box.w > 0 && (
         <iframe
           src={`/admin/theme-customizer-preview?page=home&presetId=${presetId}`}
           title={`${presetId} live preview`}
@@ -112,12 +131,28 @@ function ThemePreviewFrame({ presetId }: { presetId: ThemePresetId }) {
           aria-hidden="true"
           loading="lazy"
           onLoad={() => setIframeLoaded(true)}
-          className={`absolute top-7 left-0 border-0 transition-opacity duration-500 ${
-            iframeLoaded ? "opacity-100" : "opacity-0"
-          }`}
-          style={{ width: "400%", height: "400%", transform: "scale(0.25)", transformOrigin: "top left" }}
+          className={`absolute left-0 border-0 transition-opacity duration-500 ${iframeLoaded ? "opacity-100" : "opacity-0"}`}
+          style={{ top: CHROME, width: VIEWPORT, height: frameHeight, transform: `scale(${scale})`, transformOrigin: "top left" }}
         />
       )}
+    </div>
+  );
+}
+
+function Swatches({ preset, size = "w-5 h-5" }: { preset: SystemThemeConfig; size?: string }) {
+  const swatches = (
+    [
+      ["Primary", preset.colors.primary],
+      ["Secondary", preset.colors.secondary],
+      ["Accent", preset.colors.accent],
+      ["Buttons", preset.colors.buttonBackground],
+    ] as [string, string | undefined][]
+  ).filter((s): s is [string, string] => Boolean(s[1]));
+  return (
+    <div className="flex items-center gap-1.5">
+      {swatches.map(([label, c]) => (
+        <span key={label} title={`${label}: ${c}`} className={`${size} rounded-full ring-1 ring-black/10 dark:ring-white/15 shadow-2xs`} style={{ background: c }} />
+      ))}
     </div>
   );
 }
@@ -128,32 +163,22 @@ export default function ThemesSelectorClient({ activePresetId, presets }: Themes
 
   const activePreset = presets.find((p) => p.presetId === activePresetId) ?? presets[0];
 
-  const handleApplyPreset = async (preset: SystemThemeConfig) => {
-    setLoadingAction(preset.presetId);
-    try {
-      const res = await saveThemeDraftAction(preset);
-      if (res?.ok) {
-        toast.success(`Applied "${preset.name}" preset to customizer draft!`);
-        router.push("/admin/appearance/customize");
-      } else {
-        toast.error(res?.message || "Failed to apply preset to draft.");
-      }
-    } catch (err: any) {
-      console.error(err);
-      toast.error(err?.message || "Failed to apply preset.");
-    } finally {
-      setLoadingAction(null);
-    }
-  };
-
-  const handlePublishPreset = async (preset: SystemThemeConfig) => {
+  /** Same behaviour as before (save preset as draft -> publish) - now with a clear warning,
+   * because it replaces the live design and any customizations made to it. */
+  const handlePublishPreset = async (preset: SystemThemeConfig, mode: "switch" | "reset") => {
+    const title = metaFor(preset).title;
+    const message =
+      mode === "reset"
+        ? `Reset your live storefront to the original "${title}" design?\n\nColours, fonts and layout changes you made in the customizer will be replaced. This can't be undone.`
+        : `Switch your live storefront to "${title}"?\n\nYour store will use this theme's colours, fonts and layout straight away. Customizations made to your current theme will be replaced.`;
+    if (!window.confirm(message)) return;
     setLoadingAction(`publish-${preset.presetId}`);
     try {
       const draftRes = await saveThemeDraftAction(preset);
       if (draftRes?.ok) {
         const pubRes = await publishThemeAction();
         if (pubRes?.ok) {
-          toast.success(`Published "${preset.name}" live storefront theme!`);
+          toast.success(mode === "reset" ? `"${title}" reset to its original design.` : `"${title}" is now live on your store.`);
           router.refresh();
         } else {
           toast.error(pubRes?.message || "Failed to publish live theme.");
@@ -169,6 +194,8 @@ export default function ThemesSelectorClient({ activePresetId, presets }: Themes
     }
   };
 
+  const activeMeta = activePreset ? metaFor(activePreset) : null;
+
   return (
     <div className="space-y-8 max-w-6xl pb-10">
       {/* Header Banner */}
@@ -176,127 +203,97 @@ export default function ThemesSelectorClient({ activePresetId, presets }: Themes
         <div className="space-y-1.5 max-w-xl">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-400/30 text-xs font-semibold">
             <SparklesIcon className="w-3.5 h-3.5" />
-            Theme Catalog &amp; Storefront Appearance
+            Theme Catalog
           </div>
-          <h1 className="text-2xl font-extrabold tracking-tight">Storefront Theme Manager</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight">Storefront Themes</h1>
           <p className="text-sm text-slate-300">
-            Customize your live storefront design, edit colors &amp; typography, or switch between theme presets in real-time.
+            Pick the look of your online store. Switch themes in one click, or open the customizer to change colours, fonts and sections.
           </p>
         </div>
 
-        <Link href="/admin/appearance/customize">
-          <button
-            type="button"
-            className="px-5 py-3 rounded-2xl bg-indigo-500 hover:bg-indigo-400 text-white font-bold text-xs shadow-lg shadow-indigo-500/30 flex items-center gap-2 active:scale-95 transition-all cursor-pointer"
-          >
-            <PaintBrushIcon className="w-4 h-4" />
-            Launch Theme Customizer
-          </button>
+        <Link
+          href="/admin/appearance/customize"
+          className="px-5 py-3 rounded-2xl bg-indigo-500 hover:bg-indigo-400 text-white font-bold text-xs shadow-lg shadow-indigo-500/30 flex items-center gap-2 active:scale-95 transition-all"
+        >
+          <PaintBrushIcon className="w-4 h-4" />
+          Open Theme Customizer
         </Link>
       </div>
 
-      {/* Currently Published Live Theme Hero Section */}
+      {/* Current live theme */}
       <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-400">
-            Current Live Storefront Theme
-          </h2>
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-500">Your live theme</h2>
           <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-            Published &amp; Live
+            Live on your store
           </span>
         </div>
 
-        {activePreset && (
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden shadow-sm grid grid-cols-1 lg:grid-cols-12 gap-0">
-            {/* Left Preview Banner */}
-            <div className="lg:col-span-7 relative border-b lg:border-b-0 lg:border-r border-slate-200 dark:border-slate-800">
-              <ThemePreviewFrame presetId={activePreset.presetId} />
+        {activePreset && activeMeta && (
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden shadow-sm grid grid-cols-1 lg:grid-cols-12">
+            <div className="lg:col-span-7 border-b lg:border-b-0 lg:border-r border-slate-200 dark:border-slate-800 flex">
+              <ThemePreviewFrame presetId={activePreset.presetId} className="h-64 sm:h-80 lg:h-full lg:min-h-[22rem]" />
             </div>
 
-            {/* Right Theme Details & Actions */}
-            <div className="lg:col-span-5 p-6 sm:p-8 flex flex-col justify-between space-y-6">
+            <div className="lg:col-span-5 p-6 sm:p-8 flex flex-col justify-between gap-6">
               <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-900">
-                    {PRESET_META[activePreset.presetId]?.tag ?? "Default Theme"}
-                  </span>
-                  <span className="text-xs text-slate-400 font-medium">Preset: {activePreset.presetId}</span>
-                </div>
-
+                <span className="inline-block px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-900">
+                  {activeMeta.tag}
+                </span>
                 <div>
-                  <h3 className="text-xl font-extrabold text-slate-900 dark:text-slate-100">
-                    {activePreset.name}
-                  </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed">
-                    {PRESET_META[activePreset.presetId]?.description ?? "Configurable merchant storefront theme."}
+                  <h3 className="text-xl font-extrabold text-slate-900 dark:text-slate-100">{activeMeta.title}</h3>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 mt-1.5 leading-relaxed">{activeMeta.description}</p>
+                  <p className="text-xs text-slate-500 mt-2">
+                    <span className="font-bold text-slate-700 dark:text-slate-300">Best for:</span> {activeMeta.industry}
                   </p>
                 </div>
 
-                {/* Color Swatches & Tokens */}
-                <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Palette &amp; Tokens</span>
-                  <div className="flex items-center gap-2">
-                    {[activePreset.colors.primary, activePreset.colors.secondary, activePreset.colors.accent, activePreset.colors.buttonBackground].map((c, i) => (
-                      <span key={i} className="w-5 h-5 rounded-full border border-black/10 shadow-2xs" style={{ background: c }} />
-                    ))}
-                    <span className="text-xs text-slate-400 ml-1">({activePreset.typography.headingFont})</span>
+                <dl className="grid grid-cols-3 gap-2 text-xs pt-4 border-t border-slate-100 dark:border-slate-800">
+                  <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60">
+                    <dt className="text-[10px] text-slate-500 font-bold uppercase">Colours</dt>
+                    <dd className="mt-1.5">
+                      <Swatches preset={activePreset} size="w-4 h-4" />
+                    </dd>
                   </div>
-                </div>
-
-                {/* Structural Badges */}
-                <div className="grid grid-cols-2 gap-2 text-xs pt-2">
-                  <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
-                    <span className="block text-[10px] text-slate-400 font-bold uppercase">Header</span>
-                    <span className="font-semibold text-slate-800 dark:text-slate-200 capitalize">{activePreset.header.variant}</span>
+                  <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 min-w-0">
+                    <dt className="text-[10px] text-slate-500 font-bold uppercase">Header</dt>
+                    <dd className="font-semibold text-slate-800 dark:text-slate-200 capitalize truncate">{humanize(activePreset.header.variant)}</dd>
                   </div>
-                  <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
-                    <span className="block text-[10px] text-slate-400 font-bold uppercase">Footer</span>
-                    <span className="font-semibold text-slate-800 dark:text-slate-200 capitalize">{activePreset.footer.variant}</span>
+                  <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 min-w-0">
+                    <dt className="text-[10px] text-slate-500 font-bold uppercase">Font</dt>
+                    <dd className="font-semibold text-slate-800 dark:text-slate-200 capitalize truncate">{humanize(activePreset.typography.headingFont)}</dd>
                   </div>
-                </div>
+                </dl>
               </div>
 
-              {/* Action Buttons */}
-              <div className="space-y-2.5 pt-4">
-                <Link href="/admin/appearance/customize" className="block w-full">
-                  <button
-                    type="button"
-                    className="w-full py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md shadow-indigo-500/20 flex items-center justify-center gap-2 transition-all cursor-pointer"
-                  >
-                    <PaintBrushIcon className="w-4 h-4" />
-                    Customize Live Theme
-                  </button>
+              <div className="space-y-2.5">
+                <Link
+                  href="/admin/appearance/customize"
+                  className="w-full py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md shadow-indigo-500/20 flex items-center justify-center gap-2 transition-all"
+                >
+                  <PaintBrushIcon className="w-4 h-4" />
+                  Customize this theme
                 </Link>
-
                 <div className="grid grid-cols-2 gap-2">
                   <Link
                     href={`/admin/theme-customizer-preview?page=home&presetId=${activePreset.presetId}` as any}
                     target="_blank"
                     rel="noreferrer"
-                    className="block"
+                    className="w-full py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs flex items-center justify-center gap-1.5 transition-all"
                   >
-                    <button
-                      type="button"
-                      className="w-full py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer"
-                    >
-                      <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5" />
-                      Preview ↗
-                    </button>
+                    <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5" />
+                    Full preview
                   </Link>
-
                   <button
                     type="button"
-                    onClick={() => handlePublishPreset(activePreset)}
-                    disabled={loadingAction === `publish-${activePreset.presetId}`}
-                    className="py-2.5 px-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                    onClick={() => handlePublishPreset(activePreset, "reset")}
+                    disabled={loadingAction !== null}
+                    title="Replace your customizations with this theme's original design"
+                    className="py-2.5 px-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold text-xs flex items-center justify-center gap-1.5 transition-all disabled:opacity-50 cursor-pointer"
                   >
-                    {loadingAction === `publish-${activePreset.presetId}` ? (
-                      <ArrowPathIcon className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      <ArrowPathIcon className="w-3.5 h-3.5" />
-                    )}
-                    Reset Preset
+                    <ArrowPathIcon className={`w-3.5 h-3.5 ${loadingAction === `publish-${activePreset.presetId}` ? "animate-spin" : ""}`} />
+                    Reset to original
                   </button>
                 </div>
               </div>
@@ -305,76 +302,57 @@ export default function ThemesSelectorClient({ activePresetId, presets }: Themes
         )}
       </div>
 
-      {/* Theme Presets Catalog Library Grid */}
-      <div className="space-y-4 pt-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-sm font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
-              Theme Preset Library
-            </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Select a preset to load its colors, layout, and component variants into your Theme Customizer draft.
-            </p>
-          </div>
+      {/* Theme library */}
+      <div className="space-y-4 pt-2">
+        <div>
+          <h2 className="text-sm font-extrabold tracking-tight text-slate-900 dark:text-slate-100">All themes</h2>
+          <p className="text-xs text-slate-500 mt-0.5">Preview any theme first. Activating one makes it live on your store straight away.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {presets.map((p) => {
             const isLive = p.presetId === activePresetId;
-            const meta = PRESET_META[p.presetId] ?? {
-              tag: "Theme Preset",
-              description: "Merchant storefront theme preset.",
-              industry: "General Commerce",
-            };
+            const meta = metaFor(p);
+            const busy = loadingAction === `publish-${p.presetId}`;
 
             return (
-              <div
+              <article
                 key={p.presetId}
-                className={`bg-white dark:bg-slate-900 border rounded-3xl overflow-hidden shadow-xs flex flex-col justify-between transition-all relative ${
-                  isLive
-                    ? "border-emerald-500 ring-2 ring-emerald-500/30 dark:border-emerald-500"
-                    : "border-slate-200 dark:border-slate-800 hover:border-indigo-300"
+                aria-current={isLive ? "true" : undefined}
+                className={`bg-white dark:bg-slate-900 border rounded-3xl overflow-hidden shadow-xs flex flex-col transition-all ${
+                  isLive ? "border-emerald-500 ring-2 ring-emerald-500/25" : "border-slate-200 dark:border-slate-800 hover:border-indigo-300 hover:shadow-md"
                 }`}
               >
-                <div>
-                  <div className="relative">
-                    <ThemePreviewFrame presetId={p.presetId} />
-                    <div className="absolute top-3 left-3 right-3 flex justify-between items-center pointer-events-none">
-                      <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full bg-slate-900/90 text-white shadow-xs">
-                        {meta.tag}
-                      </span>
-                      {isLive ? (
-                        <span className="bg-emerald-500 text-white text-[10px] font-extrabold px-3 py-1 rounded-full shadow-xs flex items-center gap-1.5 uppercase tracking-wider">
-                          <CheckCircleIcon className="w-3.5 h-3.5" /> Active Theme
-                        </span>
-                      ) : (
-                        <span className="bg-slate-800/80 text-slate-300 text-[10px] font-semibold px-2.5 py-1 rounded-full shadow-xs uppercase tracking-wider">
-                          Available Preset
-                        </span>
-                      )}
+                <div className="relative">
+                  <ThemePreviewFrame presetId={p.presetId} className="h-56 sm:h-64" />
+                  {isLive && (
+                    <span className="absolute top-9 right-3 z-30 bg-emerald-500 text-white text-[10px] font-extrabold px-2.5 py-1 rounded-full shadow-md flex items-center gap-1 uppercase tracking-wider">
+                      <CheckCircleIcon className="w-3.5 h-3.5" /> Live
+                    </span>
+                  )}
+                </div>
+
+                <div className="p-5 space-y-3 flex-1">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">{meta.tag}</span>
+                      <h3 className="font-extrabold text-base text-slate-900 dark:text-slate-100">{meta.title}</h3>
                     </div>
+                    <Swatches preset={p} size="w-4 h-4" />
                   </div>
-
-                  <div className="p-5 space-y-3">
-                    <div className="flex items-center justify-between gap-2">
-                      <h3 className="font-extrabold text-base text-slate-900 dark:text-slate-100">{p.name}</h3>
-                      {isLive && (
-                        <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-900">
-                          Selected
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                      {meta.description}
-                    </p>
-
-                    <div className="flex items-center gap-2 pt-1">
-                      {[p.colors.primary, p.colors.secondary, p.colors.accent].map((c, i) => (
-                        <span key={i} className="w-4 h-4 rounded-full border border-black/10 shadow-2xs" style={{ background: c }} />
+                  <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">{meta.description}</p>
+                  <p className="text-[11px] text-slate-500">
+                    <span className="font-bold text-slate-700 dark:text-slate-300">Best for:</span> {meta.industry}
+                  </p>
+                  {meta.highlights.length > 0 && (
+                    <ul className="flex flex-wrap gap-1.5">
+                      {meta.highlights.map((h) => (
+                        <li key={h} className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-[11px] font-semibold text-slate-600 dark:text-slate-300">
+                          {h}
+                        </li>
                       ))}
-                      <span className="text-[11px] text-slate-400 font-mono">({p.typography.headingFont})</span>
-                    </div>
-                  </div>
+                    </ul>
+                  )}
                 </div>
 
                 <div className="p-5 pt-0 grid grid-cols-2 gap-2">
@@ -382,48 +360,35 @@ export default function ThemesSelectorClient({ activePresetId, presets }: Themes
                     href={`/admin/theme-customizer-preview?page=home&presetId=${p.presetId}` as any}
                     target="_blank"
                     rel="noreferrer"
-                    className="block"
+                    className="w-full py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs flex items-center justify-center gap-1.5 transition-all"
                   >
-                    <button
-                      type="button"
-                      className="w-full py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer"
-                    >
-                      <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5" />
-                      Preview ↗
-                    </button>
+                    <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5" />
+                    Preview
                   </Link>
 
                   {isLive ? (
-                    <button
-                      type="button"
-                      onClick={() => handleApplyPreset(p)}
-                      disabled={loadingAction === p.presetId}
-                      className="py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer"
+                    // Opens the customizer on the current design (it no longer overwrites the
+                    // customizer draft with the preset's defaults).
+                    <Link
+                      href="/admin/appearance/customize"
+                      className="py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all"
                     >
-                      {loadingAction === p.presetId ? (
-                        <ArrowPathIcon className="w-3.5 h-3.5 animate-spin" />
-                      ) : (
-                        <CheckCircleIcon className="w-3.5 h-3.5" />
-                      )}
-                      Active (Customize)
-                    </button>
+                      <PaintBrushIcon className="w-3.5 h-3.5" />
+                      Customize
+                    </Link>
                   ) : (
                     <button
                       type="button"
-                      onClick={() => handlePublishPreset(p)}
-                      disabled={loadingAction === `publish-${p.presetId}`}
-                      className="py-2.5 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer"
+                      onClick={() => handlePublishPreset(p, "switch")}
+                      disabled={loadingAction !== null}
+                      className="py-2.5 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all disabled:opacity-50 cursor-pointer"
                     >
-                      {loadingAction === `publish-${p.presetId}` ? (
-                        <ArrowPathIcon className="w-3.5 h-3.5 animate-spin" />
-                      ) : (
-                        <PaintBrushIcon className="w-3.5 h-3.5" />
-                      )}
-                      Publish &amp; Activate
+                      {busy ? <ArrowPathIcon className="w-3.5 h-3.5 animate-spin" /> : <CheckCircleIcon className="w-3.5 h-3.5" />}
+                      {busy ? "Activating…" : "Activate theme"}
                     </button>
                   )}
                 </div>
-              </div>
+              </article>
             );
           })}
         </div>

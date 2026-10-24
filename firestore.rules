@@ -209,6 +209,22 @@ service cloud.firestore {
         allow write: if isAdminOf(storeId) || isSuperAdmin();
       }
 
+      // Platform decisions sent to this store (src/lib/firebase/repositories/store-notifications.ts).
+      // Written only by the server inside the decision transaction; a store admin may read
+      // its own (the app itself reads them server-side).
+      match /notifications/{notificationId} {
+        allow read: if isAdminOf(storeId) || isSuperAdmin();
+        allow write: if isSuperAdmin();
+      }
+
+      // Paths under a store that only the server / Super Admin may write. Rules are OR'ed,
+      // so the catch-all below must exclude them explicitly - otherwise its admin write
+      // grant would override the stricter rule (e.g. siteSettings/commission above).
+      function isServerOnlyTenantPath(path) {
+        return path[0] == 'notifications'
+          || (path[0] == 'siteSettings' && path[1] == 'commission');
+      }
+
       // Everything else under a store is schema reserved for a later phase
       // (reviews/blog/analytics still live in flat top-level collections for
       // now - see match /{document=**} below) - locked to admin-only by
@@ -216,7 +232,7 @@ service cloud.firestore {
       // writable.
       match /{document=**} {
         allow read: if false;
-        allow write: if isAdminOf(storeId) || isSuperAdmin();
+        allow write: if isSuperAdmin() || (isAdminOf(storeId) && !isServerOnlyTenantPath(document));
       }
     }
 

@@ -29,6 +29,10 @@ interface Props {
   onOpenActive: () => void;
   value: ShippingAddressValue;
   onChange: (patch: Partial<ShippingAddressValue>) => void;
+  /** Saved-address picker for returning shoppers (rendered above the form). */
+  savedAddressSlot?: React.ReactNode;
+  /** Changes when a saved address is picked, so uncontrolled inputs (radios) re-sync. */
+  formKey?: string;
 }
 
 const SUPPORTED_COUNTRIES = ["Pakistan", "United Arab Emirates", "Saudi Arabia", "United States", "United Kingdom", "Canada"];
@@ -39,6 +43,8 @@ const ShippingAddress: FC<Props> = ({
   onOpenActive,
   value,
   onChange,
+  savedAddressSlot,
+  formKey,
 }) => {
   // Fills only what the lookup actually resolved - an empty field never overwrites what the
   // shopper typed, and the country only changes to one this checkout supports.
@@ -106,7 +112,8 @@ const ShippingAddress: FC<Props> = ({
       </div>
 
       {isActive && (
-        <div className="border-t border-slate-100 dark:border-slate-800 p-5 sm:p-7 space-y-5">
+        <div key={formKey} className="border-t border-slate-100 dark:border-slate-800 p-5 sm:p-7 space-y-5">
+          {savedAddressSlot}
           {/* Full Name */}
           <div>
             <Label className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">

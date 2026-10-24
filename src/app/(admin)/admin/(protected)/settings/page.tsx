@@ -24,7 +24,7 @@ import { getEffectiveCommissionPolicy, getPendingCommissionRequest } from "@/lib
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminSettingsPage() {
+export default async function AdminSettingsPage({ searchParams }: { searchParams?: { tab?: string } }) {
   const [
     general,
     shipping,
@@ -83,6 +83,7 @@ export default async function AdminSettingsPage() {
         </p>
       </div>
       <SettingsPageClient
+        initialTab={searchParams?.tab}
         general={general}
         shipping={shipping}
         payments={payments}

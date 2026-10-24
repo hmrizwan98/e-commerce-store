@@ -2321,10 +2321,13 @@ normalisation; at least 7 digits). The older `?email=` link format still works; 
 
 ## Admin Notifications
 
-`src/components/admin/AdminShell.tsx` polls `/api/admin/pending-orders` every ~10 s
-(admin-only) and shows a toast + chime for new orders. The chime uses one shared Web Audio
-context that is unlocked on the admin's first click/keypress (browsers block sound before
-any interaction); the new-order baseline survives page navigation.
+`src/components/admin/AdminShell.tsx` polls `/api/admin/pending-orders` every ~20 s while the
+tab is visible (admin-only). One response carries both the pending order ids (Orders badge +
+new-order toast/chime) and the store's unread notifications (bell + sidebar badge + soft
+chime). Polling uses `src/lib/notifications/poller.ts`: paused while the tab is hidden, an
+immediate refresh when it becomes visible, never two requests at once, and everything is
+removed on unmount. The first poll after a page load only records a baseline, so reloading a
+page never chimes. See [Notifications & real-time updates](#notifications--real-time-updates).
 
 ## Store Assistant
 
@@ -2418,6 +2421,117 @@ the order page sets `@page { size: A4; margin: 0 }` so the browser doesn't add i
 date/URL header and footer (the invoice keeps its own 14 mm padding). Rows and the totals
 block avoid splitting across pages. On-screen layout is unchanged.
 
+## Notifications & real-time updates
+
+### Store notifications (platform decisions)
+
+- `stores/{storeId}/notifications/{id}` (`src/types/store-notification.ts`,
+  `src/lib/firebase/repositories/store-notifications.ts`). Written **only by the server, inside
+  the same Firestore transaction as the Super Admin's decision**:
+  `resolveCommissionChangeRequest` (approve/reject) and `resolveBackupRequestAction`
+  (approve/reject/complete).
+- The store is taken from the request/backup document read in that transaction, never from
+  browser input. The id is `kind__refId__decision` and written with `create`, so a replayed or
+  racing decision can't notify twice (the request status check already rejects a second
+  decision).
+- Store Admin: header 🔔 bell + sidebar **Notifications** item with unread badges, and
+  `/admin/notifications` (All/Unread, mark read/unread, mark all read, links to
+  Settings → Commission / Backup via `?tab=`). Read/unread actions use the tenant from
+  `requireAdmin()`.
+
+### Super Admin
+
+`useSuperAdminUnread` (one poll every 60 s while visible, paused after 10 minutes idle) feeds both the header bell and a new
+unread badge on the sidebar **Notifications** item; new items show a toast + soft chime.
+
+### Sound
+
+`src/lib/notifications/chime.ts` - Web Audio tones (no sound files, no paid service).
+Browsers keep audio suspended until a user gesture, so the context is resumed on the first
+click/keypress; before that, sound is skipped and the toast/badge still appear. **Sound on/off**
+and **Test sound** (reports played / muted / blocked / unsupported) are on both Notifications
+pages. The preference is per browser (`localStorage`), like a device ringer.
+
+### Real-time strategy and Firestore reads
+
+Firestore `onSnapshot` listeners were **not** used. The admin panels authenticate with a
+server session cookie, and the browser's Firebase Auth state isn't guaranteed to match it.
+The platform/notification collections are deliberately client-denied, and aggregation queries
+can't be listened to. Live listeners on orders would bill a read for every changed order.
+Instead:
+
+| Poll | When | Reads per poll (approx.) |
+|---|---|---|
+| Store Admin shell | 20 s, visible tab only (no idle pause - new-order chime must work) | 1 per pending order (as before) + ≤20 unread notifications (1 if none) |
+| Super Admin bell | 60 s, visible tab only, paused after 10 min idle | 1 count aggregation + ≤20 unread docs |
+| Super Admin analytics | 60 s, dashboard page on screen only, paused after 10 min idle | N (stores list) + **2 per store** (fingerprint) when nothing changed |
+
+Analytics fingerprint (`platform-analytics-service.ts`): newest order `updatedAt` (every order
+write sets it) + newest ledger entry + store status/name/policy + range start. A store's
+orders/ledger for the range are re-read only when that changes (10-minute safety expiry, e.g.
+for deleted orders or currency/legacy-rate edits).
+
+**Free-tier mode.** Nothing polls unless the page is actually on screen: a hidden or minimised
+tab, another browser tab, or another admin page (the analytics poll lives only on the
+dashboard page) uses 0 reads. On the Super Admin dashboard and bell, automatic refresh also
+stops after 10 minutes without mouse/keyboard/scroll/touch activity (the dashboard shows
+"auto-refresh paused"). The first activity, returning to the tab, or **Refresh** loads fresh
+data once. Example with 20 stores (~300 orders + ~100 ledger entries each in 30 days):
+
+- **Before:** about 8,000 reads per refresh.
+- **Now:** about 60 reads per refresh (~3,600/hour while someone is actively on the
+  dashboard, ~0 when it's left idle or in the background), plus a re-read of any store that
+  changed.
+
+Firestore's free quota is 50,000 reads/day. Caches are per server instance, so a cold Vercel
+instance recomputes once.
+
+## Theme Catalog & brand colours
+
+- `appearance/themes/ThemesSelectorClient.tsx`:
+  - Previews render the real storefront at a 1280 px "desktop" width, scaled to fit the card
+    (ResizeObserver), so they fill the box at any screen size.
+  - Badges no longer sit under the fake browser bar.
+  - Plain-language names, descriptions and "Best for".
+  - **Activate theme** and **Reset to original** ask for confirmation, because they replace
+    customizations. Their behaviour is unchanged: save the preset as a draft, then publish.
+  - The live theme's **Customize** button now just opens the customizer. Before, it silently
+    overwrote the customizer draft with the preset defaults.
+- `AdminThemeSelector.tsx`: same six presets/ids, now with a miniature of the real admin layout,
+  accent-coloured selection and keyboard radio-group navigation.
+- `BrandColorPresets.tsx` (Settings → Branding): suggested primary/secondary pairs plus a live
+  sample. Clicking a pair only fills the fields; **Save Changes** still saves.
+
+## Returning customers (saved checkout details)
+
+Storefront checkout is guest-only: the storefront `/login` page is a non-functional template
+and there are no customer accounts. Looking addresses up on the server by phone/email would
+let anyone who knows a number see a stranger's address. Saved details therefore live **only
+on the shopper's own device** (`src/lib/checkout/saved-profile.ts`, `localStorage`, one key per
+store):
+
+- After a successful order the thank-you screen asks **Save on this device / No thanks**
+  (nothing is stored without that click). Shoppers who opted in get their saved details
+  updated automatically on later orders.
+- Next checkout: contact prefilled, a **Your saved addresses** list (pick, edit the fields,
+  remove, or **Use a new address**), and **Forget my details**.
+- Addresses are de-duplicated (case/spacing-insensitive). Editing a picked address updates
+  that entry. At most 5 are kept, they expire after 180 days unused, and malformed or foreign
+  storage data is ignored.
+- Nothing new is stored on the server. The order is placed and validated exactly as before
+  (same `placeGuestOrder`, payment methods and stock checks).
+
+## Firestore rules note
+
+Rules are OR'ed: the per-store catch-all `match /{document=**}` (admin write) also matched
+`siteSettings/commission`, so the earlier Super-Admin-only lock on that document had no effect.
+The catch-all now excludes server-only paths (`isServerOnlyTenantPath`:
+`siteSettings/commission`, `notifications/*`). Verified in the Firestore emulator: a store admin
+can't write either path for their own store, and can't read or write another store's. Their
+general settings, products and other subcollections still work. **Deploy with
+`firebase deploy --only firestore:rules`.** (The emulator needs Java 21 for current
+firebase-tools; firebase-tools 13.x works with Java 17.)
+
 ## Tests
 
 Plain `node:test` scripts run with `tsx` (no test framework needed):
@@ -2428,6 +2542,7 @@ npx tsx --test scripts/test-custom-domains.ts       # custom-domain rules + Verc
 npx tsx --test scripts/test-ui-helpers.ts           # address mapping, NativeSelect options
 npx tsx --test scripts/test-store-assistant.ts      # assistant answers + registry structure
 npx tsx --test scripts/test-commission.ts           # commission policy, refunds, ledger netting, trends
+npx tsx --test scripts/test-notifications-checkout.ts # store notifications, poller cleanup, saved addresses
 npx tsc --noEmit && npm run build
 ```
 

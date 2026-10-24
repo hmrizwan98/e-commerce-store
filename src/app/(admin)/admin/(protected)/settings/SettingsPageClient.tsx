@@ -7,6 +7,7 @@ import { EmailAuthProvider, reauthenticateWithCredential, updatePassword } from 
 import { getFirebaseAuth } from "@/lib/firebase/client";
 import { mapFirebaseAuthError } from "@/lib/firebase/auth-errors";
 import AdminThemeSelector from "@/components/admin/AdminThemeSelector";
+import BrandColorPresets from "@/components/admin/BrandColorPresets";
 import CustomSelect from "@/components/admin/CustomSelect";
 import { COUNTRY_OPTIONS, CURRENCY_OPTIONS, TIMEZONE_OPTIONS } from "@/lib/constants/location-options";
 import {
@@ -351,6 +352,7 @@ export default function SettingsPageClient({
   commissionState,
   tax: initialTax,
   domain,
+  initialTab,
 }: {
   general: GeneralSettings;
   shipping: ShippingSettings;
@@ -369,8 +371,10 @@ export default function SettingsPageClient({
   commissionState: { effective: EffectiveCommissionPolicy; pending: CommissionChangeRequest | null };
   tax: TaxSettings;
   domain: CustomDomainView;
+  /** From ?tab= (e.g. a notification link to the Commission or Backup tab). */
+  initialTab?: string;
 }) {
-  const [tab, setTab] = useState<Tab>("General");
+  const [tab, setTab] = useState<Tab>(() => (TABS as readonly string[]).includes(initialTab ?? "") ? (initialTab as Tab) : "General");
 
   const [general, setGeneral] = useState(initialGeneral);
   const [shipping, setShipping] = useState(initialShipping);
@@ -566,6 +570,13 @@ export default function SettingsPageClient({
                 <input type="color" className="w-12 h-10 rounded-xl border border-slate-200 dark:border-slate-700 p-1 cursor-pointer bg-white dark:bg-slate-800" value={branding.secondaryColor ?? "#000000"} onChange={(e) => setBranding({ ...branding, secondaryColor: e.target.value })} />
                 <input className={inputClass} value={branding.secondaryColor ?? "#000000"} onChange={(e) => setBranding({ ...branding, secondaryColor: e.target.value })} />
               </div>
+            </div>
+            <div className="sm:col-span-2">
+              <BrandColorPresets
+                primary={branding.primaryColor}
+                secondary={branding.secondaryColor}
+                onPick={({ primary, secondary }) => setBranding({ ...branding, primaryColor: primary, secondaryColor: secondary })}
+              />
             </div>
             <div>
               <label className={labelClass}>Border radius</label>

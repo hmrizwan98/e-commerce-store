@@ -1,35 +1,11 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { BellIcon } from "@heroicons/react/24/outline";
-import { getUnreadNotificationCountAction } from "@/app/(superadmin)/superadmin/(protected)/notifications/actions";
 
-/** Unread backup / commission requests. Refreshes on navigation and every 60 s while the
- * tab is visible (server-authoritative count - notifications aren't client-readable). */
-export default function NotificationBell() {
-  const pathname = usePathname();
-  const [count, setCount] = useState(0);
-
-  useEffect(() => {
-    let alive = true;
-    const load = () => {
-      if (document.visibilityState !== "visible") return;
-      getUnreadNotificationCountAction()
-        .then((n) => alive && setCount(n))
-        .catch(() => {});
-    };
-    load();
-    const timer = setInterval(load, 60000);
-    document.addEventListener("visibilitychange", load);
-    return () => {
-      alive = false;
-      clearInterval(timer);
-      document.removeEventListener("visibilitychange", load);
-    };
-  }, [pathname]);
-
+/** Header bell - the count comes from SuperAdminShell's single poll (useSuperAdminUnread). */
+export default function NotificationBell({ count }: { count: number }) {
   return (
     <Link
       href={"/notifications" as any}

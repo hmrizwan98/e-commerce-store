@@ -6,18 +6,21 @@ import { adminDb } from "@/lib/firebase/admin";
 import { requireSuperAdmin } from "@/lib/firebase/require-super-admin";
 import { docData } from "@/lib/firebase/repositories/utils";
 import {
-  countUnreadNotifications,
+  getUnreadNotificationSummary,
   markAllNotificationsRead,
   setNotificationRead,
 } from "@/lib/firebase/repositories/superadmin-notifications";
 import type { SuperAdminNotification } from "@/types/superadmin-notification";
 import type { BackupRecord, BackupRecordStatus } from "@/types/backup-record";
+import { createStoreNotificationInTx } from "@/lib/firebase/repositories/store-notifications";
+import { buildBackupDecisionNotification } from "@/lib/notifications/store-notification-model";
 
 type Result = { ok: true } | { ok: false; error: string };
 
-export async function getUnreadNotificationCountAction(): Promise<number> {
+/** Bell / sidebar badge poll: unread count + newest unread ids (for the new-item chime). */
+export async function getUnreadNotificationSummaryAction(): Promise<{ count: number; items: { id: string; title: string }[] }> {
   await requireSuperAdmin();
-  return countUnreadNotifications().catch(() => 0);
+  return getUnreadNotificationSummary().catch(() => ({ count: 0, items: [] }));
 }
 
 export async function setNotificationReadAction(id: string, read: boolean): Promise<Result> {
@@ -73,6 +76,19 @@ export async function resolveBackupRequestAction(
         updatedAt: FieldValue.serverTimestamp(),
       });
       tx.update(notifRef, { status: decision, read: true, updatedAt: FieldValue.serverTimestamp() });
+      // Store taken from the platform notification's own storeId + the backup doc that exists
+      // under that store - never from the browser.
+      createStoreNotificationInTx(
+        tx,
+        notif.storeId,
+        buildBackupDecisionNotification({
+          backupId,
+          backupType: backup.type,
+          decision,
+          note: cleanNote || undefined,
+          decidedBy: "Webriiz platform team",
+        })
+      );
     });
     revalidatePath("/superadmin/notifications");
     return { ok: true };

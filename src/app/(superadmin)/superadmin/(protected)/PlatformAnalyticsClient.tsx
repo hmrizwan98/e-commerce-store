@@ -6,6 +6,7 @@ import { formatMoney } from "@/lib/currency/format";
 import { getPlatformAnalyticsAction } from "./analytics-actions";
 import type { AnalyticsRange, PlatformAnalytics } from "@/lib/finance/platform-analytics-service";
 import type { TrendPoint } from "@/lib/finance/ledger-math";
+import { startPoller, type Poller } from "@/lib/notifications/poller";
 
 const RANGES: { value: AnalyticsRange; label: string }[] = [
   { value: "mtd", label: "This month" },
@@ -15,7 +16,10 @@ const RANGES: { value: AnalyticsRange; label: string }[] = [
   { value: "12m", label: "12 months" },
   { value: "all", label: "All time" },
 ];
-const REFRESH_MS = 30000;
+// Free-tier friendly: refresh every 60 s, only while this page is on screen, and stop after
+// 10 minutes without mouse/keyboard activity (one refresh as soon as someone is back).
+const REFRESH_MS = 60000;
+const IDLE_MS = 10 * 60 * 1000;
 const card = "p-6 rounded-3xl bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800/80 shadow-sm";
 
 function ago(ms: number, now: number): string {
@@ -102,15 +106,27 @@ export default function PlatformAnalyticsClient({ initial }: { initial: Platform
     setLoading(false);
   }, []);
 
-  // Refresh: on filter change, every 30 s while visible, and when the tab regains focus.
+  // Refresh: on filter change, every 30 s while the tab is visible (paused when hidden, run
+  // again on return), never two requests at once - see lib/notifications/poller.ts. The
+  // server only re-reads a store's orders/ledger when its fingerprint changed.
+  const pollerRef = useRef<Poller | null>(null);
+  const skipFirst = useRef(Boolean(initial));
   useEffect(() => {
-    if (!(initial && range === initial.range && (storeId || null) === initial.storeId && inflight.current === 0)) load(range, storeId);
-    const tick = () => document.visibilityState === "visible" && load(range, storeId);
-    const timer = setInterval(tick, REFRESH_MS);
-    document.addEventListener("visibilitychange", tick);
+    const task = async () => {
+      // The server already rendered this exact view - don't fetch it again on mount.
+      const sameAsInitial = initial && range === initial.range && (storeId || null) === initial.storeId;
+      if (skipFirst.current && sameAsInitial) {
+        skipFirst.current = false;
+        return;
+      }
+      skipFirst.current = false;
+      await load(range, storeId);
+    };
+    const poller = startPoller(task, REFRESH_MS, undefined, { idleMs: IDLE_MS });
+    pollerRef.current = poller;
     return () => {
-      clearInterval(timer);
-      document.removeEventListener("visibilitychange", tick);
+      poller.stop();
+      if (pollerRef.current === poller) pollerRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [range, storeId, load]);
@@ -129,8 +145,10 @@ export default function PlatformAnalyticsClient({ initial }: { initial: Platform
         <div>
           <h2 className="text-lg font-extrabold text-neutral-900 dark:text-white">Store performance</h2>
           <p className="text-xs text-neutral-500 flex items-center gap-2">
-            <span className={`w-2 h-2 rounded-full ${error ? "bg-amber-500" : "bg-emerald-500 animate-pulse"}`} />
-            {data ? `Updated ${ago(data.generatedAt, now)} · refreshes every 30s` : "Loading…"}
+            <span className={`w-2 h-2 rounded-full ${error ? "bg-amber-500" : pollerRef.current?.isIdle() ? "bg-neutral-400" : "bg-emerald-500 animate-pulse"}`} />
+            {data
+              ? `Updated ${ago(data.generatedAt, now)} · ${pollerRef.current?.isIdle() ? "auto-refresh paused (no activity) - move the mouse or press Refresh" : "refreshes every 60s while this page is open"}`
+              : "Loading…"}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -154,7 +172,7 @@ export default function PlatformAnalyticsClient({ initial }: { initial: Platform
           />
           <button
             type="button"
-            onClick={() => load(range, storeId)}
+            onClick={() => (pollerRef.current ? pollerRef.current.trigger() : load(range, storeId))}
             disabled={loading}
             className="px-3 py-2 rounded-xl border border-neutral-200 dark:border-neutral-700 text-xs font-bold text-neutral-700 dark:text-neutral-200 disabled:opacity-50"
           >

@@ -79,7 +79,16 @@ export async function listSuperAdminNotifications(opts: {
     .sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));
 }
 
-export async function countUnreadNotifications(): Promise<number> {
-  const snap = await adminDb().collection(COLLECTION).where("read", "==", false).count().get();
-  return snap.data().count;
+/** Unread ids + titles (newest first) for the bell badge / chime - capped, select()-only. */
+export async function getUnreadNotificationSummary(limit = 20): Promise<{ count: number; items: { id: string; title: string }[] }> {
+  const col = adminDb().collection(COLLECTION);
+  const [countSnap, snap] = await Promise.all([
+    col.where("read", "==", false).count().get(),
+    col.where("read", "==", false).select("title", "createdAt").limit(limit).get(),
+  ]);
+  const items = snap.docs
+    .map((d) => ({ id: d.id, title: String(d.get("title") ?? ""), at: d.get("createdAt")?.toMillis?.() ?? 0 }))
+    .sort((a, b) => b.at - a.at)
+    .map(({ id, title }) => ({ id, title }));
+  return { count: countSnap.data().count, items };
 }

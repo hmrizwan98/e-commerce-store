@@ -17,6 +17,17 @@ import ShippingAddress, { type ShippingAddressValue } from "./ShippingAddress";
 import PaymentMethod from "./PaymentMethod";
 import type { PaymentMethod as PaymentMethodValue } from "@/types/order";
 import type { PaymentSettings } from "@/types/site-settings";
+import { useTenantId } from "@/lib/tenant/TenantContext";
+import SavedAddressPicker from "./SavedAddressPicker";
+import {
+  forgetProfile,
+  loadProfile,
+  rememberOrder,
+  removeAddress,
+  saveProfile,
+  type SavedAddress,
+  type SavedCheckoutProfile,
+} from "@/lib/checkout/saved-profile";
 
 export interface CheckoutClientProps {
   shippingFlatRate: number;
@@ -66,6 +77,58 @@ const CheckoutClient: React.FC<CheckoutClientProps> = ({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmedOrder, setConfirmedOrder] = useState<{ orderNumber: string } | null>(null);
+  // Returning shopper: details saved on THIS device only (see lib/checkout/saved-profile.ts).
+  const tenantId = useTenantId();
+  const [profile, setProfile] = useState<SavedCheckoutProfile | null>(null);
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+  const [saveState, setSaveState] = useState<"ask" | "saved" | "updated" | "declined" | "forgotten" | "failed">("ask");
+
+  const applySavedAddress = (a: SavedAddress) => {
+    setSelectedAddressId(a.id);
+    setShipping({
+      fullName: a.fullName,
+      line1: a.line1,
+      line2: a.line2,
+      landmark: a.landmark,
+      city: a.city,
+      country: a.country,
+      state: a.state,
+      postalCode: a.postalCode,
+      addressType: a.addressType,
+    });
+  };
+
+  useEffect(() => {
+    const saved = loadProfile(tenantId);
+    if (!saved) return;
+    setProfile(saved);
+    if (saved.phone) setPhone((v) => v || saved.phone);
+    if (saved.email) setEmail((v) => v || saved.email);
+    if (saved.addresses[0]) applySavedAddress(saved.addresses[0]);
+    // Contact is already known - open the address step so they can confirm or pick another.
+    if (saved.phone || saved.email) setTabActive("ShippingAddress");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tenantId]);
+
+  const forgetSavedDetails = () => {
+    if (!window.confirm("Remove your saved phone, email and addresses from this device?")) return;
+    forgetProfile(tenantId);
+    setProfile(null);
+    setSelectedAddressId(null);
+  };
+
+  const rememberThisOrder = () => {
+    const next = rememberOrder(profile, {
+      phone,
+      email: email.trim(),
+      address: { ...shipping, line2: shipping.line2 ?? "", landmark: shipping.landmark },
+      editedId: selectedAddressId,
+    });
+    const ok = saveProfile(tenantId, next);
+    if (ok) setProfile(next);
+    return ok;
+  };
+
   const [idempotencyKey, setIdempotencyKey] = useState(() => "chk_" + Date.now().toString(36) + "_" + Math.random().toString(36).substring(2, 9));
 
   const cartFingerprint = items.map((i) => `${i.productId}:${i.variantId || ""}:${i.quantity}`).join("|");
@@ -156,6 +219,9 @@ const CheckoutClient: React.FC<CheckoutClientProps> = ({
         idempotencyKey,
       });
       dispatch(clearCart());
+      // Already opted in on this device -> keep the saved details current; otherwise ask.
+      if (profile) setSaveState(rememberThisOrder() ? "updated" : "failed");
+      else setSaveState("ask");
       trackEvent("payment_success", { value: totals.total });
       trackEvent("order_success", { value: totals.total });
       setConfirmedOrder(result);
@@ -210,6 +276,49 @@ const CheckoutClient: React.FC<CheckoutClientProps> = ({
                 </a>
               </div>
             ) : null}
+
+            {/* Returning-customer opt-in: details stay on this device only. */}
+            <div className="w-full text-left rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/30 p-5 space-y-3" aria-live="polite">
+              {saveState === "ask" && (
+                <>
+                  <p className="text-sm font-bold text-slate-900 dark:text-slate-100">Save your details for next time?</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-400">
+                    We&apos;ll remember your phone, email and this delivery address <strong>on this device only</strong>, so your next checkout is quicker. Not recommended on a shared or public computer.
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setSaveState(rememberThisOrder() ? "saved" : "failed")}
+                      className="px-4 py-2 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-bold"
+                    >
+                      Save on this device
+                    </button>
+                    <button type="button" onClick={() => setSaveState("declined")} className="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200">
+                      No thanks
+                    </button>
+                  </div>
+                </>
+              )}
+              {(saveState === "saved" || saveState === "updated") && (
+                <p className="text-xs text-slate-600 dark:text-slate-300">
+                  ✓ {saveState === "saved" ? "Saved on this device." : "Your saved details on this device were updated."} Next time, checkout will be filled in for you.{" "}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      forgetProfile(tenantId);
+                      setProfile(null);
+                      setSaveState("forgotten");
+                    }}
+                    className="font-bold underline"
+                  >
+                    Forget my details
+                  </button>
+                </p>
+              )}
+              {saveState === "declined" && <p className="text-xs text-slate-500">Okay - nothing was saved on this device.</p>}
+              {saveState === "forgotten" && <p className="text-xs text-slate-500">Done - your saved details were removed from this device.</p>}
+              {saveState === "failed" && <p className="text-xs text-slate-500">This browser doesn&apos;t allow saving (private mode?) - nothing was saved.</p>}
+            </div>
 
             {/* Same two buttons, same size: primary action + outlined secondary (real links,
                 not buttons nested inside links); stacked full-width on phones. */}
@@ -274,6 +383,14 @@ const CheckoutClient: React.FC<CheckoutClientProps> = ({
   const renderLeft = () => {
     return (
       <div className="space-y-8">
+        {profile && (
+          <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900 text-xs">
+            <span className="text-emerald-800 dark:text-emerald-300 font-semibold">👋 Welcome back! We filled in the details you saved on this device.</span>
+            <button type="button" onClick={forgetSavedDetails} className="font-bold text-emerald-900 dark:text-emerald-200 underline">
+              Forget my details
+            </button>
+          </div>
+        )}
         <div id="ContactInfo" className="scroll-mt-24">
           <ContactInfo
             isActive={tabActive === "ContactInfo"}
@@ -299,6 +416,26 @@ const CheckoutClient: React.FC<CheckoutClientProps> = ({
             isActive={tabActive === "ShippingAddress"}
             value={shipping}
             onChange={(patch) => setShipping((prev) => ({ ...prev, ...patch }))}
+            formKey={selectedAddressId ?? "new"}
+            savedAddressSlot={
+              profile?.addresses.length ? (
+                <SavedAddressPicker
+                  addresses={profile.addresses}
+                  selectedId={selectedAddressId}
+                  onSelect={applySavedAddress}
+                  onAddNew={() => {
+                    setSelectedAddressId(null);
+                    setShipping((prev) => ({ ...prev, fullName: "", line1: "", line2: "", landmark: "", city: "", state: "", postalCode: "", addressType: "home" }));
+                  }}
+                  onRemove={(a) => {
+                    const next = removeAddress(profile, a.id);
+                    saveProfile(tenantId, next);
+                    setProfile(next);
+                    if (selectedAddressId === a.id) setSelectedAddressId(null);
+                  }}
+                />
+              ) : null
+            }
             onOpenActive={() => {
               setTabActive("ShippingAddress");
               handleScrollToEl("ShippingAddress");

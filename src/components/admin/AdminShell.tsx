@@ -34,8 +34,11 @@ import {
   ChevronDoubleLeftIcon,
   ChevronDoubleRightIcon,
   SparklesIcon,
+  BellIcon,
 } from "@heroicons/react/24/outline";
 import dynamic from "next/dynamic";
+import { installChimeUnlock, playChime } from "@/lib/notifications/chime";
+import { newlyArrived, startPoller, type Poller } from "@/lib/notifications/poller";
 
 // Code-split the assistant (its growing knowledge/troubleshooting registries + framer-motion
 // drawer) out of the main AdminShell bundle - only fetched once an admin actually opens it,
@@ -100,7 +103,10 @@ const NAV_GROUPS: NavGroup[] = [
   },
   {
     title: "",
-    items: [{ label: "Settings", href: "/admin/settings", icon: Cog6ToothIcon }],
+    items: [
+      { label: "Notifications", href: "/admin/notifications", icon: BellIcon },
+      { label: "Settings", href: "/admin/settings", icon: Cog6ToothIcon },
+    ],
   },
 ];
 
@@ -151,68 +157,12 @@ export default function AdminShell({
     setCollapsed(false);
   }, []);
 
-  // One shared AudioContext, unlocked on the admin's first click/keypress - browsers
-  // create audio contexts "suspended" until the page has had a user gesture, so a context
-  // created fresh at chime time (as before) often played nothing.
-  const audioCtxRef = useRef<AudioContext | null>(null);
-  const getAudioContext = (): AudioContext | null => {
-    if (audioCtxRef.current) return audioCtxRef.current;
-    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-    if (!AudioContextClass) return null;
-    audioCtxRef.current = new AudioContextClass();
-    return audioCtxRef.current;
-  };
-
-  useEffect(() => {
-    const unlock = () => {
-      const ctx = getAudioContext();
-      if (ctx && ctx.state === "suspended") ctx.resume().catch(() => {});
-    };
-    window.addEventListener("pointerdown", unlock);
-    window.addEventListener("keydown", unlock);
-    return () => {
-      window.removeEventListener("pointerdown", unlock);
-      window.removeEventListener("keydown", unlock);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const playNotificationChime = async () => {
-    try {
-      const ctx = getAudioContext();
-      if (!ctx) return;
-      if (ctx.state === "suspended") await ctx.resume();
-      const now = ctx.currentTime;
-
-      // Tone 1 (E5 659.25Hz)
-      const osc1 = ctx.createOscillator();
-      const gain1 = ctx.createGain();
-      osc1.type = "sine";
-      osc1.frequency.setValueAtTime(659.25, now);
-      gain1.gain.setValueAtTime(0.3, now);
-      gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
-      osc1.connect(gain1);
-      gain1.connect(ctx.destination);
-      osc1.start(now);
-      osc1.stop(now + 0.35);
-
-      // Tone 2 (B5 987.77Hz - high pleasant bell)
-      const osc2 = ctx.createOscillator();
-      const gain2 = ctx.createGain();
-      osc2.type = "sine";
-      osc2.frequency.setValueAtTime(987.77, now + 0.12);
-      gain2.gain.setValueAtTime(0.35, now + 0.12);
-      gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.65);
-      osc2.connect(gain2);
-      gain2.connect(ctx.destination);
-      osc2.start(now + 0.12);
-      osc2.stop(now + 0.65);
-    } catch {
-      // Audio blocked by the browser - the toast still shows.
-    }
-  };
+  // Shared Web Audio chime (src/lib/notifications/chime.ts): unlocked on the admin's first
+  // click/keypress, since browsers keep audio suspended until a user gesture.
+  useEffect(() => installChimeUnlock(), []);
 
   const [unreadCount, setUnreadCount] = useState(0);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
 
   const markOrderAsViewed = (orderId: string) => {
     try {
@@ -241,45 +191,66 @@ export default function AdminShell({
     }
   }, [pathname]);
 
-  // Kept across client-side navigations (a ref, not a per-effect local) so moving between
-  // admin pages doesn't reset the baseline and miss an order that arrived in between.
+  // Kept across client-side navigations (refs, not per-effect locals) so moving between
+  // admin pages doesn't reset the baseline and miss an order/notification that arrived in between.
   const knownPendingIdsRef = useRef<string[] | null>(null);
+  const knownNotificationIdsRef = useRef<string[] | null>(null);
+  const pollerRef = useRef<Poller | null>(null);
 
+  // One poll (/api/admin/pending-orders also returns unread store notifications) every 20 s,
+  // only while this admin tab is on screen - paused when hidden (another tab / minimised),
+  // checked once on return, never two requests at once (poller.ts). No idle pause here: an
+  // admin waiting for orders must still hear the new-order chime.
   useEffect(() => {
     const fetchPending = async () => {
-      try {
-        const res = await fetch("/api/admin/pending-orders");
-        if (res.ok) {
-          const data = await res.json();
-          const pendingIds: string[] = data.pendingIds || [];
-          const viewedIds = getViewedOrderIds();
+      const res = await fetch("/api/admin/pending-orders", { cache: "no-store" });
+      if (!res.ok) return;
+      const data = await res.json();
+      const pendingIds: string[] = data.pendingIds || [];
+      const viewedIds = getViewedOrderIds();
+      setUnreadCount(pendingIds.filter((id) => !viewedIds.includes(id)).length);
 
-          const unviewed = pendingIds.filter((id) => !viewedIds.includes(id));
-          setUnreadCount(unviewed.length);
+      // null = first poll of this session: just record the baseline (a page load never chimes).
+      const newOrders = newlyArrived(knownPendingIdsRef.current, pendingIds);
+      knownPendingIdsRef.current = pendingIds;
 
-          // null = first poll of this session: just record the baseline. Previously the
-          // check was `prevIds.length > 0`, so a store with ZERO pending orders never
-          // chimed for its next order (the first new order only became the baseline).
-          const known = knownPendingIdsRef.current;
-          if (known) {
-            const newlyAdded = pendingIds.filter((id) => !known.includes(id));
-            if (newlyAdded.length > 0) {
-              toast.success(`🔔 ${newlyAdded.length} new order(s) received!`, { duration: 6000 });
-              playNotificationChime();
-            }
-          }
-          knownPendingIdsRef.current = pendingIds;
-        }
-      } catch {}
+      const notes: { id: string; title: string }[] = data.notifications?.items || [];
+      setUnreadNotifications(data.notifications?.count || 0);
+      const newNotes = newlyArrived(
+        knownNotificationIdsRef.current,
+        notes.map((n) => n.id)
+      );
+      knownNotificationIdsRef.current = notes.map((n) => n.id);
+
+      if (newOrders.length > 0) {
+        toast.success(`🔔 ${newOrders.length} new order(s) received!`, { duration: 6000 });
+        void playChime("order");
+      } else if (newNotes.length > 0) {
+        const first = notes.find((n) => n.id === newNotes[0]);
+        toast(first?.title || "You have a new notification", { icon: "🔔", duration: 6000 });
+        void playChime("notice");
+      }
     };
 
-    fetchPending();
-    const interval = setInterval(fetchPending, 10000);
-    return () => clearInterval(interval);
-    // Re-polls on navigation so the unread badge updates right after viewing an order;
-    // the new-order baseline lives in knownPendingIdsRef, so this doesn't reset it.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    pollerRef.current = startPoller(fetchPending, 20000);
+    return () => {
+      pollerRef.current?.stop();
+      pollerRef.current = null;
+    };
+  }, []);
+
+  // Re-poll on navigation so the badges update right after viewing an order / notification
+  // (coalesced with any poll already in flight).
+  useEffect(() => {
+    pollerRef.current?.trigger();
   }, [pathname]);
+
+  // The notifications page tells the shell when it marks items read, so the badge updates now.
+  useEffect(() => {
+    const onChange = () => pollerRef.current?.trigger();
+    window.addEventListener("webriiz:notifications-changed", onChange);
+    return () => window.removeEventListener("webriiz:notifications-changed", onChange);
+  }, []);
 
   useEffect(() => {
     setMobileOpen(false);
@@ -307,6 +278,11 @@ export default function AdminShell({
     router.push("/admin/login");
     router.refresh();
   };
+
+  const badgeFor = (href: string) =>
+    href === "/admin/orders" ? unreadCount : href === "/admin/notifications" ? unreadNotifications : 0;
+  // The notification summary is capped at 20 ids per poll.
+  const badgeLabel = (n: number) => (n >= 20 ? "20+" : String(n));
 
   const sidebarContent = (
     <>
@@ -403,14 +379,14 @@ export default function AdminShell({
                       {!collapsed && (
                         <div className="flex items-center gap-2 truncate">
                           <span className="truncate text-xs font-extrabold tracking-tight">{item.label}</span>
-                          {item.href === "/admin/orders" && unreadCount > 0 && (
+                          {badgeFor(item.href) > 0 && (
                             <span className="px-1.5 py-0.5 text-[9px] font-black rounded-full bg-rose-500 text-white shadow-2xs leading-none shrink-0">
-                              {unreadCount}
+                              {badgeLabel(badgeFor(item.href))}
                             </span>
                           )}
                         </div>
                       )}
-                      {collapsed && item.href === "/admin/orders" && unreadCount > 0 && (
+                      {collapsed && badgeFor(item.href) > 0 && (
                         <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-rose-500 ring-2 ring-slate-900" />
                       )}
                     </div>
@@ -495,6 +471,20 @@ export default function AdminShell({
             >
               <SparklesIcon className="w-5 h-5 animate-pulse" />
             </button>
+
+            <Link
+              href={"/admin/notifications" as any}
+              className="relative p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors text-white flex items-center justify-center"
+              title={unreadNotifications > 0 ? `${badgeLabel(unreadNotifications)} unread notifications` : "Notifications"}
+              aria-label={unreadNotifications > 0 ? `${badgeLabel(unreadNotifications)} unread notifications` : "Notifications"}
+            >
+              <BellIcon className="w-5 h-5" />
+              {unreadNotifications > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-rose-500 text-white text-[9px] font-black flex items-center justify-center shadow-md">
+                  {badgeLabel(unreadNotifications)}
+                </span>
+              )}
+            </Link>
 
             <Link
               href="/admin/orders"

@@ -575,7 +575,6 @@ export const KNOWLEDGE_REGISTRY: KnowledgeEntry[] = [
       "chime",
       "order alert",
       "ding",
-      "notification bell",
       "beep",
       "order aane ka pata",
       "new order alert",
@@ -587,10 +586,40 @@ export const KNOWLEDGE_REGISTRY: KnowledgeEntry[] = [
     route: "/admin/orders",
     actionLabel: "Open Orders",
     instructionsUrdu:
-      "Jab Store Admin khula ho to har naye order par **'New order received'** notification aata hai aur ek chhoti si awaz bajti hai (har ~10 second mein naye orders check hote hain). Browser ke qaide ki wajah se awaz tabhi bajegi jab aap ne admin page par **kam az kam ek dafa click** kiya ho - page kholte hi kahin bhi ek click kar dein. Computer/phone ki awaz band na ho, aur browser tab mute na ho. Ye feature bilkul free hai.",
+      "Jab Store Admin khula ho to har naye order par **'New order received'** notification aata hai aur ek chhoti si awaz bajti hai (tab khula ho to har ~20 second mein check hota hai; tab chhupa ho to check ruk jata hai aur wapas aate hi foran hota hai). Browser ke qaide ki wajah se awaz tabhi bajegi jab aap ne admin page par **kam az kam ek dafa click** kiya ho. Awaz on/off aur **Test sound** ka button **Notifications** page par hai (ye setting har browser/device ki alag hoti hai). Computer/phone ki awaz band na ho, aur browser tab mute na ho. Ye feature bilkul free hai.",
     instructionsEnglish:
-      "While Store Admin is open, every new order shows a **'New order received'** notification and plays a short chime (new orders are checked about every 10 seconds). Browsers only allow sound after you've clicked somewhere on the admin page at least once - click anywhere after opening it. Make sure your device volume is on and the browser tab isn't muted. This feature is free.",
+      "While Store Admin is open, every new order shows a **'New order received'** notification and plays a short chime (checked about every 20 seconds while the tab is visible; paused while it's hidden and checked again as soon as you come back). Browsers only allow sound after you've clicked somewhere on the admin page at least once. The **Sound on/off** switch and a **Test sound** button are on the **Notifications** page (the setting is per browser/device). Make sure your device volume is on and the browser tab isn't muted. This feature is free.",
     exampleQuestions: ["Naye order par awaz kyun nahi aa rahi?", "Order aane ka pata kaise chalega?"],
+  },
+  {
+    id: "store_notifications",
+    title: "Notifications (platform decisions)",
+    category: "settings",
+    keywords: [
+      "notifications page",
+      "notification page",
+      "bell icon",
+      "notification bell",
+      "platform notifications",
+      "request approved",
+      "request rejected",
+      "request ka jawab",
+      "request status",
+      "commission request status",
+      "backup request status",
+      "unread notifications",
+      "mark as read",
+      "sound off",
+      "awaz band",
+    ],
+    navigationPath: ["Notifications"],
+    route: "/admin/notifications",
+    actionLabel: "Open Notifications",
+    instructionsUrdu:
+      "Upar header ki **🔔 bell** ya sidebar mein **Notifications** kholein. Jab Webriiz platform team aap ki **commission change** ya **backup** request ko approve/reject (ya backup ko completed) karti hai to yahan faisla, waqt aur note aata hai, bell par unread ginti dikhti hai aur halki si awaz bajti hai. **Mark read / Mark all as read** se padha hua mark karein. Awaz band/chalu karne aur check karne ke liye isi page par **Sound on/off** aur **Test sound** hain.",
+    instructionsEnglish:
+      "Open the **🔔 bell** in the header or **Notifications** in the sidebar. When the Webriiz platform team approves or rejects your **commission change** or **backup** request (or marks a backup completed), the decision, time and note appear here, the bell shows an unread count and a soft chime plays. Use **Mark read / Mark all as read**. **Sound on/off** and **Test sound** are on the same page.",
+    exampleQuestions: ["Notification bell kahan hai?", "Where do I see platform notifications?", "Request approved hui ya rejected?"],
   },
 
   // ─────────────────────────────── Sales: customers & money ───────────────────────────────
@@ -923,9 +952,9 @@ export const KNOWLEDGE_REGISTRY: KnowledgeEntry[] = [
     route: "/admin/appearance/themes",
     actionLabel: "Open Theme Catalog",
     instructionsUrdu:
-      "1. Sidebar mein **Appearance → Theme Catalog** kholein. Upar aap ki **Published & Live** theme hai.\n2. Neeche kisi theme par **Preview ↗** se pehle dekh lein.\n3. Pasand aaye to **Publish & Activate** dabayein - theme foran storefront par live ho jati hai.\n4. Live theme ke rang/fonts/sections badalne ke liye **Customize Live Theme** ya **Launch Theme Customizer** dabayein.\nNote: Publish & Activate us theme ki default settings lagata hai, is liye pehle Preview kar lein.",
+      "1. Sidebar mein **Appearance → Theme Catalog** kholein. Upar **Your live theme** hai.\n2. **All themes** mein kisi theme par **Preview** se pehle dekh lein.\n3. Pasand aaye to **Activate theme** dabayein aur confirm karein - theme foran storefront par live ho jati hai.\n4. Live theme ke rang/fonts/sections badalne ke liye **Customize this theme** ya **Open Theme Customizer** dabayein.\nNote: **Activate theme** aur **Reset to original** us theme ki asal settings lagate hain - aap ki customizations badal jati hain, is liye pehle Preview kar lein.",
     instructionsEnglish:
-      "1. Open **Appearance → Theme Catalog**. Your **Published & Live** theme is at the top.\n2. Use **Preview ↗** on any theme to look first.\n3. Click **Publish & Activate** to make it live on the storefront immediately.\n4. To change the live theme's colours/fonts/sections, click **Customize Live Theme** or **Launch Theme Customizer**.\nNote: Publish & Activate applies that theme's default settings, so preview first.",
+      "1. Open **Appearance → Theme Catalog**. **Your live theme** is at the top.\n2. Under **All themes**, use **Preview** on any theme to look first.\n3. Click **Activate theme** and confirm to make it live on the storefront immediately.\n4. To change the live theme's colours/fonts/sections, click **Customize this theme** or **Open Theme Customizer**.\nNote: **Activate theme** and **Reset to original** apply that theme's original settings and replace your customizations, so preview first.",
     exampleQuestions: ["Theme kesy change krni hy?", "Theme catalog kahan hy?"],
   },
   {
@@ -1280,9 +1309,9 @@ export const KNOWLEDGE_REGISTRY: KnowledgeEntry[] = [
     route: "/admin/settings",
     actionLabel: "Open Settings",
     instructionsUrdu:
-      "**Settings → Branding** mein neeche Store Admin panel ka rang (admin theme) chun kar **Save Changes** karein. **Primary color** aur **Font family** sirf tab istemal hote hain jab theme mein ye set na hon. Storefront ke asal rang/fonts **Appearance → Customize Storefront → Global Settings** mein, aur logo **Header & Navigation** mein badlein - 'Logo URL', 'Favicon URL' aur 'Loading logo URL' fields abhi storefront par istemal nahi hote.",
+      "**Settings → Branding** mein neeche Store Admin panel ka rang (admin theme) chun kar **Save Changes** karein. **Suggested colour pairs** se ek click mein Primary/Secondary color bhar sakte hain (order emails mein istemal hote hain). **Primary color** aur **Font family** sirf tab istemal hote hain jab theme mein ye set na hon. Storefront ke asal rang/fonts **Appearance → Customize Storefront → Global Settings** mein, aur logo **Header & Navigation** mein badlein - 'Logo URL', 'Favicon URL' aur 'Loading logo URL' fields abhi storefront par istemal nahi hote.",
     instructionsEnglish:
-      "In **Settings → Branding** pick the Store Admin panel colour (admin theme) at the bottom and click **Save Changes**. **Primary color** and **Font family** are only used when the theme doesn't set them. Change the storefront's real colours/fonts in **Appearance → Customize Storefront → Global Settings** and the logo in **Header & Navigation** - the 'Logo URL', 'Favicon URL' and 'Loading logo URL' fields aren't used by the storefront yet.",
+      "In **Settings → Branding** pick the Store Admin panel colour (admin theme) at the bottom and click **Save Changes**. **Suggested colour pairs** fill Primary/Secondary color in one click (used in order emails). **Primary color** and **Font family** are only used when the theme doesn't set them. Change the storefront's real colours/fonts in **Appearance → Customize Storefront → Global Settings** and the logo in **Header & Navigation** - the 'Logo URL', 'Favicon URL' and 'Loading logo URL' fields aren't used by the storefront yet.",
     exampleQuestions: ["Admin panel ka color kaise badlun?", "What does the Branding tab do?"],
   },
   {
