@@ -1,5 +1,6 @@
 "use client";
 
+import NativeSelect from "@/components/ui/NativeSelect";
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -55,13 +56,13 @@ const PayoutManagementPanel: React.FC<{
       </div>
 
       <div className="flex flex-wrap items-center gap-3 p-4 rounded-2xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-200/60 dark:border-neutral-800/60">
-        <select className={inputClass} value={storeId} onChange={(e) => setStoreId(e.target.value)}>
+        <NativeSelect className={inputClass} value={storeId} onChange={(e) => setStoreId(e.target.value)}>
           {stores.map((s) => (
             <option key={s.id} value={s.id}>
               {s.name}
             </option>
           ))}
-        </select>
+        </NativeSelect>
         <input
           type="number"
           step="0.01"

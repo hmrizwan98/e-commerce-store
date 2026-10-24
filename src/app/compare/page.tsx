@@ -49,9 +49,7 @@ const PageCompare = () => {
           <p className="text-neutral-500 dark:text-neutral-400">
             You haven&apos;t added any products to compare yet.
           </p>
-          <Link href={"/collection" as any}>
-            <ButtonPrimary>Explore products</ButtonPrimary>
-          </Link>
+          <ButtonPrimary href={"/collection" as any}>Explore products</ButtonPrimary>
         </div>
       )}
 

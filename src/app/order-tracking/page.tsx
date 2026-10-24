@@ -43,6 +43,19 @@ const STEP_ICONS: Record<string, typeof TruckIcon> = {
   delivered: HomeIcon,
 };
 
+type StatusTone = "active" | "done" | "stopped";
+function statusTone(status: OrderStatus): StatusTone {
+  if (status === "delivered") return "done";
+  if (status === "cancelled" || status === "refunded") return "stopped";
+  return "active";
+}
+const STATUS_TONE: Record<StatusTone, string> = {
+  active: "bg-primary-50 dark:bg-primary-950/50 border-primary-200 dark:border-primary-800 text-primary-700 dark:text-primary-300",
+  done: "bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300",
+  stopped: "bg-rose-50 dark:bg-rose-950/50 border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300",
+};
+const STATUS_DOT: Record<StatusTone, string> = { active: "bg-primary-500", done: "bg-emerald-500", stopped: "bg-rose-500" };
+
 const ORDER_STEPS: OrderStatus[] = [
   "pending",
   "confirmed",
@@ -198,17 +211,39 @@ const OrderTrackingPage = async ({
         </form>
 
         {searched && isRateLimited && (
-          <p className="mt-4 text-xs text-rose-600 dark:text-rose-400 font-semibold text-center">
-            ⚠️ Too many tracking attempts. Please wait a few minutes and try again.
+          <p role="alert" className="mt-6 p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 text-xs text-amber-800 dark:text-amber-300 font-semibold text-center">
+            Too many tracking attempts. Please wait a few minutes and try again.
           </p>
         )}
 
         {searched && !isRateLimited && !matched && (
-          <div className="mt-6 p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200/60 dark:border-rose-800/60 text-xs text-rose-700 dark:text-rose-300 font-medium text-center">
-            No order found matching order number <span className="font-mono font-bold">{orderNumber}</span> and <span className="font-bold">{contact}</span>.
+          <div role="alert" className="mt-6 p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200/60 dark:border-rose-800/60 text-xs text-rose-700 dark:text-rose-300 font-medium text-center">
+            <p>
+              No order found for <span className="font-mono font-bold">{orderNumber}</span> with{" "}
+              <span className="font-bold">{contact}</span>.
+            </p>
+            <p className="mt-1 font-normal text-rose-600/90 dark:text-rose-300/80">
+              Check the order number, and use the same email or phone number you gave at checkout.
+            </p>
           </div>
         )}
       </div>
+
+      {!searched && (
+        <div className="grid sm:grid-cols-3 gap-4 text-center">
+          {[
+            { icon: "🧾", title: "Order number", text: "On your order confirmation screen, email or WhatsApp - e.g. ORD-XXXXXXXX." },
+            { icon: "📱", title: "Email or phone", text: "Use the same email or phone number you entered at checkout." },
+            { icon: "🚚", title: "Live status", text: "See every step from order placed to delivered, plus courier tracking." },
+          ].map((tip) => (
+            <div key={tip.title} className="p-5 rounded-2xl bg-white/70 dark:bg-slate-900/70 border border-slate-200/80 dark:border-slate-800/80">
+              <div className="text-2xl">{tip.icon}</div>
+              <p className="mt-2 text-sm font-bold text-slate-900 dark:text-slate-100">{tip.title}</p>
+              <p className="mt-1 text-xs text-slate-500 leading-relaxed">{tip.text}</p>
+            </div>
+          ))}
+        </div>
+      )}
 
       {matched && (
         <div className="space-y-8">
@@ -225,10 +260,10 @@ const OrderTrackingPage = async ({
                 </p>
               </div>
 
-              <div className="text-right">
+              <div className="sm:text-right">
                 <span className="block text-xs font-mono font-bold uppercase tracking-wider text-slate-400">Current Status</span>
-                <div className="mt-1 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 text-xs font-extrabold uppercase tracking-wide">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <div className={`mt-1 inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-extrabold uppercase tracking-wide ${STATUS_TONE[statusTone(matched.orderStatus)]}`}>
+                  <span className={`w-2 h-2 rounded-full ${STATUS_DOT[statusTone(matched.orderStatus)]} ${statusTone(matched.orderStatus) === "active" ? "animate-pulse" : ""}`}></span>
                   {STATUS_LABELS[matched.orderStatus] ?? matched.orderStatus}
                 </div>
               </div>
@@ -291,6 +326,20 @@ const OrderTrackingPage = async ({
                     })}
                   </ol>
                 </div>
+              </div>
+            )}
+
+            {/* Cancelled / refunded orders have no delivery steps - say so plainly instead of
+                showing nothing. */}
+            {currentStepIndex === -1 && (
+              <div className="mt-6 p-5 rounded-2xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800/60 text-sm text-rose-800 dark:text-rose-300">
+                <p className="font-bold">
+                  {matched.orderStatus === "refunded" ? "This order was refunded." : "This order was cancelled."}
+                </p>
+                <p className="text-xs mt-1 text-rose-700/80 dark:text-rose-300/80">
+                  {matched.cancelledAt ? `On ${new Date(matched.cancelledAt).toLocaleDateString()}. ` : ""}
+                  If you have questions, please contact the store.
+                </p>
               </div>
             )}
 
@@ -384,7 +433,13 @@ const OrderTrackingPage = async ({
                   <span className="font-mono">{formatMoney(matched.shippingCost, general)}</span>
                 </div>
                 <div className="flex justify-between font-bold text-sm text-slate-900 dark:text-slate-100 pt-2 border-t border-slate-100 dark:border-slate-800">
-                  <span>Total Paid / COD</span>
+                  <span>
+                    {matched.paymentStatus === "paid"
+                      ? "Total Paid"
+                      : matched.paymentMethod === "cod"
+                        ? "Total (Cash on Delivery)"
+                        : "Order Total"}
+                  </span>
                   <span className="font-mono">{formatMoney(matched.total, general)}</span>
                 </div>
               </div>
@@ -404,6 +459,9 @@ const OrderTrackingPage = async ({
                   {matched.shippingAddress.postalCode}
                   <br />
                   {matched.shippingAddress.country}
+                  {matched.shippingAddress.addressType === "office" && (
+                    <span className="block mt-1 text-xs text-slate-500">Office delivery (9 AM - 5 PM)</span>
+                  )}
                 </p>
               </div>
 
@@ -413,7 +471,9 @@ const OrderTrackingPage = async ({
                   {matched.statusHistory.map((h, i) => (
                     <li key={i} className="flex justify-between gap-2 py-1 border-b border-slate-100 dark:border-slate-800/60 last:border-none">
                       <span className="font-bold text-slate-700 dark:text-slate-300">{STATUS_LABELS[h.status] ?? h.status}</span>
-                      <span className="text-slate-400" suppressHydrationWarning>{new Date(h.at).toLocaleDateString()}</span>
+                      <span className="text-slate-400 text-right" suppressHydrationWarning>
+                        {new Date(h.at).toLocaleString(undefined, { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}
+                      </span>
                     </li>
                   ))}
                 </ul>

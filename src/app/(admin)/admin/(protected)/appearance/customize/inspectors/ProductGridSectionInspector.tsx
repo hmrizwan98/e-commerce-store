@@ -1,5 +1,6 @@
 "use client";
 
+import NativeSelect from "@/components/ui/NativeSelect";
 import React, { useState } from "react";
 import type { SystemThemeConfig } from "@/lib/theme/theme-types";
 import type { HomepageSection, HomepageSectionConfig } from "@/types/homepage-section";
@@ -115,7 +116,7 @@ export default function ProductGridSectionInspector({
             <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-1.5 leading-snug">
               Choose a distinct product card layout for &quot;{section.title}&quot;, or inherit the global setting.
             </p>
-            <select
+            <NativeSelect size="sm"
               value={config.cardVariant ?? "default"}
               onChange={(e) => updateConfig({ cardVariant: e.target.value })}
               className={inputClass}
@@ -127,7 +128,7 @@ export default function ProductGridSectionInspector({
               <option value="bold-grid">🔳 Bold Grid (Sharp Corners, High Contrast)</option>
               <option value="editorial">📜 Editorial (Serif Typography, Understated Actions)</option>
               <option value="sleek-pill">💊 Sleek Pill (Modern Pill Badges &amp; Details)</option>
-            </select>
+            </NativeSelect>
           </div>
 
           {/* Mode Selection */}
@@ -215,7 +216,7 @@ export default function ProductGridSectionInspector({
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                 Select Category
               </label>
-              <select
+              <NativeSelect size="sm"
                 className={inputClass}
                 value={selectedCategoryIds[0] ?? ""}
                 onChange={(e) => updateConfig({ categoryIds: [e.target.value], mode: "auto" })}
@@ -225,7 +226,7 @@ export default function ProductGridSectionInspector({
                     {cat.name}
                   </option>
                 ))}
-              </select>
+              </NativeSelect>
             </div>
           )}
 
@@ -331,7 +332,7 @@ export default function ProductGridSectionInspector({
           <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
             Card Presentation Style
           </label>
-          <select
+          <NativeSelect size="sm"
             className={inputClass}
             value={card.variant ?? "minimal"}
             onChange={(e) => updateCard({ variant: e.target.value as any })}
@@ -342,14 +343,14 @@ export default function ProductGridSectionInspector({
             <option value="minimal">Minimal Card (Clean &amp; Rounded)</option>
             <option value="bold-grid">Bold Grid Card (Dense &amp; Vibrant)</option>
             <option value="editorial">Editorial Card (Classic &amp; Magazine-Style)</option>
-          </select>
+          </NativeSelect>
         </div>
 
         <div>
           <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
             Image Aspect Ratio
           </label>
-          <select
+          <NativeSelect size="sm"
             className={inputClass}
             value={card.aspectRatio ?? "1:1"}
             onChange={(e) => updateCard({ aspectRatio: e.target.value as "1:1" | "3:4" | "4:5" | "4:3" })}
@@ -358,21 +359,21 @@ export default function ProductGridSectionInspector({
             <option value="4:3">4:3 Landscape (Wide)</option>
             <option value="3:4">3:4 Portrait (Fashion)</option>
             <option value="4:5">4:5 Tall Portrait</option>
-          </select>
+          </NativeSelect>
         </div>
 
         <div>
           <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
             Badge Position
           </label>
-          <select
+          <NativeSelect size="sm"
             className={inputClass}
             value={card.badgePosition ?? "top-left"}
             onChange={(e) => updateCard({ badgePosition: e.target.value as "top-left" | "top-right" })}
           >
             <option value="top-left">Top Left</option>
             <option value="top-right">Top Right</option>
-          </select>
+          </NativeSelect>
         </div>
 
         <div className="space-y-2 pt-1">

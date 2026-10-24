@@ -85,8 +85,10 @@ export default function CartDropdown({ cartSettings }: CartDropdownProps) {
               />
             </svg>
 
-            <Link className="block md:hidden absolute inset-0" aria-label="View shopping cart" href={getCartUrl() as any} />
           </Popover.Button>
+          {/* Phones go straight to the cart page. A sibling overlay, not a link nested inside
+              the button (invalid HTML - interactive content inside a button). */}
+          <Link className="block md:hidden absolute inset-0 rounded-full" aria-label="View shopping cart" href={getCartUrl() as any} />
           <Transition
             as={Fragment}
             enter="transition ease-out duration-200"

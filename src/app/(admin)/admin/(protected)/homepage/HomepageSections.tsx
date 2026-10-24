@@ -1,5 +1,6 @@
 "use client";
 
+import NativeSelect from "@/components/ui/NativeSelect";
 import React, { Fragment, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Dialog, Transition } from "@/app/headlessui";
@@ -340,7 +341,7 @@ const SectionCard: React.FC<{
           )}
 
           {section.type === "promo" && (
-            <select
+            <NativeSelect
               className={inputClass}
               value={config.variant ?? 1}
               onChange={(e) => setConfig({ variant: Number(e.target.value) as 1 | 2 | 3 })}
@@ -348,7 +349,7 @@ const SectionCard: React.FC<{
               <option value={1}>Layout 1 (Promo Banner 1)</option>
               <option value={2}>Layout 2 (Promo Banner 2)</option>
               <option value={3}>Layout 3 (Promo Banner 3)</option>
-            </select>
+            </NativeSelect>
           )}
 
           {(isProductMode || isCategoryMode || section.type === "brands" || section.type === "testimonials") && (

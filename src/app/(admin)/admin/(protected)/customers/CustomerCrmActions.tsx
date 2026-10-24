@@ -1,5 +1,6 @@
 "use client";
 
+import NativeSelect from "@/components/ui/NativeSelect";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -46,13 +47,13 @@ const CustomerCrmActions: React.FC<{
       <div className={cardClass}>
         <h2 className="font-semibold mb-4">Status</h2>
         <div className="flex gap-2">
-          <select className={inputClass} value={status} onChange={(e) => setStatus(e.target.value as CustomerStatus)}>
+          <NativeSelect className={inputClass} value={status} onChange={(e) => setStatus(e.target.value as CustomerStatus)}>
             {STATUSES.map((s) => (
               <option key={s} value={s}>
                 {s}
               </option>
             ))}
-          </select>
+          </NativeSelect>
           <button
             type="button"
             disabled={busy}

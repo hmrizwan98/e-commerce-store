@@ -1,5 +1,6 @@
 "use client";
 
+import NativeSelect from "@/components/ui/NativeSelect";
 import React, { useEffect, useState } from "react";
 import ImageUploader from "@/components/admin/ImageUploader";
 import type { ImageType } from "@/lib/images/presets";
@@ -204,7 +205,7 @@ const TileListEditor: React.FC<TileListEditorProps> = ({
               <label className="block text-[11px] font-semibold text-neutral-500 mb-1">
                 Card Background Accent Theme
               </label>
-              <select
+              <NativeSelect
                 className={inputClass}
                 value={tile.color ?? "auto"}
                 onChange={(e) => updateTile(tile.id, { color: e.target.value })}
@@ -216,7 +217,7 @@ const TileListEditor: React.FC<TileListEditorProps> = ({
                 <option value="bg-green-50 dark:bg-green-950/20">💚 Green Accent</option>
                 <option value="bg-purple-50 dark:bg-purple-950/20">💜 Purple Accent</option>
                 <option value="bg-slate-50 dark:bg-slate-800/40">🩶 Slate / Neutral Accent</option>
-              </select>
+              </NativeSelect>
             </div>
           )}
 

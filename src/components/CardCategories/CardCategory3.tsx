@@ -1,5 +1,4 @@
 import React, { FC } from "react";
-import ButtonSecondary from "@/shared/Button/ButtonSecondary";
 import Link from "next/link";
 import { getTenantHref } from "@/utils/getTenantHref";
 import { StaticImageData } from "next/image";
@@ -69,13 +68,11 @@ const CardCategory3: FC<CardCategory3Props> = ({
             </div>
             {showBtn !== false && (
               <div className="mt-auto pt-2 z-10">
-                <ButtonSecondary
-                  sizeClass="py-2 px-3.5 sm:py-2.5 sm:px-5"
-                  fontSize="text-xs sm:text-sm font-semibold"
-                  className="nc-shadow-lg"
-                >
+                {/* The whole card is the link - this is its visual call-to-action, not a second
+                    interactive control (a <button> inside an <a> is invalid HTML). */}
+                <span className="nc-Button inline-flex items-center justify-center rounded-[var(--btn-radius)] py-2 px-3.5 sm:py-2.5 sm:px-5 text-xs sm:text-sm font-semibold bg-white text-slate-700 dark:bg-slate-900 dark:text-slate-300 border border-slate-300 dark:border-slate-700 nc-shadow-lg transition-colors group-hover:bg-gray-100">
                   {btnText || "Show me all"}
-                </ButtonSecondary>
+                </span>
               </div>
             )}
           </div>

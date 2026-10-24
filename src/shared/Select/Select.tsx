@@ -1,29 +1,29 @@
 import React, { FC, SelectHTMLAttributes } from "react";
-import { ChevronDownIcon } from "@heroicons/react/24/outline";
+import NativeSelect from "@/components/ui/NativeSelect";
 
-export interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
+export interface SelectProps extends Omit<SelectHTMLAttributes<HTMLSelectElement>, "size"> {
   className?: string;
+  /** Kept for API compatibility - height now comes from the standard dropdown. */
   sizeClass?: string;
 }
 
-const Select: FC<SelectProps> = ({
-  className = "",
-  sizeClass = "h-11",
-  children,
-  ...args
-}) => {
+/** Storefront/account select - same API as before (<option> children, e.target.value
+ * handlers), rendered with the platform's standard dropdown (see NativeSelect). */
+const Select: FC<SelectProps> = ({ className = "", children, value, defaultValue, onChange, name, id, disabled, required }) => {
   return (
-    <div className="relative w-full">
-      <select
-        className={`nc-Select ${sizeClass} ${className} appearance-none block w-full text-xs sm:text-sm font-medium rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-800/90 text-slate-900 dark:text-slate-100 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none transition-all cursor-pointer pl-4 pr-10 shadow-xs hover:border-slate-300 dark:hover:border-slate-600`}
-        {...args}
-      >
-        {children}
-      </select>
-      <div className="absolute inset-y-0 right-0 flex items-center pr-3.5 pointer-events-none text-slate-400 dark:text-slate-500">
-        <ChevronDownIcon className="w-4 h-4 stroke-[2.5]" />
-      </div>
-    </div>
+    <NativeSelect
+      className={`w-full ${className}`}
+      value={value as string | number | undefined}
+      defaultValue={defaultValue as string | number | undefined}
+      onChange={onChange}
+      name={name}
+      id={id}
+      disabled={disabled}
+      required={required}
+      size="lg"
+    >
+      {children}
+    </NativeSelect>
   );
 };
 

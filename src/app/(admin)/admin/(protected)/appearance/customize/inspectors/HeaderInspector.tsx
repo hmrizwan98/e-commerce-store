@@ -1,4 +1,5 @@
 import React from "react";
+import NativeSelect from "@/components/ui/NativeSelect";
 import ImageUploader from "@/components/admin/ImageUploader";
 import type { SystemThemeConfig } from "@/lib/theme/theme-types";
 import type { ThemeLogos } from "@/types/theme";
@@ -104,7 +105,7 @@ export default function HeaderInspector({ draft, onChange }: HeaderInspectorProp
           <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
             Header Layout Style
           </label>
-          <select
+          <NativeSelect size="sm"
             className={inputClass}
             value={header.variant ?? "centered"}
             onChange={(e) => updateHeader({ variant: e.target.value as "centered" | "mega-menu" | "transparent-overlay" })}
@@ -112,21 +113,21 @@ export default function HeaderInspector({ draft, onChange }: HeaderInspectorProp
             <option value="centered">Centered Brand Logo & Navigation</option>
             <option value="mega-menu">Mega-Menu Navigation Header</option>
             <option value="transparent-overlay">Transparent Hero Overlay Header</option>
-          </select>
+          </NativeSelect>
         </div>
 
         <div>
           <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
             Logo Alignment
           </label>
-          <select
+          <NativeSelect size="sm"
             className={inputClass}
             value={header.logoAlignment ?? "left"}
             onChange={(e) => updateHeader({ logoAlignment: e.target.value as "left" | "center" })}
           >
             <option value="left">Left</option>
             <option value="center">Center</option>
-          </select>
+          </NativeSelect>
         </div>
 
         <div>
@@ -173,7 +174,7 @@ export default function HeaderInspector({ draft, onChange }: HeaderInspectorProp
           <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
             Header Shadow
           </label>
-          <select
+          <NativeSelect size="sm"
             className={inputClass}
             value={header.shadow ?? "none"}
             onChange={(e) => updateHeader({ shadow: e.target.value as any })}
@@ -183,7 +184,7 @@ export default function HeaderInspector({ draft, onChange }: HeaderInspectorProp
             <option value="md">Medium</option>
             <option value="lg">Large</option>
             <option value="xl">Extra Large</option>
-          </select>
+          </NativeSelect>
         </div>
 
         <div className="space-y-2 pt-1">

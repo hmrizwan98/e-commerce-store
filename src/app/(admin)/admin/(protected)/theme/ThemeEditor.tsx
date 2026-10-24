@@ -1,5 +1,6 @@
 "use client";
 
+import NativeSelect from "@/components/ui/NativeSelect";
 import { useFormatMoney } from "@/lib/currency/CurrencyContext";
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -145,13 +146,13 @@ function SelectField<T extends string>({
   return (
     <div>
       <label className={labelClass}>{label}</label>
-      <select className={inputClass} value={value ?? options[0]} onChange={(e) => onChange(e.target.value as T)}>
+      <NativeSelect className={inputClass} value={value ?? options[0]} onChange={(e) => onChange(e.target.value as T)}>
         {options.map((opt) => (
           <option key={opt} value={opt}>
             {labelMap?.[opt] ?? capitalize(opt)}
           </option>
         ))}
-      </select>
+      </NativeSelect>
     </div>
   );
 }
@@ -200,13 +201,13 @@ function NumberSelectField({
   return (
     <div>
       <label className={labelClass}>{label}</label>
-      <select className={inputClass} value={value ?? options[0]} onChange={(e) => onChange(Number(e.target.value))}>
+      <NativeSelect className={inputClass} value={value ?? options[0]} onChange={(e) => onChange(Number(e.target.value))}>
         {options.map((opt) => (
           <option key={opt} value={opt}>
             {opt}
           </option>
         ))}
-      </select>
+      </NativeSelect>
     </div>
   );
 }
@@ -1251,7 +1252,7 @@ const ThemeEditor: React.FC<{ themes: Theme[]; activeThemeId: string; defaultThe
     <div className="pb-24">
       <div className="flex items-center justify-between flex-wrap gap-3 mb-6">
         <div className="flex items-center gap-3">
-          <select
+          <NativeSelect
             value={currentThemeId}
             onChange={(e) => handleThemeSelect(e.target.value)}
             className={`${inputClass} w-auto min-w-[200px]`}
@@ -1262,7 +1263,7 @@ const ThemeEditor: React.FC<{ themes: Theme[]; activeThemeId: string; defaultThe
                 {t.id === activeId ? " (Active)" : ""}
               </option>
             ))}
-          </select>
+          </NativeSelect>
           {currentThemeId === activeId && (
             <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-700 dark:bg-green-500/10 dark:text-green-400">
               Live theme

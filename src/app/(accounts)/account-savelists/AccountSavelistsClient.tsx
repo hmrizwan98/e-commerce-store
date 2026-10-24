@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import ThemeProductCardAdapter from "@/components/theme/ThemeProductCardAdapter";
 import ButtonPrimary from "@/shared/Button/ButtonPrimary";
 import { useWishlist } from "@/hooks/useWishlist";
@@ -47,9 +46,7 @@ const AccountSavelistsClient = ({ productCardSettings }: AccountSavelistsClientP
           <p className="text-neutral-500 dark:text-neutral-400">
             You haven&apos;t saved any products yet.
           </p>
-          <Link href={"/collection" as any}>
-            <ButtonPrimary>Explore products</ButtonPrimary>
-          </Link>
+          <ButtonPrimary href={"/collection" as any}>Explore products</ButtonPrimary>
         </div>
       )}
 

@@ -11,12 +11,13 @@ import NcImage from "@/shared/NcImage/NcImage";
 import ProductStatus from "@/components/ProductStatus";
 import LikeButton from "@/components/LikeButton";
 import ModalQuickView from "@/components/ModalQuickView";
-import { showAddToBagToast } from "@/components/AddToBagToast";
+import { useCardAddToBag } from "@/components/AddToBagToast";
 import { trackEvent } from "@/lib/analytics/track";
 import { safeImageSrc } from "@/utils/safeImageSrc";
 import { aspectRatioClass, type ProductCardVariantProps } from "./ProductCardVariantProps";
 
 export default function TrendGlassCard({ data, className = "", productCardSettings }: ProductCardVariantProps) {
+  const addToBag = useCardAddToBag();
   const formatMoney = useFormatMoney();
   const { name, price, compareAtPrice, shortDescription, description, badge, images, slug, rating, numberOfReviews } = data;
   const image = safeImageSrc(images[0]);
@@ -150,7 +151,7 @@ export default function TrendGlassCard({ data, className = "", productCardSettin
                 className="relative z-10 w-full py-2.5 px-4 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-sky-600 dark:hover:bg-sky-500 hover:text-white font-bold text-xs transition-all shadow-md active:scale-95 flex items-center justify-center gap-2"
                 onClick={(e) => {
                   e.preventDefault();
-                  showAddToBagToast({ product: data });
+                  addToBag(data, { source: e.currentTarget });
                 }}
               >
                 <ShoppingBagIcon className="w-4 h-4" />

@@ -1,5 +1,6 @@
 "use client";
 
+import NativeSelect from "@/components/ui/NativeSelect";
 import React from "react";
 import ImageUploader from "@/components/admin/ImageUploader";
 import type { SystemThemeConfig } from "@/lib/theme/theme-types";
@@ -101,7 +102,7 @@ export default function FooterInspector({ draft, onChange }: FooterInspectorProp
           <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
             Footer Layout Variant
           </label>
-          <select
+          <NativeSelect size="sm"
             className={inputClass}
             value={footer.variant ?? "multi-column"}
             onChange={(e) => updateFooter({ variant: e.target.value as "multi-column" | "minimal-centered" | "newsletter-focused" })}
@@ -109,7 +110,7 @@ export default function FooterInspector({ draft, onChange }: FooterInspectorProp
             <option value="multi-column">Multi-Column Standard Footer</option>
             <option value="minimal-centered">Minimal Centered Footer</option>
             <option value="newsletter-focused">Newsletter-Focused Footer</option>
-          </select>
+          </NativeSelect>
         </div>
 
         <div>

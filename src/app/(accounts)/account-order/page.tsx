@@ -1,4 +1,3 @@
-import Link from "next/link";
 import ButtonPrimary from "@/shared/Button/ButtonPrimary";
 
 // There's no customer account/auth system in this project yet (checkout is
@@ -13,9 +12,7 @@ const AccountOrder = () => {
         Orders are placed as a guest. Look up an order using its order number
         and the email address used at checkout.
       </p>
-      <Link href={"/order-tracking" as any}>
-        <ButtonPrimary>Track an order</ButtonPrimary>
-      </Link>
+      <ButtonPrimary href={"/order-tracking" as any}>Track an order</ButtonPrimary>
     </div>
   );
 };

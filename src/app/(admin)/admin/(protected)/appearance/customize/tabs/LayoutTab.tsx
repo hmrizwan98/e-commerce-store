@@ -1,5 +1,6 @@
 "use client";
 
+import NativeSelect from "@/components/ui/NativeSelect";
 import React from "react";
 import type { SystemThemeConfig } from "@/lib/theme/theme-types";
 import type { TransitionSpeed } from "@/types/theme";
@@ -93,7 +94,7 @@ export default function LayoutTab({ draft, onChange }: TabProps) {
           <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
             Global Motion / Animation Speed
           </label>
-          <select
+          <NativeSelect size="sm"
             value={layout.animationSpeed ?? "normal"}
             onChange={(e) => setLayout({ animationSpeed: e.target.value as TransitionSpeed })}
             className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-transparent"
@@ -103,7 +104,7 @@ export default function LayoutTab({ draft, onChange }: TabProps) {
                 {s.label}
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </div>
       </div>
     </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import NativeSelect from "@/components/ui/NativeSelect";
 import React from "react";
 import type { SystemThemeConfig, ProductDetailThemeConfig } from "@/lib/theme/theme-types";
 
@@ -65,20 +66,20 @@ export default function ProductDetailTab({ draft, onChange }: TabProps) {
           <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
             Gallery
           </label>
-          <select
+          <NativeSelect size="sm"
             value={productDetail.galleryStyle ?? "clickable-thumbnails"}
             onChange={(e) => setProductDetail({ galleryStyle: e.target.value as any })}
             className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-transparent"
           >
             <option value="clickable-thumbnails">Clickable thumbnails</option>
             <option value="static">Static thumbnails</option>
-          </select>
+          </NativeSelect>
         </div>
         <div className="space-y-1.5 py-2">
           <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
             Purchase panel
           </label>
-          <select
+          <NativeSelect size="sm"
             value={productDetail.purchasePanelStyle ?? "standard"}
             onChange={(e) => setProductDetail({ purchasePanelStyle: e.target.value as any })}
             className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-transparent"
@@ -86,7 +87,7 @@ export default function ProductDetailTab({ draft, onChange }: TabProps) {
             <option value="standard">Standard</option>
             <option value="sticky">Sticky</option>
             <option value="compact">Compact</option>
-          </select>
+          </NativeSelect>
         </div>
       </div>
 

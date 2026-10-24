@@ -1,5 +1,6 @@
 "use client";
 
+import NativeSelect from "@/components/ui/NativeSelect";
 import React from "react";
 import ImageUploader from "@/components/admin/ImageUploader";
 import type { SystemThemeConfig, PopupThemeConfig } from "@/lib/theme/theme-types";
@@ -93,7 +94,7 @@ export default function PopupTab({ draft, onChange }: TabProps) {
           <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
             Trigger
           </label>
-          <select
+          <NativeSelect size="sm"
             value={popup.trigger ?? "page-load"}
             onChange={(e) => setPopup({ trigger: e.target.value as any })}
             className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-transparent"
@@ -101,7 +102,7 @@ export default function PopupTab({ draft, onChange }: TabProps) {
             <option value="page-load">Page load</option>
             <option value="delay">Time delay</option>
             <option value="exit-intent">Exit intent</option>
-          </select>
+          </NativeSelect>
         </div>
         <div className="space-y-1.5">
           <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
@@ -120,7 +121,7 @@ export default function PopupTab({ draft, onChange }: TabProps) {
           <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
             Frequency
           </label>
-          <select
+          <NativeSelect size="sm"
             value={popup.frequency ?? "once-per-session"}
             onChange={(e) => setPopup({ frequency: e.target.value as any })}
             className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-transparent"
@@ -128,7 +129,7 @@ export default function PopupTab({ draft, onChange }: TabProps) {
             <option value="once-per-session">Once per session</option>
             <option value="once-per-day">Once per day</option>
             <option value="always">Always</option>
-          </select>
+          </NativeSelect>
         </div>
       </div>
 
@@ -136,7 +137,7 @@ export default function PopupTab({ draft, onChange }: TabProps) {
         <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
           Style
         </label>
-        <select
+        <NativeSelect size="sm"
           value={popup.styleVariant ?? "center-modal"}
           onChange={(e) => setPopup({ styleVariant: e.target.value as any })}
           className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-transparent"
@@ -144,7 +145,7 @@ export default function PopupTab({ draft, onChange }: TabProps) {
           <option value="center-modal">Center modal</option>
           <option value="bottom-slide">Bottom slide</option>
           <option value="full-overlay">Full overlay</option>
-        </select>
+        </NativeSelect>
       </div>
 
       <div className="space-y-1.5">

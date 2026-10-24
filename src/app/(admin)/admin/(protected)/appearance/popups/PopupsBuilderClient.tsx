@@ -1,5 +1,6 @@
 "use client";
 
+import NativeSelect from "@/components/ui/NativeSelect";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
 import ButtonPrimary from "@/shared/Button/ButtonPrimary";
@@ -199,7 +200,7 @@ export default function PopupsBuilderClient({ draftTheme, activeTheme }: PopupsB
               <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
                 Trigger Event
               </label>
-              <select
+              <NativeSelect
                 value={popup.trigger || "page-load"}
                 onChange={(e) => setPopup((prev) => ({ ...prev, trigger: e.target.value as any }))}
                 className="w-full px-3 py-2 text-xs font-medium rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 focus:outline-none"
@@ -207,7 +208,7 @@ export default function PopupsBuilderClient({ draftTheme, activeTheme }: PopupsB
                 <option value="page-load">Page Load</option>
                 <option value="delay">Time Delay</option>
                 <option value="exit-intent">Exit Intent (Desktop)</option>
-              </select>
+              </NativeSelect>
             </div>
 
             <div className="space-y-1.5">
@@ -228,7 +229,7 @@ export default function PopupsBuilderClient({ draftTheme, activeTheme }: PopupsB
               <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
                 Frequency Limit
               </label>
-              <select
+              <NativeSelect
                 value={popup.frequency || "once-per-session"}
                 onChange={(e) => setPopup((prev) => ({ ...prev, frequency: e.target.value as any }))}
                 className="w-full px-3 py-2 text-xs font-medium rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 focus:outline-none"
@@ -236,7 +237,7 @@ export default function PopupsBuilderClient({ draftTheme, activeTheme }: PopupsB
                 <option value="once-per-session">Once Per Session</option>
                 <option value="once-per-day">Once Per Day</option>
                 <option value="always">Always (Every Page)</option>
-              </select>
+              </NativeSelect>
             </div>
           </div>
 

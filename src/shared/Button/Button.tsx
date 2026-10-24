@@ -16,7 +16,7 @@ export interface ButtonProps {
   type?: ButtonHTMLAttributes<HTMLButtonElement>["type"];
   href?: Route;
   targetBlank?: boolean;
-  onClick?: () => void;
+  onClick?: (e: React.MouseEvent<HTMLElement>) => void;
   children?: React.ReactNode;
 }
 
@@ -34,13 +34,13 @@ const Button: FC<ButtonProps> = ({
   onClick = () => {},
 }) => {
   const CLASSES =
-    `nc-Button relative h-auto inline-flex items-center justify-center rounded-[var(--btn-radius)] transition-colors duration-[var(--btn-transition)] ${fontSize} ${sizeClass} ${translate} ${className} ` +
+    `nc-Button relative h-auto inline-flex items-center justify-center gap-2 rounded-[var(--btn-radius)] transition-colors duration-[var(--btn-transition)] disabled:opacity-60 disabled:cursor-not-allowed disabled:shadow-none ${fontSize} ${sizeClass} ${translate} ${className} ` +
     twFocusClass(true);
 
   const _renderLoading = () => {
     return (
       <svg
-        className="animate-spin -ml-1 mr-3 h-5 w-5"
+        className="animate-spin h-5 w-5"
         xmlns="http://www.w3.org/2000/svg"
         fill="none"
         viewBox="0 0 24 24"
@@ -73,6 +73,7 @@ const Button: FC<ButtonProps> = ({
   return (
     <button
       disabled={disabled || loading}
+      aria-busy={loading || undefined}
       className={`${CLASSES}`}
       onClick={onClick}
       type={type}

@@ -1,5 +1,6 @@
 "use client";
 
+import NativeSelect from "@/components/ui/NativeSelect";
 import React from "react";
 import type { SystemThemeConfig, ProductCardThemeConfig } from "@/lib/theme/theme-types";
 
@@ -67,7 +68,7 @@ export default function ProductCardTab({ draft, onChange }: TabProps) {
           <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
             Image aspect ratio
           </label>
-          <select
+          <NativeSelect size="sm"
             value={productCard.aspectRatio ?? "1:1"}
             onChange={(e) => setProductCard({ aspectRatio: e.target.value as any })}
             className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-transparent"
@@ -76,20 +77,20 @@ export default function ProductCardTab({ draft, onChange }: TabProps) {
             <option value="4:3">Landscape (4:3)</option>
             <option value="3:4">Portrait (3:4)</option>
             <option value="4:5">Portrait (4:5)</option>
-          </select>
+          </NativeSelect>
         </div>
         <div className="space-y-1.5 py-2">
           <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
             Badge position
           </label>
-          <select
+          <NativeSelect size="sm"
             value={productCard.badgePosition ?? "top-left"}
             onChange={(e) => setProductCard({ badgePosition: e.target.value as any })}
             className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-transparent"
           >
             <option value="top-left">Top left</option>
             <option value="top-right">Top right</option>
-          </select>
+          </NativeSelect>
         </div>
       </div>
 

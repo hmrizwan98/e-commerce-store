@@ -9,12 +9,13 @@ import ProductStatus from "@/components/ProductStatus";
 import LikeButton from "@/components/LikeButton";
 import CompareButton from "@/components/CompareButton";
 import ModalQuickView from "@/components/ModalQuickView";
-import { showAddToBagToast } from "@/components/AddToBagToast";
+import { useCardAddToBag } from "@/components/AddToBagToast";
 import { trackEvent } from "@/lib/analytics/track";
 import { safeImageSrc } from "@/utils/safeImageSrc";
 import { aspectRatioClass, type ProductCardVariantProps } from "./ProductCardVariantProps";
 
 export default function EditorialCard({ data, className = "", productCardSettings }: ProductCardVariantProps) {
+  const addToBag = useCardAddToBag();
   const { name, price, compareAtPrice, shortDescription, description, badge, images, slug, rating, numberOfReviews } = data;
   const image = safeImageSrc(images[0]);
   const secondaryImage = images[1] ? safeImageSrc(images[1]) : undefined;
@@ -102,7 +103,7 @@ export default function EditorialCard({ data, className = "", productCardSetting
                       className="text-[11px] uppercase tracking-widest border-b border-transparent hover:border-[var(--heading)] transition-colors"
                       onClick={(e) => {
                         e.preventDefault();
-                        showAddToBagToast({ product: data, size });
+                        addToBag(data, { size, source: e.currentTarget });
                       }}
                     >
                       {size}
@@ -115,7 +116,7 @@ export default function EditorialCard({ data, className = "", productCardSetting
                   className="text-[11px] uppercase tracking-[0.2em] border-b border-[var(--heading)] pb-0.5"
                   onClick={(e) => {
                     e.preventDefault();
-                    showAddToBagToast({ product: data });
+                    addToBag(data, { source: e.currentTarget });
                   }}
                 >
                   Add to Bag

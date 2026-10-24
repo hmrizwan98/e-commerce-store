@@ -8,6 +8,7 @@ import Input from "@/shared/Input/Input";
 import Radio from "@/shared/Radio/Radio";
 import Select from "@/shared/Select/Select";
 import SmartAddressInput, { type AddressSuggestion } from "@/components/SmartAddressInput";
+import { countryCodeFor } from "@/lib/location/address-mapping";
 import { MapPinIcon, CheckIcon, BuildingStorefrontIcon, InformationCircleIcon } from "@heroicons/react/24/outline";
 
 export interface ShippingAddressValue {
@@ -30,6 +31,8 @@ interface Props {
   onChange: (patch: Partial<ShippingAddressValue>) => void;
 }
 
+const SUPPORTED_COUNTRIES = ["Pakistan", "United Arab Emirates", "Saudi Arabia", "United States", "United Kingdom", "Canada"];
+
 const ShippingAddress: FC<Props> = ({
   isActive,
   onCloseActive,
@@ -37,12 +40,14 @@ const ShippingAddress: FC<Props> = ({
   value,
   onChange,
 }) => {
+  // Fills only what the lookup actually resolved - an empty field never overwrites what the
+  // shopper typed, and the country only changes to one this checkout supports.
   const handleSelectSuggestion = (sug: AddressSuggestion) => {
     const patch: Partial<ShippingAddressValue> = {};
     if (sug.line1) patch.line1 = sug.line1;
     if (sug.city) patch.city = sug.city;
     if (sug.state) patch.state = sug.state;
-    if (sug.country) patch.country = sug.country;
+    if (sug.country && SUPPORTED_COUNTRIES.includes(sug.country)) patch.country = sug.country;
     if (sug.postalCode) patch.postalCode = sug.postalCode;
     onChange(patch);
   };
@@ -121,15 +126,16 @@ const ShippingAddress: FC<Props> = ({
               <Label className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
                 Street Address / House / Village / Mohalla *
               </Label>
-              <span className="text-[11px] text-indigo-600 dark:text-indigo-400 font-medium">
-                ✨ Auto-suggestions &amp; GPS Enabled
+              <span className="hidden sm:inline text-[11px] text-indigo-600 dark:text-indigo-400 font-medium">
+                Suggestions, GPS &amp; map
               </span>
             </div>
             <SmartAddressInput
               value={value.line1}
               onChange={(line1) => onChange({ line1 })}
               onSelectSuggestion={handleSelectSuggestion}
-              placeholder="Start typing your street, colony, village or area..."
+              countryCode={countryCodeFor(value.country)}
+              placeholder="House #, street, colony, village or area..."
             />
             <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5 flex items-center gap-1">
               <InformationCircleIcon className="w-3.5 h-3.5 text-slate-400 shrink-0" />
@@ -172,12 +178,11 @@ const ShippingAddress: FC<Props> = ({
                 value={value.country}
                 onChange={(e) => onChange({ country: e.target.value })}
               >
-                <option value="Pakistan">Pakistan</option>
-                <option value="United Arab Emirates">United Arab Emirates</option>
-                <option value="Saudi Arabia">Saudi Arabia</option>
-                <option value="United States">United States</option>
-                <option value="United Kingdom">United Kingdom</option>
-                <option value="Canada">Canada</option>
+                {SUPPORTED_COUNTRIES.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
               </Select>
             </div>
           </div>
@@ -232,10 +237,10 @@ const ShippingAddress: FC<Props> = ({
           </div>
 
           {/* Action CTAs */}
-          <div className="flex items-center gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
             <ButtonPrimary
               type="button"
-              className="sm:!px-7 shadow-sm"
+              className="w-full sm:w-auto sm:!px-7 shadow-sm"
               onClick={onCloseActive}
             >
               Save &amp; Continue to Payment →

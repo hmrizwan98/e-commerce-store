@@ -165,9 +165,7 @@ const CartClient: React.FC<CartClientProps> = ({
             <p className="text-neutral-500 dark:text-neutral-400 text-lg">
               Your cart is empty.
             </p>
-            <Link href={"/collection" as any}>
-              <ButtonPrimary>Continue shopping</ButtonPrimary>
-            </Link>
+            <ButtonPrimary href={"/collection" as any}>Continue shopping</ButtonPrimary>
           </div>
         ) : (
           <div className="flex flex-col lg:flex-row">

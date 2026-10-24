@@ -1,4 +1,5 @@
 import React from "react";
+import NativeSelect from "@/components/ui/NativeSelect";
 import Link from "next/link";
 import { searchAdminStores, type AdminStoresCursor } from "@/lib/firebase/repositories/stores";
 import { DEFAULT_THEME } from "@/lib/firebase/repositories/themes";
@@ -109,7 +110,7 @@ export default async function SuperAdminStoresPage({
 
           <div className="flex items-center gap-2">
             <FunnelIcon className="w-4 h-4 text-neutral-400 hidden sm:block" />
-            <select
+            <NativeSelect
               name="status"
               defaultValue={statusFilter ?? ""}
               className="px-3.5 py-2 text-sm rounded-xl border border-neutral-300 dark:border-neutral-700 bg-neutral-50/50 dark:bg-neutral-950/50 text-neutral-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-6000/50 transition-all"
@@ -119,7 +120,7 @@ export default async function SuperAdminStoresPage({
               <option value="active">Active only</option>
               <option value="suspended">Suspended only</option>
               <option value="archived">Archived only</option>
-            </select>
+            </NativeSelect>
           </div>
 
           <button

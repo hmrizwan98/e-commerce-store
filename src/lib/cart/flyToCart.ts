@@ -18,8 +18,16 @@ function visibleCartIcon(): HTMLElement | null {
   return icons.find((el) => el.getClientRects().length > 0) ?? null;
 }
 
+/** Sources with a flyer currently in the air - a rapid double click still adds twice to
+ * the cart (that's the cart's job) but only animates once. */
+const inFlight = new WeakSet<Element>();
+let lastFlightAt = 0;
+
 export function flyToCart(source?: Element | null, imageUrl?: string) {
   if (typeof window === "undefined") return;
+  const now = Date.now();
+  if ((source && inFlight.has(source)) || (!source && now - lastFlightAt < 400)) return;
+  lastFlightAt = now;
   try {
     const target = visibleCartIcon();
     if (!target) return;
@@ -67,12 +75,17 @@ export function flyToCart(source?: Element | null, imageUrl?: string) {
       ],
       { duration: 800, easing: "cubic-bezier(0.45, 0, 0.55, 1)" }
     );
+    if (source) inFlight.add(source);
     const finish = () => {
       flyer.remove();
+      if (source) inFlight.delete(source);
       bump(target);
     };
     animation.onfinish = finish;
-    animation.oncancel = () => flyer.remove();
+    animation.oncancel = () => {
+      flyer.remove();
+      if (source) inFlight.delete(source);
+    };
   } catch {
     // decorative only
   }

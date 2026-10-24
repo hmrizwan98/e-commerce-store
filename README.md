@@ -2191,3 +2191,168 @@ connected, the storefront opens at `mystore.com`, the Store Admin at `admin.myst
   provider responses.
 - Admin sessions are per-host cookies: after connecting, the admin signs in once on
   `admin.<domain>`.
+
+## COD Order Verification
+
+Every new **cash-on-delivery** order is checked by a small local rules engine and gets an
+**Order Verification** card on the Store Admin order page. It is **advisory only** - the
+engine never confirms or rejects an order; the admin decides.
+
+- **Risk level** LOW / MEDIUM / HIGH with a recommendation (`RECOMMEND_CONFIRM`,
+  `CALL_CUSTOMER`, `MANUAL_REVIEW`) and plain-language reasons: first order from the phone,
+  incomplete/short address, invalid phone, previous cancellations or RTOs (cancelled after
+  "shipped"), several orders in 24 h, unusual quantity or value vs. the customer's history.
+- History comes from **one indexed query** on `shippingAddress.phone` (a few spellings of
+  the same number, capped at 50 orders, 5 fields) - never a scan of all orders. Tenant-scoped.
+- **Confirm Order** (preset note or "Other" text) moves a pending order to `confirmed`;
+  **Reject Order** requires a preset reason (or "Other" + text) and cancels it. Order status
+  and the decision (`decisionBy`, `decisionAt`, reason) are written in **one transaction**;
+  two admins deciding at once -> first one wins.
+- **Call / WhatsApp Customer** - `tel:` and free `wa.me` click-to-chat links (pre-filled
+  Roman-Urdu message, number normalised to `+92`). Replies are not received by the platform.
+- Until a COD order is approved, the server blocks fulfillment: status beyond `pending`
+  (except cancel), tracking/shipment details, packing slip and shipping label. Cancelling a
+  verification-pending order requires a reason. Prepaid orders are never verified.
+- Data: `stores/{storeId}/orderVerifications/{orderId}` (admin-only, deleted with the store).
+  Runs after checkout in the background (`waitUntil`); if that fails, the order page creates it.
+
+| Piece | File |
+|---|---|
+| Rules engine, rejection/confirmation presets | `src/lib/orders/verification/engine.ts` |
+| Phone normalisation, wa.me link | `src/lib/orders/verification/phone.ts` |
+| Persistence, transaction, fulfillment gate | `src/lib/firebase/repositories/order-verifications.ts` |
+| Admin actions / card | `orders/verification-actions.ts`, `orders/OrderVerificationCard.tsx` |
+| Gated actions | `orders/actions.ts` (`assertCodFulfillmentAllowed`) |
+
+## Store Currency
+
+All money is formatted with the store's own **Settings → General → Currency / Currency
+Symbol** (e.g. `PKR` / `Rs.`) - never a hardcoded `$`.
+
+- `src/lib/currency/format.ts` - `formatMoney(amount, settings)` (pure; used by server pages,
+  emails and WhatsApp text). Whole amounts drop decimals; word-like symbols get a space (`Rs. 145`).
+- `src/lib/currency/CurrencyContext.tsx` - `CurrencyProvider` (fed by the root layout) and the
+  `useFormatMoney()` hook for client components. `src/components/Prices.tsx` uses it.
+- Server pages (admin orders, dashboard, customers, products, finance, analytics, order
+  tracking) call `getGeneralSettings()` and `formatMoney(...)`.
+- Not converted on purpose: Super Admin finance (platform-level) and the template demo routes
+  `/product-detail`, `/product-detail-2`, `/subscription`.
+
+## Checkout: Address, Location & Map
+
+- **Suggestions** while typing and **reverse lookup** use OpenStreetMap Nominatim (free, no
+  key; light, user-triggered requests only), filtered to the shopper's country.
+- Searching runs **only on text the shopper typed** - choosing a suggestion or a GPS result
+  no longer re-opens the list (the old "select again and again" bug).
+- **Use my location** - one shared geolocation request per page session (no repeat
+  prompts). The page never asks for permission on load; if permission was already granted
+  it auto-fills once per session.
+- The fill is limited by GPS accuracy (`locationConfidence`): precise -> street + city;
+  approximate -> area + city; coarse -> city only. A street or house number is never invented.
+- Pakistani results often return `city: "Karachi Division"`; `cleanAdministrativeName`
+  turns that into "Karachi" (repeated area names are also de-duplicated).
+- **Set on map / Adjust pin** - Leaflet + OpenStreetMap tiles, loaded only when opened
+  (`next/dynamic`). The shopper moves the map under a fixed pin, then confirms.
+- Failures (permission blocked, timeout, not https) show an inline message; manual typing
+  always works. Geolocation only works on https (or localhost).
+- Delivery preference (Home / Office 9-5) is saved as `shippingAddress.addressType` and shown
+  on the admin order page and tracking page.
+- "Confirm Payment Option" closes the payment step and scrolls to the order summary.
+
+| Piece | File |
+|---|---|
+| Nominatim -> address fields, confidence rules (pure) | `src/lib/location/address-mapping.ts` |
+| Geolocation + cached lookups (browser) | `src/lib/location/geocode.ts` |
+| Address input | `src/components/SmartAddressInput.tsx` |
+| Map picker | `src/components/location/MapPinPicker.tsx` |
+
+### Checkout reliability
+- The order request must stay well under Vercel's function time limit (a cut-off response
+  made the page crash right after "Thank you"). So: `vercel.json` pins functions to `bom1`
+  (Mumbai, next to the `asia-south1` Firestore); `checkout/page.tsx` sets `maxDuration = 60`;
+  `placeGuestOrder` no longer calls `revalidatePath` (it forced a full page re-render); and
+  verification, confirmation email and WhatsApp run **after** the response (`waitUntil`).
+
+## Order Confirmation Email
+
+`src/lib/notifications/email-service.ts` sends the customer's order email (only when they
+gave an email at checkout) **branded as the store**: store name as the sender name, store
+logo and theme colour, real items and totals in the store currency. The sending address is
+`orders@<root domain>` (must be on the Resend-verified domain; override with
+`ORDER_EMAIL_FROM_ADDRESS`) and **Reply-To** is the store's Settings → Email support email
+(then from-email, then store email). Customer text is HTML-escaped; totals use a table
+(Gmail ignores flexbox). Store-owner emails (welcome / set password) still come from Webriiz.
+
+## Order Tracking (customers)
+
+`/order-tracking` finds an order by **order number + email or phone** (phones compared after
+normalisation; at least 7 digits). The older `?email=` link format still works; new links use
+`?contact=`. Rate-limited (`tracking` bucket, 15 per 15 min per IP).
+
+- Animated stepper in the store's theme colour; cancelled/refunded orders get a clear notice
+  instead; status badge colour by state; total labelled "Total Paid" / "Total (Cash on
+  Delivery)" / "Order Total"; empty-state tips, not-found guidance and a loading skeleton.
+- WhatsApp "Dispatched" messages link to the store's real storefront
+  (`getReliableStorefrontUrl` - custom domain only once live) via
+  `src/lib/orders/tracking-url.ts`.
+- Note: `tailwind.config.js` adds a `600` alias for the `primary`/`secondary` scales - many
+  components used `primary-600`, which previously rendered no colour.
+
+## Storefront Cart & Add-to-Cart
+
+- One add path for everything: `src/hooks/useAddToCart.ts` (cartSlice `addItem` + analytics +
+  animation). Used by the product page, theme product pages and both Quick View modals.
+- Quick View loads the product's variants (`src/app/product/actions.ts`) so variant products
+  are added with the right variant.
+- Product cards (`useCardAddToBag` in `src/components/AddToBagToast.tsx`): simple products
+  are really added (they previously only showed a toast); products with variants open the
+  product page to choose options; out-of-stock shows a message.
+- **Fly to cart**: `src/lib/cart/flyToCart.ts` animates the product image from the clicked
+  button to the header cart icon (`[data-cart-icon]` in `CartDropdown.tsx`), then bumps it.
+  Respects `prefers-reduced-motion`, one flight per button at a time, never blocks the add.
+
+## UI Components: Dropdowns & Buttons
+
+- **Dropdowns** - the standard control is `src/components/admin/CustomSelect.tsx` (Headless
+  UI Listbox: keyboard, type-ahead, options in a portal so they are never clipped, flips
+  upward when needed, sizes `sm` / `md` / `lg`, optional `name` for forms).
+  `src/components/ui/NativeSelect.tsx` is a drop-in for a native `<select>` (same `<option>`
+  children, `value`/`defaultValue`, `onChange(e)` with `e.target.value`, `name`), and
+  `src/shared/Select/Select.tsx` is built on it. Use these - don't add native `<select>`s.
+- **Buttons** - `src/shared/Button/*`: disabled/loading states are visible (`aria-busy`,
+  spinner); `ButtonSecondary` is always outlined. For navigation use the `href` prop
+  (`<ButtonPrimary href="/collection">`), never a button inside a `<Link>`.
+
+## Admin Notifications
+
+`src/components/admin/AdminShell.tsx` polls `/api/admin/pending-orders` every ~10 s
+(admin-only) and shows a toast + chime for new orders. The chime uses one shared Web Audio
+context that is unlocked on the admin's first click/keypress (browsers block sound before
+any interaction); the new-order baseline survives page navigation.
+
+## Store Assistant
+
+The Store Admin assistant is **deterministic and free** (no AI API): it matches questions to
+a hand-written help registry built from the real admin code.
+
+- `src/lib/assistant/knowledge-registry.ts` - how-to entries (navigation path, route,
+  Roman-Urdu + English steps). Features that don't exist (coupons, staff accounts, payment
+  gateways, courier booking...) and request-only buttons (exports, backups) are stated honestly.
+- `src/lib/assistant/troubleshooting-registry.ts` - "X is not working" entries.
+- `src/lib/assistant/intent-matcher.ts` - keyword scoring, typo map (English + Roman Urdu),
+  language detection, live-stat questions ("kitne orders pending hain").
+- **When you add or rename an admin feature, button or label, update the matching entry and
+  run `scripts/test-store-assistant.ts`** - it checks that every route exists, ids are unique,
+  and every entry's example questions still resolve to it.
+
+## Tests
+
+Plain `node:test` scripts run with `tsx` (no test framework needed):
+
+```bash
+npx tsx --test scripts/test-order-verification.ts   # COD verification, phone/wa.me, tracking links
+npx tsx --test scripts/test-custom-domains.ts       # custom-domain rules + Vercel provider (mocked)
+npx tsx --test scripts/test-ui-helpers.ts           # address mapping, NativeSelect options
+npx tsx --test scripts/test-store-assistant.ts      # assistant answers + registry structure
+npx tsc --noEmit && npm run build
+```

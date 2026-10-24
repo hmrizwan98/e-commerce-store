@@ -4,6 +4,7 @@ import { useFormatMoney } from "@/lib/currency/CurrencyContext";
 import { useEffect, useState, useRef } from "react";
 import Prices from "@/components/Prices";
 import ButtonPrimary from "@/shared/Button/ButtonPrimary";
+import ButtonSecondary from "@/shared/Button/ButtonSecondary";
 import Image from "next/image";
 import Link from "next/link";
 import { useAppDispatch, useAppSelector } from "@/utils/hooks/store";
@@ -210,15 +211,19 @@ const CheckoutClient: React.FC<CheckoutClientProps> = ({
               </div>
             ) : null}
 
-            <div className="flex items-center gap-3 pt-2">
-              <Link href={`/order-tracking?orderNumber=${confirmedOrder.orderNumber}&contact=${encodeURIComponent(email.trim() || phone.trim())}` as any}>
-                <ButtonPrimary className="text-xs !py-2.5">Track Order Status</ButtonPrimary>
-              </Link>
-              <Link href={"/collection" as any}>
-                <ButtonPrimary className="text-xs !py-2.5 !bg-slate-800 hover:!bg-slate-900">
-                  Continue Shopping
-                </ButtonPrimary>
-              </Link>
+            {/* Same two buttons, same size: primary action + outlined secondary (real links,
+                not buttons nested inside links); stacked full-width on phones. */}
+            <div className="w-full flex flex-col sm:flex-row sm:justify-center gap-3 pt-2">
+              <ButtonPrimary
+                href={`/order-tracking?orderNumber=${confirmedOrder.orderNumber}&contact=${encodeURIComponent(email.trim() || phone.trim())}` as any}
+                className="w-full sm:w-auto sm:min-w-[200px]"
+                fontSize="text-sm font-bold"
+              >
+                Track Order Status
+              </ButtonPrimary>
+              <ButtonSecondary href={"/collection" as any} className="w-full sm:w-auto sm:min-w-[200px]" fontSize="text-sm font-bold">
+                Continue Shopping
+              </ButtonSecondary>
             </div>
           </div>
         </main>
@@ -335,14 +340,13 @@ const CheckoutClient: React.FC<CheckoutClientProps> = ({
             Checkout
           </h2>
           <div className="block mt-3 sm:mt-5 text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-400">
-            <Link href={"/"} className="">
-              Homepage
+            <Link href={"/"} className="hover:underline">
+              Home
             </Link>
-            <span className="text-xs mx-1 sm:mx-1.5">/</span>
-            <Link href={"/collection-2"} className="">
-              Clothing Categories
+            <span className="text-xs mx-1 sm:mx-1.5 text-slate-400">/</span>
+            <Link href={"/cart"} className="hover:underline">
+              Cart
             </Link>
-            <span className="text-xs mx-1 sm:mx-1.5">/</span>
             <span className="text-xs mx-1 sm:mx-1.5 text-slate-400">/</span>
             <span className="text-slate-900 dark:text-slate-100 font-semibold">Checkout</span>
           </div>
@@ -357,9 +361,9 @@ const CheckoutClient: React.FC<CheckoutClientProps> = ({
               <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">Your cart is empty</h3>
               <p className="text-sm text-slate-500 mt-1">Explore our catalog to add items before checking out.</p>
             </div>
-            <Link href={"/collection" as any}>
-              <ButtonPrimary className="shadow-md">Explore Products →</ButtonPrimary>
-            </Link>
+            <ButtonPrimary href={"/collection" as any} className="shadow-md">
+              Explore Products →
+            </ButtonPrimary>
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -416,11 +420,12 @@ const CheckoutClient: React.FC<CheckoutClientProps> = ({
               )}
 
               <ButtonPrimary
-                className="w-full !py-3 text-sm font-extrabold shadow-md shadow-indigo-500/20"
+                className="w-full !py-3 shadow-md"
+                fontSize="text-sm font-extrabold"
                 onClick={handleConfirmOrder}
-                disabled={submitting}
+                loading={submitting}
               >
-                {submitting ? "Placing Your Order..." : "Confirm & Place Order →"}
+                {submitting ? "Placing your order…" : "Confirm & Place Order →"}
               </ButtonPrimary>
 
               <p className="text-[11px] text-slate-400 text-center flex items-center justify-center gap-1">

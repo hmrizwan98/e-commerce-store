@@ -1,5 +1,6 @@
 "use client";
 
+import NativeSelect from "@/components/ui/NativeSelect";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import {
@@ -684,7 +685,7 @@ export default function CustomizeShell({ initialDraft, homepage, navigation }: C
         {/* Center Page & Viewport Switcher */}
         <div className="flex items-center gap-2">
           {/* Surface Page Selector */}
-          <select
+          <NativeSelect size="sm"
             value={previewSurface}
             onChange={(e) => handleSurfaceChange(e.target.value as PreviewSurfaceKey)}
             className="px-3 py-1.5 text-xs font-semibold rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 cursor-pointer focus:outline-none"
@@ -694,7 +695,7 @@ export default function CustomizeShell({ initialDraft, homepage, navigation }: C
                 {s.label}
               </option>
             ))}
-          </select>
+          </NativeSelect>
 
           {/* Viewport switcher */}
           <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl">

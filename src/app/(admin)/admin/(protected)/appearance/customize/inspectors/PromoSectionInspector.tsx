@@ -1,5 +1,6 @@
 "use client";
 
+import NativeSelect from "@/components/ui/NativeSelect";
 import React from "react";
 import Link from "next/link";
 import ImageUploader from "@/components/admin/ImageUploader";
@@ -207,7 +208,7 @@ export default function PromoSectionInspector({
           <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
             Promo Banner Theme Style
           </label>
-          <select
+          <NativeSelect size="sm"
             className={inputClass}
             value={draft.promo?.styleVariant ?? "generic"}
             onChange={(e) => onChange({ promo: { ...draft.promo, styleVariant: e.target.value as any } })}
@@ -217,7 +218,7 @@ export default function PromoSectionInspector({
             <option value="minimal">Minimal (clean, single image)</option>
             <option value="bold-street">Bold Street (high-contrast flash drop)</option>
             <option value="tech">Tech (dark gradient deals card)</option>
-          </select>
+          </NativeSelect>
         </div>
 
         {/* Database Link Box */}

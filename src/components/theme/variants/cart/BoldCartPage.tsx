@@ -60,9 +60,7 @@ export default function BoldCartPage({ shippingFlatRate, freeShippingThreshold, 
         {!items.length ? (
           <div className="flex flex-col items-center py-20 space-y-6">
             <p className="text-[var(--muted)] text-lg font-bold uppercase">Your cart is empty.</p>
-            <Link href={"/collection" as any}>
-              <ButtonPrimary className="uppercase font-bold">Continue shopping</ButtonPrimary>
-            </Link>
+            <ButtonPrimary href={"/collection" as any} className="uppercase font-bold">Continue shopping</ButtonPrimary>
           </div>
         ) : (
           <div className="flex flex-col lg:flex-row gap-10">

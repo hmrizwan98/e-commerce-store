@@ -1,5 +1,6 @@
 "use client";
 
+import NativeSelect from "@/components/ui/NativeSelect";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import ImageUploader from "@/components/admin/ImageUploader";
@@ -535,7 +536,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
               </div>
               <div>
                 <label className={labelClass}>Out-of-stock behavior</label>
-                <select
+                <NativeSelect
                   className={inputClass}
                   value={outOfStockBehavior}
                   onChange={(e) => setOutOfStockBehavior(e.target.value as OutOfStockBehavior)}
@@ -543,7 +544,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
                   <option value="hide">Hide from storefront</option>
                   <option value="show_disabled">Show with disabled buy button</option>
                   <option value="allow_backorder">Allow backorder</option>
-                </select>
+                </NativeSelect>
               </div>
             </div>
             <label className="flex items-center gap-2 text-sm">
@@ -580,7 +581,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
                     value={attr.name}
                     onChange={(e) => updateAttribute(attr.key, { name: e.target.value })}
                   />
-                  <select
+                  <NativeSelect
                     className={inputClass}
                     value={attr.type}
                     onChange={(e) => updateAttribute(attr.key, { type: e.target.value as ProductAttributeType })}
@@ -588,7 +589,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
                     <option value="text">Text</option>
                     <option value="color">Color</option>
                     <option value="image">Image/Style</option>
-                  </select>
+                  </NativeSelect>
                   <button
                     type="button"
                     onClick={() => removeAttribute(attr.key)}
@@ -819,20 +820,20 @@ const ProductForm: React.FC<ProductFormProps> = ({
         <div className="space-y-6">
           <div className={cardClass}>
             <h2 className="font-semibold">Status</h2>
-            <select className={inputClass} value={status} onChange={(e) => setStatus(e.target.value as Product["status"])}>
+            <NativeSelect className={inputClass} value={status} onChange={(e) => setStatus(e.target.value as Product["status"])}>
               <option value="draft">Draft</option>
               <option value="active">Active (published)</option>
               <option value="archived">Archived</option>
-            </select>
+            </NativeSelect>
             <div>
               <label className={labelClass}>Badge</label>
-              <select className={inputClass} value={badge ?? ""} onChange={(e) => setBadge(e.target.value)}>
+              <NativeSelect className={inputClass} value={badge ?? ""} onChange={(e) => setBadge(e.target.value)}>
                 <option value="">None</option>
                 <option value="new">New</option>
                 <option value="sale">Sale</option>
                 <option value="sold_out">Sold out</option>
                 <option value="limited_edition">Limited edition</option>
-              </select>
+              </NativeSelect>
             </div>
             <div>
               <label className={labelClass}>Scheduled publish (optional)</label>
@@ -872,14 +873,14 @@ const ProductForm: React.FC<ProductFormProps> = ({
             <h2 className="font-semibold">Organization</h2>
             <div>
               <label className={labelClass}>Brand</label>
-              <select className={inputClass} value={brandId} onChange={(e) => setBrandId(e.target.value)}>
+              <NativeSelect className={inputClass} value={brandId} onChange={(e) => setBrandId(e.target.value)}>
                 <option value="">No brand</option>
                 {brands.map((b) => (
                   <option key={b.id} value={b.id}>
                     {b.name}
                   </option>
                 ))}
-              </select>
+              </NativeSelect>
             </div>
             <div>
               <label className={labelClass}>Categories</label>
@@ -902,14 +903,14 @@ const ProductForm: React.FC<ProductFormProps> = ({
             </div>
             <div>
               <label className={labelClass}>Supplier</label>
-              <select className={inputClass} value={supplierId} onChange={(e) => setSupplierId(e.target.value)}>
+              <NativeSelect className={inputClass} value={supplierId} onChange={(e) => setSupplierId(e.target.value)}>
                 <option value="">No supplier</option>
                 {suppliers.map((s) => (
                   <option key={s.id} value={s.id}>
                     {s.name}
                   </option>
                 ))}
-              </select>
+              </NativeSelect>
             </div>
             <div>
               <label className={labelClass}>Collections</label>

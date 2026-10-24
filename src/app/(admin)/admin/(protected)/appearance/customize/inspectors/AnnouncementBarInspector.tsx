@@ -1,5 +1,6 @@
 "use client";
 
+import NativeSelect from "@/components/ui/NativeSelect";
 import React from "react";
 import type { SystemThemeConfig } from "@/lib/theme/theme-types";
 
@@ -39,7 +40,7 @@ export default function AnnouncementBarInspector({ draft, onChange }: Announceme
           <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
             Announcement Bar Style
           </label>
-          <select
+          <NativeSelect size="sm"
             className={inputClass}
             value={draft.announcementBar?.variant ?? "generic"}
             onChange={(e) => onChange({ announcementBar: { ...draft.announcementBar, variant: e.target.value as any } })}
@@ -49,7 +50,7 @@ export default function AnnouncementBarInspector({ draft, onChange }: Announceme
             <option value="minimal">Minimal (clean, compact)</option>
             <option value="bold-street">Bold Street (high-contrast)</option>
             <option value="tech">Tech (dark, accented)</option>
-          </select>
+          </NativeSelect>
         </div>
 
         <label className="flex items-center gap-2 cursor-pointer">

@@ -1,5 +1,6 @@
 "use client";
 
+import NativeSelect from "@/components/ui/NativeSelect";
 import React, { useState } from "react";
 import type { SystemThemeConfig } from "@/lib/theme/theme-types";
 import type { HomepageSection, HomepageSectionConfig } from "@/types/homepage-section";
@@ -243,7 +244,7 @@ export default function CategoriesSectionInspector({
           <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
             Category Grid Style
           </label>
-          <select
+          <NativeSelect size="sm"
             className={inputClass}
             value={draft.categories?.variant ?? "generic"}
             onChange={(e) => onChange({ categories: { ...draft.categories, variant: e.target.value as any } })}
@@ -253,7 +254,7 @@ export default function CategoriesSectionInspector({
             <option value="minimal">Minimal (clean cards)</option>
             <option value="bold-street">Bold Street (high-contrast tiles)</option>
             <option value="tech">Tech (compact spec-style tiles)</option>
-          </select>
+          </NativeSelect>
         </div>
       </div>
     </div>

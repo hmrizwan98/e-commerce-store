@@ -1,5 +1,6 @@
 "use client";
 
+import NativeSelect from "@/components/ui/NativeSelect";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
@@ -144,7 +145,7 @@ const BannerForm: React.FC<BannerFormProps> = ({ mode, banner, placement }) => {
         />
         <div>
           <label className={labelClass}>Background position</label>
-          <select
+          <NativeSelect
             className={inputClass}
             value={backgroundPosition}
             onChange={(e) => setBackgroundPosition(e.target.value as BannerBackgroundPosition)}
@@ -154,7 +155,7 @@ const BannerForm: React.FC<BannerFormProps> = ({ mode, banner, placement }) => {
                 {pos[0].toUpperCase() + pos.slice(1)}
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </div>
       </div>
 
@@ -215,23 +216,23 @@ const BannerForm: React.FC<BannerFormProps> = ({ mode, banner, placement }) => {
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
             <label className={labelClass}>Text alignment</label>
-            <select className={inputClass} value={textAlign} onChange={(e) => setTextAlign(e.target.value as BannerTextAlign)}>
+            <NativeSelect className={inputClass} value={textAlign} onChange={(e) => setTextAlign(e.target.value as BannerTextAlign)}>
               {TEXT_ALIGN_OPTIONS.map((align) => (
                 <option key={align} value={align}>
                   {align[0].toUpperCase() + align.slice(1)}
                 </option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
           <div>
             <label className={labelClass}>Animation</label>
-            <select className={inputClass} value={animation} onChange={(e) => setAnimation(e.target.value as BannerAnimation)}>
+            <NativeSelect className={inputClass} value={animation} onChange={(e) => setAnimation(e.target.value as BannerAnimation)}>
               {ANIMATION_OPTIONS.map((a) => (
                 <option key={a} value={a}>
                   {a[0].toUpperCase() + a.slice(1)}
                 </option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
           <div>
             <label className={labelClass}>Text color</label>

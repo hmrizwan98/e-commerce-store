@@ -13,12 +13,13 @@ import CompareButton from "@/components/CompareButton";
 import ModalQuickView from "@/components/ModalQuickView";
 import ButtonPrimary from "@/shared/Button/ButtonPrimary";
 import BagIcon from "@/components/BagIcon";
-import { showAddToBagToast } from "@/components/AddToBagToast";
+import { useCardAddToBag } from "@/components/AddToBagToast";
 import { trackEvent } from "@/lib/analytics/track";
 import { safeImageSrc } from "@/utils/safeImageSrc";
 import { aspectRatioClass, type ProductCardVariantProps } from "./ProductCardVariantProps";
 
 export default function BoldGridCard({ data, className = "", productCardSettings }: ProductCardVariantProps) {
+  const addToBag = useCardAddToBag();
   const { name, price, compareAtPrice, shortDescription, description, badge, images, slug, rating, numberOfReviews } = data;
   const image = safeImageSrc(images[0]);
   const secondaryImage = images[1] ? safeImageSrc(images[1]) : undefined;
@@ -123,7 +124,7 @@ export default function BoldGridCard({ data, className = "", productCardSettings
                     className="border-2 border-[var(--border)] hover:border-[var(--primary-600,#dc2626)] rounded-md px-2.5 py-1 text-xs font-bold uppercase transition-colors"
                     onClick={(e) => {
                       e.preventDefault();
-                      showAddToBagToast({ product: data, size });
+                      addToBag(data, { size, source: e.currentTarget });
                     }}
                   >
                     {size}
@@ -133,7 +134,7 @@ export default function BoldGridCard({ data, className = "", productCardSettings
             ) : (
               <ButtonPrimary
                 className="w-full py-2 text-xs uppercase font-bold tracking-wider relative z-10"
-                onClick={() => showAddToBagToast({ product: data })}
+                onClick={(e) => addToBag(data, { source: e.currentTarget })}
               >
                 <BagIcon className="w-3.5 h-3.5 mb-0.5" />
                 <span className="ms-1">Add to bag</span>

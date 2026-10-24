@@ -13,12 +13,13 @@ import ProductStatus from "@/components/ProductStatus";
 import LikeButton from "@/components/LikeButton";
 import CompareButton from "@/components/CompareButton";
 import ModalQuickView from "@/components/ModalQuickView";
-import { showAddToBagToast } from "@/components/AddToBagToast";
+import { useCardAddToBag } from "@/components/AddToBagToast";
 import { trackEvent } from "@/lib/analytics/track";
 import { safeImageSrc } from "@/utils/safeImageSrc";
 import { aspectRatioClass, type ProductCardVariantProps } from "./ProductCardVariantProps";
 
 export default function DealCard({ data, className = "", productCardSettings }: ProductCardVariantProps) {
+  const addToBag = useCardAddToBag();
   const formatMoney = useFormatMoney();
   const { name, price, compareAtPrice, shortDescription, description, badge, images, slug, rating, numberOfReviews } = data;
   const image = safeImageSrc(images[0]);
@@ -143,7 +144,7 @@ export default function DealCard({ data, className = "", productCardSettings }: 
                 className="relative z-10 px-4 py-2 text-xs font-bold rounded-full bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 shadow-xs transition-transform active:scale-95 flex items-center gap-1.5"
                 onClick={(e) => {
                   e.preventDefault();
-                  showAddToBagToast({ product: data });
+                  addToBag(data, { source: e.currentTarget });
                 }}
               >
                 <ShoppingBagIcon className="w-3.5 h-3.5" />

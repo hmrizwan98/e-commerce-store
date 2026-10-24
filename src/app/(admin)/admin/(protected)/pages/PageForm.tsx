@@ -1,5 +1,6 @@
 "use client";
 
+import NativeSelect from "@/components/ui/NativeSelect";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createPage, updatePage, type PageFormInput } from "./actions";
@@ -90,11 +91,11 @@ const PageForm: React.FC<{ mode: "create" | "edit"; page?: CmsPage }> = ({ mode,
         </div>
         <div>
           <label className={labelClass}>Status</label>
-          <select className={inputClass} value={status} onChange={(e) => setStatus(e.target.value as CmsPageStatus)}>
+          <NativeSelect className={inputClass} value={status} onChange={(e) => setStatus(e.target.value as CmsPageStatus)}>
             <option value="draft">Draft (not visible on storefront)</option>
             <option value="published">Published (visible on storefront)</option>
             <option value="archived">Archived (not visible on storefront)</option>
-          </select>
+          </NativeSelect>
         </div>
       </div>
 

@@ -8,6 +8,8 @@ import { Transition } from "@/app/headlessui";
 import Prices from "@/components/Prices";
 import { safeImageSrc } from "@/utils/safeImageSrc";
 import { getCartUrl } from "@/utils/getCartUrl";
+import { useRouter } from "next/navigation";
+import { useAddToCart } from "@/hooks/useAddToCart";
 import type { Product } from "@/types/product";
 
 export interface AddToBagToastOptions {
@@ -16,12 +18,9 @@ export interface AddToBagToastOptions {
   colorLabel?: string;
 }
 
-/**
- * The real ProductCard's "Add to bag" toast never dispatches to the cart
- * (see cartSlice.ts - the only genuine add-to-cart path is the PDP). This is
- * that exact toast, extracted so every theme product-card variant shows the
- * byte-identical notification instead of a fourth independent copy.
- */
+/** The "added to bag" toast shared by every product-card variant. Only shown AFTER the
+ * item was really added (see useCardAddToBag below) - it used to be shown on its own,
+ * without adding anything to the cart. */
 export function showAddToBagToast({ product, size, colorLabel }: AddToBagToastOptions) {
   const { name, price, compareAtPrice, images, id } = product;
   const image = safeImageSrc(images[0]);
@@ -101,4 +100,41 @@ function AddToBagToastBody({
       </div>
     </Transition>
   );
+}
+
+/**
+ * "Add to bag" straight from a product card (every theme variant + the default card):
+ * - simple product: really adds 1 to the cart (shared cartSlice path via useAddToCart,
+ *   with the fly-to-cart animation from the clicked button), then shows the toast;
+ * - product with variants: a card can't know which variant was meant, so it opens the
+ *   product page to choose (never adds a wrong/variant-less line);
+ * - out of stock: says so instead of adding.
+ */
+export function useCardAddToBag() {
+  const addToCart = useAddToCart();
+  const router = useRouter();
+  return (
+    product: Pick<Product, "id" | "name" | "slug" | "price" | "compareAtPrice" | "images" | "hasVariants" | "stock" | "trackInventory">,
+    opts: { size?: string; colorLabel?: string; source?: Element | null } = {}
+  ) => {
+    if (product.hasVariants) {
+      toast("Choose your options on the product page", { id: `choose-${product.id}`, icon: "👉" });
+      router.push(`/product/${product.slug}` as any);
+      return;
+    }
+    if (product.trackInventory && product.stock <= 0) {
+      toast.error(`${product.name} is out of stock.`, { id: `oos-${product.id}` });
+      return;
+    }
+    addToCart({
+      product: product as Product,
+      activeImage: product.images[0],
+      activePrice: product.price,
+      activeStock: product.stock,
+      variantLabel: [opts.colorLabel, opts.size].filter(Boolean).join(" / "),
+      quantity: 1,
+      source: opts.source,
+    });
+    showAddToBagToast({ product, size: opts.size, colorLabel: opts.colorLabel });
+  };
 }

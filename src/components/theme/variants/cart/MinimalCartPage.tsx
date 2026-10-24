@@ -77,9 +77,7 @@ export default function MinimalCartPage({ shippingFlatRate, freeShippingThreshol
         {!items.length ? (
           <div className="flex flex-col items-center py-20 space-y-6">
             <p className="text-[var(--muted)] text-lg">Your cart is empty.</p>
-            <Link href={"/collection" as any}>
-              <ButtonPrimary>Continue shopping</ButtonPrimary>
-            </Link>
+            <ButtonPrimary href={"/collection" as any}>Continue shopping</ButtonPrimary>
           </div>
         ) : (
           <div className="flex flex-col lg:flex-row">

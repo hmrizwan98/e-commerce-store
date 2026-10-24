@@ -1,5 +1,6 @@
 "use client";
 
+import NativeSelect from "@/components/ui/NativeSelect";
 import React from "react";
 import { FONT_PRESETS, FONT_KEYS } from "@/lib/theme/fonts";
 import type { SystemThemeConfig } from "@/lib/theme/theme-types";
@@ -29,7 +30,7 @@ export default function TypographyTab({ draft, onChange }: TabProps) {
           <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
             Heading font
           </label>
-          <select
+          <NativeSelect size="sm"
             value={typography.headingFont ?? "poppins"}
             onChange={(e) => onChange({ typography: { ...typography, headingFont: e.target.value as any } })}
             className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-transparent"
@@ -39,14 +40,14 @@ export default function TypographyTab({ draft, onChange }: TabProps) {
                 {FONT_PRESETS[key].label}
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </div>
 
         <div className="space-y-1.5">
           <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
             Body font
           </label>
-          <select
+          <NativeSelect size="sm"
             value={typography.bodyFont ?? "poppins"}
             onChange={(e) => onChange({ typography: { ...typography, bodyFont: e.target.value as any } })}
             className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-transparent"
@@ -56,7 +57,7 @@ export default function TypographyTab({ draft, onChange }: TabProps) {
                 {FONT_PRESETS[key].label}
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </div>
 
         <div className="space-y-1.5">
@@ -93,7 +94,7 @@ export default function TypographyTab({ draft, onChange }: TabProps) {
           <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
             Heading weight
           </label>
-          <select
+          <NativeSelect size="sm"
             value={typography.headingWeight ?? 600}
             onChange={(e) => onChange({ typography: { ...typography, headingWeight: parseInt(e.target.value, 10) as any } })}
             className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-transparent"
@@ -103,14 +104,14 @@ export default function TypographyTab({ draft, onChange }: TabProps) {
                 {w}
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </div>
 
         <div className="space-y-1.5">
           <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
             Body weight
           </label>
-          <select
+          <NativeSelect size="sm"
             value={typography.bodyWeight ?? 400}
             onChange={(e) => onChange({ typography: { ...typography, bodyWeight: parseInt(e.target.value, 10) as any } })}
             className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-transparent"
@@ -120,7 +121,7 @@ export default function TypographyTab({ draft, onChange }: TabProps) {
                 {w}
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </div>
       </div>
     </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import NativeSelect from "@/components/ui/NativeSelect";
 import React from "react";
 import Link from "next/link";
 import { PlusIcon, ArrowTopRightOnSquareIcon, PhotoIcon } from "@heroicons/react/24/outline";
@@ -77,7 +78,7 @@ export default function HeroSectionInspector({ draft, onChange }: HeroSectionIns
           <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
             Hero Style
           </label>
-          <select
+          <NativeSelect size="sm"
             className={inputClass}
             value={draft.hero?.variant ?? "generic"}
             onChange={(e) => onChange({ hero: { ...draft.hero, variant: e.target.value as any } })}
@@ -88,7 +89,7 @@ export default function HeroSectionInspector({ draft, onChange }: HeroSectionIns
             <option value="minimal">Minimal (clean, lifestyle banner)</option>
             <option value="bold-street">Bold Street (dark, high-contrast)</option>
             <option value="tech">Tech (category sidebar + deal card)</option>
-          </select>
+          </NativeSelect>
         </div>
 
         <div>
@@ -107,7 +108,7 @@ export default function HeroSectionInspector({ draft, onChange }: HeroSectionIns
           <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
             Text Alignment
           </label>
-          <select
+          <NativeSelect size="sm"
             className={inputClass}
             value={banner.textAlign ?? "center"}
             onChange={(e) => updateBanner({ textAlign: e.target.value as "left" | "center" | "right" })}
@@ -115,7 +116,7 @@ export default function HeroSectionInspector({ draft, onChange }: HeroSectionIns
             <option value="left">Left Aligned</option>
             <option value="center">Centered</option>
             <option value="right">Right Aligned</option>
-          </select>
+          </NativeSelect>
         </div>
 
         <div>

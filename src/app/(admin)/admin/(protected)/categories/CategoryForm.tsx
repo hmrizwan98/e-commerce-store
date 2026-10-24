@@ -1,5 +1,6 @@
 "use client";
 
+import NativeSelect from "@/components/ui/NativeSelect";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import ImageUploader from "@/components/admin/ImageUploader";
@@ -123,7 +124,7 @@ const CategoryForm: React.FC<{ mode: "create" | "edit"; category?: Category; all
         </div>
         <div>
           <label className={labelClass}>Parent category</label>
-          <select className={inputClass} value={parentId} onChange={(e) => setParentId(e.target.value)}>
+          <NativeSelect className={inputClass} value={parentId} onChange={(e) => setParentId(e.target.value)}>
             <option value="">None (top-level)</option>
             {allCategories
               .filter((c) => c.id !== category?.id)
@@ -132,7 +133,7 @@ const CategoryForm: React.FC<{ mode: "create" | "edit"; category?: Category; all
                   {c.name}
                 </option>
               ))}
-          </select>
+          </NativeSelect>
         </div>
         <div>
           <label className={labelClass}>Sort order</label>

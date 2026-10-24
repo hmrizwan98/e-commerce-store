@@ -13,12 +13,13 @@ import CompareButton from "@/components/CompareButton";
 import ModalQuickView from "@/components/ModalQuickView";
 import ButtonPrimary from "@/shared/Button/ButtonPrimary";
 import BagIcon from "@/components/BagIcon";
-import { showAddToBagToast } from "@/components/AddToBagToast";
+import { useCardAddToBag } from "@/components/AddToBagToast";
 import { trackEvent } from "@/lib/analytics/track";
 import { safeImageSrc } from "@/utils/safeImageSrc";
 import { aspectRatioClass, type ProductCardVariantProps } from "./ProductCardVariantProps";
 
 export default function MinimalCard({ data, className = "", productCardSettings }: ProductCardVariantProps) {
+  const addToBag = useCardAddToBag();
   const { name, price, compareAtPrice, shortDescription, description, badge, images, slug, rating, numberOfReviews } = data;
   const image = safeImageSrc(images[0]);
   const secondaryImage = images[1] ? safeImageSrc(images[1]) : undefined;
@@ -80,7 +81,7 @@ export default function MinimalCard({ data, className = "", productCardSettings 
                     className="nc-shadow-lg w-9 h-9 rounded-full bg-white hover:bg-slate-900 hover:text-white transition-colors flex items-center justify-center uppercase font-semibold text-xs text-slate-900"
                     onClick={(e) => {
                       e.preventDefault();
-                      showAddToBagToast({ product: data, size });
+                      addToBag(data, { size, source: e.currentTarget });
                     }}
                   >
                     {size}
@@ -92,7 +93,7 @@ export default function MinimalCard({ data, className = "", productCardSettings 
                     className="shadow-lg"
                     fontSize="text-xs"
                     sizeClass="py-2 px-3.5"
-                    onClick={() => showAddToBagToast({ product: data })}
+                    onClick={(e) => addToBag(data, { source: e.currentTarget })}
                   >
                     <BagIcon className="w-3.5 h-3.5 mb-0.5" />
                     <span className="ms-1">Add to bag</span>

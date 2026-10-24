@@ -101,10 +101,10 @@ const ContactInfo: FC<Props> = ({
             />
           </div>
 
-          <div className="flex items-center gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
             <ButtonPrimary
               type="button"
-              className="sm:!px-7 shadow-sm"
+              className="w-full sm:w-auto sm:!px-7 shadow-sm"
               onClick={onCloseActive}
             >
               Save &amp; Continue to Address →

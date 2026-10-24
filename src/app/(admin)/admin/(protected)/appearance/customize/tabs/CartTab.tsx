@@ -1,5 +1,6 @@
 "use client";
 
+import NativeSelect from "@/components/ui/NativeSelect";
 import React from "react";
 import type { SystemThemeConfig, CartThemeConfig } from "@/lib/theme/theme-types";
 
@@ -54,7 +55,7 @@ export default function CartTab({ draft, onChange }: TabProps) {
           <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
             Cart drawer style
           </label>
-          <select
+          <NativeSelect size="sm"
             value={cart.drawerStyle ?? "standard"}
             onChange={(e) => setCart({ drawerStyle: e.target.value as any })}
             className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-transparent"
@@ -62,20 +63,20 @@ export default function CartTab({ draft, onChange }: TabProps) {
             <option value="standard">Standard</option>
             <option value="compact">Compact</option>
             <option value="minimal">Minimal</option>
-          </select>
+          </NativeSelect>
         </div>
         <div className="space-y-1.5 py-2">
           <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
             Item layout (cart page)
           </label>
-          <select
+          <NativeSelect size="sm"
             value={cart.itemLayout ?? "detailed"}
             onChange={(e) => setCart({ itemLayout: e.target.value as any })}
             className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-transparent"
           >
             <option value="detailed">Detailed</option>
             <option value="compact">Compact</option>
-          </select>
+          </NativeSelect>
         </div>
       </div>
     </div>

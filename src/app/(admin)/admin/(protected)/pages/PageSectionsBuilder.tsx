@@ -1,5 +1,6 @@
 "use client";
 
+import NativeSelect from "@/components/ui/NativeSelect";
 import React, { Fragment, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Dialog, Transition } from "@/app/headlessui";
@@ -235,14 +236,14 @@ const SectionCard: React.FC<{
             </div>
           )}
           {meta.fields.includes("imagePosition") && (
-            <select
+            <NativeSelect
               className={inputClass}
               value={section.config.imagePosition ?? "left"}
               onChange={(e) => onChange({ config: { ...section.config, imagePosition: e.target.value as "left" | "right" } })}
             >
               <option value="left">Image on left</option>
               <option value="right">Image on right</option>
-            </select>
+            </NativeSelect>
           )}
           {meta.fields.includes("buttonText") && (
             <input

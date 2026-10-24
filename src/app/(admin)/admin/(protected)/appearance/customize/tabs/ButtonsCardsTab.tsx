@@ -1,5 +1,6 @@
 "use client";
 
+import NativeSelect from "@/components/ui/NativeSelect";
 import React from "react";
 import type { SystemThemeConfig } from "@/lib/theme/theme-types";
 import type { RadiusSize, ShadowLevel, TransitionSpeed } from "@/types/theme";
@@ -71,7 +72,7 @@ export default function ButtonsCardsTab({ draft, onChange }: TabProps) {
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
               Button Corner Radius
             </label>
-            <select
+            <NativeSelect size="sm"
               value={buttons.radius ?? "full"}
               onChange={(e) => setButtons({ radius: e.target.value as RadiusSize })}
               className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-transparent"
@@ -81,14 +82,14 @@ export default function ButtonsCardsTab({ draft, onChange }: TabProps) {
                   {r.label}
                 </option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
 
           <div className="space-y-1.5">
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
               Button Shadow
             </label>
-            <select
+            <NativeSelect size="sm"
               value={buttons.shadow ?? "xl"}
               onChange={(e) => setButtons({ shadow: e.target.value as ShadowLevel })}
               className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-transparent"
@@ -98,7 +99,7 @@ export default function ButtonsCardsTab({ draft, onChange }: TabProps) {
                   {s.label}
                 </option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
 
           <div className="space-y-1.5">
@@ -120,7 +121,7 @@ export default function ButtonsCardsTab({ draft, onChange }: TabProps) {
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
               Transition Speed
             </label>
-            <select
+            <NativeSelect size="sm"
               value={buttons.transitionSpeed ?? "normal"}
               onChange={(e) => setButtons({ transitionSpeed: e.target.value as TransitionSpeed })}
               className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-transparent"
@@ -130,7 +131,7 @@ export default function ButtonsCardsTab({ draft, onChange }: TabProps) {
                   {s.label}
                 </option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
 
           <div className="space-y-1.5">
@@ -182,7 +183,7 @@ export default function ButtonsCardsTab({ draft, onChange }: TabProps) {
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
               Card Corner Radius
             </label>
-            <select
+            <NativeSelect size="sm"
               value={cards.radius ?? "xl"}
               onChange={(e) => setCards({ radius: e.target.value as RadiusSize })}
               className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-transparent"
@@ -192,14 +193,14 @@ export default function ButtonsCardsTab({ draft, onChange }: TabProps) {
                   {r.label}
                 </option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
 
           <div className="space-y-1.5">
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
               Card Shadow
             </label>
-            <select
+            <NativeSelect size="sm"
               value={cards.shadow ?? "none"}
               onChange={(e) => setCards({ shadow: e.target.value as ShadowLevel })}
               className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-transparent"
@@ -209,7 +210,7 @@ export default function ButtonsCardsTab({ draft, onChange }: TabProps) {
                   {s.label}
                 </option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
 
           <div className="space-y-1.5">

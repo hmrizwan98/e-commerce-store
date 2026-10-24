@@ -10,7 +10,7 @@ import { StarIcon } from "@heroicons/react/24/solid";
 import ButtonPrimary from "@/shared/Button/ButtonPrimary";
 import ButtonSecondary from "@/shared/Button/ButtonSecondary";
 import BagIcon from "./BagIcon";
-import { showAddToBagToast } from "./AddToBagToast";
+import { useCardAddToBag } from "./AddToBagToast";
 import ModalQuickView from "./ModalQuickView";
 import ProductStatus from "./ProductStatus";
 import Link from "next/link";
@@ -60,13 +60,14 @@ const ProductCard: FC<ProductCardProps> = ({
   const [colorActive, setColorActive] = useState(0);
   const [showModalQuickView, setShowModalQuickView] = useState(false);
 
-  const notifyAddTocart = ({ size }: { size?: string }) => {
+  const addToBag = useCardAddToBag();
+  const notifyAddTocart = ({ size, source }: { size?: string; source?: Element | null }) => {
     const colorLabel = colorAttribute
       ? typeof colorAttribute.values[colorActive] === "string"
         ? (colorAttribute.values[colorActive] as string)
         : (colorAttribute.values[colorActive] as { label: string }).label
       : undefined;
-    showAddToBagToast({ product: data, size, colorLabel });
+    addToBag(data, { size, colorLabel, source });
   };
 
   const getBorderClass = (hex?: string) => {
@@ -112,7 +113,7 @@ const ProductCard: FC<ProductCardProps> = ({
           className="shadow-lg"
           fontSize="text-xs"
           sizeClass="py-2 px-4"
-          onClick={() => notifyAddTocart({})}
+          onClick={(e) => notifyAddTocart({ source: e.currentTarget })}
         >
           <BagIcon className="w-3.5 h-3.5 mb-0.5" />
           <span className="ms-1">Add to bag</span>
@@ -142,7 +143,7 @@ const ProductCard: FC<ProductCardProps> = ({
             <div
               key={index}
               className="nc-shadow-lg w-10 h-10 rounded-xl bg-white hover:bg-slate-900 hover:text-white transition-colors cursor-pointer flex items-center justify-center uppercase font-semibold tracking-tight text-sm text-slate-900"
-              onClick={() => notifyAddTocart({ size })}
+              onClick={(e) => notifyAddTocart({ size, source: e.currentTarget })}
             >
               {size}
             </div>
@@ -207,7 +208,7 @@ const ProductCard: FC<ProductCardProps> = ({
             </div>
 
             <button
-              onClick={() => notifyAddTocart({})}
+              onClick={(e) => notifyAddTocart({ source: e.currentTarget })}
               className="relative z-20 w-full py-2.5 px-4 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-sky-600 dark:hover:bg-sky-500 hover:text-white font-semibold text-xs transition-all shadow-sm active:scale-95 flex items-center justify-center gap-2 group/btn"
             >
               <BagIcon className="w-4 h-4 transition-transform group-hover/btn:scale-110" />
