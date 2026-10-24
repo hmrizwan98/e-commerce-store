@@ -30,6 +30,9 @@ import {
   LinkIcon,
 } from "@heroicons/react/24/outline";
 import CustomDomainPanel from "./CustomDomainPanel";
+import CommissionRequestPanel from "./CommissionRequestPanel";
+import type { EffectiveCommissionPolicy } from "@/lib/finance/commission";
+import type { CommissionChangeRequest } from "@/types/commission";
 import type { CustomDomainView } from "@/lib/domains/custom-domain-service";
 import {
   updateGeneralSettings,
@@ -44,7 +47,6 @@ import {
   updateIntegrationsSettings,
   updateNotificationsSettings,
   updateAdvancedSettings,
-  updateCommissionSettings,
   updateTaxSettings,
   requestBackupExport,
   requestBackupImport,
@@ -280,6 +282,14 @@ function SaveButton({ onClick }: { onClick: () => Promise<void> }) {
   );
 }
 
+const BACKUP_STATUS_LABEL: Record<string, string> = {
+  queued: "Pending review",
+  approved: "Approved - in progress",
+  rejected: "Rejected",
+  completed: "Completed",
+  failed: "Failed",
+};
+
 const TABS = [
   "General",
   "Domain",
@@ -338,7 +348,7 @@ export default function SettingsPageClient({
   advanced: initialAdvanced,
   analytics,
   backupHistory,
-  commission: initialCommission,
+  commissionState,
   tax: initialTax,
   domain,
 }: {
@@ -356,7 +366,7 @@ export default function SettingsPageClient({
   advanced: AdvancedSettings;
   analytics: AnalyticsSettings;
   backupHistory: BackupRecord[];
-  commission: CommissionSettings;
+  commissionState: { effective: EffectiveCommissionPolicy; pending: CommissionChangeRequest | null };
   tax: TaxSettings;
   domain: CustomDomainView;
 }) {
@@ -376,7 +386,6 @@ export default function SettingsPageClient({
   const [advanced, setAdvanced] = useState(initialAdvanced);
   const [history, setHistory] = useState(backupHistory);
   const [backupBusy, setBackupBusy] = useState(false);
-  const [commission, setCommission] = useState(initialCommission);
   const [tax, setTax] = useState(initialTax);
 
   const updatePaymentMethod = (key: keyof PaymentSettings, patch: Partial<PaymentMethodSetting>) => {
@@ -394,8 +403,12 @@ export default function SettingsPageClient({
   const handleBackup = async (kind: "export" | "import") => {
     setBackupBusy(true);
     try {
-      if (kind === "export") await requestBackupExport();
-      else await requestBackupImport();
+      const res = kind === "export" ? await requestBackupExport() : await requestBackupImport();
+      if (!res.ok) {
+        toast.error(res.error);
+        return;
+      }
+      toast.success("Request sent - the platform has been notified.");
       setHistory((prev) => [
         { id: `pending-${Date.now()}`, type: kind, status: "queued", createdAt: Date.now() },
         ...prev,
@@ -866,31 +879,8 @@ export default function SettingsPageClient({
       {/* Commission Tab */}
       {tab === "Commission" && (
         <section className={cardClass}>
-          <SectionHeader icon={BanknotesIcon} title="Commission Engine" subtitle="Configure transaction commission rates for order settlements." />
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div>
-              <label className={labelClass}>Commission type</label>
-              <CustomSelect
-                value={commission.type}
-                onChange={(val) => setCommission({ ...commission, type: val as CommissionSettings["type"] })}
-                options={COMMISSION_TYPE_OPTIONS}
-              />
-            </div>
-            {commission.type !== "none" && (
-              <div>
-                <label className={labelClass}>
-                  {commission.type === "percentage" ? "Percentage Rate (%)" : "Fixed Amount"}
-                </label>
-                <input
-                  type="number"
-                  className={inputClass}
-                  value={commission.value}
-                  onChange={(e) => setCommission({ ...commission, value: Number(e.target.value) || 0 })}
-                />
-              </div>
-            )}
-          </div>
-          <SaveButton onClick={() => updateCommissionSettings(commission)} />
+          <SectionHeader icon={BanknotesIcon} title="Platform Commission" subtitle="The platform's fee on each paid order - set by the platform." />
+          <CommissionRequestPanel effective={commissionState.effective} pending={commissionState.pending} />
         </section>
       )}
 
@@ -1153,7 +1143,7 @@ export default function SettingsPageClient({
             {history.map((record) => (
               <div key={record.id} className="py-3 text-sm flex items-center justify-between">
                 <span className="capitalize font-bold text-slate-900 dark:text-slate-100">{record.type}</span>
-                <span className="text-slate-500 capitalize text-xs bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-full">{record.status}</span>
+                <span className="text-slate-500 text-xs bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-full">{BACKUP_STATUS_LABEL[record.status] ?? record.status}</span>
                 <span className="text-xs text-slate-400">
                   {record.createdAt ? new Date(record.createdAt).toLocaleString() : ""}
                 </span>

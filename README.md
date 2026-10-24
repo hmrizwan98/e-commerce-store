@@ -1101,13 +1101,9 @@ store's commission rate is edited later.
 
 ### Commission Engine
 
-A new "Commission" tab in the Settings Center (`CommissionSettings`:
-`type: "percentage" | "fixed" | "none"` + `value`), store-level
-configuration only, wired exactly like every other settings tab
-(type → `getCommissionSettings()`/`updateCommissionSettings()` →
-Settings page fetch → tab UI). `calculateCommission()`
-(`src/lib/finance/commission.ts`) is a pure function applied to each
-`payment` transaction.
+> **Superseded** - see [Commission & Platform Finance](#commission--platform-finance).
+> Commission is now set by the Super Admin; the store's old `siteSettings/commission`
+> doc is only a legacy fallback and the Store Admin can no longer edit it.
 
 ### Store Financial Summary
 
@@ -1123,10 +1119,10 @@ Transaction Ledger table and a Finance Report request panel.
 
 A new `/superadmin/finance` page shows Total Platform Revenue, Total
 Commission, Active Stores, Pending Payouts, Monthly Revenue, and a Top
-Stores list - computed via a single `collectionGroup("transactions")` scan
-across every store's ledger (`getPlatformFinancialDashboard()`), avoiding
-an N+1 loop over every store. Active Stores reuses the existing
-`status === "active"` filter with zero new code.
+Stores list. Now built on `getPlatformAnalytics()` (see
+[Commission & Platform Finance](#commission--platform-finance)): net of
+reversals/refunds, one row per currency, and "Monthly Revenue" fixed (it used to
+compare the Timestamp `createdAt` with a number and always showed 0).
 
 ### Payout Architecture (architecture only, no payment transfer integration)
 
@@ -2345,6 +2341,83 @@ a hand-written help registry built from the real admin code.
   run `scripts/test-store-assistant.ts`** - it checks that every route exists, ids are unique,
   and every entry's example questions still resolve to it.
 
+## Commission & Platform Finance
+
+### Definitions (used everywhere: Store Finance, Super Admin dashboard & Finance page)
+
+| Term | Meaning |
+|---|---|
+| **Payment** | Ledger entry written when an order's payment status becomes **Paid**. Revenue is recognised here, not when the order is placed. |
+| **Reversal** | Written when a paid order is moved back to unpaid/failed. Cancels the payment and its commission. |
+| **Refund** | Written when a paid order is refunded (full or partial). Capped at what was paid minus earlier refunds. |
+| **Gross revenue** | payments − reversals |
+| **Net revenue** | gross revenue − refunds |
+| **Commission earned** | commission charged on payments − commission returned on reversals/refunds (refunds return commission proportionally) |
+| **Outstanding commission** | *Estimate*: commission the current policy would charge on unpaid open/delivered orders in the range |
+
+Money is always shown in each store's own currency (`formatMoney`); totals are grouped per
+currency and never added across currencies.
+
+### Who sets the rate
+
+- `stores/{id}.commissionPolicy` (Super Admin, versioned): `none | percentage | fixed |
+  percentage_plus_fixed`, with `version`, `setBy`, `setAt`, `reason`. Set from
+  **Super Admin → store → Commission** tab (reason required).
+- Fallback for stores without a platform policy: legacy `stores/{id}/siteSettings/commission`
+  (old store-set rate, unchanged), else no commission. Firestore rules now block Store Admins
+  from writing that doc.
+- Store Admin **Settings → Commission** is read-only + "Request a change". A request
+  (`commissionChangeRequests`) never changes the rate; the Super Admin approves or rejects it
+  (one pending request per store). Every set/request/approve/reject is written to
+  `commissionAuditLogs` in the same Firestore transaction as the change.
+- Item/category-specific commission is **not** supported (order items don't store a category).
+
+### Ledger rules (`src/lib/finance/commission-service.ts`, server-only)
+
+- `recordPaymentRecognized` / `recordPaymentReversed` / `recordRefund` run in Firestore
+  transactions and read the order's existing ledger entries first, so paid → unpaid → paid
+  never double counts and repeated clicks are no-ops.
+- Each payment stores a `commissionPolicy` snapshot; later rate changes never alter history.
+- Pure math lives in `src/lib/finance/commission.ts` and `src/lib/finance/ledger-math.ts`.
+- **Reconciliation** (Super Admin store Commission tab) lists paid orders without a payment
+  entry, orders with duplicate payments (from before this change), orphan entries and amount
+  mismatches. It is read-only - nothing is auto-corrected.
+
+### Super Admin dashboard analytics
+
+`src/lib/finance/platform-analytics-service.ts` + `PlatformAnalyticsClient.tsx`: per-store
+revenue, commission, outstanding commission, orders delivered/pending/cancelled, revenue and
+order trends, range (this month / 7d / 30d / 90d / 12m / all) and store filters. Data is read
+server-side with the Admin SDK via a Super-Admin-only server action and **polled every 30 s
+while the tab is visible** (near real-time, no client Firestore listeners). A 15 s
+per-instance cache prevents repeated full reads. "All time" reads every store's ledger and
+orders - fine at current scale, revisit with pre-aggregated counters if stores grow a lot.
+
+### Super Admin notifications
+
+`superAdminNotifications` (Admin SDK only; rules deny clients). Created for backup requests and
+commission change requests with a deterministic id (`type__refId`) so the same request can't
+notify twice. **Super Admin → Notifications** has filters (unread/pending/approved/rejected/
+completed), read/unread, and approve/reject/mark-completed for backups. Backups are still
+produced manually - "Completed" is only set by the Super Admin, never automatically. Store
+Admins see the status in **Settings → Backup**; a second open request of the same type is
+refused.
+
+### Migration / deploy notes
+
+- Deploy rules: `firebase deploy --only firestore:rules` (commission doc lock + new collections).
+- No data migration needed: stores without `commissionPolicy` keep their legacy rate.
+- Old ledger entries have no `commissionPolicy` snapshot (shown as "Legacy entry"); past
+  duplicate payments, if any, show in Reconciliation.
+
+## Invoice Printing
+
+The order page's **Print Invoice** output contains only the invoice: the admin sidebar,
+header, Store Assistant button/drawer, impersonation banner and toasts are `print:hidden`, and
+the order page sets `@page { size: A4; margin: 0 }` so the browser doesn't add its own
+date/URL header and footer (the invoice keeps its own 14 mm padding). Rows and the totals
+block avoid splitting across pages. On-screen layout is unchanged.
+
 ## Tests
 
 Plain `node:test` scripts run with `tsx` (no test framework needed):
@@ -2354,5 +2427,56 @@ npx tsx --test scripts/test-order-verification.ts   # COD verification, phone/wa
 npx tsx --test scripts/test-custom-domains.ts       # custom-domain rules + Vercel provider (mocked)
 npx tsx --test scripts/test-ui-helpers.ts           # address mapping, NativeSelect options
 npx tsx --test scripts/test-store-assistant.ts      # assistant answers + registry structure
+npx tsx --test scripts/test-commission.ts           # commission policy, refunds, ledger netting, trends
 npx tsc --noEmit && npm run build
 ```
+
+## Marketing Website Copy & Animations
+
+Customer-facing polish for the public marketing site (`src/app/(marketing)/platform/**`,
+`src/components/marketing/**`). No new dependencies; links, CTAs, routes, canonical URLs
+and page structure are unchanged.
+
+### Copy guidelines
+
+- Write for Pakistani small-business owners: say what they get (take COD / bank transfer /
+  JazzCash-EasyPaisa payments, share courier tracking links, send WhatsApp order updates,
+  check COD orders before shipping, use your own domain), not how it's built.
+- No internal jargon on customer-facing pages or SEO metadata: avoid "multi-tenant",
+  "tenant", "architecture", "provisioning", framework/vendor names (Next.js, Firestore,
+  Cloudinary, CDN), "Super Admin" (except on the `/login` gateway, which genuinely links to it).
+- Only claim what the product does. Payments are COD, bank transfer and JazzCash / EasyPaisa
+  with payment-proof upload (no card gateway); courier support = tracking page + links for
+  Couriers Next, TCS, PostEx, Trax, Leopards, CallCourier (no courier API booking); WhatsApp =
+  one-click pre-filled messages + chat button (not automated sending). Pricing = no setup or
+  monthly fee, a commission per sale - never "0% fees" or "keep 100% of sales".
+- The default no-tenant metadata strings in `src/app/layout.tsx` mirror
+  `(marketing)/platform/layout.tsx` - keep both in sync.
+- FAQ answers live in `src/lib/marketing/faq-data.ts` and follow the same guidelines (the old
+  "multi-tenant architecture" / "Super Admin" / "Cloudinary" answers were rewritten).
+
+### Components & animations
+
+- `AnimatedHeadline.tsx` - Server Component, word-by-word reveal for the hero `<h1>`
+  ("Launch your online store with local payments & 6+ courier tracking"). Pure CSS
+  (`.mkt-word` keyframes at the end of `globals.css`), so it runs without JS/hydration.
+  Every word is rendered in its final position and only opacity/transform/blur animate -
+  no layout shift. The `<h1>` has the full sentence as `aria-label` and the word spans are
+  `aria-hidden`. Gradient phrases get per-word gradients offset by word index so the colour
+  flows across the phrase.
+- `Reveal.tsx` - small client wrapper: fade + slide-up when a block scrolls into view
+  (IntersectionObserver, disconnects after first reveal). Progressive enhancement - SSR and
+  first render are fully visible; after mount only blocks still below the viewport are hidden
+  and then revealed, so no-JS, slow hydration or anchor jumps never hide content. Used for the
+  homepage supporting sections (hero and first section stay static) and the bottom CTA.
+- `.mkt-fade-up` (globals.css) - staggered CSS fade-up for the hero eyebrow, description,
+  CTAs and highlights (`animationDelay` set inline).
+- `buttons.ts` - shared CTA class strings (`MKT_BTN_PRIMARY`, `MKT_BTN_SECONDARY`,
+  `MKT_BTN_INVERSE`) with consistent size, hover lift and `focus-visible` ring.
+- Section spacing normalised to `py-16 lg:py-24` with tighter heading margins.
+
+### Reduced motion
+
+`@media (prefers-reduced-motion: reduce)` turns off `.mkt-word` / `.mkt-fade-up` (the full
+headline and hero content show immediately); `Reveal` checks `matchMedia` and never hides
+anything; button hover lift and the eyebrow pulse are `motion-safe`/`motion-reduce` guarded.

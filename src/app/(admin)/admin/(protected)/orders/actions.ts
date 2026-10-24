@@ -16,9 +16,7 @@ import {
 } from "@/lib/firebase/repositories/order-verifications";
 import { queueInvoice, queuePackingSlip, queueShippingLabel } from "@/lib/firebase/services/order-document-service";
 import { queueOrderExport } from "@/lib/firebase/services/order-bulk-service";
-import { logTransaction } from "@/lib/firebase/repositories/transactions";
-import { getCommissionSettings } from "@/lib/firebase/repositories/site-settings";
-import { calculateCommission } from "@/lib/finance/commission";
+import { recordPaymentRecognized, recordPaymentReversed, recordRefund } from "@/lib/finance/commission-service";
 import { requireCurrentTenant } from "@/lib/tenant/current";
 import { getPlatformBaseUrl } from "@/lib/platform/base-url";
 import { getReliableStorefrontUrl } from "@/lib/platform/tenant-url";
@@ -149,14 +147,22 @@ export async function updatePaymentStatus(id: string, status: PaymentStatus, not
     });
   await logOrderActivity(id, "payment_status_changed", decoded.uid, { status });
 
-  if (status === "paid") {
-    const tenant = await requireCurrentTenant();
-    const commissionSettings = await getCommissionSettings();
-    const commissionAmount = calculateCommission(order.total, commissionSettings);
-    await logTransaction(tenant.id, id, "payment", order.total, order.paymentMethod, {
-      commissionAmount,
-      actorUid: decoded.uid,
-    });
+  // Finance ledger (src/lib/finance/commission-service.ts) - idempotent and computed on the
+  // server from the stored order total + the store's Super-Admin-controlled commission
+  // policy (snapshotted on the entry). Marking paid twice never double counts; moving
+  // away from paid reverses the recognised payment. A ledger failure is logged and shows
+  // up in Super Admin's reconciliation - it never undoes the order update above.
+  const tenant = await requireCurrentTenant();
+  try {
+    if (status === "paid") {
+      await recordPaymentRecognized({ storeId: tenant.id, orderId: id, actorUid: decoded.uid });
+    } else if (order.paymentStatus === "paid" && status === "refunded") {
+      await recordRefund({ storeId: tenant.id, orderId: id, amount: order.total, actorUid: decoded.uid, note: note ?? "Payment status set to refunded" });
+    } else if (order.paymentStatus === "paid") {
+      await recordPaymentReversed({ storeId: tenant.id, orderId: id, actorUid: decoded.uid, note: note ?? `Payment status changed to ${status}` });
+    }
+  } catch (err) {
+    console.error(`[ledger] payment status ${order.paymentStatus} -> ${status} for order ${id} not recorded`, err);
   }
 
   revalidatePath("/admin/orders");
@@ -281,11 +287,14 @@ export async function initiateRefund(id: string, amount: number, reason: string)
   });
   await logOrderActivity(id, "refund_issued", decoded.uid, { amount: String(amount) });
 
+  // Only money that was actually recognised can be refunded in the ledger (capped, with
+  // proportional commission returned) - see recordRefund().
   const tenant = await requireCurrentTenant();
-  await logTransaction(tenant.id, id, "refund", amount, order.paymentMethod, {
-    note: reason,
-    actorUid: decoded.uid,
-  });
+  try {
+    await recordRefund({ storeId: tenant.id, orderId: id, amount, actorUid: decoded.uid, note: reason });
+  } catch (err) {
+    console.error(`[ledger] refund for order ${id} not recorded`, err);
+  }
 
   revalidatePath("/admin/orders");
   revalidatePath(`/admin/orders/${id}`);

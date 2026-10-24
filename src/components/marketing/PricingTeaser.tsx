@@ -1,16 +1,17 @@
 import Link from "next/link";
 import { CheckIcon, ArrowRightIcon, BanknotesIcon } from "@heroicons/react/24/outline";
+import { MKT_BTN_PRIMARY } from "./buttons";
 
 const TOP_INCLUDED = [
-  "Full Store Admin panel — products, inventory, orders, customers, finance & settings",
-  "Native Pakistani Couriers tracking (`/order-tracking`) & 1-click WhatsApp order share",
-  "Pre-configured JazzCash, EasyPaisa, Bank Transfer & Cash on Delivery (COD)",
-  "Multi-tenant isolation, Custom Domain support & Cloudinary media CDN",
+  "Full Store Admin — products, stock, orders, customers, payments & settings",
+  "Courier tracking for 6+ Pakistani couriers & one-click WhatsApp order updates",
+  "Cash on Delivery with order verification, bank transfer and JazzCash / EasyPaisa",
+  "Your own domain, ready-made themes and automatically optimized product photos",
 ];
 
 export default function PricingTeaser() {
   return (
-    <section className="container py-20 lg:py-28 max-w-2xl mx-auto">
+    <section className="container py-16 lg:py-24 max-w-2xl mx-auto">
       <div className="relative p-8 sm:p-10 rounded-3xl border border-neutral-200/80 dark:border-neutral-800/80 bg-white dark:bg-neutral-900 shadow-xl shadow-neutral-900/5 overflow-hidden">
         {/* Decorative corner glow */}
         <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-bl from-primary-6000/10 via-indigo-500/5 to-transparent rounded-bl-full pointer-events-none" />
@@ -20,8 +21,8 @@ export default function PricingTeaser() {
             <BanknotesIcon className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="font-extrabold text-xl text-neutral-900 dark:text-white tracking-tight">Everything included, one model</h2>
-            <p className="text-xs text-neutral-600 dark:text-neutral-300">Growth-aligned commission model — no flat license fee</p>
+            <h2 className="font-extrabold text-xl text-neutral-900 dark:text-white tracking-tight">Everything included, one simple price</h2>
+            <p className="text-xs text-neutral-600 dark:text-neutral-300">No setup or monthly fee — a small commission only when you sell</p>
           </div>
         </div>
 
@@ -38,7 +39,7 @@ export default function PricingTeaser() {
 
         <Link
           href={"/pricing" as any}
-          className="inline-flex items-center justify-center gap-2 w-full px-6 py-3.5 rounded-full bg-gradient-to-r from-neutral-900 to-neutral-800 dark:from-white dark:to-neutral-200 text-white dark:text-neutral-900 font-bold text-sm shadow-md hover:opacity-90 transition-opacity"
+          className={`${MKT_BTN_PRIMARY} w-full`}
         >
           <span>View Full Pricing Details</span>
           <ArrowRightIcon className="w-4 h-4" />

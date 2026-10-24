@@ -1,4 +1,5 @@
 import type { CustomDomainRequest, DomainSetting } from "./domain-settings";
+import type { EffectiveCommissionPolicy } from "@/lib/finance/commission";
 
 export type StoreStatus = "active" | "suspended" | "archived";
 export type StoreTemplate = "empty" | "demo";
@@ -27,6 +28,10 @@ export interface Store {
   domainSettings?: Record<string, DomainSetting>;
   /** Store Admin's self-service custom domain (see src/lib/domains/custom-domain-service.ts). */
   customDomainRequest?: CustomDomainRequest;
+  /** Platform commission policy - set ONLY by Super Admin (server), see commission-service.ts.
+   * Absent on stores created before policies existed: their legacy siteSettings/commission
+   * rate stays in force until Super Admin sets one. */
+  commissionPolicy?: EffectiveCommissionPolicy;
   logo?: string;
   email?: string;
   ownerName?: string;

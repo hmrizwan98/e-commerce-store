@@ -425,10 +425,10 @@ export default function AdminShell({
   );
 
   return (
-    <div className="h-screen w-screen flex overflow-hidden bg-[#f0f4fa] dark:bg-slate-950 font-sans antialiased text-slate-900 dark:text-slate-100" style={styleVars as any}>
+    <div className="h-screen w-screen flex overflow-hidden print:block print:h-auto print:w-auto print:overflow-visible print:bg-white bg-[#f0f4fa] dark:bg-slate-950 font-sans antialiased text-slate-900 dark:text-slate-100" style={styleVars as any}>
       {/* Desktop sidebar - Collapsible w-16 (Closed/Patla) vs w-60 (Open) - Border removed for seamless cutout */}
       <aside
-        className={`h-screen flex-shrink-0 hidden md:flex flex-col ${preset.sidebarBg} transition-all duration-200 ${collapsed ? "w-16" : "w-60"
+        className={`h-screen flex-shrink-0 hidden md:flex print:!hidden flex-col ${preset.sidebarBg} transition-all duration-200 ${collapsed ? "w-16" : "w-60"
           }`}
       >
         {sidebarContent}
@@ -436,7 +436,7 @@ export default function AdminShell({
 
       {/* Mobile drawer */}
       {mobileOpen && (
-        <div className="fixed inset-0 z-50 md:hidden">
+        <div className="fixed inset-0 z-50 md:hidden print:hidden">
           <div className="absolute inset-0 bg-slate-950/75 backdrop-blur-xs" onClick={() => setMobileOpen(false)} />
           <aside className={`absolute inset-y-0 left-0 w-60 flex flex-col ${preset.sidebarBg} shadow-2xl border-r border-slate-800`}>
             {sidebarContent}
@@ -444,9 +444,9 @@ export default function AdminShell({
         </div>
       )}
 
-      <div className="flex-1 flex flex-col h-screen min-w-0 overflow-hidden">
+      <div className="flex-1 flex flex-col h-screen min-w-0 overflow-hidden print:block print:h-auto print:overflow-visible">
         {/* Dynamic Theme Header Bar */}
-        <header className={`h-16 flex items-center justify-between px-4 md:px-8 ${preset.headerGradient} text-white shadow-md z-20 shrink-0`}>
+        <header className={`print:hidden h-16 flex items-center justify-between px-4 md:px-8 ${preset.headerGradient} text-white shadow-md z-20 shrink-0`}>
           <div className="flex items-center gap-3">
             <button
               onClick={() => setMobileOpen(true)}
@@ -523,7 +523,7 @@ export default function AdminShell({
         </header>
 
         {/* Dashboard Main View Area */}
-        <main className="flex-1 p-4 md:p-6 overflow-y-auto overflow-x-hidden relative flex flex-col min-h-0">{children}</main>
+        <main className="flex-1 p-4 md:p-6 overflow-y-auto overflow-x-hidden relative flex flex-col min-h-0 print:block print:p-0 print:overflow-visible">{children}</main>
       </div>
 
       {/* Floating Action Button (Fixed Bottom-Right Position across every page) */}
@@ -532,7 +532,7 @@ export default function AdminShell({
           type="button"
           onClick={() => setAssistantOpen(true)}
           aria-label="Open Store Assistant"
-          className="fixed bottom-6 right-6 z-40 flex items-center gap-2.5 px-4 py-3 rounded-full bg-gradient-to-r from-primary-6000 to-indigo-600 hover:from-primary-700 hover:to-indigo-700 text-white font-extrabold text-xs shadow-xl shadow-primary-6000/30 hover:scale-105 active:scale-95 transition-all border border-white/20 group cursor-pointer"
+          className="print:hidden fixed bottom-6 right-6 z-40 flex items-center gap-2.5 px-4 py-3 rounded-full bg-gradient-to-r from-primary-6000 to-indigo-600 hover:from-primary-700 hover:to-indigo-700 text-white font-extrabold text-xs shadow-xl shadow-primary-6000/30 hover:scale-105 active:scale-95 transition-all border border-white/20 group cursor-pointer"
         >
           <SparklesIcon className="w-4 h-4 text-amber-300 animate-pulse group-hover:rotate-12 transition-transform" />
           <span className="tracking-tight font-extrabold">Store Assistant</span>
@@ -544,7 +544,9 @@ export default function AdminShell({
       )}
 
       {/* Store Assistant Slide-Over Drawer */}
-      <StoreAssistantDrawer isOpen={assistantOpen} onClose={() => setAssistantOpen(false)} />
+      <div className="print:hidden">
+        <StoreAssistantDrawer isOpen={assistantOpen} onClose={() => setAssistantOpen(false)} />
+      </div>
     </div>
   );
 }

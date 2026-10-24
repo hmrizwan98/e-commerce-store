@@ -498,7 +498,7 @@ export const TROUBLESHOOTING_REGISTRY: TroubleshootingEntry[] = [
     symptomUrdu: "Export / Import / Backup / Report ka button dabaya lekin koi file nahi bani.",
     symptomEnglish: "Clicked an Export / Import / Backup / Report button but no file was produced.",
     checklist: [
-      { urdu: "Ye buttons (Products Bulk Import/Export, Order Export, Customer Export, Finance Reports, Settings → Backup, order Documents) abhi sirf request record karte hain - history mein 'queued' dikhta hai.", english: "These buttons (Products Bulk Import/Export, Order Export, Customer Export, Finance Reports, Settings → Backup, order Documents) only record a request for now - history shows 'queued'." },
+      { urdu: "Ye buttons (Products Bulk Import/Export, Order Export, Customer Export, Finance Reports, order Documents) abhi sirf request record karte hain - history mein 'queued' dikhta hai. **Settings → Backup** ki request platform team ko jati hai aur woh manually tayyar karti hai (status: Pending review → Approved → Completed).", english: "These buttons (Products Bulk Import/Export, Order Export, Customer Export, Finance Reports, order Documents) only record a request for now - history shows 'queued'. **Settings → Backup** requests go to the platform team, who prepare them manually (status: Pending review → Approved → Completed)." },
     ],
     fixUrdu: "Ye expected hai - file banane wala hissa abhi available nahi. Filhal data admin ki lists aur order page (🖨️ Print invoice → Save as PDF) se hasil karein.",
     fixEnglish: "This is expected - the part that generates files isn't available yet. For now use the admin lists and the order page (🖨️ Print invoice → Save as PDF).",

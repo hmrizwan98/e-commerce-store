@@ -59,7 +59,7 @@ export default function MarketingFooter() {
               </span>
             </Link>
             <p className="text-sm text-neutral-600 dark:text-neutral-300 max-w-sm leading-relaxed">
-              Enterprise multi-tenant eCommerce SaaS platform. Launch your own store with dedicated Store Admin, tenant isolation, and Cloudinary media power.
+              The online store builder for Pakistani businesses. Launch your own store with local payments, courier tracking and WhatsApp order updates - and run it all from one simple Store Admin.
             </p>
             <a
               href="mailto:support@webriiz.com"
@@ -96,7 +96,7 @@ export default function MarketingFooter() {
         <div className="mt-14 pt-8 border-t border-neutral-200/60 dark:border-neutral-800/60 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-neutral-600 dark:text-neutral-300">
           <p>© {new Date().getFullYear()} Webriiz Platform. All rights reserved.</p>
           <p className="flex items-center gap-2 font-mono">
-            <span>Powered by Next.js RSC & Cloudinary</span>
+            <span>Made for Pakistani businesses</span>
           </p>
         </div>
       </div>

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createPayoutRequest, updatePayoutStatusAction } from "./actions";
 import type { Payout, PayoutStatus } from "@/types/payout";
+import { formatMoney } from "@/lib/currency/format";
 import { PlusIcon, BanknotesIcon, CheckCircleIcon, XCircleIcon } from "@heroicons/react/24/outline";
 
 type FinanceHref = string | { pathname: string; query: Record<string, string> };
@@ -66,7 +67,7 @@ const PayoutManagementPanel: React.FC<{
         <input
           type="number"
           step="0.01"
-          placeholder="Amount ($)"
+          placeholder="Amount (Rs)"
           className={`${inputClass} w-36 font-mono`}
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
@@ -96,7 +97,7 @@ const PayoutManagementPanel: React.FC<{
                 {storeName(p.storeId)}
               </span>
               <span className="font-bold text-emerald-600 dark:text-emerald-400">
-                ${p.amount.toFixed(2)}
+                {formatMoney(p.amount, null, { fixedDecimals: true })}
               </span>
               <span className="px-2.5 py-0.5 rounded-full capitalize font-semibold bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300">
                 {p.status}

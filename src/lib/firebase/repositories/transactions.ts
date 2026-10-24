@@ -116,22 +116,18 @@ export interface TransactionTotals {
  */
 export async function getTransactionTotals(): Promise<TransactionTotals> {
   const col = await tenantCollection(COLLECTION);
-  const [paymentAgg, refundAgg] = await Promise.all([
+  // Same definitions as src/lib/finance/ledger-math.ts: reversals cancel recognised
+  // payments, and commission returned on reversals/refunds is netted off.
+  const sumOf = (type: string) =>
     col
-      .where("type", "==", "payment")
-      .aggregate({
-        grossSales: AggregateField.sum("amount"),
-        commission: AggregateField.sum("commissionAmount"),
-      })
-      .get(),
-    col
-      .where("type", "==", "refund")
-      .aggregate({ refunds: AggregateField.sum("amount") })
-      .get(),
-  ]);
+      .where("type", "==", type)
+      .aggregate({ amount: AggregateField.sum("amount"), commission: AggregateField.sum("commissionAmount") })
+      .get()
+      .then((snap) => snap.data());
+  const [payment, reversal, refund] = await Promise.all([sumOf("payment"), sumOf("reversal"), sumOf("refund")]);
   return {
-    grossSales: paymentAgg.data().grossSales,
-    commission: paymentAgg.data().commission,
-    refunds: refundAgg.data().refunds,
+    grossSales: (payment.amount ?? 0) - (reversal.amount ?? 0),
+    commission: (payment.commission ?? 0) - (reversal.commission ?? 0) - (refund.commission ?? 0),
+    refunds: refund.amount ?? 0,
   };
 }

@@ -21,7 +21,7 @@ export default function ImpersonationBanner() {
   };
 
   return (
-    <div className="bg-amber-500 text-white text-sm px-4 py-2 flex items-center justify-between gap-4">
+    <div className="print:hidden bg-amber-500 text-white text-sm px-4 py-2 flex items-center justify-between gap-4">
       <span>Viewing as Store Owner</span>
       <button
         type="button"

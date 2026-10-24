@@ -3,13 +3,13 @@ import { PlayIcon } from "@heroicons/react/24/solid";
 
 export default function VideoPlaceholder() {
   return (
-    <section className="container py-20 lg:py-28">
+    <section className="container py-16 lg:py-24">
       <div className="text-center max-w-2xl mx-auto mb-12 space-y-4">
         <h2 className="text-3xl sm:text-4xl font-extrabold text-neutral-900 dark:text-white tracking-tight">
-          See the platform in action
+          See Webriiz in action
         </h2>
         <p className="text-base text-neutral-600 dark:text-neutral-400">
-          Walk through the Store Admin panel, Super Admin oversight, and storefront rendering live.
+          See how you add products, receive and confirm orders, and share tracking with customers - live.
         </p>
       </div>
 
@@ -37,7 +37,7 @@ export default function VideoPlaceholder() {
                 Watch a Live Product Walkthrough
               </span>
               <span className="block text-xs sm:text-sm text-neutral-400 font-medium">
-                Click to schedule a 1-on-1 demo with our engineering team
+                Click to schedule a 1-on-1 demo with our team
               </span>
             </div>
           </div>

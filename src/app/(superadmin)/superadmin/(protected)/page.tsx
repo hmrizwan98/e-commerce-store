@@ -2,6 +2,8 @@ import React from "react";
 import Link from "next/link";
 import { getStoreStatusCounts, getRecentStores } from "@/lib/firebase/repositories/stores";
 import { STATUS_BADGE_CLASS } from "@/lib/superadmin/status-badge";
+import { getPlatformAnalytics } from "@/lib/finance/platform-analytics-service";
+import PlatformAnalyticsClient from "./PlatformAnalyticsClient";
 import {
   BuildingStorefrontIcon,
   CheckCircleIcon,
@@ -14,8 +16,16 @@ import {
 export const dynamic = "force-dynamic";
 
 export default async function SuperAdminDashboardPage() {
-  const [{ total: totalLiveStores, active: activeCount, suspended: disabledCount }, recentStores] =
-    await Promise.all([getStoreStatusCounts(), getRecentStores(5)]);
+  const [{ total: totalLiveStores, active: activeCount, suspended: disabledCount }, recentStores, analytics] =
+    await Promise.all([
+      getStoreStatusCounts(),
+      getRecentStores(5),
+      // A failed analytics read must not take the whole dashboard down - the client shows an error and retries.
+      getPlatformAnalytics({ range: "30d" }).catch((err) => {
+        console.error("[superadmin] analytics failed", err);
+        return null;
+      }),
+    ]);
 
   const activePct = totalLiveStores ? Math.round((activeCount / totalLiveStores) * 100) : 0;
 
@@ -101,6 +111,8 @@ export default async function SuperAdminDashboardPage() {
           </div>
         </div>
       </div>
+
+      <PlatformAnalyticsClient initial={analytics} />
 
       {/* Recent Stores Table Section */}
       <div className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800/80 shadow-sm space-y-6">

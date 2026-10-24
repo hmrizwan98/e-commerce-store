@@ -78,7 +78,9 @@ service cloud.firestore {
       // non-secret, admin-managed.
       match /siteSettings/{settingId} {
         allow read: if true;
-        allow write: if isAdminOf(storeId) || isSuperAdmin();
+        // "commission" is the legacy commission setting - store admins may no longer write it
+        // (rates are set by Super Admin on the store doc; see src/lib/finance/commission-service.ts).
+        allow write: if (isAdminOf(storeId) && settingId != "commission") || isSuperAdmin();
       }
 
       // Orders/customers: admin-only for now - there's no customer-facing
@@ -256,6 +258,19 @@ service cloud.firestore {
     // existing store), same posture as storeActivityLogs/payouts above: Admin SDK /
     // Server Action only, never client-reachable.
     match /bookDemoRequests/{id} {
+      allow read, write: if false;
+    }
+
+    // Commission audit trail, Store Admin change requests and Super Admin notifications
+    // (src/lib/finance/commission-service.ts, superadmin-notifications.ts) - written only by
+    // the server (Admin SDK) after its own role checks; never client-reachable.
+    match /commissionAuditLogs/{id} {
+      allow read, write: if false;
+    }
+    match /commissionChangeRequests/{id} {
+      allow read, write: if false;
+    }
+    match /superAdminNotifications/{id} {
       allow read, write: if false;
     }
 

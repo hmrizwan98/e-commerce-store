@@ -15,10 +15,10 @@ import {
 
 export const metadata: Metadata = {
   title: "Features — Webriiz Platform",
-  description: "Everything included with every store on the Webriiz eCommerce SaaS platform.",
+  description: "Everything included with every Webriiz store: local payments, Pakistani courier tracking, WhatsApp order updates, COD order verification, themes and your own domain.",
   openGraph: {
     title: "Features — Webriiz Platform",
-    description: "Everything included with every store on the Webriiz eCommerce SaaS platform.",
+    description: "Everything included with every Webriiz store: local payments, Pakistani courier tracking, WhatsApp order updates, COD order verification, themes and your own domain.",
     url: "/features",
     siteName: "Webriiz",
     type: "website",
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Features — Webriiz Platform",
-    description: "Everything included with every store on the Webriiz eCommerce SaaS platform.",
+    description: "Everything included with every Webriiz store: local payments, Pakistani courier tracking, WhatsApp order updates, COD order verification, themes and your own domain.",
   },
   alternates: { canonical: "/features" },
 };
@@ -36,60 +36,59 @@ const FEATURE_GROUPS: { title: string; icon: React.ComponentType<{ className?: s
     title: "Catalog & Inventory",
     icon: ShoppingBagIcon,
     items: [
-      "Product management with variants, SKUs, and auto-generated codes",
-      "Collections, suppliers, and brand organization",
-      "Real-time stock tracking with low-stock alerts",
-      "Bulk import/export architecture for catalog data",
+      "Products with sizes, colours and other options, plus auto-generated product codes",
+      "Organize products by collection, brand and supplier",
+      "Live stock levels with low-stock alerts",
     ],
   },
   {
     title: "Orders & Fulfillment",
     icon: TruckIcon,
     items: [
-      "Native Pakistani Couriers tracking (`/order-tracking`): Couriers Next, TCS, PostEx, Trax, Leopards, CallCourier",
-      "Full order lifecycle: status history, shipment tracking, cancellations, refunds",
-      "Automated WhatsApp tracking link sharing & direct customer notifications",
-      "Printable invoices, packing slips, and consignment label details",
+      "Order tracking page on your store with links for Couriers Next, TCS, PostEx, Trax, Leopards & CallCourier",
+      "COD order verification - a quick risk check so you can confirm orders before shipping",
+      "Full order history: status updates, shipment tracking, cancellations & refunds",
+      "One-click WhatsApp order updates with the tracking link included",
+      "Printable invoices, packing slips and shipping label details",
     ],
   },
   {
-    title: "Customers & CRM",
+    title: "Customers",
     icon: UsersIcon,
     items: [
-      "Unified customer profiles for registered accounts and guest checkouts",
-      "Computed analytics: lifetime value, average order value, order history",
-      "Automatic customer segmentation and custom tags",
-      "GDPR-ready data export and account deletion requests",
+      "One customer list for account holders and guest checkouts",
+      "See each customer's total spend, average order and order history",
+      "Automatic customer groups and your own custom tags",
+      "Customer data export and account deletion on request",
     ],
   },
   {
-    title: "Finance & Commission",
+    title: "Payments & Finance",
     icon: BanknotesIcon,
     items: [
-      "Per-store transaction ledger with payment and refund history",
-      "Configurable commission engine (percentage, fixed, or none)",
-      "Store financial summaries: gross sales, net sales, commission, payouts",
-      "Platform-wide revenue dashboard for operators",
+      "Cash on Delivery, bank transfer & JazzCash / EasyPaisa with payment proof upload",
+      "A clear record of every payment and refund",
+      "Sales summaries: gross sales, net sales, commission and payouts",
     ],
   },
   {
-    title: "Design & Content CMS",
+    title: "Design & Pages",
     icon: PaintBrushIcon,
     items: [
-      "Drag-and-configure Homepage Builder",
-      "Full CMS for custom pages",
-      "Theme Builder with instant live preview",
-      "Four production-ready starter themes included day one",
+      "Homepage sections you can arrange yourself",
+      "Create your own pages (About, policies and more)",
+      "Theme editor with instant live preview",
+      "Four ready-made themes included from day one",
     ],
   },
   {
-    title: "Platform & Security",
+    title: "Your Store & Security",
     icon: ShieldCheckIcon,
     items: [
-      "Dedicated Store Admin and Super Admin panels",
-      "Custom domain support per store",
-      "Cloudinary-backed media pipeline for every image upload",
-      "Tenant-isolated data, role-based access, and full activity audit logs",
+      "Your own Store Admin to run everything",
+      "Use your own domain name",
+      "Product photos automatically optimized for fast loading",
+      "Private store data, secure sign-in and a full activity log",
     ],
   },
 ];
@@ -101,13 +100,13 @@ export default function FeaturesPage() {
       <div className="text-center max-w-3xl mx-auto space-y-4">
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-primary-6000/20 bg-primary-6000/10 text-primary-700 dark:text-primary-300 text-xs font-semibold">
           <SparklesIcon className="w-4 h-4 text-primary-6000" />
-          <span>Full Platform Capability</span>
+          <span>Everything Included</span>
         </div>
         <h1 className="text-4xl sm:text-5xl font-extrabold text-neutral-900 dark:text-white tracking-tight leading-tight">
           Everything you need to run a serious store
         </h1>
         <p className="text-base sm:text-lg text-neutral-700 dark:text-neutral-300 max-w-2xl mx-auto leading-relaxed">
-          Every store on the platform gets the complete feature suite below — no feature-gated tiers locking core tools away.
+          Every Webriiz store gets everything below — no paid tiers or add-on apps locking the basics away.
         </p>
       </div>
 

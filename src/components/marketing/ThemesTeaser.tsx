@@ -9,17 +9,17 @@ function ThemesTeaser() {
   const presets = Object.values(THEME_PRESETS);
 
   return (
-    <section className="container py-20 lg:py-28">
-      <div className="text-center max-w-2xl mx-auto mb-16 space-y-4">
+    <section className="container py-16 lg:py-24">
+      <div className="text-center max-w-2xl mx-auto mb-12 lg:mb-14 space-y-4">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
           <SparklesIcon className="w-3.5 h-3.5" />
-          <span>Production Ready Starter Themes</span>
+          <span>Ready-made Themes</span>
         </div>
         <h2 className="text-3xl sm:text-4xl font-extrabold text-neutral-900 dark:text-white tracking-tight">
           Four themes, ready on day one
         </h2>
         <p className="text-base text-neutral-700 dark:text-neutral-300 leading-relaxed">
-          Every store starts from a complete, production-ready theme - colors, typography, and homepage layout included, pre-configured for instant launch.
+          Start from a complete, professional design - colours, fonts and homepage layout included - then make it yours. No designer needed.
         </p>
       </div>
 
@@ -77,7 +77,7 @@ function ThemesTeaser() {
           href={"/themes" as any}
           className="inline-flex items-center gap-2 font-semibold text-primary-6000 hover:text-indigo-600 transition-colors group"
         >
-          <span>Explore full theme presets & homepage builder</span>
+          <span>Explore all themes</span>
           <ArrowRightIcon className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
         </Link>
       </div>

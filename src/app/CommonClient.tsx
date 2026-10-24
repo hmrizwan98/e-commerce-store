@@ -6,7 +6,7 @@ import { Toaster } from "react-hot-toast";
 const CommonClient = () => {
   return (
     <>
-      <Toaster />
+      <Toaster containerClassName="print:hidden" />
     </>
   );
 };

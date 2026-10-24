@@ -5,10 +5,10 @@ import BookDemoForm from "./BookDemoForm";
 
 export const metadata: Metadata = {
   title: "Book a Demo — Webriiz Platform",
-  description: "Book a personalized demo of the Webriiz eCommerce SaaS platform.",
+  description: "Book a personalized demo of Webriiz and see how your online store would work - products, orders, payments and courier tracking.",
   openGraph: {
     title: "Book a Demo — Webriiz Platform",
-    description: "Book a personalized demo of the Webriiz eCommerce SaaS platform.",
+    description: "Book a personalized demo of Webriiz and see how your online store would work - products, orders, payments and courier tracking.",
     url: "/book-demo",
     siteName: "Webriiz",
     type: "website",
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Book a Demo — Webriiz Platform",
-    description: "Book a personalized demo of the Webriiz eCommerce SaaS platform.",
+    description: "Book a personalized demo of Webriiz and see how your online store would work - products, orders, payments and courier tracking.",
   },
   alternates: { canonical: "/book-demo" },
 };
@@ -27,13 +27,13 @@ export default function BookDemoPage() {
       <div className="text-center space-y-3">
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-primary-6000/20 bg-primary-6000/10 text-primary-700 dark:text-primary-300 text-xs font-semibold">
           <SparklesIcon className="w-4 h-4 text-primary-6000" />
-          <span>Live 1-on-1 Engineering Walkthrough</span>
+          <span>Live 1-on-1 Walkthrough</span>
         </div>
         <h1 className="text-4xl sm:text-5xl font-extrabold text-neutral-900 dark:text-white tracking-tight leading-tight">
           Book a personalized demo
         </h1>
         <p className="text-base sm:text-lg text-neutral-600 dark:text-neutral-400 max-w-xl mx-auto leading-relaxed">
-          Tell us about your business and we&apos;ll set up a live walkthrough of Store Admin, Super Admin, themes, and commission structure.
+          Tell us about your business and we&apos;ll set up a live walkthrough of your Store Admin, themes, payments, courier tracking and pricing.
         </p>
       </div>
 

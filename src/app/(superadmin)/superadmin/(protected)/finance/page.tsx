@@ -3,6 +3,7 @@ import { getPlatformFinancialDashboard } from "@/lib/firebase/services/platform-
 import { getStoreIdsAndNames } from "@/lib/firebase/repositories/stores";
 import { getPayoutsPage } from "@/lib/firebase/repositories/payouts";
 import PayoutManagementPanel from "./PayoutManagementPanel";
+import { formatMoney } from "@/lib/currency/format";
 import {
   BanknotesIcon,
   CurrencyDollarIcon,
@@ -13,10 +14,6 @@ import {
 } from "@heroicons/react/24/outline";
 
 export const dynamic = "force-dynamic";
-
-function money(n: number): string {
-  return `$${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
 
 /** Builds the finance page URL for a given cursor stack - an empty stack is page 1 (no
  * query param at all), matching this page's un-paginated URL before this feature existed. */
@@ -51,12 +48,19 @@ export default async function SuperAdminFinancePage({
   const nextHref = hasMore && lastCreatedAt != null ? financeHref([...cursorStack, lastCreatedAt]) : undefined;
   const prevHref = cursorStack.length ? financeHref(cursorStack.slice(0, -1)) : undefined;
 
+  // Money is shown per store currency; amounts in different currencies are never added up.
+  const multi = dashboard.totals.length > 1;
+  const suffix = (key: string) => (multi ? ` · ${key}` : "");
+  const moneyStats = (dashboard.totals.length ? dashboard.totals : [{ currencyKey: "PKR", currency: {}, totalRevenue: 0, totalCommission: 0, monthlyRevenue: 0 }]).flatMap((t) => [
+    { label: `Net Revenue${suffix(t.currencyKey)}`, value: formatMoney(t.totalRevenue, t.currency), icon: CurrencyDollarIcon, color: "text-emerald-500 bg-emerald-500/10" },
+    { label: `Platform Commission${suffix(t.currencyKey)}`, value: formatMoney(t.totalCommission, t.currency), icon: BanknotesIcon, color: "text-indigo-500 bg-indigo-500/10" },
+    { label: `This Month's Revenue${suffix(t.currencyKey)}`, value: formatMoney(t.monthlyRevenue, t.currency), icon: ChartBarSquareIcon, color: "text-cyan-500 bg-cyan-500/10" },
+  ]);
   const stats = [
-    { label: "Platform Revenue", value: money(dashboard.totalRevenue), icon: CurrencyDollarIcon, color: "text-emerald-500 bg-emerald-500/10" },
-    { label: "Platform Commission", value: money(dashboard.totalCommission), icon: BanknotesIcon, color: "text-indigo-500 bg-indigo-500/10" },
+    ...moneyStats,
     { label: "Active Stores", value: String(dashboard.activeStores), icon: BuildingStorefrontIcon, color: "text-blue-500 bg-blue-500/10" },
-    { label: "Pending Payouts", value: money(dashboard.pendingPayouts), icon: ClockIcon, color: "text-amber-500 bg-amber-500/10" },
-    { label: "Monthly Revenue", value: money(dashboard.monthlyRevenue), icon: ChartBarSquareIcon, color: "text-cyan-500 bg-cyan-500/10" },
+    // Payout records carry no currency of their own - shown in the platform default (PKR).
+    { label: "Pending Payouts", value: formatMoney(dashboard.pendingPayouts), icon: ClockIcon, color: "text-amber-500 bg-amber-500/10" },
   ];
 
   return (
@@ -64,7 +68,7 @@ export default async function SuperAdminFinancePage({
       {/* Page Header */}
       <div>
         <h1 className="text-2xl font-extrabold text-neutral-900 dark:text-white tracking-tight">Finance & Platform Payouts</h1>
-        <p className="text-xs text-neutral-500">Track platform commission, revenue share, and payout schedules</p>
+        <p className="text-xs text-neutral-500">Revenue counts when an order is marked paid, net of reversals and refunds. Commission is net of commission returned on refunds.</p>
       </div>
 
       {/* KPI Stats Cards Grid */}
@@ -99,7 +103,7 @@ export default async function SuperAdminFinancePage({
               <span className="font-bold text-neutral-900 dark:text-white">
                 #{i + 1} &nbsp; {s.storeName}
               </span>
-              <span className="font-bold text-emerald-600 dark:text-emerald-400">{money(s.revenue)}</span>
+              <span className="font-bold text-emerald-600 dark:text-emerald-400">{formatMoney(s.revenue, s.currency)}</span>
             </div>
           ))}
           {!dashboard.topStores.length && <p className="text-xs text-neutral-500 py-3">No revenue recorded yet.</p>}

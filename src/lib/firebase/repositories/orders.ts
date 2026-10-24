@@ -509,7 +509,8 @@ export async function getRevenueTrend(days = 14): Promise<RevenueTrendPoint[]> {
   const col = await tenantCollection(COLLECTION);
   const snap = await col
     .where("paymentStatus", "==", "paid")
-    .where("createdAt", ">=", since)
+    // createdAt is stored as a Firestore Timestamp - comparing it to a number matched nothing.
+    .where("createdAt", ">=", Timestamp.fromMillis(since))
     .orderBy("createdAt", "desc")
     .select("createdAt", "total")
     .get();

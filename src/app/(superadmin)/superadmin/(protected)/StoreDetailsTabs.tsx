@@ -9,6 +9,8 @@ import CloneStoreDialog from "./CloneStoreDialog";
 import DeleteStoreDialog from "./DeleteStoreDialog";
 import DomainManagementPanel from "./DomainManagementPanel";
 import DeploymentPanel from "./DeploymentPanel";
+import CommissionPanel from "./CommissionPanel";
+import type { StoreCommissionOverview } from "@/lib/finance/commission-service";
 import { STATUS_BADGE_CLASS } from "@/lib/superadmin/status-badge";
 import { ACTIVITY_LABELS } from "@/lib/superadmin/activity-labels";
 import type { Store } from "@/types/store";
@@ -22,6 +24,7 @@ import {
   GlobeAltIcon,
   CloudArrowUpIcon,
   ShieldExclamationIcon,
+  BanknotesIcon,
 } from "@heroicons/react/24/outline";
 
 const DEFAULT_THEME_ID = "__default__";
@@ -32,10 +35,11 @@ const TABS: { id: string; label: string; icon: React.ComponentType<{ className?:
   { id: "Theme", label: "Theme", icon: SwatchIcon },
   { id: "Domains", label: "Domains", icon: GlobeAltIcon },
   { id: "Deployment", label: "Deployment", icon: CloudArrowUpIcon },
+  { id: "Commission", label: "Commission", icon: BanknotesIcon },
   { id: "Status", label: "Lifecycle & Actions", icon: ShieldExclamationIcon },
 ];
 
-type Tab = "General" | "Owner" | "Theme" | "Domains" | "Deployment" | "Status";
+type Tab = "General" | "Owner" | "Theme" | "Domains" | "Deployment" | "Commission" | "Status";
 
 const cardClass =
   "p-6 sm:p-8 rounded-3xl bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800/80 shadow-sm space-y-5";
@@ -46,8 +50,10 @@ const StoreDetailsTabs: React.FC<{
   deployment: DeploymentMetadata | null;
   deploymentLogs: DeploymentLog[];
   platformBaseUrl: string;
-}> = ({ store, activity, deployment, deploymentLogs, platformBaseUrl }) => {
-  const [tab, setTab] = useState<Tab>("General");
+  commission: StoreCommissionOverview;
+  initialTab?: string;
+}> = ({ store, activity, deployment, deploymentLogs, platformBaseUrl, commission, initialTab }) => {
+  const [tab, setTab] = useState<Tab>(TABS.some((t) => t.id === initialTab) ? (initialTab as Tab) : "General");
 
   return (
     <div className="space-y-6">
@@ -133,6 +139,8 @@ const StoreDetailsTabs: React.FC<{
           activity={activity}
         />
       )}
+
+      {tab === "Commission" && <CommissionPanel storeId={store.id} overview={commission} />}
 
       {tab === "Status" && (
         <div className="space-y-6">

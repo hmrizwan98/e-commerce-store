@@ -6,10 +6,10 @@ import { PLATFORM_FAQS } from "@/lib/marketing/faq-data";
 
 export const metadata: Metadata = {
   title: "FAQ — Webriiz Platform",
-  description: "Frequently asked questions about the Webriiz eCommerce SaaS platform.",
+  description: "Answers to common questions about launching your online store with Webriiz - setup, payments, courier tracking, themes and pricing.",
   openGraph: {
     title: "FAQ — Webriiz Platform",
-    description: "Frequently asked questions about the Webriiz eCommerce SaaS platform.",
+    description: "Answers to common questions about launching your online store with Webriiz - setup, payments, courier tracking, themes and pricing.",
     url: "/faq",
     siteName: "Webriiz",
     type: "website",
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "FAQ — Webriiz Platform",
-    description: "Frequently asked questions about the Webriiz eCommerce SaaS platform.",
+    description: "Answers to common questions about launching your online store with Webriiz - setup, payments, courier tracking, themes and pricing.",
   },
   alternates: { canonical: "/faq" },
 };
@@ -43,13 +43,13 @@ export default function FaqPage() {
       <div className="text-center space-y-3">
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-primary-6000/20 bg-primary-6000/10 text-primary-700 dark:text-primary-300 text-xs font-semibold">
           <QuestionMarkCircleIcon className="w-4 h-4 text-primary-6000" />
-          <span>Knowledge & Telemetry FAQ</span>
+          <span>Help & Answers</span>
         </div>
         <h1 className="text-4xl sm:text-5xl font-extrabold text-neutral-900 dark:text-white tracking-tight leading-tight">
           Frequently asked questions
         </h1>
         <p className="text-base sm:text-lg text-neutral-600 dark:text-neutral-400 max-w-xl mx-auto leading-relaxed">
-          Everything you need to know about store setup, multi-tenant security, themes, and hosting.
+          Everything you need to know about getting your store set up, keeping your data private, themes and your own domain.
         </p>
       </div>
 

@@ -4,7 +4,9 @@ import { revalidatePath } from "next/cache";
 import { tenantCollection } from "@/lib/firebase/tenant-scope";
 import { requireAdmin } from "@/lib/firebase/require-admin";
 import { stripUndefined } from "@/lib/firebase/repositories/utils";
+import { requireCurrentTenant } from "@/lib/tenant/current";
 import { queueBackupExport, queueBackupImport } from "@/lib/firebase/services/backup-service";
+import { createSuperAdminNotification } from "@/lib/firebase/repositories/superadmin-notifications";
 import { formatPhoneNumber } from "@/lib/notifications/whatsapp-service";
 import type {
   GeneralSettings,
@@ -122,13 +124,6 @@ export async function updateAdvancedSettings(settings: AdvancedSettings): Promis
   revalidateStorefront();
 }
 
-export async function updateCommissionSettings(settings: CommissionSettings): Promise<void> {
-  await requireAdmin();
-  const col = await tenantCollection("siteSettings");
-  await col.doc("commission").set(stripUndefined(settings), { merge: true });
-  revalidateStorefront();
-}
-
 export async function updateTaxSettings(settings: TaxSettings): Promise<void> {
   await requireAdmin();
   const col = await tenantCollection("siteSettings");
@@ -136,14 +131,41 @@ export async function updateTaxSettings(settings: TaxSettings): Promise<void> {
   revalidateStorefront();
 }
 
-export async function requestBackupExport(): Promise<void> {
+export type BackupRequestResult = { ok: true } | { ok: false; error: string };
+
+/** Store Admin backup request: one open (pending/approved) request per type at a time, and
+ * the platform (Super Admin) is notified. Only a REQUEST is recorded - no backup is produced
+ * here (see src/lib/firebase/services/backup-service.ts). */
+async function requestBackup(kind: "export" | "import"): Promise<BackupRequestResult> {
   await requireAdmin();
-  await queueBackupExport();
-  revalidatePath("/admin/settings");
+  try {
+    const store = await requireCurrentTenant();
+    const col = await tenantCollection("backupHistory");
+    const open = await col.where("status", "in", ["queued", "approved"]).limit(20).get();
+    if (open.docs.some((d) => d.data().type === kind)) {
+      return { ok: false, error: `You already have an open ${kind} request - the platform will process it.` };
+    }
+    const backupId = kind === "export" ? await queueBackupExport() : await queueBackupImport();
+    await createSuperAdminNotification({
+      type: "backup_request",
+      storeId: store.id,
+      storeName: store.name,
+      title: `${store.name} requested a backup ${kind}`,
+      refId: `${store.id}__${backupId}`,
+      href: "/notifications",
+    }).catch((err) => console.error("[backup] notification failed", err));
+    revalidatePath("/admin/settings");
+    return { ok: true };
+  } catch (err) {
+    console.error("[backup] request failed", err);
+    return { ok: false, error: "Could not send the request. Please try again." };
+  }
 }
 
-export async function requestBackupImport(): Promise<void> {
-  await requireAdmin();
-  await queueBackupImport();
-  revalidatePath("/admin/settings");
+export async function requestBackupExport(): Promise<BackupRequestResult> {
+  return requestBackup("export");
+}
+
+export async function requestBackupImport(): Promise<BackupRequestResult> {
+  return requestBackup("import");
 }

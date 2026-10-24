@@ -3,11 +3,11 @@ import {
   BuildingStorefrontIcon,
   ShieldCheckIcon,
   BoltIcon,
-  CloudIcon,
   PhotoIcon,
   BanknotesIcon,
   UserGroupIcon,
-  Cog6ToothIcon,
+  TruckIcon,
+  ChatBubbleLeftRightIcon,
 } from "@heroicons/react/24/outline";
 
 export interface Highlight {
@@ -19,63 +19,63 @@ export interface Highlight {
 const HIGHLIGHTS: Highlight[] = [
   {
     icon: BuildingStorefrontIcon,
-    title: "True multi-tenant architecture",
+    title: "Your own store, your own data",
     description:
-      "Every store's data is fully isolated under its own tenant boundary - your store, your customers, your orders, never mixed with anyone else's.",
+      "Your products, customers and orders belong to your store alone - private to you and never shared with other sellers.",
   },
   {
-    icon: Cog6ToothIcon,
-    title: "Native Pakistani Couriers (`/order-tracking`)",
+    icon: TruckIcon,
+    title: "Courier tracking customers understand",
     description:
-      "Integrated live order tracking for Couriers Next, TCS, PostEx, Trax, Leopards & CallCourier with visual step timeline.",
-  },
-  {
-    icon: UserGroupIcon,
-    title: "Super Admin Control & Impersonation",
-    description:
-      "1-click store creation wizard, store cloning, and secure 1-click Store Owner impersonation with instant return.",
-  },
-  {
-    icon: CloudIcon,
-    title: "WhatsApp Order Updates & Chat",
-    description:
-      "Automated WhatsApp tracking link sharing, WhatsApp chat float button, and direct customer notification pre-fills.",
-  },
-  {
-    icon: PhotoIcon,
-    title: "Cloudinary-powered media",
-    description:
-      "Every product photo, banner, and theme asset is automatically optimized and delivered through Cloudinary CDN.",
+      "Add the courier and tracking number - customers follow their parcel on your store with a clear step-by-step timeline and a direct link to Couriers Next, TCS, PostEx, Trax, Leopards or CallCourier.",
   },
   {
     icon: ShieldCheckIcon,
-    title: "Enterprise-grade security",
+    title: "Fewer fake COD orders",
     description:
-      "Role-based access for Store Admins and Super Admins, tenant isolation enforced at data layer, and full audit logs.",
+      "Every Cash on Delivery order gets a quick risk check based on the customer's details and order history, so you can confirm it by call or WhatsApp before you ship.",
+  },
+  {
+    icon: ChatBubbleLeftRightIcon,
+    title: "WhatsApp order updates & chat",
+    description:
+      "Send ready-made order confirmed, dispatched and delivered messages - with the tracking link - in one click, plus a WhatsApp chat button on your store.",
+  },
+  {
+    icon: UserGroupIcon,
+    title: "We set up your store with you",
+    description:
+      "Our team creates your store, connects your domain and helps you get your first products live - no developer needed.",
+  },
+  {
+    icon: PhotoIcon,
+    title: "Sharp, fast-loading product photos",
+    description:
+      "Upload your photos and they're automatically resized and compressed, so pages stay quick even on mobile data.",
   },
   {
     icon: BoltIcon,
-    title: "Next.js 14 App Router speed",
+    title: "A fast store on every phone",
     description:
-      "Server-rendered pages, instant URL search filter state, and computed analytics keep every storefront fast as it grows.",
+      "Pages load quickly and search and filters respond instantly, so shoppers find what they want and check out.",
   },
   {
     icon: BanknotesIcon,
-    title: "0% Hidden Transaction Fees",
+    title: "No monthly fee",
     description:
-      "No hidden commissions or forced app subscriptions locking you in — keep 100% of your store sales profits.",
+      "No setup fee, no monthly subscription and no paid apps to unlock the basics - you pay a small commission only when you make a sale.",
   },
 ];
 
 function FeatureGrid() {
   return (
-    <section className="container py-20 lg:py-28">
-      <div className="text-center max-w-2xl mx-auto mb-16 space-y-4">
+    <section className="container py-16 lg:py-24">
+      <div className="text-center max-w-2xl mx-auto mb-12 lg:mb-14 space-y-4">
         <h2 className="text-3xl sm:text-4xl font-extrabold text-neutral-900 dark:text-white tracking-tight">
           Everything you need to run a serious store
         </h2>
         <p className="text-base sm:text-lg text-neutral-700 dark:text-neutral-300">
-          Built from the ground up to give store owners full operational autonomy and platform operators total control.
+          Everything a growing Pakistani business needs to sell online, take payments and deliver - in one place.
         </p>
       </div>
 

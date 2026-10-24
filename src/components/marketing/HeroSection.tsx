@@ -1,75 +1,92 @@
 import Link from "next/link";
-import { ArrowRightIcon, ShieldCheckIcon, SparklesIcon, BoltIcon, CloudIcon } from "@heroicons/react/24/outline";
+import {
+  ArrowRightIcon,
+  ShieldCheckIcon,
+  SparklesIcon,
+  TruckIcon,
+  GlobeAltIcon,
+  ChatBubbleLeftRightIcon,
+} from "@heroicons/react/24/outline";
+import AnimatedHeadline from "./AnimatedHeadline";
+import { MKT_BTN_PRIMARY, MKT_BTN_SECONDARY } from "./buttons";
+
+const HIGHLIGHTS = [
+  { icon: GlobeAltIcon, label: "Your own store & domain", color: "text-primary-6000" },
+  { icon: TruckIcon, label: "6+ Pakistani couriers", color: "text-indigo-500" },
+  { icon: ShieldCheckIcon, label: "COD order verification", color: "text-cyan-500" },
+  { icon: ChatBubbleLeftRightIcon, label: "WhatsApp order updates", color: "text-emerald-500" },
+];
 
 export default function HeroSection() {
   return (
-    <section className="relative overflow-hidden pt-16 pb-20 lg:pt-28 lg:pb-32 bg-gradient-to-b from-primary-50/40 via-transparent to-transparent dark:from-neutral-900/50">
+    <section className="relative overflow-hidden pt-14 pb-16 sm:pt-20 lg:pt-24 lg:pb-24 bg-gradient-to-b from-primary-50/40 via-transparent to-transparent dark:from-neutral-900/50">
       {/* Background glow effects */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-gradient-to-tr from-primary-6000/10 via-indigo-500/10 to-cyan-500/10 blur-3xl pointer-events-none -z-10" />
 
       <div className="container relative max-w-4xl mx-auto text-center px-4">
         {/* Eyebrow pill */}
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary-6000/20 bg-primary-6000/10 dark:bg-primary-6000/20 text-primary-700 dark:text-primary-300 text-xs sm:text-sm font-semibold mb-6 shadow-sm">
-          <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+        <div className="mkt-fade-up inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary-6000/20 bg-primary-6000/10 dark:bg-primary-6000/20 text-primary-700 dark:text-primary-300 text-xs sm:text-sm font-semibold mb-6 shadow-sm">
+          <span className="flex h-2 w-2 rounded-full bg-emerald-500 motion-safe:animate-pulse" />
           <SparklesIcon className="w-4 h-4 text-primary-6000" />
-          <span>The Complete Store Builder for Pakistan &amp; Global Brands</span>
+          <span>The complete online store builder for Pakistani businesses</span>
         </div>
 
-        {/* Headline */}
-        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-neutral-900 dark:text-white tracking-tight leading-[1.15]">
-          Launch your online store{" "}
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-6000 via-indigo-600 to-cyan-500">
-            with local payments &amp; 6+ courier tracking
-          </span>
-        </h1>
+        {/* Headline - word-by-word reveal (see AnimatedHeadline) */}
+        <AnimatedHeadline
+          className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-neutral-900 dark:text-white tracking-tight leading-[1.15]"
+          segments={[
+            { text: "Launch your online store" },
+            { text: "with local payments & 6+ courier tracking", gradient: true },
+          ]}
+        />
 
         {/* Description */}
-        <p className="mt-6 text-base sm:text-xl text-neutral-700 dark:text-neutral-300 max-w-2xl mx-auto leading-relaxed">
-          Get fully isolated multi-tenant architecture, dedicated Store Admin &amp; Super Admin panels, 1-click WhatsApp order tracking link sharing, JazzCash / EasyPaisa / COD checkout, and Next.js 14 speed — all with 0% hidden transaction fees.
+        <p
+          className="mkt-fade-up mt-6 text-base sm:text-xl text-neutral-700 dark:text-neutral-300 max-w-2xl mx-auto leading-relaxed"
+          style={{ animationDelay: "550ms" }}
+        >
+          Take Cash on Delivery, bank transfer and JazzCash / EasyPaisa payments, send customers their
+          courier tracking link on WhatsApp in one click, and check COD orders before you ship them
+          &mdash; all from one simple Store Admin, on your own domain.
         </p>
 
         {/* CTA Buttons */}
-        <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Link
-            href={"/book-demo" as any}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full bg-gradient-to-r from-primary-6000 via-indigo-600 to-indigo-700 text-white font-bold text-base shadow-xl shadow-primary-6000/25 hover:shadow-primary-6000/40 hover:-translate-y-0.5 active:translate-y-0 transition-all"
-          >
+        <div
+          className="mkt-fade-up mt-8 sm:mt-10 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4"
+          style={{ animationDelay: "700ms" }}
+        >
+          <Link href={"/book-demo" as any} className={`${MKT_BTN_PRIMARY} w-full sm:w-auto`}>
             <span>Book a Personalized Demo</span>
             <ArrowRightIcon className="w-5 h-5" />
           </Link>
 
-          <Link
-            href={"/pricing" as any}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full border border-neutral-300 dark:border-neutral-700 bg-white/70 dark:bg-neutral-900/70 backdrop-blur-sm text-neutral-800 dark:text-neutral-200 font-semibold text-base hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:-translate-y-0.5 transition-all shadow-sm"
-          >
-            View Pricing Model
+          <Link href={"/pricing" as any} className={`${MKT_BTN_SECONDARY} w-full sm:w-auto`}>
+            View Pricing
           </Link>
         </div>
+        <p
+          className="mkt-fade-up mt-4 text-xs sm:text-sm text-neutral-500 dark:text-neutral-400"
+          style={{ animationDelay: "800ms" }}
+        >
+          No setup fee and no monthly fee &mdash; you pay a small commission only when you sell.
+        </p>
 
         {/* Key Trust Highlights */}
-        <div className="mt-12 pt-10 border-t border-neutral-200/60 dark:border-neutral-800/60 grid grid-cols-2 sm:grid-cols-4 gap-4 text-left">
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-white/50 dark:bg-neutral-900/50 border border-neutral-200/50 dark:border-neutral-800/50">
-            <ShieldCheckIcon className="w-5 h-5 text-primary-6000 shrink-0" />
-            <span className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">Tenant Data Isolation</span>
-          </div>
-
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-white/50 dark:bg-neutral-900/50 border border-neutral-200/50 dark:border-neutral-800/50">
-            <CloudIcon className="w-5 h-5 text-indigo-500 shrink-0" />
-            <span className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">6+ PK Couriers Sync</span>
-          </div>
-
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-white/50 dark:bg-neutral-900/50 border border-neutral-200/50 dark:border-neutral-800/50">
-            <BoltIcon className="w-5 h-5 text-cyan-500 shrink-0" />
-            <span className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">Next.js 14 Speed</span>
-          </div>
-
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-white/50 dark:bg-neutral-900/50 border border-neutral-200/50 dark:border-neutral-800/50">
-            <SparklesIcon className="w-5 h-5 text-amber-500 shrink-0" />
-            <span className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">WhatsApp Order Share</span>
-          </div>
-        </div>
+        <ul
+          className="mkt-fade-up mt-10 pt-8 border-t border-neutral-200/60 dark:border-neutral-800/60 grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 text-left"
+          style={{ animationDelay: "900ms" }}
+        >
+          {HIGHLIGHTS.map(({ icon: Icon, label, color }) => (
+            <li
+              key={label}
+              className="flex items-center gap-3 p-3 rounded-xl bg-white/60 dark:bg-neutral-900/50 border border-neutral-200/60 dark:border-neutral-800/50"
+            >
+              <Icon className={`w-5 h-5 shrink-0 ${color}`} />
+              <span className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">{label}</span>
+            </li>
+          ))}
+        </ul>
       </div>
     </section>
   );
 }
-

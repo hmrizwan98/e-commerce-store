@@ -7,10 +7,10 @@ import { FONT_PRESETS } from "@/lib/theme/fonts";
 
 export const metadata: Metadata = {
   title: "Themes — Webriiz Platform",
-  description: "Four production-ready storefront themes included with every store, installable at store creation.",
+  description: "Four ready-made, professional store themes included with every Webriiz store - pick one when your store is set up and customise it anytime.",
   openGraph: {
     title: "Themes — Webriiz Platform",
-    description: "Four production-ready storefront themes included with every store, installable at store creation.",
+    description: "Four ready-made, professional store themes included with every Webriiz store - pick one when your store is set up and customise it anytime.",
     url: "/themes",
     siteName: "Webriiz",
     type: "website",
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Themes — Webriiz Platform",
-    description: "Four production-ready storefront themes included with every store.",
+    description: "Four ready-made, professional store themes included with every Webriiz store.",
   },
   alternates: { canonical: "/themes" },
 };
@@ -34,13 +34,13 @@ export default function ThemesShowcasePage() {
       <div className="text-center max-w-3xl mx-auto space-y-4">
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-300 text-xs font-semibold">
           <SparklesIcon className="w-4 h-4 text-amber-500" />
-          <span>Production Storefront Themes</span>
+          <span>Ready-made Store Themes</span>
         </div>
         <h1 className="text-4xl sm:text-5xl font-extrabold text-neutral-900 dark:text-white tracking-tight leading-tight">
           Four themes, ready on day one
         </h1>
         <p className="text-base sm:text-lg text-neutral-600 dark:text-neutral-400 max-w-2xl mx-auto leading-relaxed">
-          Every store can install one of these production-ready presets at creation time — colors, typography, and homepage section order pre-configured, and fully customizable in Theme Builder.
+          Pick one of these professional designs when your store is set up — colours, fonts and homepage layout are ready to go, and you can change any of it later in the theme editor.
         </p>
       </div>
 

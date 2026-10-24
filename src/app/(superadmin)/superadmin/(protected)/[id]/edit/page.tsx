@@ -9,17 +9,19 @@ import { getPlatformBaseUrl } from "@/lib/platform/base-url";
 import { getStoreAdminUrl } from "@/lib/platform/tenant-url";
 import { STATUS_BADGE_CLASS } from "@/lib/superadmin/status-badge";
 import StoreDetailsTabs from "../../StoreDetailsTabs";
+import { getStoreCommissionOverview } from "@/lib/finance/commission-service";
 import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 
 export const dynamic = "force-dynamic";
 
-export default async function EditStorePage({ params }: { params: { id: string } }) {
+export default async function EditStorePage({ params, searchParams }: { params: { id: string }; searchParams: { tab?: string } }) {
   const store = await getStoreById(params.id);
   if (!store) notFound();
-  const [activity, deployment, deploymentLogs] = await Promise.all([
+  const [activity, deployment, deploymentLogs, commission] = await Promise.all([
     getRecentActivity(store.id, 20),
     getDeploymentMetadataByStoreId(store.id),
     getDeploymentLogs(store.id, 10),
+    getStoreCommissionOverview(store.id),
   ]);
 
   return (
@@ -60,6 +62,8 @@ export default async function EditStorePage({ params }: { params: { id: string }
         deployment={deployment}
         deploymentLogs={deploymentLogs}
         platformBaseUrl={getPlatformBaseUrl()}
+        commission={commission}
+        initialTab={searchParams.tab}
       />
     </div>
   );

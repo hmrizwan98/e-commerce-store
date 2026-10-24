@@ -1,6 +1,9 @@
 import type { PaymentMethod } from "./order";
+import type { CommissionSnapshot } from "@/lib/finance/commission";
 
-export type TransactionType = "payment" | "refund";
+/** "reversal" = a recognised payment taken back (order set back from paid) - see
+ * src/lib/finance/ledger-math.ts for how each type affects revenue and commission. */
+export type TransactionType = "payment" | "refund" | "reversal";
 export type TransactionStatus = "completed" | "pending" | "failed";
 
 /** Per-store financial ledger entry - tenant-scoped: stores/{storeId}/transactions/{id}.
@@ -16,7 +19,10 @@ export interface Transaction {
   orderId: string;
   type: TransactionType;
   amount: number;
+  /** payment: commission charged. refund/reversal: commission RETURNED (positive number). */
   commissionAmount?: number;
+  /** Policy used for this entry's commission - absent on entries written before snapshots existed. */
+  commissionPolicy?: CommissionSnapshot;
   method: PaymentMethod;
   status: TransactionStatus;
   note?: string;

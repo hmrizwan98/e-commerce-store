@@ -10,7 +10,7 @@ const ILLUSTRATIONS: Illustration[] = [
   {
     role: "Fashion retailer",
     quote:
-      "Launched with the Fashion Pro theme and had orders flowing within a day of provisioning - no developer needed.",
+      "Launched with the Fashion Pro theme and had orders coming in within a day of our store being set up - no developer needed.",
   },
   {
     role: "Restaurant & food delivery",
@@ -20,13 +20,13 @@ const ILLUSTRATIONS: Illustration[] = [
   {
     role: "Electronics store",
     quote:
-      "Multi-tenant isolation meant our catalog and customer data stayed fully separate from every other store on the platform.",
+      "Sending customers their courier tracking link on WhatsApp cut down the ‘where is my order?’ calls.",
   },
 ];
 
 function TestimonialsSection() {
   return (
-    <section className="container py-20 lg:py-28">
+    <section className="container py-16 lg:py-24">
       <div className="text-center max-w-2xl mx-auto mb-4 space-y-2">
         <h2 className="text-3xl sm:text-4xl font-extrabold text-neutral-900 dark:text-white tracking-tight">
           What store owners experience
@@ -36,7 +36,7 @@ function TestimonialsSection() {
         </p>
       </div>
 
-      <div className="mt-12 grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="mt-10 grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {ILLUSTRATIONS.map((item) => (
           <div
             key={item.role}

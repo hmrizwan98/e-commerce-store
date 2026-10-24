@@ -5,10 +5,10 @@ import { CheckIcon, ArrowRightIcon, BanknotesIcon, ShieldCheckIcon } from "@hero
 
 export const metadata: Metadata = {
   title: "Pricing — Webriiz Platform",
-  description: "Commission-based pricing for the Webriiz eCommerce SaaS platform - no flat license fee.",
+  description: "Simple Webriiz pricing: no setup fee and no monthly fee - a small commission only when you sell.",
   openGraph: {
     title: "Pricing — Webriiz Platform",
-    description: "Commission-based pricing for the Webriiz eCommerce SaaS platform - no flat license fee.",
+    description: "Simple Webriiz pricing: no setup fee and no monthly fee - a small commission only when you sell.",
     url: "/pricing",
     siteName: "Webriiz",
     type: "website",
@@ -16,21 +16,21 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Pricing — Webriiz Platform",
-    description: "Commission-based pricing - no flat license fee.",
+    description: "No setup fee and no monthly fee - a small commission only when you sell.",
   },
   alternates: { canonical: "/pricing" },
 };
 
 const INCLUDED = [
-  "Full Store Admin panel — products, inventory, orders, CRM, finance & CMS",
-  "Theme Builder with 4 production-ready starter themes",
-  "Drag-and-configure Homepage Builder and full custom page builder",
-  "Cloudinary-backed media pipeline for every product & banner asset",
-  "Tenant-isolated Firestore data with role-based access & audit logs",
-  "Fast, server-rendered Next.js hosting — zero servers to configure",
+  "Full Store Admin — products, stock, orders, customers, payments & pages",
+  "4 ready-made themes you can customise with your own colours and fonts",
+  "Homepage sections you can arrange yourself, plus your own custom pages",
+  "Cash on Delivery with order verification, bank transfer & JazzCash / EasyPaisa",
+  "Tracking links for 6+ Pakistani couriers & one-click WhatsApp order updates",
+  "Your own domain, fast hosting and optimized product photos — nothing to manage",
 ];
 
-const NO_FEES = ["Zero Setup Fee", "Zero Monthly Base Fee", "Zero Hidden Charges", "Zero Infrastructure Overhead"];
+const NO_FEES = ["Zero Setup Fee", "Zero Monthly Base Fee", "Zero Hidden Charges", "Zero Hosting Costs"];
 
 export default function PricingPage() {
   return (
@@ -38,13 +38,13 @@ export default function PricingPage() {
       <div className="text-center space-y-4">
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 text-xs font-semibold">
           <BanknotesIcon className="w-4 h-4 text-emerald-500" />
-          <span>Growth-Aligned Revenue Model</span>
+          <span>You only pay when you sell</span>
         </div>
         <h1 className="text-4xl sm:text-5xl font-extrabold text-neutral-900 dark:text-white tracking-tight leading-tight">
-          Simple, commission-based pricing
+          Simple pricing that grows with you
         </h1>
         <p className="text-base sm:text-lg text-neutral-600 dark:text-neutral-400 max-w-2xl mx-auto leading-relaxed">
-          We don&apos;t charge a flat monthly license fee to run your store. Each store configures a commission model with us (percentage, fixed per order, or custom) — so we only succeed when your store sells.
+          No monthly subscription to keep your store running. Instead, we agree a small commission with you (a percentage or a fixed amount per order) — so we only earn when your store sells.
         </p>
       </div>
 
@@ -52,7 +52,7 @@ export default function PricingPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 pb-8 border-b border-neutral-200/60 dark:border-neutral-800/60">
           <div>
             <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-primary-6000/10 text-primary-6000 border border-primary-6000/20">
-              Complete Platform Plan
+              One Complete Plan
             </span>
             <h2 className="font-extrabold text-2xl text-neutral-900 dark:text-white mt-2 tracking-tight">Everything Included</h2>
             <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">No feature-gated tiers or hidden add-ons.</p>
@@ -75,7 +75,7 @@ export default function PricingPage() {
 
         <div className="space-y-4">
           <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 font-mono">
-            Included with every tenant
+            Included with every store
           </h3>
           <ul className="grid sm:grid-cols-2 gap-4 text-sm text-neutral-700 dark:text-neutral-300">
             {INCLUDED.map((item) => (

@@ -104,7 +104,7 @@ export default function BookDemoModal() {
             </h2>
 
             <p className="text-sm text-slate-300 leading-relaxed font-normal">
-              Schedule a personalized 1-on-1 demo call to tour Store Admin, Super Admin, themes, and commission pricing live.
+              Schedule a personalized 1-on-1 demo call to see your Store Admin, themes, payments, courier tracking and pricing live.
             </p>
 
             <ul className="space-y-4 pt-2 text-xs text-slate-300 font-medium">
@@ -112,26 +112,26 @@ export default function BookDemoModal() {
                 <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
                   <BanknotesIcon className="w-4 h-4 text-emerald-400" />
                 </div>
-                <span className="mt-1">Zero setup fee — growth-aligned commission model</span>
+                <span className="mt-1">No setup or monthly fee — a small commission only when you sell</span>
               </li>
               <li className="flex items-start gap-3">
                 <div className="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center shrink-0">
                   <ShieldCheckIcon className="w-4 h-4 text-indigo-400" />
                 </div>
-                <span className="mt-1">Tenant-isolated Firestore data with full security audit trail</span>
+                <span className="mt-1">Your store data stays private to you, with a full activity log</span>
               </li>
               <li className="flex items-start gap-3">
                 <div className="w-8 h-8 rounded-lg bg-sky-500/10 border border-sky-500/20 flex items-center justify-center shrink-0">
                   <CloudIcon className="w-4 h-4 text-sky-400" />
                 </div>
-                <span className="mt-1">Dedicated Store Admin, 4 Instant Themes &amp; Cloudinary CDN</span>
+                <span className="mt-1">Easy Store Admin, 4 ready-made themes &amp; your own domain</span>
               </li>
             </ul>
           </div>
 
           <div className="relative pt-8 mt-6 border-t border-slate-800 text-[11px] text-slate-400 font-medium flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span>Dedicated engineering team ready to walk you through</span>
+            <span>Our team is ready to walk you through it</span>
           </div>
         </div>
 
@@ -191,7 +191,7 @@ export default function BookDemoModal() {
                   <div>
                     <label className={labelClass}>PHONE (OPTIONAL)</label>
                     <input
-                      placeholder="+1 (555) 000-0000"
+                      placeholder="0300 1234567"
                       className={inputClass}
                       value={form.phone}
                       onChange={(e) => setForm({ ...form, phone: e.target.value })}

@@ -7,12 +7,12 @@ export const PLATFORM_FAQS: PlatformFaq[] = [
   {
     question: "Is my store's data isolated from other stores?",
     answer:
-      "Yes. The platform is built on a multi-tenant architecture where every store's data is structurally separated - orders, customers, products, and finance records for one store are never visible to another.",
+      "Yes. Every store's data is kept completely separate - your orders, customers, products and sales are never visible to any other store.",
   },
   {
-    question: "What's the difference between Store Admin and Super Admin?",
+    question: "Who manages the platform behind my store?",
     answer:
-      "Store Admin is the panel you use to run your own store day-to-day - products, orders, customers, finance, content. Super Admin is the platform-operator panel used to provision new stores and oversee the whole platform.",
+      "You run your store day-to-day from your own dashboard - products, orders, customers, sales and content. The Webriiz team looks after the platform itself: setting up new stores, keeping everything running, and helping you when you need it.",
   },
   {
     question: "How does pricing work?",
@@ -26,7 +26,7 @@ export const PLATFORM_FAQS: PlatformFaq[] = [
   {
     question: "How are product images and media handled?",
     answer:
-      "Every image you upload is processed and delivered through Cloudinary automatically - you don't need to manage hosting or optimization yourself.",
+      "Every image you upload is resized and served quickly automatically - you don't need to manage hosting or image optimisation yourself.",
   },
   {
     question: "How do I get started?",

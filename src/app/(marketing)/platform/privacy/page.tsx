@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Privacy Policy — Webriiz Platform",
-  description: "Privacy policy for the Webriiz eCommerce SaaS platform website.",
+  description: "Privacy policy for the Webriiz online store builder website.",
   alternates: { canonical: "/privacy" },
   robots: { index: false, follow: true },
 };

@@ -6,7 +6,7 @@ import {
   BanknotesIcon,
   CheckCircleIcon,
   SparklesIcon,
-  CloudIcon,
+  PhotoIcon,
 } from "@heroicons/react/24/outline";
 
 function DashboardPreviewMockup() {
@@ -30,7 +30,7 @@ function DashboardPreviewMockup() {
         </div>
         <div className="flex items-center gap-2">
           <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-primary-6000/10 text-primary-6000 border border-primary-6000/20">
-            Tenant Isolated
+            Your Store
           </span>
         </div>
       </div>
@@ -44,7 +44,7 @@ function DashboardPreviewMockup() {
               <span>Gross Revenue</span>
               <BanknotesIcon className="w-4 h-4 text-emerald-500" />
             </div>
-            <div className="mt-2 text-lg sm:text-xl font-bold text-neutral-900 dark:text-white font-mono">$48,250</div>
+            <div className="mt-2 text-lg sm:text-xl font-bold text-neutral-900 dark:text-white font-mono">Rs 1,248,500</div>
             <div className="mt-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">+14.2% this month</div>
           </div>
 
@@ -68,11 +68,11 @@ function DashboardPreviewMockup() {
 
           <div className="p-3.5 rounded-xl border border-neutral-200/80 dark:border-neutral-800/80 bg-white dark:bg-neutral-950 shadow-xs">
             <div className="flex items-center justify-between text-neutral-500 dark:text-neutral-400 text-xs font-medium">
-              <span>Cloudinary CDN</span>
-              <CloudIcon className="w-4 h-4 text-primary-6000" />
+              <span>Product Photos</span>
+              <PhotoIcon className="w-4 h-4 text-primary-6000" />
             </div>
-            <div className="mt-2 text-lg sm:text-xl font-bold text-neutral-900 dark:text-white font-mono">Auto-Optimized</div>
-            <div className="mt-1 text-[11px] font-semibold text-primary-6000">100% WebP delivery</div>
+            <div className="mt-2 text-lg sm:text-xl font-bold text-neutral-900 dark:text-white font-mono">Optimized</div>
+            <div className="mt-1 text-[11px] font-semibold text-primary-6000">Fast on mobile data</div>
           </div>
         </div>
 
@@ -83,7 +83,7 @@ function DashboardPreviewMockup() {
               <span className="flex items-center gap-1.5">
                 <ChartBarIcon className="w-4 h-4 text-primary-6000" /> Revenue & Orders Growth
               </span>
-              <span className="text-[11px] text-neutral-400 font-mono">Real-time telemetry</span>
+              <span className="text-[11px] text-neutral-400 font-mono">Live overview</span>
             </div>
             {/* Chart Graphic */}
             <div className="flex items-end gap-2 h-28 pt-2 px-1">
@@ -128,34 +128,34 @@ function DashboardPreviewMockup() {
 
 export default function DashboardPreview() {
   return (
-    <section className="relative container py-20 lg:py-28">
-      <div className="grid lg:grid-cols-12 gap-12 items-center">
+    <section className="relative container py-16 lg:py-24">
+      <div className="grid lg:grid-cols-12 gap-10 lg:gap-12 items-center">
         <div className="lg:col-span-5 space-y-6">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
-            Store Admin & Super Admin Control
+            Store Admin
           </div>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-neutral-900 dark:text-white tracking-tight leading-tight">
             Run your store from one dedicated panel
           </h2>
           <p className="text-base text-neutral-700 dark:text-neutral-300 leading-relaxed">
-            Every store owner gets a dedicated, tenant-isolated Store Admin panel for day-to-day operations, paired with Super Admin control for platform operators.
+            Your Store Admin is where you run the business every day - products, orders, customers, payments and your store&apos;s design, all in one place and private to you.
           </p>
           <ul className="space-y-3.5 text-sm text-neutral-700 dark:text-neutral-300">
             <li className="flex items-start gap-3">
               <CheckCircleIcon className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
-              <span>Real-time order tracking, financial ledgers, customer lifetime analytics</span>
+              <span>See every order, payment and customer at a glance - including repeat buyers and sales totals</span>
             </li>
             <li className="flex items-start gap-3">
               <CheckCircleIcon className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
-              <span>Catalog management with variants, SKUs, inventory alerts and collections</span>
+              <span>Add products with sizes, colours and stock levels, and get alerts before you run out</span>
             </li>
             <li className="flex items-start gap-3">
               <CheckCircleIcon className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
-              <span>Drag-and-configure Homepage Builder & full custom page CMS</span>
+              <span>Arrange your homepage sections and add your own pages - no coding</span>
             </li>
             <li className="flex items-start gap-3">
               <CheckCircleIcon className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
-              <span>Cloudinary-powered media upload pipeline with auto WebP optimization</span>
+              <span>Upload photos once - they&apos;re automatically optimized for fast loading</span>
             </li>
           </ul>
         </div>

@@ -1233,15 +1233,15 @@ export const KNOWLEDGE_REGISTRY: KnowledgeEntry[] = [
     id: "commission_settings",
     title: "Commission Settings",
     category: "settings",
-    keywords: ["commission", "commission rate", "commission type", "platform fee"],
+    keywords: ["commission", "commission rate", "commission type", "platform fee", "change commission", "commission request"],
     navigationPath: ["Settings", "Commission"],
     route: "/admin/settings",
     actionLabel: "Open Settings",
     instructionsUrdu:
-      "**Settings → Commission** mein **Commission type** chunein: **No commission (0%)**, **Percentage (%)** ya **Fixed amount**, aur raqam likh kar **Save Changes** dabayein. Jab order **Paid** mark hota hai to commission hisaab ho kar **Sales → Finance** ke ledger aur **Commission** card mein dikhta hai.",
+      "Commission rate platform (Webriiz) set karta hai - aap khud change nahi kar sakte. **Settings → Commission** mein **Current commission** dikhta hai. Change chahiye to **Request a change** mein **Type**, rate aur **Reason** likh kar **Send request for approval** dabayein; approve hone tak purana rate hi lagta hai. Jab order **Paid** mark hota hai to us waqt ka rate us payment ke saath save hota hai aur **Sales → Finance** ke ledger aur **Commission** card mein dikhta hai. Refund par commission bhi usi hisaab se wapas hota hai.",
     instructionsEnglish:
-      "In **Settings → Commission** choose the **Commission type**: **No commission (0%)**, **Percentage (%)** or **Fixed amount**, enter the value and click **Save Changes**. When an order is marked **Paid**, the commission is calculated and shown in the **Sales → Finance** ledger and **Commission** card.",
-    exampleQuestions: ["Commission kahan set hota hai?", "How is commission calculated?"],
+      "Your commission rate is set by the platform (Webriiz) - you can't change it yourself. **Settings → Commission** shows the **Current commission**. To ask for a change, fill **Type**, the rate and a **Reason** under **Request a change** and click **Send request for approval**; the old rate stays until it's approved. When an order is marked **Paid**, the rate in force at that moment is saved with the payment and shown in the **Sales → Finance** ledger and **Commission** card. Refunds return commission proportionally.",
+    exampleQuestions: ["Commission kahan set hota hai?", "How is commission calculated?", "Commission rate kaise change karun?"],
   },
   {
     id: "seo_settings",
@@ -1381,16 +1381,16 @@ export const KNOWLEDGE_REGISTRY: KnowledgeEntry[] = [
   },
   {
     id: "backup_settings",
-    title: "Backup & Restore (not available yet)",
+    title: "Backup & Restore (by request)",
     category: "settings",
     keywords: ["backup", "back up", "restore backup", "data backup", "export snapshot", "import snapshot", "data export"],
     navigationPath: ["Settings", "Backup"],
     route: "/admin/settings",
     actionLabel: "Open Settings",
     instructionsUrdu:
-      "**Settings → Backup** mein **Request Export Snapshot / Request Import Snapshot** buttons abhi sirf request record karte hain (history mein 'queued') - koi backup file nahi banti aur kuch restore nahi hota. Ye feature abhi available nahi.",
+      "**Settings → Backup** mein **Request Export Snapshot / Request Import Snapshot** se platform team ko request jati hai. History mein status dikhta hai: **Pending review**, **Approved - in progress**, **Rejected** ya **Completed**. Button khud koi file nahi banata aur kuch restore nahi karta - backup platform team manually tayyar karti hai.",
     instructionsEnglish:
-      "In **Settings → Backup**, **Request Export Snapshot / Request Import Snapshot** only record a request for now (shown as 'queued' in history) - no backup file is created and nothing is restored. This feature isn't available yet.",
+      "In **Settings → Backup**, **Request Export Snapshot / Request Import Snapshot** sends a request to the platform team. History shows its status: **Pending review**, **Approved - in progress**, **Rejected** or **Completed**. The button itself doesn't create a file or restore anything - the platform team prepares the backup manually.",
     exampleQuestions: ["Store ka backup kaise lun?", "How do I back up my store data?"],
   },
   {

@@ -11,68 +11,68 @@ interface FeatureComparison {
 
 const COMPARISONS: FeatureComparison[] = [
   {
-    feature: "Monthly Base Platform Fee",
+    feature: "Monthly Platform Fee",
     category: "Cost & Pricing",
-    webriiz: "Growth Aligned / Flat Low Fee",
+    webriiz: "Rs 0 - commission on sales only",
     shopify: "$39 - $399 / mo",
     wooCommerce: "Free (Paid Hosting $25+/mo)",
   },
   {
     feature: "Transaction Fees",
     category: "Cost & Pricing",
-    webriiz: "0% Hidden Fees",
+    webriiz: "No hidden fees",
     shopify: "0.5% - 2.0% per sale",
     wooCommerce: "Varies by plugin",
   },
   {
-    feature: "Native Pakistani Couriers Tracking (`/order-tracking`)",
-    category: "Pakistani Ecosystem",
+    feature: "Pakistani courier tracking on your store",
+    category: "Selling in Pakistan",
     webriiz: true,
     shopify: false,
     wooCommerce: false,
   },
   {
-    feature: "Pre-configured JazzCash & EasyPaisa Checkout",
-    category: "Pakistani Ecosystem",
+    feature: "JazzCash / EasyPaisa & bank transfer with payment proof",
+    category: "Selling in Pakistan",
     webriiz: true,
     shopify: false,
     wooCommerce: false,
   },
   {
-    feature: "Direct WhatsApp Order Notifications & Share",
-    category: "Pakistani Ecosystem",
+    feature: "One-click WhatsApp order updates",
+    category: "Selling in Pakistan",
     webriiz: true,
     shopify: "Requires $15/mo App",
     wooCommerce: "Requires Paid Plugin",
   },
   {
-    feature: "Full Multi-Tenant Super Admin (`/superadmin`)",
-    category: "Platform Architecture",
+    feature: "COD order verification before shipping",
+    category: "Selling in Pakistan",
     webriiz: true,
-    shopify: "Plus Only ($2,000/mo)",
-    wooCommerce: false,
+    shopify: "Requires Paid App",
+    wooCommerce: "Requires Paid Plugin",
   },
   {
-    feature: "1-Click Store Impersonation & Cloning",
-    category: "Platform Architecture",
+    feature: "Store set up with you by our team",
+    category: "Support",
     webriiz: true,
-    shopify: false,
-    wooCommerce: false,
+    shopify: "Paid Experts",
+    wooCommerce: "Hire a Developer",
   },
   {
-    feature: "Page Load Speed & Cloudinary CDN Optimization",
+    feature: "Fast pages & automatic image optimization",
     category: "Performance",
-    webriiz: "Next.js 14 App Router + Cloudinary",
-    shopify: "Liquid Engine (Variable)",
-    wooCommerce: "Slow PHP Server dependent",
+    webriiz: "Built in",
+    shopify: "Varies by theme & apps",
+    wooCommerce: "Depends on your hosting",
   },
 ];
 
 function ComparisonMatrix() {
   return (
-    <section className="container py-20 lg:py-28 max-w-5xl mx-auto px-4">
+    <section className="container py-16 lg:py-24 max-w-5xl mx-auto px-4">
       {/* Section Header */}
-      <div className="text-center max-w-2xl mx-auto mb-16 space-y-4">
+      <div className="text-center max-w-2xl mx-auto mb-12 lg:mb-14 space-y-4">
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-primary-6000/20 bg-primary-6000/10 text-primary-700 dark:text-primary-300 text-xs font-semibold">
           <span>⚡ Platform Comparison</span>
         </div>
@@ -80,7 +80,7 @@ function ComparisonMatrix() {
           How we compare to generic store builders
         </h2>
         <p className="text-base sm:text-lg text-neutral-700 dark:text-neutral-300">
-          See why Pakistani brands and multi-store operators choose Webriiz over Shopify and WooCommerce.
+          See why Pakistani small businesses choose Webriiz over Shopify and WooCommerce.
         </p>
       </div>
 

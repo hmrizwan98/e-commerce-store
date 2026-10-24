@@ -5,10 +5,10 @@ import { EnvelopeIcon, SparklesIcon, CalendarIcon } from "@heroicons/react/24/ou
 
 export const metadata: Metadata = {
   title: "Contact — Webriiz Platform",
-  description: "Get in touch with the Webriiz eCommerce SaaS platform team.",
+  description: "Get in touch with the Webriiz team - questions about setting up your online store, pricing or a demo.",
   openGraph: {
     title: "Contact — Webriiz Platform",
-    description: "Get in touch with the Webriiz eCommerce SaaS platform team.",
+    description: "Get in touch with the Webriiz team - questions about setting up your online store, pricing or a demo.",
     url: "/contact",
     siteName: "Webriiz",
     type: "website",
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Contact — Webriiz Platform",
-    description: "Get in touch with the Webriiz eCommerce SaaS platform team.",
+    description: "Get in touch with the Webriiz team - questions about setting up your online store, pricing or a demo.",
   },
   alternates: { canonical: "/contact" },
 };

@@ -13,7 +13,6 @@ import {
   getNotificationsSettings,
   getAdvancedSettings,
   getAnalyticsSettings,
-  getCommissionSettings,
   getTaxSettings,
 } from "@/lib/firebase/repositories/site-settings";
 import { getBackupHistory } from "@/lib/firebase/repositories/backup-history";
@@ -21,6 +20,7 @@ import SettingsPageClient from "./SettingsPageClient";
 import { requireCurrentTenant } from "@/lib/tenant/current";
 import { getStoreById } from "@/lib/firebase/repositories/stores";
 import { getCustomDomainView } from "@/lib/domains/custom-domain-service";
+import { getEffectiveCommissionPolicy, getPendingCommissionRequest } from "@/lib/finance/commission-service";
 
 export const dynamic = "force-dynamic";
 
@@ -40,7 +40,6 @@ export default async function AdminSettingsPage() {
     advanced,
     analytics,
     backupHistory,
-    commission,
     tax,
     store,
   ] = await Promise.all([
@@ -58,11 +57,17 @@ export default async function AdminSettingsPage() {
     getAdvancedSettings(),
     getAnalyticsSettings(),
     getBackupHistory(),
-    getCommissionSettings(),
     getTaxSettings(),
     // Fresh read (not the request-memoized tenant) so the domain status is current.
     requireCurrentTenant().then((t) => getStoreById(t.id)),
   ]);
+
+  const commissionStoreId = store?.id ?? (await requireCurrentTenant()).id;
+  const [effectiveCommission, pendingCommission] = await Promise.all([
+    getEffectiveCommissionPolicy(commissionStoreId, store),
+    getPendingCommissionRequest(commissionStoreId),
+  ]);
+  const commissionState = { effective: effectiveCommission, pending: pendingCommission };
 
   return (
     <div className="space-y-6">
@@ -92,7 +97,7 @@ export default async function AdminSettingsPage() {
         advanced={advanced}
         analytics={analytics}
         backupHistory={backupHistory}
-        commission={commission}
+        commissionState={commissionState}
         tax={tax}
         domain={getCustomDomainView(store ?? (await requireCurrentTenant()))}
       />

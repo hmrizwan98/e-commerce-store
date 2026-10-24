@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Terms of Service — Webriiz Platform",
-  description: "Terms of service for the Webriiz eCommerce SaaS platform website.",
+  description: "Terms of service for the Webriiz online store builder website.",
   alternates: { canonical: "/terms" },
   robots: { index: false, follow: true },
 };

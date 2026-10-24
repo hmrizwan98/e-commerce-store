@@ -217,8 +217,13 @@ export default async function AdminOrderDetailPage({ params }: { params: { id: s
         </div>
       </div>
 
+      {/* Print page setup for the invoice only: A4 with zero page margin, which stops the browser
+          from adding its own date / title / URL header and footer; the spacing comes from the
+          invoice's own padding instead. Rendered only on this page, so other pages print as before. */}
+      <style>{`@media print { @page { size: A4; margin: 0; } html, body { background: #fff !important; } }`}</style>
+
       {/* DEDICATED PRINT-ONLY COMMERCIAL INVOICE RECEIPT */}
-      <div className="hidden print:block p-8 bg-white text-slate-900 font-sans max-w-2xl mx-auto border border-slate-300 rounded-xl">
+      <div className="invoice-print hidden print:block p-8 print:p-[14mm] bg-white text-slate-900 font-sans max-w-2xl print:max-w-none mx-auto border border-slate-300 print:border-0 rounded-xl">
         <div className="flex justify-between items-start border-b border-slate-300 pb-6 mb-6">
           <div>
             <h1 className="text-2xl font-black tracking-tight text-slate-900">{general.storeName || "Store Invoice"}</h1>
@@ -267,7 +272,7 @@ export default async function AdminOrderDetailPage({ params }: { params: { id: s
           </thead>
           <tbody className="divide-y divide-slate-200">
             {order.items.map((item, idx) => (
-              <tr key={idx}>
+              <tr key={idx} className="break-inside-avoid">
                 <td className="py-2.5 px-3 font-semibold text-slate-800">{item.name}</td>
                 <td className="py-2.5 px-3 text-center font-mono">{item.quantity}</td>
                 <td className="py-2.5 px-3 text-right font-mono">{formatMoney(item.unitPrice, general)}</td>
@@ -277,7 +282,7 @@ export default async function AdminOrderDetailPage({ params }: { params: { id: s
           </tbody>
         </table>
 
-        <div className="flex justify-end text-xs mb-8">
+        <div className="flex justify-end text-xs mb-8 break-inside-avoid">
           <div className="w-60 space-y-1.5 border-t border-slate-300 pt-3">
             <div className="flex justify-between text-slate-600">
               <span>Subtotal:</span>
@@ -287,6 +292,12 @@ export default async function AdminOrderDetailPage({ params }: { params: { id: s
               <span>Shipping Fee:</span>
               <span className="font-mono">{formatMoney(order.shippingCost, general)}</span>
             </div>
+            {order.tax ? (
+              <div className="flex justify-between text-slate-600">
+                <span>Tax:</span>
+                <span className="font-mono">{formatMoney(order.tax, general)}</span>
+              </div>
+            ) : null}
             <div className="flex justify-between text-slate-900 font-extrabold text-sm border-t-2 border-slate-900 pt-2">
               <span>Total Amount:</span>
               <span className="font-mono">{formatMoney(order.total, general)}</span>

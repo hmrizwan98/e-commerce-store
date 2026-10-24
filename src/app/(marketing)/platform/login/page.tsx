@@ -50,7 +50,7 @@ export default function PlatformLoginGatewayPage() {
             </div>
             <h2 className="font-extrabold text-2xl text-neutral-900 dark:text-white mb-2 tracking-tight">Store Admin</h2>
             <p className="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed">
-              For merchant store owners to manage products, orders, inventory, customers, themes, and financial ledgers.
+              For store owners to manage products, orders, stock, customers, themes and payments.
             </p>
           </div>
 
@@ -70,7 +70,7 @@ export default function PlatformLoginGatewayPage() {
             </div>
             <h2 className="font-extrabold text-2xl text-neutral-900 dark:text-white mb-2 tracking-tight">Super Admin</h2>
             <p className="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed">
-              For platform operators to provision store tenants, manage custom domains, oversee platform revenue, and audit system logs.
+              For the Webriiz team to set up stores, connect custom domains and support store owners.
             </p>
           </div>
 

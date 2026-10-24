@@ -64,7 +64,7 @@ export default function BookDemoForm() {
         <div>
           <label className={labelClass}>Phone (optional)</label>
           <input
-            placeholder="+1 (555) 000-0000"
+            placeholder="0300 1234567"
             className={inputClass}
             value={form.phone}
             onChange={(e) => setForm({ ...form, phone: e.target.value })}

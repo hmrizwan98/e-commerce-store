@@ -105,3 +105,29 @@ h1, h2, h3, h4, h5, h6 {
     animation: none;
   }
 }
+
+/* Marketing site (src/components/marketing/*) - hero word reveal + hero fade-up.
+ * Pure CSS so it runs without JS/hydration; only opacity/transform animate, so
+ * the final layout is reserved from the first paint (no layout shift). */
+@keyframes mkt-word-in {
+  from { opacity: 0; transform: translateY(0.35em); filter: blur(4px); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+@keyframes mkt-fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: none; }
+}
+.mkt-word {
+  display: inline-block;
+  animation: mkt-word-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.mkt-fade-up {
+  animation: mkt-fade-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mkt-word,
+  .mkt-fade-up {
+    animation: none;
+  }
+}

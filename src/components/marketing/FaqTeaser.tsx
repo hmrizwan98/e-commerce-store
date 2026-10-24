@@ -7,13 +7,13 @@ export default function FaqTeaser() {
   const data = PLATFORM_FAQS.slice(0, 4).map((f) => ({ name: f.question, content: f.answer }));
 
   return (
-    <section className="container py-20 lg:py-28 max-w-3xl mx-auto">
+    <section className="container py-16 lg:py-24 max-w-3xl mx-auto">
       <div className="text-center mb-12 space-y-3">
         <h2 className="text-3xl sm:text-4xl font-extrabold text-neutral-900 dark:text-white tracking-tight">
           Common questions
         </h2>
         <p className="text-base text-neutral-700 dark:text-neutral-300">
-          Everything you need to know about store provisioning, themes, and platform hosting.
+          Quick answers about getting your store set up, themes, pricing and your own domain.
         </p>
       </div>
       <div className="p-6 sm:p-8 rounded-3xl border border-neutral-200/80 dark:border-neutral-800/80 bg-white/70 dark:bg-neutral-900/70 backdrop-blur-sm shadow-sm">
@@ -24,7 +24,7 @@ export default function FaqTeaser() {
           href={"/faq" as any}
           className="inline-flex items-center gap-1.5 font-semibold text-primary-6000 hover:text-indigo-600 transition-colors group"
         >
-          <span>View all platform FAQs</span>
+          <span>View all FAQs</span>
           <ArrowRightIcon className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
         </Link>
       </div>

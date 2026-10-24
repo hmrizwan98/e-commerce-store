@@ -106,11 +106,11 @@ export async function generateMetadata(): Promise<Metadata> {
     return {
       metadataBase: new URL(PLATFORM_SITE_URL),
       title: {
-        default: "Webriiz Platform - Multi-Tenant E-Commerce SaaS for Pakistan & Global Brands",
+        default: "Webriiz Platform - Online Store Builder for Pakistan & Global Brands",
         template: "%s | Webriiz Platform",
       },
-      description: "Launch your online store with local payments (JazzCash, EasyPaisa, COD), 6+ Pakistani courier tracking (PostEx, CallCourier, Trax, TCS, Leopard, M&P), isolated multi-tenant architecture, and Next.js 14 speed with 0% transaction fees.",
-      keywords: ["e-commerce SaaS", "Pakistan e-commerce", "multi-tenant store builder", "JazzCash payment gateway", "EasyPaisa payment", "PostEx tracking", "CallCourier tracking", "Trax tracking", "TCS tracking", "Leopard tracking", "M&P courier tracking", "WhatsApp order updates", "Webriiz"],
+      description: "Launch your online store with local payments (Cash on Delivery, bank transfer, JazzCash / EasyPaisa), 6+ Pakistani courier tracking (TCS, PostEx, Trax, Leopards, CallCourier, Couriers Next), WhatsApp order updates and your own domain - no setup or monthly fee.",
+      keywords: ["e-commerce SaaS", "Pakistan e-commerce", "online store builder Pakistan", "JazzCash payments", "EasyPaisa payments", "cash on delivery store", "PostEx tracking", "CallCourier tracking", "Trax tracking", "TCS tracking", "Leopards tracking", "Couriers Next tracking", "WhatsApp order updates", "Webriiz"],
       alternates: {
         canonical: PLATFORM_SITE_URL,
       },
@@ -118,14 +118,14 @@ export async function generateMetadata(): Promise<Metadata> {
         type: "website",
         locale: "en_US",
         url: PLATFORM_SITE_URL,
-        title: "Webriiz - Multi-Tenant E-Commerce SaaS for Pakistan & Global Brands",
-        description: "Launch your online store with local payments, 6+ courier tracking, isolated multi-tenant architecture, and Next.js 14 speed with 0% transaction fees.",
+        title: "Webriiz - Online Store Builder for Pakistan & Global Brands",
+        description: "Launch your online store with local payments, 6+ Pakistani courier tracking, WhatsApp order updates and your own domain - no setup or monthly fee.",
         siteName: "Webriiz Platform",
       },
       twitter: {
         card: "summary_large_image",
-        title: "Webriiz - Multi-Tenant E-Commerce SaaS",
-        description: "Launch your online store with local payments, 6+ courier tracking, and Next.js 14 speed with 0% transaction fees.",
+        title: "Webriiz - Online Store Builder for Pakistan",
+        description: "Launch your online store with local payments, 6+ courier tracking and WhatsApp order updates - no setup or monthly fee.",
       },
       robots: {
         index: true,

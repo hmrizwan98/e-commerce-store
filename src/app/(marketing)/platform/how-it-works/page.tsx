@@ -5,10 +5,10 @@ import { ArrowRightIcon, SparklesIcon } from "@heroicons/react/24/outline";
 
 export const metadata: Metadata = {
   title: "How It Works — Webriiz Platform",
-  description: "How a store gets provisioned and run on the Webriiz eCommerce SaaS platform.",
+  description: "From demo to your first order: how Webriiz sets up your online store and how you run it day to day.",
   openGraph: {
     title: "How It Works — Webriiz Platform",
-    description: "How a store gets provisioned and run on the Webriiz eCommerce SaaS platform.",
+    description: "From demo to your first order: how Webriiz sets up your online store and how you run it day to day.",
     url: "/how-it-works",
     siteName: "Webriiz",
     type: "website",
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "How It Works — Webriiz Platform",
-    description: "How a store gets provisioned and run on the Webriiz eCommerce SaaS platform.",
+    description: "From demo to your first order: how Webriiz sets up your online store and how you run it day to day.",
   },
   alternates: { canonical: "/how-it-works" },
 };
@@ -27,28 +27,28 @@ const STEPS: { num: string; title: string; description: string; tag: string }[] 
     tag: "Walkthrough",
     title: "Book a personalized demo",
     description:
-      "Tell us about your retail business and goals. We'll walk you through Store Admin & Super Admin, answer technical questions, and discuss your commission structure.",
+      "Tell us about your retail business and goals. We'll show you how your store would work, answer your questions, and agree a commission that fits your business.",
   },
   {
     num: "02",
-    tag: "Super Admin",
-    title: "Tenant provisioning",
+    tag: "Store Setup",
+    title: "We set up your store",
     description:
-      "Our Super Admin provisions a dedicated, fully isolated tenant boundary for your store — complete with isolated data rules, Cloudinary media folder, and custom domain configuration.",
+      "Our team creates your store for you — with its own private data, image storage and your custom domain connected — so it's ready for you to fill in.",
   },
   {
     num: "03",
     tag: "Store Admin",
     title: "Pick a theme & setup catalog",
     description:
-      "Choose from four production-ready starter themes, configure your colors/typography, upload products and categories, and configure shipping & payment integrations.",
+      "Choose one of four ready-made themes, set your colours and fonts, add your products and categories, and turn on the payment methods and delivery options you want.",
   },
   {
     num: "04",
     tag: "Live Launch",
-    title: "Launch & scale daily operations",
+    title: "Launch and start selling",
     description:
-      "Open your store to customers: track real-time orders, manage fulfillment, monitor customer CRM data, and track net sales & commission payouts in your financial ledger.",
+      "Open your store to customers: confirm and pack orders, share courier tracking on WhatsApp, follow your customers and repeat buyers, and see your sales and payouts in one place.",
   },
 ];
 
@@ -62,10 +62,10 @@ export default function HowItWorksPage() {
           <span>Simple 4-Step Journey</span>
         </div>
         <h1 className="text-4xl sm:text-5xl font-extrabold text-neutral-900 dark:text-white tracking-tight leading-tight">
-          How the platform works
+          How Webriiz works
         </h1>
         <p className="text-base sm:text-lg text-neutral-600 dark:text-neutral-400 max-w-xl mx-auto leading-relaxed">
-          From initial walkthrough to live merchant operations — zero server management required.
+          From your first demo call to your first order — no technical setup on your side.
         </p>
       </div>
 

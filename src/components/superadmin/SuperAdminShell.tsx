@@ -14,7 +14,9 @@ import {
   ArrowRightOnRectangleIcon,
   ShieldCheckIcon,
   Cog6ToothIcon,
+  BellIcon,
 } from "@heroicons/react/24/outline";
+import NotificationBell from "./NotificationBell";
 
 interface NavItem {
   href: string;
@@ -38,7 +40,10 @@ const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
   },
   {
     title: "PLATFORM",
-    items: [{ href: "/settings", label: "Platform Settings", icon: Cog6ToothIcon }],
+    items: [
+      { href: "/notifications", label: "Notifications", icon: BellIcon },
+      { href: "/settings", label: "Platform Settings", icon: Cog6ToothIcon },
+    ],
   },
   {
     title: "PUBLIC PLATFORM",
@@ -182,6 +187,7 @@ export default function SuperAdminShell({
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
+            <NotificationBell />
             {email && <span className="text-xs font-semibold text-white/90 bg-white/15 px-3 py-1.5 rounded-lg">{email}</span>}
           </div>
         </header>
