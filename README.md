@@ -2532,6 +2532,97 @@ general settings, products and other subcollections still work. **Deploy with
 `firebase deploy --only firestore:rules`.** (The emulator needs Java 21 for current
 firebase-tools; firebase-tools 13.x works with Java 17.)
 
+## Theme Customizer: Global Settings (audit & wiring)
+
+### How a setting reaches the storefront
+
+- **Data flow:** Customizer tab → draft (`stores/{id}/themeSettings/draft`) → **Publish Live** →
+  `themeSettings/active`. The resolver merges the saved values over the preset
+  (`theme-repository.ts`).
+- **CSS-backed settings:** compiled to CSS variables by `theme-compiler.ts`. The root layout
+  injects them, and so does the editor preview through `ThemePreviewStyleSync`.
+- **Component settings:** read as props by the storefront components.
+- **Editor preview:**
+  - Colours, fonts, spacing, buttons, cards and dark mode update instantly via postMessage.
+  - Every other change saves the draft about 1.2 s after the last edit and reloads the
+    preview (`lib/theme/preview-reload.ts`). The live store is unchanged until Publish.
+- **Same components as the storefront:** the preview now renders the real `AnnouncementBar`,
+  `SiteHeader` (store name/logo) and `Footer` and the real collection page
+  (`components/collection/CollectionPageView.tsx`), fed with the draft.
+- **Precedence:** Global Settings are the defaults. Page-level settings (homepage section
+  `cardVariant`, collection/product built-in sections) override only their own property.
+
+### Fixes in this pass (root causes)
+
+- **Fonts:** `var(${font.variable})` used next/font's generated class name as if it were a
+  CSS variable, so heading fonts never applied. Fixed by adding `cssVar` names to `FONT_PRESETS`
+  and a `body { font-family: var(--font-body) }` rule. The preview also loads every font class.
+- **Base font size / line height:** the `text-base` class on `<body>` overrode them. It is
+  removed, and line height is now ratio × base size, so inherited line heights stay exactly
+  as before.
+- **Buttons:**
+  - Padding, height and weight use marker classes (`nc-btn-theme-size`/`-weight`). The
+    compiler emits override rules for them only when values differ from the defaults
+    (24×14 px, 44 px, weight 500); the border rule is emitted only when the border is on. An
+    untouched theme is pixel-identical.
+  - Buttons with a custom `sizeClass`/`fontSize` keep their own sizes.
+- **Layout:**
+  - Container width applies at 1280 px and wider.
+  - Section padding/margin apply to the homepage (phones get ⅔).
+  - Grid gap applies to collection, category, search, brand and collection-2 listings
+    (`lib/theme/grid.ts`). The default reproduces the old gaps exactly.
+- **Cards:** new opt-in toggle `cards.applyToProductCards`, default off. Each product card
+  design keeps its own look. When on, radius, shadow, border and spacing are applied through
+  `.theme-card-slot` (a `display: contents` wrapper, so no layout change).
+- **Dark mode:**
+  - Shopper switches show only when the theme enables it (`<html data-dark-mode>`).
+  - `darkColors.primary` now drives the dark primary scale.
+  - The body uses the theme's dark colours (default = old neutral-900/200).
+- **Collection & Grid:**
+  - "Show filters", "Show sorting" and "Products per page" now work.
+  - Desktop/mobile columns also apply to category/search/brand once set explicitly.
+  - The tab's default columns now match the store (3).
+- **Product cards:**
+  - "Sleek Pill" is listed.
+  - Options a design doesn't render are disabled ("Not part of this card design").
+  - Sleek Pill respects wishlist and badge position.
+- **Product detail:**
+  - The wishlist toggle works on Minimal, Bold and Luxury.
+  - Purchase panel: Standard = scrolls, Sticky = sticky, Compact = not sticky and tighter.
+    Defaults per design are unchanged.
+- **Cart:** "Item layout" works on the Minimal and Luxury cart pages too.
+- **Popup:** "Style" now changes the layout (centre / bottom slide / full overlay). Exit-intent
+  uses `mouseout`, with a scroll-up fallback on touch devices. The preview keeps its own
+  "seen" state.
+- **Menus:** a deliberately emptied menu stays empty (`getMenuOrNull`/`fetchMenu` → `null`
+  only when the menu was never saved). The Navigation tab says it saves live.
+- **Page sections:** the collection/product built-in sections stay in sync with
+  `showBottomPromo`/`showFeaturedSection`/`showRelatedProducts`. Extra added sections and
+  their order are not rendered yet (noted in the editor).
+- **Theme repository:**
+  - The legacy Branding fallback is shared by the draft and live resolvers.
+  - Presets are no longer mutated (they were shared across tenants per server instance).
+  - A Branding font is applied only if it is a loadable font.
+
+### Data change made to keep today's look (one-off)
+
+These settings were saved but not applied before. Glamix and Hafiz Traderz (active + draft)
+and the presets were set to the values that reproduce the current look:
+
+- line height 1.5
+- heading font = body font (Work Sans)
+- button min-height 44, padding-x 24, border off
+- dark primary = primary, dark background `#171717`
+
+A field was changed only if it still held the old preset default. A computed-style comparison
+of Glamix (home, collection, product and cart pages at 1440/1600/390 px; old build vs new
+build) showed no differences other than build-hash class names.
+
+### Not used by the current designs
+
+- Secondary and Accent colours, and Layout → Animation speed (labelled in the editor).
+- Heading weight is overridden where a component sets its own `font-*` class.
+
 ## Tests
 
 Plain `node:test` scripts run with `tsx` (no test framework needed):
@@ -2543,6 +2634,7 @@ npx tsx --test scripts/test-ui-helpers.ts           # address mapping, NativeSel
 npx tsx --test scripts/test-store-assistant.ts      # assistant answers + registry structure
 npx tsx --test scripts/test-commission.ts           # commission policy, refunds, ledger netting, trends
 npx tsx --test scripts/test-notifications-checkout.ts # store notifications, poller cleanup, saved addresses
+npx tsx --test scripts/test-theme-settings.ts       # theme compiler, zero-diff defaults, preview reload rules, grids, fonts
 npx tsc --noEmit && npm run build
 ```
 

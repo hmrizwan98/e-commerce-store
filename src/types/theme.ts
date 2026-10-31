@@ -86,6 +86,9 @@ export interface ThemeButtons {
 }
 
 export interface ThemeCards {
+  /** Apply radius/shadow/border/spacing below to product cards. Off (default) = each product
+   * card style keeps its own design. */
+  applyToProductCards?: boolean;
   radius?: RadiusSize;
   shadow?: ShadowLevel;
   border?: boolean;

@@ -65,6 +65,9 @@ export default function SleekPillCard({ data, className = "", productCardSetting
   const mainImage = safeImageSrc(images[0]);
   const secondaryImage = images[1] ? safeImageSrc(images[1]) : undefined;
   const showSecondaryImageOnHover = (productCardSettings?.showSecondaryImageOnHover ?? true) && Boolean(secondaryImage);
+  const showWishlist = productCardSettings?.showWishlist ?? true;
+  // Badge position setting; the heart button sits on the opposite corner.
+  const badgeRight = productCardSettings?.badgePosition === "top-right";
 
   // Derive color swatches dynamically from product attributes or colorFacets
   const colorAttr = attributes.find((a) => a.type === "color" || a.name.toLowerCase() === "color");
@@ -137,12 +140,13 @@ export default function SleekPillCard({ data, className = "", productCardSetting
           )} bg-slate-100/80 dark:bg-slate-800/60 rounded-3xl overflow-hidden p-6 flex items-center justify-center transition-all duration-300 group-hover:bg-slate-200/70 dark:group-hover:bg-slate-800/90`}
         >
           {/* Badge Top Left */}
-          <div className="absolute top-3.5 start-3.5 z-10">{renderBadge()}</div>
+          <div className={`absolute top-3.5 ${badgeRight ? "end-3.5" : "start-3.5"} z-10`}>{renderBadge()}</div>
 
-          {/* Heart Wishlist Button Top Right */}
+          {/* Heart Wishlist Button (opposite the badge) */}
+          {showWishlist && (
           <button
             type="button"
-            className="absolute top-3.5 end-3.5 z-10 w-9 h-9 rounded-full bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 shadow-sm flex items-center justify-center transition-transform hover:scale-110 active:scale-95"
+            className={`absolute top-3.5 ${badgeRight ? "start-3.5" : "end-3.5"} z-10 w-9 h-9 rounded-full bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 shadow-sm flex items-center justify-center transition-transform hover:scale-110 active:scale-95`}
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -156,6 +160,7 @@ export default function SleekPillCard({ data, className = "", productCardSetting
               <HeartOutline className="w-5 h-5 text-slate-600 dark:text-slate-300" />
             )}
           </button>
+          )}
 
           {/* Product Image */}
           <NcImage

@@ -3,8 +3,8 @@
 import React, { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { XMarkIcon } from "@heroicons/react/24/outline";
-import ButtonPrimary from "@/shared/Button/ButtonPrimary";
 import { useChromeSuppressed } from "@/lib/tenant/useChromeSuppressed";
+import { useIsThemePreviewMode } from "@/lib/tenant/ThemePreviewModeContext";
 import type { PopupThemeConfig } from "@/lib/theme/theme-types";
 
 export interface ThemePopupModalProps {
@@ -20,6 +20,7 @@ export default function ThemePopupModal({
 }: ThemePopupModalProps) {
   const [isOpen, setIsOpen] = useState(false);
   const isSuppressed = useChromeSuppressed();
+  const isPreview = useIsThemePreviewMode();
 
   const enabled = popupConfig?.enabled ?? false;
   const title = popupConfig?.title || "Special Offer";
@@ -32,7 +33,9 @@ export default function ThemePopupModal({
   const frequency = popupConfig?.frequency || "once-per-session";
   const styleVariant = popupConfig?.styleVariant || "center-modal";
 
-  const storageKey = `popup_seen_${tenantId}_${title.replace(/\s+/g, "_").toLowerCase()}`;
+  // The editor preview keeps its own "seen" state, so dismissing the popup while editing
+  // doesn't hide it on the live store in the same browser (and vice versa).
+  const storageKey = `${isPreview ? "preview_" : ""}popup_seen_${tenantId}_${title.replace(/\s+/g, "_").toLowerCase()}`;
 
   const shouldShowPopup = useCallback(() => {
     if (!enabled) return false;
@@ -96,14 +99,34 @@ export default function ThemePopupModal({
       }, Math.max(0, delaySeconds) * 1000);
       return () => clearTimeout(timer);
     } else if (trigger === "exit-intent") {
-      const handleMouseLeave = (e: MouseEvent) => {
-        if (e.clientY <= 0) {
+      // Desktop: the pointer leaves the page through the top edge (towards the tabs / address
+      // bar). `mouseout` on document with no relatedTarget is the reliable signal -
+      // `mouseleave` on window doesn't fire in every browser.
+      const handleMouseOut = (e: MouseEvent) => {
+        if (!e.relatedTarget && e.clientY <= 0) {
           setIsOpen(true);
-          window.removeEventListener("mouseleave", handleMouseLeave);
+          cleanup();
         }
       };
-      window.addEventListener("mouseleave", handleMouseLeave);
-      return () => window.removeEventListener("mouseleave", handleMouseLeave);
+      // Touch devices have no pointer to leave with: fall back to a quick scroll back up
+      // after the shopper has scrolled down a bit (a common "about to leave" gesture).
+      let maxY = 0;
+      const handleScroll = () => {
+        const y = window.scrollY;
+        maxY = Math.max(maxY, y);
+        if (maxY > 600 && maxY - y > 250) {
+          setIsOpen(true);
+          cleanup();
+        }
+      };
+      const isTouch = typeof window !== "undefined" && window.matchMedia?.("(hover: none)").matches;
+      const cleanup = () => {
+        document.removeEventListener("mouseout", handleMouseOut);
+        window.removeEventListener("scroll", handleScroll);
+      };
+      document.addEventListener("mouseout", handleMouseOut);
+      if (isTouch) window.addEventListener("scroll", handleScroll, { passive: true });
+      return cleanup;
     }
   }, [shouldShowPopup, trigger, delaySeconds]);
 
@@ -125,9 +148,24 @@ export default function ThemePopupModal({
     ? "text-3xl font-serif tracking-wide text-[#1c1917]"
     : "text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug";
 
+  // Layout per "Style" setting: centred modal (default), a smaller card sliding in at the
+  // bottom (no page-blocking backdrop) or a full-screen overlay.
+  const overlayClasses =
+    styleVariant === "bottom-slide"
+      ? "fixed inset-x-0 bottom-0 z-50 flex items-end justify-center sm:justify-end p-4 pointer-events-none"
+      : styleVariant === "full-overlay"
+      ? "fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-md animate-in fade-in duration-200"
+      : "fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md transition-opacity animate-in fade-in duration-200";
+  const panelSizeClasses =
+    styleVariant === "bottom-slide"
+      ? "max-w-sm p-6 space-y-4 pointer-events-auto animate-in slide-in-from-bottom-8 duration-300"
+      : styleVariant === "full-overlay"
+      ? "max-w-xl sm:max-w-2xl p-8 sm:p-12 space-y-6 animate-in zoom-in-95 duration-200"
+      : "max-w-md p-8 space-y-6 animate-in zoom-in-95 duration-200";
+
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md transition-opacity animate-in fade-in duration-200"
+      className={overlayClasses}
       role="dialog"
       aria-modal="true"
       aria-labelledby="popup-modal-title"
@@ -135,7 +173,7 @@ export default function ThemePopupModal({
         if (e.target === e.currentTarget) handleClose();
       }}
     >
-      <div className={`relative w-full max-w-md overflow-hidden p-8 space-y-6 animate-in zoom-in-95 duration-200 ${modalContainerClasses}`}>
+      <div className={`relative w-full overflow-hidden ${panelSizeClasses} ${modalContainerClasses}`}>
         <button
           onClick={handleClose}
           aria-label="Close modal"
@@ -145,7 +183,7 @@ export default function ThemePopupModal({
         </button>
 
         {imageUrl && (
-          <div className="relative w-full h-48 overflow-hidden rounded-2xl bg-slate-100">
+          <div className={`relative w-full overflow-hidden rounded-2xl bg-slate-100 ${styleVariant === "bottom-slide" ? "h-32" : styleVariant === "full-overlay" ? "h-64" : "h-48"}`}>
             <Image src={imageUrl} alt={title} fill className="object-cover" />
           </div>
         )}
@@ -160,10 +198,13 @@ export default function ThemePopupModal({
         </div>
 
         <div className="pt-2 flex flex-col gap-3">
-          <a href={buttonUrl} onClick={handleClose} className="w-full">
-            <ButtonPrimary className={`w-full py-3.5 rounded-xl text-white font-extrabold text-sm shadow-md hover:shadow-lg transition-all ${isBold ? "uppercase tracking-wider" : isLuxury ? "font-serif tracking-widest" : "bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-600 hover:to-rose-700"}`}>
-              {buttonText}
-            </ButtonPrimary>
+          {/* One link styled as a button (a <button> nested in an <a> is invalid HTML). */}
+          <a
+            href={buttonUrl}
+            onClick={handleClose}
+            className={`w-full inline-flex items-center justify-center py-3.5 rounded-xl text-white font-extrabold text-sm shadow-md hover:shadow-lg transition-all ${isBold ? "uppercase tracking-wider bg-[var(--btn-bg)]" : isLuxury ? "font-serif tracking-widest bg-[var(--btn-bg)]" : "bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-600 hover:to-rose-700"}`}
+          >
+            {buttonText}
           </a>
         </div>
 

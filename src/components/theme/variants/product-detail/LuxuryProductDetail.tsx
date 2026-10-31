@@ -33,7 +33,10 @@ export default function LuxuryProductDetail({
   const s = useProductDetailState(product, variants);
   const showCompare = productDetailSettings?.showCompare ?? true;
   const clickableGallery = (productDetailSettings?.galleryStyle ?? "clickable-thumbnails") === "clickable-thumbnails";
-  const isSticky = (productDetailSettings?.purchasePanelStyle ?? "sticky") !== "compact";
+  // Luxury's own default is a sticky panel; "standard" scrolls normally, "compact" also tightens spacing.
+  const panelStyle = productDetailSettings?.purchasePanelStyle ?? "sticky";
+  const isSticky = panelStyle === "sticky";
+  const showWishlist = productDetailSettings?.showWishlist ?? true;
 
   return (
     <div className="nc-ProductDetailPage bg-[var(--background)]">
@@ -49,13 +52,13 @@ export default function LuxuryProductDetail({
                 mainImageClassName="aspect-w-4 aspect-h-5"
               />
               <ProductStatus status={product.badge} />
-              <LikeButton productId={product.id} className="absolute right-5 top-5" />
+              {showWishlist && <LikeButton productId={product.id} className="absolute right-5 top-5" />}
               {showCompare && <CompareButton productId={product.id} className="absolute right-5 top-20" />}
             </div>
           </div>
 
           <div className={`w-full lg:w-2/5 pt-12 lg:pt-0 ${isSticky ? "lg:sticky lg:top-24" : ""}`}>
-            <div className="space-y-8 text-center lg:text-left">
+            <div className={`${panelStyle === "compact" ? "space-y-5" : "space-y-8"} text-center lg:text-left`}>
               <div>
                 <h1 className="font-serif text-3xl sm:text-4xl tracking-wide text-[var(--heading)]">{product.name}</h1>
                 <div className="flex items-center justify-center lg:justify-start mt-4 gap-4">

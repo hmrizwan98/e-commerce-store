@@ -20,11 +20,14 @@ export interface ButtonProps {
   children?: React.ReactNode;
 }
 
+const DEFAULT_SIZE_CLASS = "py-3 px-4 sm:py-3.5 sm:px-6";
+const DEFAULT_FONT_SIZE = "text-sm sm:text-base font-medium";
+
 const Button: FC<ButtonProps> = ({
   className = "text-neutral-700 dark:text-neutral-200 disabled:cursor-not-allowed",
   translate = "",
-  sizeClass = "py-3 px-4 sm:py-3.5 sm:px-6",
-  fontSize = "text-sm sm:text-base font-medium",
+  sizeClass = DEFAULT_SIZE_CLASS,
+  fontSize = DEFAULT_FONT_SIZE,
   disabled = false,
   href,
   children,
@@ -33,8 +36,12 @@ const Button: FC<ButtonProps> = ({
   loading,
   onClick = () => {},
 }) => {
+  // Theme "Buttons" settings: buttons using the default size / text get a marker class; the
+  // theme compiler only emits rules for them when the admin changed padding, height or weight
+  // from the defaults - so an untouched theme renders exactly as before.
+  const themeMarkers = `${sizeClass === DEFAULT_SIZE_CLASS ? "nc-btn-theme-size" : ""} ${fontSize === DEFAULT_FONT_SIZE ? "nc-btn-theme-weight" : ""}`;
   const CLASSES =
-    `nc-Button relative h-auto inline-flex items-center justify-center gap-2 rounded-[var(--btn-radius)] transition-colors duration-[var(--btn-transition)] disabled:opacity-60 disabled:cursor-not-allowed disabled:shadow-none ${fontSize} ${sizeClass} ${translate} ${className} ` +
+    `nc-Button ${themeMarkers} relative h-auto inline-flex items-center justify-center gap-2 rounded-[var(--btn-radius)] transition-colors duration-[var(--btn-transition)] disabled:opacity-60 disabled:cursor-not-allowed disabled:shadow-none ${fontSize} ${sizeClass} ${translate} ${className} ` +
     twFocusClass(true);
 
   const _renderLoading = () => {

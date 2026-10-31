@@ -68,6 +68,7 @@ import TestimonialsSectionInspector from "./inspectors/TestimonialsSectionInspec
 import GenericSectionInspector from "./inspectors/GenericSectionInspector";
 import HomepageSections, { AddSectionModal, type PickerOption } from "../../homepage/HomepageSections";
 import { SECTION_META } from "../../homepage/section-meta";
+import { patchNeedsPreviewReload } from "@/lib/theme/preview-reload";
 import type { SystemThemeConfig } from "@/lib/theme/theme-types";
 import type { HomepageSection, HomepageSectionType } from "@/types/homepage-section";
 import type { NavItem } from "@/types/nav";
@@ -243,9 +244,15 @@ export default function CustomizeShell({ initialDraft, homepage, navigation }: C
     }
   };
 
+  // Non-CSS settings: save the draft (never the live store) shortly after the last change and
+  // reload the preview so it shows them - no more manual "Save/Reload" to see a change.
+  const [previewReloadRequest, setPreviewReloadRequest] = useState(0);
+  const [autoRefreshing, setAutoRefreshing] = useState(false);
+
   const updateDraft = useCallback((patch: Partial<SystemThemeConfig>) => {
     setDraft((prev) => mergeDraft(prev, patch));
     setDirty(true);
+    if (patchNeedsPreviewReload(patch)) setPreviewReloadRequest((n) => n + 1);
   }, []);
 
   const [sections, setSections] = useState<HomepageSection[]>(
@@ -261,7 +268,10 @@ export default function CustomizeShell({ initialDraft, homepage, navigation }: C
     [updateDraft]
   );
 
-  const collectionSections: HomepageSection[] = draft.collection?.sections ?? [
+  // The storefront shows/hides the two built-in sections from the booleans
+  // (collection.showBottomPromo / showFeaturedSection), so those booleans are the single source
+  // of truth: the list always reflects them, and toggling/removing a built-in row writes them back.
+  const collectionSections: HomepageSection[] = (draft.collection?.sections ?? [
     {
       id: "sec-col-promo",
       type: "promo",
@@ -278,21 +288,31 @@ export default function CustomizeShell({ initialDraft, homepage, navigation }: C
       isActive: draft.collection?.showFeaturedSection ?? true,
       config: {},
     },
-  ];
+  ]).map((sec) =>
+    sec.id === "sec-col-promo"
+      ? { ...sec, isActive: draft.collection?.showBottomPromo ?? true }
+      : sec.id === "sec-col-categories"
+      ? { ...sec, isActive: draft.collection?.showFeaturedSection ?? true }
+      : sec
+  );
 
   const updateCollectionSections = useCallback(
     (nextSections: HomepageSection[]) => {
+      const promo = nextSections.find((x) => x.id === "sec-col-promo");
+      const featured = nextSections.find((x) => x.id === "sec-col-categories");
       updateDraft({
         collection: {
           ...(draft.collection ?? {}),
           sections: nextSections,
+          showBottomPromo: promo ? promo.isActive !== false : false,
+          showFeaturedSection: featured ? featured.isActive !== false : false,
         },
       });
     },
     [draft.collection, updateDraft]
   );
 
-  const productSections: HomepageSection[] = draft.productDetail?.sections ?? [
+  const productSections: HomepageSection[] = (draft.productDetail?.sections ?? [
     {
       id: "sec-prod-promo",
       type: "promo",
@@ -309,14 +329,24 @@ export default function CustomizeShell({ initialDraft, homepage, navigation }: C
       isActive: draft.productDetail?.showRelatedProducts ?? true,
       config: {},
     },
-  ];
+  ]).map((sec) =>
+    sec.id === "sec-prod-promo"
+      ? { ...sec, isActive: draft.productDetail?.showBottomPromo ?? true }
+      : sec.id === "sec-prod-related"
+      ? { ...sec, isActive: draft.productDetail?.showRelatedProducts ?? true }
+      : sec
+  );
 
   const updateProductSections = useCallback(
     (nextSections: HomepageSection[]) => {
+      const promo = nextSections.find((x) => x.id === "sec-prod-promo");
+      const related = nextSections.find((x) => x.id === "sec-prod-related");
       updateDraft({
         productDetail: {
           ...(draft.productDetail ?? {}),
           sections: nextSections,
+          showBottomPromo: promo ? promo.isActive !== false : false,
+          showRelatedProducts: related ? related.isActive !== false : false,
         },
       });
     },
@@ -489,6 +519,28 @@ export default function CustomizeShell({ initialDraft, homepage, navigation }: C
       setSavingDraft(false);
     }
   };
+
+  const draftRef = useRef(draft);
+  draftRef.current = draft;
+  useEffect(() => {
+    if (!previewReloadRequest) return;
+    const timer = setTimeout(async () => {
+      setAutoRefreshing(true);
+      try {
+        const res = await saveCustomizerDraftAction(draftRef.current);
+        if (res.ok) {
+          setDirty(false);
+          setPreviewLoaded(false);
+          setReloadKey((k) => k + 1);
+        }
+      } catch {
+        toast.error("Couldn't update the preview - use the refresh button.");
+      } finally {
+        setAutoRefreshing(false);
+      }
+    }, 1200);
+    return () => clearTimeout(timer);
+  }, [previewReloadRequest]);
 
   const handleRefreshPreview = async () => {
     setSavingDraft(true);
@@ -1038,6 +1090,9 @@ export default function CustomizeShell({ initialDraft, homepage, navigation }: C
                             </button>
                           </div>
 
+                          <p className="px-1 pb-2 text-[11px] leading-snug text-amber-700 dark:text-amber-400">
+                            Live store: the built-in sections can be shown or hidden here. Their order and any extra sections you add aren&apos;t shown on this page yet.
+                          </p>
                           {collectionSections.map((sec, index) => {
                             const meta = SECTION_META[sec.type];
                             const isSelected = selectedSectionId === sec.id;
@@ -1182,6 +1237,9 @@ export default function CustomizeShell({ initialDraft, homepage, navigation }: C
                             </button>
                           </div>
 
+                          <p className="px-1 pb-2 text-[11px] leading-snug text-amber-700 dark:text-amber-400">
+                            Live store: the built-in sections can be shown or hidden here. Their order and any extra sections you add aren&apos;t shown on this page yet.
+                          </p>
                           {productSections.map((sec, index) => {
                             const meta = SECTION_META[sec.type];
                             const isSelected = selectedSectionId === sec.id;
@@ -1330,6 +1388,11 @@ export default function CustomizeShell({ initialDraft, homepage, navigation }: C
                   </button>
 
                   <div className="space-y-4">
+                    {ALL_GLOBAL_TABS.find((t) => t.key === activeGlobalTab)?.savesImmediately && (
+                      <p className="text-[11px] leading-snug p-2.5 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-900">
+                        Saves straight to your live store when you click Save in this tab - it isn&apos;t part of Save Draft, Publish or Discard.
+                      </p>
+                    )}
                     {activeGlobalTab === "theme" && <ThemeTab draft={draft} onChange={updateDraft} />}
                     {activeGlobalTab === "colors" && <ColorsTab draft={draft} onChange={updateDraft} />}
                     {activeGlobalTab === "typography" && <TypographyTab draft={draft} onChange={updateDraft} />}
@@ -1434,7 +1497,9 @@ export default function CustomizeShell({ initialDraft, homepage, navigation }: C
             )}
           </div>
           <p className="text-[11px] text-slate-400 text-center shrink-0">
-            Colors, typography &amp; tokens update live in real-time. Component variants refresh automatically on Save/Reload.
+            {autoRefreshing
+              ? "Saving draft & updating preview…"
+              : "Colours, fonts & spacing update instantly. Other changes save to your draft and refresh the preview automatically (your live store only changes when you Publish)."}
           </p>
         </div>
       </div>

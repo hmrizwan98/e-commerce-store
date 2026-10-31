@@ -80,7 +80,9 @@ export default function ProductDetailTab({ draft, onChange }: TabProps) {
             Purchase panel
           </label>
           <NativeSelect size="sm"
-            value={productDetail.purchasePanelStyle ?? "standard"}
+            // Shows what the storefront actually uses when nothing is saved: Minimal scrolls
+            // normally, Bold and Luxury keep the purchase panel sticky.
+            value={productDetail.purchasePanelStyle ?? ((productDetail.variant ?? "minimal") === "minimal" ? "standard" : "sticky")}
             onChange={(e) => setProductDetail({ purchasePanelStyle: e.target.value as any })}
             className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-transparent"
           >

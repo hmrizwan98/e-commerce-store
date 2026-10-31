@@ -21,7 +21,8 @@ export default function ShopTab({ draft, onChange }: TabProps) {
   const setLayout = (patch: Partial<typeof layout>) => onChange({ layout: { ...layout, ...patch } });
   const setCollection = (patch: Partial<typeof collection>) => onChange({ collection: { ...collection, ...patch } });
 
-  const gridDesktop = collection.gridColumnsDesktop ?? 4;
+  // Same default as the storefront collection page (CollectionPageView).
+  const gridDesktop = collection.gridColumnsDesktop ?? 3;
   const gridMobile = collection.gridColumnsMobile ?? 2;
   const showFilter = collection.showSidebarFilter ?? true;
   const filterPos = collection.filterPosition ?? "left";

@@ -178,6 +178,15 @@ export default function ButtonsCardsTab({ draft, onChange }: TabProps) {
       <div className="space-y-5">
         <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">Card Tokens</h3>
 
+        <Toggle
+          label="Apply card style to product cards"
+          checked={cards.applyToProductCards ?? false}
+          onChange={(v) => setCards({ applyToProductCards: v })}
+        />
+        <p className="text-[11px] text-slate-500 -mt-3">
+          Off: every product card keeps its own design (Product Cards tab). On: the radius, shadow, spacing and border below are applied to all product cards.
+        </p>
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <div className="space-y-1.5">
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">

@@ -7,7 +7,7 @@ import ClientProviders from "./ClientProviders";
 import { CurrencyProvider } from "@/lib/currency/CurrencyContext";
 import { getActiveTheme, DEFAULT_THEME } from "@/lib/firebase/repositories/themes";
 import { getGeneralSettings, DEFAULT_GENERAL_SETTINGS } from "@/lib/firebase/repositories/site-settings";
-import { getMenu } from "@/lib/firebase/repositories/menus";
+import { getMenuOrNull } from "@/lib/firebase/repositories/menus";
 import { themeToCssText } from "@/lib/theme/css-variables";
 import { poppins } from "@/lib/theme/default-font";
 import { getCurrentTenant } from "@/lib/tenant/current";
@@ -45,8 +45,8 @@ async function resolveThemeAndSettings(): Promise<{
   theme: Theme;
   general: GeneralSettings;
   suspended: boolean;
-  headerMenu: NavItem[];
-  footerMenu: NavItem[];
+  headerMenu: NavItem[] | null;
+  footerMenu: NavItem[] | null;
 }> {
   return requestMemo("theme-and-settings", () => computeThemeAndSettings());
 }
@@ -56,8 +56,8 @@ async function computeThemeAndSettings(): Promise<{
   theme: Theme;
   general: GeneralSettings;
   suspended: boolean;
-  headerMenu: NavItem[];
-  footerMenu: NavItem[];
+  headerMenu: NavItem[] | null;
+  footerMenu: NavItem[] | null;
 }> {
   // Checked BEFORE calling getCurrentTenant() - that function has a
   // local-dev-only "no slug matched -> fall back to the first available
@@ -67,7 +67,7 @@ async function computeThemeAndSettings(): Promise<{
   // downstream chrome-suppression check. isPlatformDomainRequest() makes
   // "platform domain -> no tenant" a guarantee, not a hope.
   if (isPlatformDomainRequest()) {
-    return { tenantId: null, theme: DEFAULT_THEME, general: DEFAULT_GENERAL_SETTINGS, suspended: false, headerMenu: [], footerMenu: [] };
+    return { tenantId: null, theme: DEFAULT_THEME, general: DEFAULT_GENERAL_SETTINGS, suspended: false, headerMenu: null, footerMenu: null };
   }
   const tenant = await getCurrentTenant();
   if (!tenant) {
@@ -79,16 +79,16 @@ async function computeThemeAndSettings(): Promise<{
     if (headers().get(FRONTSTORE_PREVIEW_HEADER)) {
       notFound();
     }
-    return { tenantId: null, theme: DEFAULT_THEME, general: DEFAULT_GENERAL_SETTINGS, suspended: false, headerMenu: [], footerMenu: [] };
+    return { tenantId: null, theme: DEFAULT_THEME, general: DEFAULT_GENERAL_SETTINGS, suspended: false, headerMenu: null, footerMenu: null };
   }
   if (tenant.status !== "active") {
-    return { tenantId: tenant.id, theme: DEFAULT_THEME, general: DEFAULT_GENERAL_SETTINGS, suspended: true, headerMenu: [], footerMenu: [] };
+    return { tenantId: tenant.id, theme: DEFAULT_THEME, general: DEFAULT_GENERAL_SETTINGS, suspended: true, headerMenu: null, footerMenu: null };
   }
   const [theme, general, headerMenu, footerMenu] = await Promise.all([
     getActiveTheme(),
     getGeneralSettings(),
-    getMenu("header"),
-    getMenu("footer"),
+    getMenuOrNull("header"),
+    getMenuOrNull("footer"),
   ]);
   return { tenantId: tenant.id, theme, general, suspended: false, headerMenu, footerMenu };
 }
@@ -192,8 +192,8 @@ export default async function RootLayout({
   const bodyFontKey = (theme.typography?.bodyFont as FontKey) ?? "poppins";
   const headingFontKey = (theme.typography?.headingFont as FontKey) ?? "poppins";
 
-  let bodyFont = { className: poppins.className, variable: poppins.variable };
-  let headingFont = { className: poppins.className, variable: poppins.variable };
+  let bodyFont = { className: poppins.className, variable: poppins.variable, cssVar: "--font-poppins" };
+  let headingFont = { className: poppins.className, variable: poppins.variable, cssVar: "--font-poppins" };
 
   if (bodyFontKey !== "poppins" || headingFontKey !== "poppins") {
     const { FONT_PRESETS } = await import("@/lib/theme/fonts");
@@ -208,16 +208,25 @@ export default async function RootLayout({
       lang="en"
       dir=""
       className={`${bodyFont.className} ${activeFontVariables}`}
+      // Theme "Dark mode" switch: when off, shoppers can't switch the store to dark mode
+      // (useThemeMode + the .dark-mode-control rule in globals.css read this).
+      data-card-style={(theme as { cards?: { applyToProductCards?: boolean } }).cards?.applyToProductCards ? "theme" : "design"}
+      data-dark-mode={(theme as { darkMode?: { enabled?: boolean } }).darkMode?.enabled === true ? "on" : "off"}
     >
       <head>
         <style
           id="theme-vars"
           dangerouslySetInnerHTML={{
-            __html: `${cssText}\n:root { --font-body: var(${bodyFont.variable}); --font-heading: var(${headingFont.variable}); }`,
+            // var() must reference the font's CSS custom property NAME (cssVar, e.g.
+            // --font-inter); `variable` is next/font's class name and is only used on <html>.
+            __html: `${cssText}\n:root { --font-body: var(${bodyFont.cssVar}); --font-heading: var(${headingFont.cssVar}); }`,
           }}
         />
       </head>
-      <body className="bg-[var(--background,white)] text-base dark:bg-neutral-900 text-[var(--text,#111827)] dark:text-neutral-200">
+      {/* Font size / line height come from the theme (globals.css body rule) - no text-base here,
+          it used to override them. Dark colours come from the theme's .dark block; its defaults
+          are the old neutral-900 / neutral-200. */}
+      <body className="bg-[var(--background,white)] dark:bg-[var(--background,#171717)] text-[var(--text,#111827)] dark:text-[var(--text,#e5e5e5)]">
         <CurrencyProvider currency={general.currency} currencySymbol={general.currencySymbol}>
           <ClientProviders
             headerSettings={theme.header}

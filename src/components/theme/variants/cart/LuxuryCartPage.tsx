@@ -15,7 +15,9 @@ export interface LuxuryCartPageProps extends CartClientProps {
   itemLayout?: CartThemeConfig["itemLayout"];
 }
 
-export default function LuxuryCartPage({ shippingFlatRate, freeShippingThreshold, taxRatePercent, taxInclusive }: LuxuryCartPageProps) {
+export default function LuxuryCartPage({ shippingFlatRate, freeShippingThreshold, taxRatePercent, taxInclusive, itemLayout = "detailed" }: LuxuryCartPageProps) {
+  // Theme Cart setting "Item layout": compact = smaller image and tighter rows.
+  const compact = itemLayout === "compact";
   const formatMoney = useFormatMoney();
   const { items, totals, setQuantity, remove } = useCartPageState({ shippingFlatRate, freeShippingThreshold, taxRatePercent, taxInclusive });
 
@@ -23,8 +25,8 @@ export default function LuxuryCartPage({ shippingFlatRate, freeShippingThreshold
     const { productId, variantId, image, price, name, slug, quantity, maxStock, variantLabel } = item;
 
     return (
-      <div key={`${productId}-${variantId ?? ""}`} className="flex py-10 first:pt-0 last:pb-0 border-b border-[var(--border)] last:border-b-0">
-        <div className="relative h-40 w-32 flex-shrink-0 overflow-hidden bg-[var(--surface)]">
+      <div key={`${productId}-${variantId ?? ""}`} className={`flex ${compact ? "py-5" : "py-10"} first:pt-0 last:pb-0 border-b border-[var(--border)] last:border-b-0`}>
+        <div className={`relative ${compact ? "h-24 w-20" : "h-40 w-32"} flex-shrink-0 overflow-hidden bg-[var(--surface)]`}>
           {image && <Image fill src={image} alt={name} sizes="200px" className="h-full w-full object-cover object-center" />}
           <Link href={`/product/${slug}` as any} className="absolute inset-0" />
         </div>

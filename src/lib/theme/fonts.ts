@@ -30,17 +30,22 @@ export const playfairDisplay = Playfair_Display({ subsets: ["latin"], display: "
 export const raleway = Raleway({ subsets: ["latin"], display: "swap", weight: ["400", "500", "600", "700"], variable: "--font-raleway" });
 export const workSans = Work_Sans({ subsets: ["latin"], display: "swap", weight: ["400", "500", "600", "700"], variable: "--font-work-sans" });
 
-export const FONT_PRESETS: Record<FontKey, { label: string; className: string; variable: string }> = {
-  poppins: { label: "Poppins", className: poppins.className, variable: poppins.variable },
-  inter: { label: "Inter", className: inter.className, variable: inter.variable },
-  montserrat: { label: "Montserrat", className: montserrat.className, variable: montserrat.variable },
-  roboto: { label: "Roboto", className: roboto.className, variable: roboto.variable },
-  openSans: { label: "Open Sans", className: openSans.className, variable: openSans.variable },
-  lato: { label: "Lato", className: lato.className, variable: lato.variable },
-  nunito: { label: "Nunito", className: nunito.className, variable: nunito.variable },
-  playfairDisplay: { label: "Playfair Display", className: playfairDisplay.className, variable: playfairDisplay.variable },
-  raleway: { label: "Raleway", className: raleway.className, variable: raleway.variable },
-  workSans: { label: "Work Sans", className: workSans.className, variable: workSans.variable },
+/**
+ * `variable` is next/font's generated CLASS name (e.g. "__variable_8b3a0b") - adding it to an
+ * element defines the font's CSS custom property. `cssVar` is that custom property's NAME
+ * (e.g. "--font-inter"), which is what `var(...)` must reference.
+ */
+export const FONT_PRESETS: Record<FontKey, { label: string; className: string; variable: string; cssVar: string }> = {
+  poppins: { label: "Poppins", className: poppins.className, variable: poppins.variable, cssVar: "--font-poppins" },
+  inter: { label: "Inter", className: inter.className, variable: inter.variable, cssVar: "--font-inter" },
+  montserrat: { label: "Montserrat", className: montserrat.className, variable: montserrat.variable, cssVar: "--font-montserrat" },
+  roboto: { label: "Roboto", className: roboto.className, variable: roboto.variable, cssVar: "--font-roboto" },
+  openSans: { label: "Open Sans", className: openSans.className, variable: openSans.variable, cssVar: "--font-open-sans" },
+  lato: { label: "Lato", className: lato.className, variable: lato.variable, cssVar: "--font-lato" },
+  nunito: { label: "Nunito", className: nunito.className, variable: nunito.variable, cssVar: "--font-nunito" },
+  playfairDisplay: { label: "Playfair Display", className: playfairDisplay.className, variable: playfairDisplay.variable, cssVar: "--font-playfair-display" },
+  raleway: { label: "Raleway", className: raleway.className, variable: raleway.variable, cssVar: "--font-raleway" },
+  workSans: { label: "Work Sans", className: workSans.className, variable: workSans.variable, cssVar: "--font-work-sans" },
 };
 
 export const ALL_FONT_VARIABLES = Object.values(FONT_PRESETS)

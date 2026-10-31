@@ -6,11 +6,14 @@ import { createGlobalState } from "react-hooks-global-state";
 const initialState = { isDarkmode: false };
 const { useGlobalState } = createGlobalState(initialState);
 
+/** The store's theme can turn dark mode off (Customizer -> Colors -> Dark mode). */
+const darkModeAllowed = () => typeof document === "undefined" || document.documentElement.dataset.darkMode !== "off";
+
 export const useThemeMode = () => {
   const [isDarkMode, setIsDarkMode] = useGlobalState("isDarkmode");
 
   useEffect(() => {
-    if (localStorage.theme === "dark") {
+    if (localStorage.theme === "dark" && darkModeAllowed()) {
       toDark();
     } else {
       toLight();
@@ -19,6 +22,7 @@ export const useThemeMode = () => {
   }, []);
 
   const toDark = () => {
+    if (!darkModeAllowed()) return;
     setIsDarkMode(true);
     const root = document.querySelector("html");
     if (!root) return;

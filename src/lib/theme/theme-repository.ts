@@ -3,6 +3,7 @@ import { tenantCollection, tenantDoc } from "@/lib/firebase/tenant-scope";
 import { requestMemo } from "@/lib/request-cache";
 import { getBrandingSettings } from "@/lib/firebase/repositories/site-settings";
 import { THEME_PRESETS, DEFAULT_SYSTEM_THEME } from "./theme-presets";
+import { isLoadableFontKey } from "./font-keys";
 import type { SystemThemeConfig, ThemePresetId } from "./theme-types";
 
 const THEME_SETTINGS_COLLECTION = "themeSettings";
@@ -36,6 +37,22 @@ function deepMergeTheme(preset: SystemThemeConfig, override: Partial<SystemTheme
 }
 
 /**
+ * Backward compatibility: Settings -> Branding colours/font fill in only what the theme itself
+ * doesn't set. Shared by the live and the draft resolver so the preview matches the storefront.
+ */
+async function applyLegacyBranding(config: SystemThemeConfig, raw: Partial<SystemThemeConfig> | null): Promise<void> {
+  const branding = await getBrandingSettings().catch(() => null);
+  if (!branding) return;
+  if (branding.primaryColor && !raw?.colors?.primary) config.colors.primary = branding.primaryColor;
+  if (branding.secondaryColor && !raw?.colors?.secondary) config.colors.secondary = branding.secondaryColor;
+  // Only a font the storefront can actually load (the Branding field is free text).
+  if (!raw?.typography?.headingFont && isLoadableFontKey(branding.fontFamily)) {
+    config.typography.headingFont = branding.fontFamily;
+    config.typography.bodyFont = branding.fontFamily;
+  }
+}
+
+/**
  * Resolves the current tenant's active SystemThemeConfig.
  * Fully memoized per-request via requestMemo to prevent duplicate Firestore queries.
  */
@@ -64,23 +81,10 @@ async function resolveActiveThemeConfig(): Promise<SystemThemeConfig> {
     const presetKey: ThemePresetId = (rawConfig?.presetId as ThemePresetId) || "modern-minimal";
     const basePreset = THEME_PRESETS[presetKey] ?? DEFAULT_SYSTEM_THEME;
 
-    let mergedConfig = rawConfig ? deepMergeTheme(basePreset, rawConfig) : { ...basePreset };
-
-    // Backward compatibility: map legacy siteSettings/branding into theme tokens if present
-    const branding = await getBrandingSettings().catch(() => null);
-    if (branding) {
-      if (branding.primaryColor && (!rawConfig?.colors?.primary)) {
-        mergedConfig.colors.primary = branding.primaryColor;
-      }
-      if (branding.secondaryColor && (!rawConfig?.colors?.secondary)) {
-        mergedConfig.colors.secondary = branding.secondaryColor;
-      }
-      if (branding.fontFamily && (!rawConfig?.typography?.headingFont)) {
-        mergedConfig.typography.headingFont = branding.fontFamily as any;
-        mergedConfig.typography.bodyFont = branding.fontFamily as any;
-      }
-    }
-
+    // Always a fresh deep copy - never mutate the shared preset objects (they're module-level
+    // and shared by every tenant served by this server instance).
+    const mergedConfig = deepMergeTheme(basePreset, rawConfig ?? {});
+    await applyLegacyBranding(mergedConfig, rawConfig);
     return mergedConfig;
   } catch (error) {
     console.error("Error resolving active theme config, using fallback:", error);
@@ -104,7 +108,10 @@ async function resolveDraftThemeConfig(): Promise<SystemThemeConfig> {
       const rawDraft = draftSnap.data() as Partial<SystemThemeConfig>;
       const presetKey: ThemePresetId = (rawDraft.presetId as ThemePresetId) || "modern-minimal";
       const basePreset = THEME_PRESETS[presetKey] ?? DEFAULT_SYSTEM_THEME;
-      return deepMergeTheme(basePreset, rawDraft);
+      const merged = deepMergeTheme(basePreset, rawDraft);
+      // Same legacy-branding fallback as the live theme, so the editor preview matches it.
+      await applyLegacyBranding(merged, rawDraft);
+      return merged;
     }
   } catch (error) {
     console.error("Error reading draft theme config:", error);

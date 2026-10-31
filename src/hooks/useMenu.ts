@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { fetchMenu } from "@/lib/firebase/client-data/menus";
 import { useTenantId } from "@/lib/tenant/TenantContext";
-import { useMenuContext, DEFAULT_HEADER_ITEMS, DEFAULT_FOOTER_ITEMS } from "@/lib/tenant/MenuContext";
+import { useMenuContext } from "@/lib/tenant/MenuContext";
 import type { NavItemType } from "@/shared/Navigation/NavigationItem";
 
 /**
@@ -15,20 +15,19 @@ export function useMenu(id: "header" | "footer"): NavItemType[] {
   const tenantId = useTenantId();
   const menuContext = useMenuContext();
 
+  // MenuProvider already resolved "never saved -> starter menu", so an empty list here is the
+  // admin's own (emptied) menu and is shown as-is.
   const contextItems = id === "header" ? menuContext.headerItems : menuContext.footerItems;
-  const fallback = id === "header" ? DEFAULT_HEADER_ITEMS : DEFAULT_FOOTER_ITEMS;
-  const initial = contextItems.length ? contextItems : fallback;
 
-  const [items, setItems] = useState<NavItemType[]>(initial);
+  const [items, setItems] = useState<NavItemType[]>(contextItems);
 
   useEffect(() => {
     let active = true;
-    if (contextItems.length > 0) {
-      setItems(contextItems);
-    }
+    setItems(contextItems);
     fetchMenu(id, tenantId)
       .then((data) => {
-        if (active && data && data.length > 0) {
+        // null = never saved: keep the starter menu from MenuProvider.
+        if (active && data !== null) {
           setItems(data as unknown as NavItemType[]);
         }
       })

@@ -6,6 +6,7 @@ import Pagination from "@/shared/Pagination/Pagination";
 import { searchProducts } from "@/lib/firebase/repositories/products";
 import { getCategories } from "@/lib/firebase/repositories/categories";
 import { getActiveThemeConfig } from "@/lib/theme/theme-repository";
+import { GRID_GAP_WIDE } from "@/lib/theme/grid";
 import {
   parseProductSearchParams,
   buildPageHref,
@@ -20,7 +21,7 @@ const PageCollection2 = async ({
 }: {
   searchParams: RawSearchParams;
 }) => {
-  const params = parseProductSearchParams(searchParams);
+  const params = parseProductSearchParams(searchParams, (await getActiveThemeConfig()).collection?.productsPerPage);
   const [{ products, totalPages }, categories, theme] = await Promise.all([
     searchProducts(params),
     getCategories(),
@@ -51,7 +52,7 @@ const PageCollection2 = async ({
               </div>
               <div className="flex-shrink-0 mb-10 lg:mb-0 lg:mx-4 border-t lg:border-t-0"></div>
               <div className="flex-1 ">
-                <div className="flex-1 grid sm:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-10 ">
+                <div className={`flex-1 grid sm:grid-cols-2 xl:grid-cols-3 ${GRID_GAP_WIDE}`}>
                   {products.map((item) => (
                     <ThemeProductCardAdapter data={item} productCardSettings={theme.productCard} key={item.id} />
                   ))}

@@ -509,7 +509,10 @@ export default async function HomeContent({ themeConfig: themeConfigOverride }: 
       />
       {renderHero()}
 
-      <div className="container relative my-16 space-y-16 lg:space-y-24 lg:my-24">
+      {/* Theme "Layout & Container": Section Padding = space above/below the page's sections,
+          Section Margin = gap between sections. Phones get 2/3 of it; the default 96px gives
+          exactly the old my-16/space-y-16 (phone) and lg:my-24/lg:space-y-24 (desktop). */}
+      <div className="container relative my-[calc(var(--section-padding,96px)*2/3)] space-y-[calc(var(--section-margin,96px)*2/3)] lg:space-y-[var(--section-margin,96px)] lg:my-[var(--section-padding,96px)]">
         {renderedSections}
       </div>
     </main>

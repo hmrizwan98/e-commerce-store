@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { compileThemeToCssText } from "@/lib/theme/theme-compiler";
-import { FONT_PRESETS } from "@/lib/theme/fonts";
+import { ALL_FONT_VARIABLES, FONT_PRESETS } from "@/lib/theme/fonts";
 import type { SystemThemeConfig } from "@/lib/theme/theme-types";
 
 export interface ThemePreviewStyleSyncProps {
@@ -32,15 +32,29 @@ export default function ThemePreviewStyleSync({ initialTheme }: ThemePreviewStyl
     return () => window.removeEventListener("message", handleMessage);
   }, []);
 
+  // The root layout only puts the PUBLISHED theme's font classes on <html>; a font picked in the
+  // editor needs its next/font class too, or its CSS variable is undefined in the preview.
+  useEffect(() => {
+    const classes = ALL_FONT_VARIABLES.split(" ").filter(Boolean);
+    document.documentElement.classList.add(...classes);
+  }, []);
+
+  // Same <html> switches the storefront layout sets, but from the draft being edited.
+  useEffect(() => {
+    const root = document.documentElement;
+    root.dataset.cardStyle = theme.cards?.applyToProductCards ? "theme" : "design";
+    root.dataset.darkMode = theme.darkMode?.enabled === true ? "on" : "off";
+  }, [theme.cards?.applyToProductCards, theme.darkMode?.enabled]);
+
   const cssText = compileThemeToCssText(theme);
-  const bodyFont = FONT_PRESETS[theme.typography?.bodyFont ?? "poppins"];
-  const headingFont = FONT_PRESETS[theme.typography?.headingFont ?? "poppins"];
+  const bodyFont = FONT_PRESETS[theme.typography?.bodyFont ?? "poppins"] ?? FONT_PRESETS.poppins;
+  const headingFont = FONT_PRESETS[theme.typography?.headingFont ?? "poppins"] ?? FONT_PRESETS.poppins;
 
   return (
     <style
       id="theme-vars-preview"
       dangerouslySetInnerHTML={{
-        __html: `${cssText}\n:root { --font-body: var(${bodyFont.variable}); --font-heading: var(${headingFont.variable}); }`,
+        __html: `${cssText}\n:root { --font-body: var(${bodyFont.cssVar}); --font-heading: var(${headingFont.cssVar}); }`,
       }}
     />
   );

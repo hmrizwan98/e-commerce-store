@@ -18,7 +18,13 @@ export interface ThemeProductCardAdapterProps {
   isLiked?: boolean;
 }
 
-export default function ThemeProductCardAdapter({ data, productCardSettings, className = "", isLiked }: ThemeProductCardAdapterProps) {
+export default function ThemeProductCardAdapter(props: ThemeProductCardAdapterProps) {
+  // Layout-neutral wrapper (display: contents) so the theme's "Apply card style to product
+  // cards" option can style the card root via CSS - see .theme-card-slot in globals.css.
+  return <div className="theme-card-slot">{renderCard(props)}</div>;
+}
+
+function renderCard({ data, productCardSettings, className = "", isLiked }: ThemeProductCardAdapterProps) {
   switch (productCardSettings?.variant) {
     case "sleek-pill":
     case "sleek":

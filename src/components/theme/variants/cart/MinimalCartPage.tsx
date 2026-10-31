@@ -17,7 +17,9 @@ export interface MinimalCartPageProps extends CartClientProps {
   itemLayout?: CartThemeConfig["itemLayout"];
 }
 
-export default function MinimalCartPage({ shippingFlatRate, freeShippingThreshold, taxRatePercent, taxInclusive }: MinimalCartPageProps) {
+export default function MinimalCartPage({ shippingFlatRate, freeShippingThreshold, taxRatePercent, taxInclusive, itemLayout = "detailed" }: MinimalCartPageProps) {
+  // Theme Cart setting "Item layout": compact = smaller image and tighter rows.
+  const compact = itemLayout === "compact";
   const formatMoney = useFormatMoney();
   const { items, totals, setQuantity, remove } = useCartPageState({ shippingFlatRate, freeShippingThreshold, taxRatePercent, taxInclusive });
 
@@ -26,8 +28,8 @@ export default function MinimalCartPage({ shippingFlatRate, freeShippingThreshol
     const inStock = maxStock > 0;
 
     return (
-      <div key={`${productId}-${variantId ?? ""}`} className="relative flex py-8 first:pt-0 last:pb-0">
-        <div className="relative h-32 w-24 flex-shrink-0 overflow-hidden rounded-2xl bg-[var(--surface)]">
+      <div key={`${productId}-${variantId ?? ""}`} className={`relative flex ${compact ? "py-4" : "py-8"} first:pt-0 last:pb-0`}>
+        <div className={`relative ${compact ? "h-20 w-16" : "h-32 w-24"} flex-shrink-0 overflow-hidden rounded-2xl bg-[var(--surface)]`}>
           {image && <Image fill src={image} alt={name} sizes="200px" className="h-full w-full object-contain object-center" />}
           <Link href={`/product/${slug}` as any} className="absolute inset-0" />
         </div>

@@ -16,8 +16,12 @@ function getOne(searchParams: RawSearchParams, key: string): string | undefined 
 
 const PAGE_SIZE = 12;
 
+/** Theme Collection setting "Products per page" (8/12/16/24); anything else -> 12. */
+const ALLOWED_PAGE_SIZES = [8, 12, 16, 24];
+
 export function parseProductSearchParams(
-  searchParams: RawSearchParams
+  searchParams: RawSearchParams,
+  pageSize: number = PAGE_SIZE
 ): SearchProductsParams {
   const minPriceRaw = getOne(searchParams, "minPrice");
   const maxPriceRaw = getOne(searchParams, "maxPrice");
@@ -32,7 +36,7 @@ export function parseProductSearchParams(
     maxPrice: maxPriceRaw ? Number(maxPriceRaw) : undefined,
     sort: getOne(searchParams, "sort") as SearchProductsParams["sort"],
     page: pageRaw ? Math.max(1, Number(pageRaw)) : 1,
-    pageSize: PAGE_SIZE,
+    pageSize: ALLOWED_PAGE_SIZES.includes(pageSize) ? pageSize : PAGE_SIZE,
   };
 }
 

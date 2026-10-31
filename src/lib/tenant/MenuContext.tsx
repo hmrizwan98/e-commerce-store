@@ -27,12 +27,14 @@ const MenuContext = createContext<MenuContextType>({
 });
 
 export const MenuProvider: React.FC<{
-  headerItems?: NavItemType[];
-  footerItems?: NavItemType[];
+  headerItems?: NavItemType[] | null;
+  footerItems?: NavItemType[] | null;
   children: React.ReactNode;
 }> = ({ headerItems, footerItems, children }) => {
-  const initialHeader = headerItems && headerItems.length > 0 ? headerItems : DEFAULT_HEADER_ITEMS;
-  const initialFooter = footerItems && footerItems.length > 0 ? footerItems : DEFAULT_FOOTER_ITEMS;
+  // null/undefined = the store never saved this menu -> starter menu. An empty array means the
+  // admin removed every item, which must stay empty.
+  const initialHeader = headerItems ?? DEFAULT_HEADER_ITEMS;
+  const initialFooter = footerItems ?? DEFAULT_FOOTER_ITEMS;
 
   return (
     <MenuContext.Provider value={{ headerItems: initialHeader, footerItems: initialFooter }}>

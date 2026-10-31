@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { useChromeSuppressed } from "@/lib/tenant/useChromeSuppressed";
+import { useIsThemePreviewMode } from "@/lib/tenant/ThemePreviewModeContext";
 import type { AnnouncementBar as AnnouncementBarData } from "@/types/announcement-bar";
 
 function dismissKey(id: string) {
@@ -16,7 +17,11 @@ function dismissKey(id: string) {
  * Firestore directly - same pattern as PageViewTracker/MarketingPixels/WhatsAppButton.
  */
 export default function AnnouncementBar() {
-  const isAdminRoute = useChromeSuppressed({ includeAdmin: true });
+  // Inside the theme customizer's live preview (an /admin route) the bar must render exactly
+  // as on the storefront, so the preview matches what shoppers see.
+  const isPreviewMode = useIsThemePreviewMode();
+  const suppressedOutsidePreview = useChromeSuppressed({ includeAdmin: true });
+  const isAdminRoute = isPreviewMode ? false : suppressedOutsidePreview;
   const [bar, setBar] = useState<AnnouncementBarData | null>(null);
   const [dismissed, setDismissed] = useState(false);
 

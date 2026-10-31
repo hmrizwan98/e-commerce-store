@@ -7,6 +7,7 @@ import ThemeProductCardAdapter from "@/components/theme/ThemeProductCardAdapter"
 import { getBrandBySlug } from "@/lib/firebase/repositories/brands";
 import { searchProducts } from "@/lib/firebase/repositories/products";
 import { getActiveThemeConfig } from "@/lib/theme/theme-repository";
+import { GRID_GAP_WIDE, themeListingColsClass } from "@/lib/theme/grid";
 import {
   parseProductSearchParams,
   buildPageHref,
@@ -42,7 +43,7 @@ const PageBrand = async ({
     notFound();
   }
 
-  const filterParams = parseProductSearchParams(searchParams);
+  const filterParams = parseProductSearchParams(searchParams, (await getActiveThemeConfig()).collection?.productsPerPage);
   const [{ products, totalPages }, theme] = await Promise.all([
     searchProducts({ ...filterParams, brand: brand.id }),
     getActiveThemeConfig(),
@@ -84,7 +85,7 @@ const PageBrand = async ({
 
           <hr className="border-slate-200 dark:border-slate-700" />
           <main>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-8 gap-y-10 mt-8 lg:mt-10">
+            <div className={`grid ${themeListingColsClass(theme.collection)} ${GRID_GAP_WIDE} mt-8 lg:mt-10`}>
               {products.map((item) => (
                 <ThemeProductCardAdapter data={item} productCardSettings={theme.productCard} key={item.id} />
               ))}

@@ -21,13 +21,15 @@ export interface FilterCategoryOption {
 
 export interface TabFiltersProps {
   categories?: FilterCategoryOption[];
+  /** Theme Collection setting "Show sorting". */
+  showSorting?: boolean;
 }
 
 const DATA_colors = FILTER_COLORS.map((name) => ({ name }));
 const DATA_sizes = FILTER_SIZES.map((name) => ({ name }));
 const DATA_sortOrderRadios = SORT_OPTIONS;
 
-const TabFilters = ({ categories = [] }: TabFiltersProps) => {
+const TabFilters = ({ categories = [], showSorting = true }: TabFiltersProps) => {
   const { filters, applyFilters, clearAll } = useFilterParams();
   // Category filter values round-trip through the URL as category *names*
   // (matching this component's existing name-keyed state) - searchProducts()
@@ -1110,7 +1112,7 @@ const TabFilters = ({ categories = [] }: TabFiltersProps) => {
 
                       {/* --------- */}
                       {/* ---- */}
-                      <div className="py-7">
+                      <div className={showSorting ? "py-7" : "hidden"}>
                         <h3 className="text-xl font-medium">Sort Order</h3>
                         <div className="mt-6 relative ">
                           <div className="relative flex flex-col space-y-5">
@@ -1188,7 +1190,7 @@ const TabFilters = ({ categories = [] }: TabFiltersProps) => {
         {renderTabsColor()}
         {renderTabsSize()}
         {renderTabIsOnsale()}
-        <div className="!ml-auto">{renderTabsSortOrder()}</div>
+        {showSorting && <div className="!ml-auto">{renderTabsSortOrder()}</div>}
       </div>
 
       {/* FOR RESPONSIVE MOBILE */}

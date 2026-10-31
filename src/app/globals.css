@@ -6,9 +6,48 @@
    tag rendered by src/app/layout.tsx (see src/lib/theme/css-variables.ts);
    these var(...,fallback) defaults only apply if that tag is ever absent. */
 body {
+  font-family: var(--font-body, inherit);
   font-size: var(--base-font-size, 16px);
-  line-height: var(--line-height, 1.5);
+  /* Absolute (ratio x base size), so children inherit e.g. 24px exactly like the old
+     text-base on <body> did - a bare ratio would shrink small text's line height. */
+  line-height: calc(var(--line-height, 1.5) * var(--base-font-size, 16px));
   letter-spacing: var(--letter-spacing, 0px);
+  font-weight: var(--body-weight, 400);
+}
+
+/* Dark mode turned off in the theme -> hide the shopper's dark/light switches. */
+html[data-dark-mode="off"] .dark-mode-control {
+  display: none !important;
+}
+
+/* Theme "Layout & Container" -> Container Width = the content width. Tailwind's container
+   (tailwind.config.js) keeps its side padding (40px at xl, 128px at 2xl); with the default
+   1280px these give exactly Tailwind's own max-widths (1280px / 1536px). */
+@media (min-width: 1280px) {
+  .container {
+    max-width: min(1280px, calc(var(--container-width, 1280px) + 80px));
+  }
+}
+@media (min-width: 1536px) {
+  .container {
+    max-width: calc(var(--container-width, 1280px) + 256px);
+  }
+}
+
+/* Theme "Buttons & Cards" -> Cards, applied to product cards only when the admin turns on
+   "Apply card style to product cards" (otherwise each card design keeps its own look).
+   ThemeProductCardAdapter wraps every card in a layout-neutral .theme-card-slot
+   (display: contents); the card's root element is its first child. <html data-card-style>
+   comes from the theme (layout.tsx, and the editor preview). */
+.theme-card-slot {
+  display: contents;
+}
+html[data-card-style="theme"] .theme-card-slot > :first-child {
+  border-radius: var(--card-radius) !important;
+  box-shadow: var(--card-shadow) !important;
+  border: var(--card-border) !important;
+  padding: var(--card-spacing) !important;
+  overflow: hidden;
 }
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading, inherit);

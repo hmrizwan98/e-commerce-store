@@ -34,7 +34,8 @@ export const PRESET_MODERN_MINIMAL: SystemThemeConfig = {
   },
   darkColors: {
     primary: "#0284c7",
-    background: "#0a0a0a",
+    // #171717 = the storefront's built-in dark page colour (was neutral-900).
+    background: "#171717",
     card: "#171717",
     text: "#e5e5e5",
     headerBackground: "#171717",
@@ -54,7 +55,8 @@ export const PRESET_MODERN_MINIMAL: SystemThemeConfig = {
   logos: {},
   buttons: {
     radius: "full",
-    heightPx: 48,
+    // 44px = the natural height of the default button (min-height only).
+    heightPx: 44,
     shadow: "xl",
     hoverEffect: "none",
     border: false,
@@ -170,11 +172,17 @@ export const PRESET_PREMIUM_LUXURY: SystemThemeConfig = {
     buttonHoverBackground: "#292524",
     buttonText: "#fafaf9",
   },
+  // Values below match how the Default Theme has always looked on the storefront (these
+  // settings weren't applied before; with them applied, these defaults keep the same look).
+  darkColors: {
+    ...PRESET_MODERN_MINIMAL.darkColors,
+    primary: "#78350f",
+  },
   typography: {
-    headingFont: "playfairDisplay",
+    headingFont: "workSans",
     bodyFont: "workSans",
     baseFontSizePx: 16,
-    lineHeight: 1.6,
+    lineHeight: 1.5,
     letterSpacingPx: 1,
     headingWeight: 600,
     bodyWeight: 400,
@@ -182,11 +190,11 @@ export const PRESET_PREMIUM_LUXURY: SystemThemeConfig = {
   },
   buttons: {
     radius: "none",
-    heightPx: 46,
+    heightPx: 44,
     shadow: "none",
     hoverEffect: "glow",
-    border: true,
-    paddingX: 32,
+    border: false,
+    paddingX: 24,
     paddingY: 14,
     transitionSpeed: "slow",
   },

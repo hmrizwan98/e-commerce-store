@@ -62,6 +62,8 @@ function ColorField({
 
 const LIGHT_FIELDS: { key: keyof ThemeColors; label: string; fallback: string }[] = [
   { key: "primary", label: "Primary", fallback: "#0284c7" },
+  // Secondary / Accent are saved and exposed as --c-secondary-* / --c-accent-*, but none of the
+  // current storefront designs use them (see note under the fields).
   { key: "secondary", label: "Secondary", fallback: "#16a34a" },
   { key: "accent", label: "Accent", fallback: "#7c3aed" },
   { key: "background", label: "Background", fallback: "#ffffff" },
@@ -110,6 +112,10 @@ export default function ColorsTab({ draft, onChange }: TabProps) {
           />
         ))}
       </div>
+
+      <p className="text-[11px] text-slate-500 -mt-2">
+        Secondary and Accent are saved for future designs - the current storefront designs don&apos;t use them yet, so changing them has no visible effect.
+      </p>
 
       <div className="border-t border-slate-200 dark:border-slate-800 pt-5 space-y-4 w-full min-w-0">
         <div className="flex items-center justify-between">

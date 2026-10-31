@@ -16,6 +16,8 @@ export interface SidebarFiltersProps {
   availableColors?: string[];
   availableSizes?: string[];
   showHeader?: boolean;
+  /** Theme Collection setting "Show sorting". */
+  showSorting?: boolean;
 }
 
 // Every filter change commits straight to the URL
@@ -24,6 +26,7 @@ const SidebarFilters = ({
   availableColors = FILTER_COLORS,
   availableSizes = FILTER_SIZES,
   showHeader = true,
+  showSorting = true,
 }: SidebarFiltersProps) => {
   const formatMoney = useFormatMoney();
   const { filters, applyFilters, clearAll } = useFilterParams();
@@ -290,7 +293,7 @@ const SidebarFilters = ({
             onChange={handleChangeOnSale}
           />
         </div>
-        {renderTabsSortOrder()}
+        {showSorting && renderTabsSortOrder()}
       </div>
     </div>
   );

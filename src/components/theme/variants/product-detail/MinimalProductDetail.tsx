@@ -36,6 +36,9 @@ export default function MinimalProductDetail({
   const s = useProductDetailState(product, variants);
   const showCompare = productDetailSettings?.showCompare ?? true;
   const clickableGallery = (productDetailSettings?.galleryStyle ?? "clickable-thumbnails") === "clickable-thumbnails";
+  const showWishlist = productDetailSettings?.showWishlist ?? true;
+  // Minimal's own default is a normal (non-sticky) panel.
+  const panelStyle = productDetailSettings?.purchasePanelStyle ?? "standard";
 
   return (
     <div className="nc-ProductDetailPage">
@@ -45,13 +48,13 @@ export default function MinimalProductDetail({
             <div className="relative">
               <ProductGallery activeImage={s.activeImage} thumbnails={s.thumbnails} alt={product.name} clickable={clickableGallery} />
               <ProductStatus status={product.badge} />
-              <LikeButton productId={product.id} className="absolute right-3 top-3" />
+              {showWishlist && <LikeButton productId={product.id} className="absolute right-3 top-3" />}
               {showCompare && <CompareButton productId={product.id} className="absolute right-3 top-16" />}
             </div>
           </div>
 
-          <div className="w-full lg:w-[45%] pt-10 lg:pt-0 lg:pl-7 xl:pl-9 2xl:pl-10">
-            <div className="space-y-7 2xl:space-y-8">
+          <div className={`w-full lg:w-[45%] pt-10 lg:pt-0 lg:pl-7 xl:pl-9 2xl:pl-10 ${panelStyle === "sticky" ? "lg:sticky lg:top-24 lg:self-start" : ""}`}>
+            <div className={panelStyle === "compact" ? "space-y-5" : "space-y-7 2xl:space-y-8"}>
               <div>
                 <h2 className="text-2xl sm:text-3xl font-semibold text-[var(--heading)]">{product.name}</h2>
                 <div className="flex items-center mt-5 space-x-4 sm:space-x-5">

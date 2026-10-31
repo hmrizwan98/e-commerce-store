@@ -105,7 +105,11 @@ export default function LayoutTab({ draft, onChange }: TabProps) {
               </option>
             ))}
           </NativeSelect>
+          <p className="text-[11px] text-slate-500">Saved for future designs - the current storefront designs don&apos;t use it yet.</p>
         </div>
+        <p className="sm:col-span-2 text-[11px] text-slate-500 leading-relaxed">
+          Where these apply: Container Width - page content width on screens 1280px and wider. Grid Gap - spacing between products on collection, category, search and brand pages. Section Padding / Margin - space around and between homepage sections (phones get two-thirds).
+        </p>
       </div>
     </div>
   );

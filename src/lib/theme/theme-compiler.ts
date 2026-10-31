@@ -97,9 +97,11 @@ ${hexVar("badge-out-of-stock", c.badgeOutOfStock, DEFAULT_COLOR_FALLBACKS.badgeO
   --btn-padding-x: ${px(buttons.paddingX, 24)};
   --btn-padding-y: ${px(buttons.paddingY, 14)};
   --btn-border: ${buttons.border ? "1px solid rgba(0,0,0,0.1)" : "none"};
+  --btn-height: ${px(buttons.heightPx, 44)};
   --card-radius: ${RADIUS_MAP[cards.radius ?? "xl"]};
   --card-shadow: ${SHADOW_MAP[cards.shadow ?? "none"]};
   --card-spacing: ${px(cards.spacingPx, 16)};
+  --card-border: ${cards.border ? "1px solid var(--border)" : "1px solid transparent"};
   --product-image-radius: ${RADIUS_MAP[productCard.imageRadius ?? "xl"]};
   --product-card-radius: ${RADIUS_MAP[productCard.cardRadius ?? "none"]};
   --container-width: ${px(layout.containerWidthPx, 1280)};
@@ -115,10 +117,13 @@ ${hexVar("badge-out-of-stock", c.badgeOutOfStock, DEFAULT_COLOR_FALLBACKS.badgeO
   --button-weight: ${typography.buttonWeight ?? 500};
 }`;
 
+  // Dark mode: the primary colour scale is re-generated from darkColors.primary (falls back to
+  // the light primary), and the surfaces use the dark colours. Defaults match the storefront's
+  // built-in dark look (neutral-900 page, neutral-200 text).
   const darkBlock = dm.enabled
     ? `.dark {
-${hexVar("c-primary-600-override", dc.primary, c.primary || DEFAULT_COLOR_FALLBACKS.primary)}
-${hexVar("background", dc.background, "#0a0a0a")}
+${scaleVars("primary", dc.primary, c.primary || DEFAULT_COLOR_FALLBACKS.primary)}
+${hexVar("background", dc.background, "#171717")}
 ${hexVar("card", dc.card, "#171717")}
 ${hexVar("text", dc.text, "#e5e5e5")}
 ${hexVar("header-bg", dc.headerBackground, "#171717")}
@@ -127,5 +132,29 @@ ${hexVar("border", dc.border, "#262626")}
 }`
     : "";
 
-  return `${root}\n${darkBlock}`;
+  // Button overrides only when changed from the defaults the button component was designed
+  // with (24px x 14px padding, natural height, weight 500, no border), so an untouched theme
+  // renders pixel-identical. Higher specificity than utilities on purpose: a theme change
+  // applies to every default-size button.
+  const padX = typeof buttons.paddingX === "number" ? buttons.paddingX : 24;
+  const padY = typeof buttons.paddingY === "number" ? buttons.paddingY : 14;
+  const btnRules: string[] = [];
+  if (padX !== 24 || padY !== 14) {
+    btnRules.push(
+      `.nc-Button.nc-btn-theme-size { padding: ${px(padY - 2, 12)} ${px(Math.round((padX * 2) / 3), 16)}; }`,
+      `@media (min-width: 640px) { .nc-Button.nc-btn-theme-size { padding: ${px(padY, 14)} ${px(padX, 24)}; } }`
+    );
+  }
+  if (typeof buttons.heightPx === "number" && buttons.heightPx !== 44) {
+    btnRules.push(`.nc-Button.nc-btn-theme-size { min-height: ${px(buttons.heightPx, 44)}; }`);
+  }
+  const weight = typography.buttonWeight;
+  if (weight && weight !== 500 && [400, 500, 600, 700].includes(weight)) {
+    btnRules.push(`.nc-Button.nc-btn-theme-weight { font-weight: ${weight}; }`);
+  }
+  if (buttons.border) {
+    btnRules.push(`.ttnc-ButtonPrimary { border: 1px solid rgba(0,0,0,0.1); }`);
+  }
+
+  return `${root}\n${darkBlock}${btnRules.length ? `\n${btnRules.join("\n")}` : ""}`;
 }

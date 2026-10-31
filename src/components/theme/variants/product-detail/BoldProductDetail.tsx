@@ -38,7 +38,10 @@ export default function BoldProductDetail({
   const s = useProductDetailState(product, variants);
   const showCompare = productDetailSettings?.showCompare ?? true;
   const clickableGallery = (productDetailSettings?.galleryStyle ?? "clickable-thumbnails") === "clickable-thumbnails";
-  const isSticky = (productDetailSettings?.purchasePanelStyle ?? "sticky") !== "compact";
+  // Bold's own default is a sticky panel; "standard" scrolls normally, "compact" also tightens spacing.
+  const panelStyle = productDetailSettings?.purchasePanelStyle ?? "sticky";
+  const isSticky = panelStyle === "sticky";
+  const showWishlist = productDetailSettings?.showWishlist ?? true;
   const lowStock = !s.isOutOfStock && s.activeStock > 0 && s.activeStock <= LOW_STOCK_THRESHOLD;
 
   return (
@@ -49,13 +52,13 @@ export default function BoldProductDetail({
             <div className="relative">
               <ProductGallery activeImage={s.activeImage} thumbnails={s.thumbnails} alt={product.name} clickable={clickableGallery} />
               <ProductStatus status={product.badge} position="top-right" />
-              <LikeButton productId={product.id} className="absolute left-3 top-3" />
+              {showWishlist && <LikeButton productId={product.id} className="absolute left-3 top-3" />}
               {showCompare && <CompareButton productId={product.id} className="absolute left-3 top-16" />}
             </div>
           </div>
 
           <div className={`w-full lg:w-1/2 pt-10 lg:pt-0 lg:pl-10 xl:pl-14 ${isSticky ? "lg:sticky lg:top-24" : ""}`}>
-            <div className="space-y-6 border-2 border-[var(--border)] rounded-lg p-6">
+            <div className={`${panelStyle === "compact" ? "space-y-4 p-4" : "space-y-6 p-6"} border-2 border-[var(--border)] rounded-lg`}>
               <div>
                 <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-[var(--heading)]">{product.name}</h1>
                 <div className="flex items-center mt-3 gap-3">

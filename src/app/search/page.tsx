@@ -11,6 +11,7 @@ import {
 } from "@/lib/firebase/repositories/products";
 import { getCategories } from "@/lib/firebase/repositories/categories";
 import { getActiveThemeConfig } from "@/lib/theme/theme-repository";
+import { GRID_GAP_WIDE, themeListingColsClass } from "@/lib/theme/grid";
 import {
   parseProductSearchParams,
   buildPageHref,
@@ -21,7 +22,7 @@ export const dynamic = "force-dynamic";
 
 const PageSearch = async ({ searchParams }: { searchParams: RawSearchParams }) => {
   const q = typeof searchParams.q === "string" ? searchParams.q : undefined;
-  const params = parseProductSearchParams(searchParams);
+  const params = parseProductSearchParams(searchParams, (await getActiveThemeConfig()).collection?.productsPerPage);
 
   const [result, categories, theme] = await Promise.all([
     q ? searchProductsByName(q, params.pageSize) : searchProducts(params),
@@ -55,7 +56,7 @@ const PageSearch = async ({ searchParams }: { searchParams: RawSearchParams }) =
           )}
 
           {/* LOOP ITEMS */}
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-8 gap-y-10 mt-8 lg:mt-10">
+          <div className={`grid ${themeListingColsClass(theme.collection)} ${GRID_GAP_WIDE} mt-8 lg:mt-10`}>
             {products.map((item) => (
               <ThemeProductCardAdapter data={item} productCardSettings={theme.productCard} key={item.id} />
             ))}
