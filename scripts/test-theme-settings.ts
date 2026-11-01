@@ -107,7 +107,7 @@ test("preview reload: CSS-only edits update live, component edits reload", () =>
   assert.equal(patchNeedsPreviewReload({ productCard: { imageRadius: "lg" } } as never), false);
   assert.equal(patchNeedsPreviewReload({ productCard: { variant: "minimal" } } as never), true);
   assert.equal(patchNeedsPreviewReload({ collection: { gridColumnsDesktop: 4 } }), true);
-  assert.equal(patchNeedsPreviewReload({ popup: { enabled: true } }), true);
+  assert.equal(patchNeedsPreviewReload({ popup: { enabled: true } }), false); // chrome: rendered live in the preview
   assert.equal(patchNeedsPreviewReload({ cart: { itemLayout: "compact" } }), true);
   assert.equal(patchNeedsPreviewReload({ presetId: "modern-minimal" } as never), true);
 });

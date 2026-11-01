@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { decodeHtmlEntities } from "@/lib/theme/announcement";
 import SocialsList1 from "@/shared/SocialsList1/SocialsList1";
 import { useChromeSuppressed } from "@/lib/tenant/useChromeSuppressed";
 import type { ThemeHeader } from "@/types/theme";
@@ -17,7 +18,7 @@ export default function LuxeAnnouncementBar({ topBar }: AnnouncementBarVariantPr
     <div className="nc-TopBar bg-[var(--top-bar-bg)] text-stone-50 border-b border-amber-900/20">
       <div className="container flex flex-col sm:flex-row items-center justify-center gap-1 py-2.5 text-center">
         {topBar.text && (
-          <span className="font-serif text-[11px] tracking-[0.25em] uppercase">{topBar.text}</span>
+          <span className="font-serif text-[11px] tracking-[0.25em] uppercase">{decodeHtmlEntities(topBar.text)}</span>
         )}
         <div className="flex items-center gap-4 text-[11px] font-serif tracking-widest">
           {topBar.phone && (

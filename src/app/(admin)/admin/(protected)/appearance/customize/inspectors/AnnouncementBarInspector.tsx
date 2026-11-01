@@ -3,6 +3,7 @@
 import NativeSelect from "@/components/ui/NativeSelect";
 import React from "react";
 import type { SystemThemeConfig } from "@/lib/theme/theme-types";
+import { isThemeTopBarActive } from "@/lib/theme/announcement";
 
 export interface AnnouncementBarInspectorProps {
   draft: SystemThemeConfig;
@@ -13,7 +14,9 @@ const inputClass =
   "w-full px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500/20";
 
 export default function AnnouncementBarInspector({ draft, onChange }: AnnouncementBarInspectorProps) {
-  const topBar = draft.header?.topBar ?? { enabled: true, text: "✦ FREE SHIPPING ON ALL ORDERS ✦" };
+  // Nothing saved = the storefront shows no theme bar, so show it as off/empty here too.
+  const topBar = draft.header?.topBar ?? { enabled: false, text: "" };
+  const active = isThemeTopBarActive(topBar);
 
   const updateTopBar = (patch: Partial<NonNullable<SystemThemeConfig["header"]["topBar"]>>) => {
     onChange({
@@ -34,6 +37,22 @@ export default function AnnouncementBarInspector({ draft, onChange }: Announceme
           Customize the top message banner displayed across all store pages.
         </p>
       </div>
+
+      {/* The store shows ONE bar: this one when it's on and has text, otherwise the one from
+          Content -> Announcements. */}
+      <p
+        className={`text-[11px] leading-snug p-2.5 rounded-lg border ${
+          active
+            ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900"
+            : "bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-900"
+        }`}
+      >
+        {active
+          ? "This bar is shown on your store. It replaces the bar from Content → Announcements."
+          : topBar.enabled
+          ? "Add some text below to show this bar. Until then your store shows the bar from Content → Announcements (if any)."
+          : "This bar is off, so your store shows the bar from Content → Announcements (if any). Turn it on to use your own text here."}
+      </p>
 
       <div className="space-y-4 pt-2">
         <div>
@@ -56,7 +75,7 @@ export default function AnnouncementBarInspector({ draft, onChange }: Announceme
         <label className="flex items-center gap-2 cursor-pointer">
           <input
             type="checkbox"
-            checked={topBar.enabled ?? true}
+            checked={topBar.enabled ?? false}
             onChange={(e) => updateTopBar({ enabled: e.target.checked })}
             className="w-4 h-4 rounded text-sky-600 focus:ring-sky-500"
           />
@@ -73,7 +92,7 @@ export default function AnnouncementBarInspector({ draft, onChange }: Announceme
             type="text"
             className={inputClass}
             value={topBar.text ?? ""}
-            placeholder="✦ FREE SHIPPING ON ALL ORDERS ✦"
+            placeholder="e.g. Free delivery on orders over Rs 3,000"
             onChange={(e) => updateTopBar({ text: e.target.value })}
           />
         </div>

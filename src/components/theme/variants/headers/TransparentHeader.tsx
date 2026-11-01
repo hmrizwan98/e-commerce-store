@@ -21,10 +21,13 @@ export default function TransparentHeader({ headerSettings, cartSettings, logos,
   const showSearch = headerSettings?.showSearch ?? true;
   const showAccount = headerSettings?.showAccount ?? true;
   const showCart = headerSettings?.showCart ?? true;
+  // Header Height (Customizer -> Header & Navigation): a minimum height - the logo, menu and
+  // icons stay vertically centred and are never clipped. Unset = the design's own py-6 spacing.
+  const minHeight = headerSettings?.heightPx ? `${headerSettings.heightPx}px` : undefined;
 
   return (
     <header className="relative w-full z-40 bg-[var(--header-bg)]/90 backdrop-blur-md transition-all duration-300 border-b border-[var(--border)]/50">
-      <div className="container py-6 flex items-center justify-between gap-8">
+      <div className={`container ${minHeight ? "py-2" : "py-6"} flex items-center justify-between gap-8`} style={minHeight ? { minHeight } : undefined}>
         <div className="flex-1 flex items-center lg:hidden">
           <MenuBar logos={logos} storeName={storeName} />
         </div>

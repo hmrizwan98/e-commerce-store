@@ -10,6 +10,8 @@ import TabFilters from "@/components/TabFilters";
 import SidebarFilters from "@/components/SidebarFilters";
 import { GRID_GAP_SIDEBAR, GRID_GAP_WIDE, themeGridColsClass } from "@/lib/theme/grid";
 import type { SystemThemeConfig } from "@/lib/theme/theme-types";
+import { renderSection } from "@/app/HomeContent";
+import { extraPageSections } from "@/lib/theme/page-sections";
 
 /**
  * The storefront collection page body, driven by the theme's Collection settings. Used by the
@@ -26,7 +28,12 @@ export default async function CollectionPageView({
   basePath?: string;
 }) {
   const params = parseProductSearchParams(searchParams, theme.collection?.productsPerPage);
-  const [{ products, totalPages }, categories] = await Promise.all([searchProducts(params), getCategories()]);
+  const [{ products, totalPages }, categories, extraSections] = await Promise.all([
+    searchProducts(params),
+    getCategories(),
+    // Sections the admin added to this page in the Customizer, below the page content.
+    Promise.all(extraPageSections(theme.collection?.sections).map((sec) => renderSection(sec, theme))),
+  ]);
 
   const isSidebarFilter = theme.collection?.filterPosition !== "top";
   const showFilters = theme.collection?.showSidebarFilter ?? true;
@@ -147,6 +154,10 @@ export default async function CollectionPageView({
             <SectionPromo1 />
           </>
         )}
+
+        {extraSections.filter(Boolean).map((el, i) => (
+          <React.Fragment key={i}>{el}</React.Fragment>
+        ))}
       </div>
     </div>
   );

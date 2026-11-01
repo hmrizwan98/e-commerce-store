@@ -36,6 +36,7 @@ import { toCardCategoryData, toHeroSlide, toExploreType } from '@/lib/firebase/a
 import { getCurrentTenant } from '@/lib/tenant/current';
 import { isPlatformDomainRequest } from '@/lib/tenant/platform-domain';
 import { getActiveThemeConfig } from '@/lib/theme/theme-repository';
+import { activeSectionsInOrder } from '@/lib/theme/page-sections';
 import PlatformLayout from './(marketing)/platform/layout';
 import PlatformHomePage from './(marketing)/platform/page';
 import type { HomepageSection, HomepageTile } from '@/types/homepage-section';
@@ -99,7 +100,8 @@ function tilesToGallery(items: HomepageTile[] | undefined) {
   return withImages.map((t) => ({ image: t.image!, href: t.href }));
 }
 
-async function renderSection(
+/** Renders one CMS section (also used for sections added to the collection / product pages). */
+export async function renderSection(
   section: HomepageSection,
   themeConfig: SystemThemeConfig
 ): Promise<JSX.Element | null> {
@@ -470,7 +472,11 @@ export default async function HomeContent({ themeConfig: themeConfigOverride }: 
   const themeConfig = themeConfigOverride ?? (await getActiveThemeConfig());
   const presetId = themeConfig.presetId;
 
-  const rawSections = await getActiveHomepageSections();
+  // The editor preview passes the draft theme: its homepageSections (what the admin is editing)
+  // are what must show - the live site reads the published sections collection.
+  const rawSections = themeConfigOverride?.homepageSections
+    ? activeSectionsInOrder(themeConfigOverride.homepageSections)
+    : await getActiveHomepageSections();
   const sections = rawSections.length ? rawSections : DEFAULT_HOMEPAGE_SECTIONS_FALLBACK;
 
   const heroSection = sections.find((s) => s.type === 'hero');

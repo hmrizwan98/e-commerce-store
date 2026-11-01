@@ -151,3 +151,34 @@ export async function saveDraftThemeConfig(config: Partial<SystemThemeConfig>): 
     { merge: true }
   );
 }
+
+/**
+ * Editor preview staging: unsaved customizer changes that need a server render (homepage
+ * sections, card/collection/product/cart settings) are written to themeSettings/preview -
+ * never to the draft, so "Save Draft" keeps its meaning and nothing the admin hasn't saved
+ * overwrites their draft. The preview uses it only while it is newer than the draft.
+ */
+export async function savePreviewThemeConfig(config: Partial<SystemThemeConfig>): Promise<void> {
+  const ref = await tenantDoc(THEME_SETTINGS_COLLECTION, "preview");
+  await ref.set({ ...config, isPublished: false, updatedAt: Date.now() });
+}
+
+export async function getPreviewThemeConfig(): Promise<SystemThemeConfig> {
+  try {
+    const [previewSnap, draftSnap] = await Promise.all([
+      (await tenantDoc(THEME_SETTINGS_COLLECTION, "preview")).get(),
+      (await tenantDoc(THEME_SETTINGS_COLLECTION, "draft")).get(),
+    ]);
+    const preview = previewSnap.exists ? (previewSnap.data() as Partial<SystemThemeConfig> & { updatedAt?: number }) : null;
+    const draftUpdatedAt = (draftSnap.exists ? (draftSnap.get("updatedAt") as number | undefined) : undefined) ?? 0;
+    if (preview && (preview.updatedAt ?? 0) > draftUpdatedAt) {
+      const presetKey: ThemePresetId = (preview.presetId as ThemePresetId) || "modern-minimal";
+      const merged = deepMergeTheme(THEME_PRESETS[presetKey] ?? DEFAULT_SYSTEM_THEME, preview);
+      await applyLegacyBranding(merged, preview);
+      return merged;
+    }
+  } catch (error) {
+    console.error("Error reading preview theme config:", error);
+  }
+  return getDraftThemeConfig();
+}

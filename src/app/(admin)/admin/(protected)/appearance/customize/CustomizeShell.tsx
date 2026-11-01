@@ -38,7 +38,7 @@ import {
 } from "@heroicons/react/24/outline";
 import ButtonPrimary from "@/shared/Button/ButtonPrimary";
 import ButtonSecondary from "@/shared/Button/ButtonSecondary";
-import { saveCustomizerDraftAction, publishCustomizerAction, discardCustomizerDraftAction } from "./actions";
+import { saveCustomizerDraftAction, publishCustomizerAction, discardCustomizerDraftAction, stagePreviewThemeAction } from "./actions";
 import ThemeTab from "./tabs/ThemeTab";
 import ColorsTab from "./tabs/ColorsTab";
 import TypographyTab from "./tabs/TypographyTab";
@@ -68,7 +68,7 @@ import TestimonialsSectionInspector from "./inspectors/TestimonialsSectionInspec
 import GenericSectionInspector from "./inspectors/GenericSectionInspector";
 import HomepageSections, { AddSectionModal, type PickerOption } from "../../homepage/HomepageSections";
 import { SECTION_META } from "../../homepage/section-meta";
-import { patchNeedsPreviewReload } from "@/lib/theme/preview-reload";
+import { draftPatchChanges, patchNeedsPreviewReload } from "@/lib/theme/preview-reload";
 import type { SystemThemeConfig } from "@/lib/theme/theme-types";
 import type { HomepageSection, HomepageSectionType } from "@/types/homepage-section";
 import type { NavItem } from "@/types/nav";
@@ -222,12 +222,15 @@ export default function CustomizeShell({ initialDraft, homepage, navigation }: C
   }, [viewport]);
   
   const [previewSurface, setPreviewSurface] = useState<PreviewSurfaceKey>("home");
+  // Product opened by clicking a product inside the preview (null = first product as sample).
+  const [previewProductSlug, setPreviewProductSlug] = useState<string | null>(null);
   const [previewLoaded, setPreviewLoaded] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
   const [confirmDiscardOpen, setConfirmDiscardOpen] = useState(false);
 
   const handleSurfaceChange = (surface: PreviewSurfaceKey) => {
     setPreviewSurface(surface);
+    setPreviewProductSlug(null);
     setSelectedSectionId(null);
     if (surface === "collection") {
       setEditorMode("global");
@@ -244,15 +247,26 @@ export default function CustomizeShell({ initialDraft, homepage, navigation }: C
     }
   };
 
-  // Non-CSS settings: save the draft (never the live store) shortly after the last change and
-  // reload the preview so it shows them - no more manual "Save/Reload" to see a change.
-  const [previewReloadRequest, setPreviewReloadRequest] = useState(0);
+  // Settings rendered on the server (homepage sections, card / collection / product / cart
+  // settings) are staged for the preview only (themeSettings/preview - never the draft) a moment
+  // after the last change, then the preview does a soft refresh (no reload, scroll kept).
+  // Colours/fonts/spacing and the header/footer/announcement/popup update instantly in the
+  // preview without any server round trip.
+  const [stageRequest, setStageRequest] = useState(0);
   const [autoRefreshing, setAutoRefreshing] = useState(false);
+  const draftRef = useRef(draft);
+  draftRef.current = draft;
 
   const updateDraft = useCallback((patch: Partial<SystemThemeConfig>) => {
-    setDraft((prev) => mergeDraft(prev, patch));
+    const prev = draftRef.current;
+    const next = mergeDraft(prev, patch);
+    // A component re-sending the same value must not mark the draft dirty or refresh the
+    // preview (this is what breaks any update -> re-render -> update feedback loop).
+    if (!draftPatchChanges(prev, next, patch)) return;
+    draftRef.current = next;
+    setDraft(next);
     setDirty(true);
-    if (patchNeedsPreviewReload(patch)) setPreviewReloadRequest((n) => n + 1);
+    if (patchNeedsPreviewReload(patch)) setStageRequest((n) => n + 1);
   }, []);
 
   const [sections, setSections] = useState<HomepageSection[]>(
@@ -490,6 +504,15 @@ export default function CustomizeShell({ initialDraft, homepage, navigation }: C
         setPreviewLoaded(true);
         sendPreviewUpdate(draft);
       }
+      // A storefront link clicked inside the preview (PreviewRuntime) - switch the preview page
+      // without touching the editor's selected tab/section.
+      if (event.data?.type === "theme-preview-navigate") {
+        const surface = event.data.surface as PreviewSurfaceKey;
+        if (surface === "home" || surface === "collection" || surface === "product" || surface === "cart") {
+          setPreviewSurface(surface);
+          setPreviewProductSlug(surface === "product" && typeof event.data.productSlug === "string" ? event.data.productSlug : null);
+        }
+      }
     }
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
@@ -520,27 +543,27 @@ export default function CustomizeShell({ initialDraft, homepage, navigation }: C
     }
   };
 
-  const draftRef = useRef(draft);
-  draftRef.current = draft;
   useEffect(() => {
-    if (!previewReloadRequest) return;
+    if (!stageRequest) return;
     const timer = setTimeout(async () => {
       setAutoRefreshing(true);
       try {
-        const res = await saveCustomizerDraftAction(draftRef.current);
+        const res = await stagePreviewThemeAction(draftRef.current);
         if (res.ok) {
-          setDirty(false);
-          setPreviewLoaded(false);
-          setReloadKey((k) => k + 1);
+          iframeRef.current?.contentWindow?.postMessage({ type: "theme-preview-refresh" }, window.location.origin);
         }
       } catch {
         toast.error("Couldn't update the preview - use the refresh button.");
       } finally {
         setAutoRefreshing(false);
       }
-    }, 1200);
+    }, 900);
     return () => clearTimeout(timer);
-  }, [previewReloadRequest]);
+  }, [stageRequest]);
+
+  const previewSrc = `/admin/theme-customizer-preview?page=${previewSurface}${
+    previewSurface === "product" && previewProductSlug ? `&product=${encodeURIComponent(previewProductSlug)}` : ""
+  }`;
 
   const handleRefreshPreview = async () => {
     setSavingDraft(true);
@@ -1091,7 +1114,7 @@ export default function CustomizeShell({ initialDraft, homepage, navigation }: C
                           </div>
 
                           <p className="px-1 pb-2 text-[11px] leading-snug text-amber-700 dark:text-amber-400">
-                            Live store: the built-in sections can be shown or hidden here. Their order and any extra sections you add aren&apos;t shown on this page yet.
+                            The two built-in sections keep their usual place (show/hide them here). Sections you add appear below the page content, in the order shown here.
                           </p>
                           {collectionSections.map((sec, index) => {
                             const meta = SECTION_META[sec.type];
@@ -1238,7 +1261,7 @@ export default function CustomizeShell({ initialDraft, homepage, navigation }: C
                           </div>
 
                           <p className="px-1 pb-2 text-[11px] leading-snug text-amber-700 dark:text-amber-400">
-                            Live store: the built-in sections can be shown or hidden here. Their order and any extra sections you add aren&apos;t shown on this page yet.
+                            The two built-in sections keep their usual place (show/hide them here). Sections you add appear below the page content, in the order shown here.
                           </p>
                           {productSections.map((sec, index) => {
                             const meta = SECTION_META[sec.type];
@@ -1449,7 +1472,7 @@ export default function CustomizeShell({ initialDraft, homepage, navigation }: C
             </div>
 
             <a
-              href={`/admin/theme-customizer-preview?page=${previewSurface}`}
+              href={previewSrc}
               target="_blank"
               rel="noreferrer"
               className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
@@ -1468,9 +1491,9 @@ export default function CustomizeShell({ initialDraft, homepage, navigation }: C
                 className="relative shrink-0 shadow-lg rounded-xl overflow-hidden bg-white border border-slate-300 dark:border-slate-700"
               >
                 <iframe
-                  key={`${reloadKey}-${previewSurface}`}
+                  key={`${reloadKey}-${previewSurface}-${previewProductSlug ?? ""}`}
                   ref={iframeRef}
-                  src={`/admin/theme-customizer-preview?page=${previewSurface}`}
+                  src={previewSrc}
                   title="Live Storefront Preview"
                   style={{ width: "100%", height: "100%", border: "none", background: "white" }}
                   onLoad={() => sendPreviewUpdate(draft)}
@@ -1479,9 +1502,9 @@ export default function CustomizeShell({ initialDraft, homepage, navigation }: C
             ) : (
               <div className="w-full h-full relative overflow-hidden bg-white">
                 <iframe
-                  key={`${reloadKey}-${previewSurface}`}
+                  key={`${reloadKey}-${previewSurface}-${previewProductSlug ?? ""}`}
                   ref={iframeRef}
-                  src={`/admin/theme-customizer-preview?page=${previewSurface}`}
+                  src={previewSrc}
                   title="Live Storefront Preview"
                   style={{
                     width: `${(1 / previewScale) * 100}%`,
@@ -1498,8 +1521,8 @@ export default function CustomizeShell({ initialDraft, homepage, navigation }: C
           </div>
           <p className="text-[11px] text-slate-400 text-center shrink-0">
             {autoRefreshing
-              ? "Saving draft & updating preview…"
-              : "Colours, fonts & spacing update instantly. Other changes save to your draft and refresh the preview automatically (your live store only changes when you Publish)."}
+              ? "Updating preview…"
+              : "Changes show in the preview right away. Save Draft keeps them; your live store only changes when you Publish."}
           </p>
         </div>
       </div>

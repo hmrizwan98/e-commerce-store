@@ -24,6 +24,11 @@ export default function HeaderInspector({ draft, onChange }: HeaderInspectorProp
     onChange({ logos: { ...logos, ...patch } });
   };
 
+  // What the selected header layout actually uses (checked against the header components):
+  // only the classic header (no layout chosen) is sticky; no layout uses shadow or logo alignment.
+  const usesSticky = !header.variant;
+  const notUsed = <span className="block text-[11px] font-normal text-slate-500">Not used by this header layout</span>;
+
   return (
     <div className="space-y-5">
       <div>
@@ -120,8 +125,10 @@ export default function HeaderInspector({ draft, onChange }: HeaderInspectorProp
           <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
             Logo Alignment
           </label>
+          {notUsed}
           <NativeSelect size="sm"
-            className={inputClass}
+            disabled
+            className={`${inputClass} opacity-50`}
             value={header.logoAlignment ?? "left"}
             onChange={(e) => updateHeader({ logoAlignment: e.target.value as "left" | "center" })}
           >
@@ -134,11 +141,16 @@ export default function HeaderInspector({ draft, onChange }: HeaderInspectorProp
           <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
             Header Height ({header.heightPx ?? 80}px)
           </label>
+          {/* A slider, so typing "40" can't briefly apply a 4px header; the value is a
+              minimum - the logo and menu stay centred and are never clipped. */}
           <input
-            type="number"
-            className={inputClass}
+            type="range"
+            min={40}
+            max={160}
+            step={2}
+            className="w-full"
             value={header.heightPx ?? 80}
-            onChange={(e) => updateHeader({ heightPx: Number(e.target.value) || 80 })}
+            onChange={(e) => updateHeader({ heightPx: Number(e.target.value) })}
           />
         </div>
 
@@ -174,9 +186,11 @@ export default function HeaderInspector({ draft, onChange }: HeaderInspectorProp
           <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
             Header Shadow
           </label>
+          {notUsed}
           <NativeSelect size="sm"
-            className={inputClass}
+            className={`${inputClass} opacity-50`}
             value={header.shadow ?? "none"}
+            disabled
             onChange={(e) => updateHeader({ shadow: e.target.value as any })}
           >
             <option value="none">None</option>
@@ -192,11 +206,13 @@ export default function HeaderInspector({ draft, onChange }: HeaderInspectorProp
             <input
               type="checkbox"
               checked={header.sticky ?? true}
+              disabled={!usesSticky}
               onChange={(e) => updateHeader({ sticky: e.target.checked })}
               className="w-4 h-4 rounded text-sky-600 focus:ring-sky-500"
             />
             <span className="text-xs font-semibold text-slate-900 dark:text-slate-100">
               Sticky Header on Scroll
+              {!usesSticky && notUsed}
             </span>
           </label>
 

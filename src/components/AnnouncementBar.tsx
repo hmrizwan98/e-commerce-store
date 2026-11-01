@@ -5,6 +5,7 @@ import Link from "next/link";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { useChromeSuppressed } from "@/lib/tenant/useChromeSuppressed";
 import { useIsThemePreviewMode } from "@/lib/tenant/ThemePreviewModeContext";
+import { decodeHtmlEntities } from "@/lib/theme/announcement";
 import type { AnnouncementBar as AnnouncementBarData } from "@/types/announcement-bar";
 
 function dismissKey(id: string) {
@@ -16,7 +17,8 @@ function dismissKey(id: string) {
  * fetches the active bar client-side from a public route instead of reading
  * Firestore directly - same pattern as PageViewTracker/MarketingPixels/WhatsAppButton.
  */
-export default function AnnouncementBar() {
+/** `hidden`: the theme's own announcement bar is on (see isThemeTopBarActive) - only one bar shows. */
+export default function AnnouncementBar({ hidden = false }: { hidden?: boolean }) {
   // Inside the theme customizer's live preview (an /admin route) the bar must render exactly
   // as on the storefront, so the preview matches what shoppers see.
   const isPreviewMode = useIsThemePreviewMode();
@@ -26,12 +28,12 @@ export default function AnnouncementBar() {
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
-    if (isAdminRoute) return;
+    if (isAdminRoute || hidden) return;
     fetch("/api/announcements/active")
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => setBar(data?.bar ?? null))
       .catch(() => {});
-  }, [isAdminRoute]);
+  }, [isAdminRoute, hidden]);
 
   useEffect(() => {
     if (bar?.isClosable && window.localStorage.getItem(dismissKey(bar.id)) === "1") {
@@ -56,7 +58,7 @@ export default function AnnouncementBar() {
     updatedAt: 0,
   };
 
-  if (isAdminRoute || dismissed) return null;
+  if (hidden || isAdminRoute || dismissed) return null;
   if (!activeBar.showOnDesktop && !activeBar.showOnMobile) return null;
 
   const visibilityClass =
@@ -75,8 +77,8 @@ export default function AnnouncementBar() {
       style={{ color: activeBar.textColor, backgroundColor: activeBar.backgroundColor }}
     >
       <span className={activeBar.autoScroll ? "announcement-marquee" : ""}>
-        <span>{activeBar.title}</span>
-        {activeBar.subtitle && <span className="ml-2 opacity-90">{activeBar.subtitle}</span>}
+        <span>{decodeHtmlEntities(activeBar.title)}</span>
+        {activeBar.subtitle && <span className="ml-2 opacity-90">{decodeHtmlEntities(activeBar.subtitle)}</span>}
       </span>
       {activeBar.buttonText && activeBar.buttonHref && (
         <Link href={activeBar.buttonHref as any} className="ml-3 underline underline-offset-2 font-semibold whitespace-nowrap">

@@ -27,7 +27,8 @@ export default function CenteredHeader({ headerSettings, cartSettings, logos, st
     <header className="relative w-full z-40 bg-[var(--header-bg)] border-b border-[var(--border)] transition-all duration-200">
       <div
         className={`container flex items-center justify-between gap-6 ${customHeight ? "" : "min-h-[50px] py-2"}`}
-        style={customHeight ? { height: customHeight } : undefined}
+        // Minimum (not fixed) height so a small value can't clip the logo or menu.
+        style={customHeight ? { minHeight: customHeight } : undefined}
       >
         <div className="flex-1 flex items-center lg:hidden">
           <MenuBar logos={logos} storeName={storeName} />

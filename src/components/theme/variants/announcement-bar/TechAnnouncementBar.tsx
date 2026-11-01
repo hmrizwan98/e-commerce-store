@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { decodeHtmlEntities } from "@/lib/theme/announcement";
 import SocialsList1 from "@/shared/SocialsList1/SocialsList1";
 import { useChromeSuppressed } from "@/lib/tenant/useChromeSuppressed";
 import type { AnnouncementBarVariantProps } from "./LuxeAnnouncementBar";
@@ -14,7 +15,7 @@ export default function TechAnnouncementBar({ topBar }: AnnouncementBarVariantPr
       <div className="container flex flex-wrap items-center justify-center gap-4 py-2 text-xs font-semibold">
         {topBar.text && (
           <span className="inline-flex items-center gap-1.5">
-            <span className="text-sky-400">⚡</span> {topBar.text}
+            <span className="text-sky-400">⚡</span> {decodeHtmlEntities(topBar.text)}
           </span>
         )}
         <div className="flex items-center gap-4">

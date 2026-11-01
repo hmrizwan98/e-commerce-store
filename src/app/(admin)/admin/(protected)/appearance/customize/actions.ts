@@ -2,6 +2,7 @@
 
 import { requireAdmin } from "@/lib/firebase/require-admin";
 import {
+  savePreviewThemeConfig,
   saveDraftThemeConfig,
   setActiveThemeConfig,
   getActiveThemeConfig,
@@ -15,6 +16,14 @@ export async function saveCustomizerDraftAction(draftConfig: Partial<SystemTheme
   await requireAdmin();
   await saveDraftThemeConfig(draftConfig);
   revalidatePath("/admin/appearance/customize/preview");
+  return { ok: true as const };
+}
+
+/** Stages unsaved editor changes for the preview only (themeSettings/preview). Does NOT touch
+ * the draft or the live store - see theme-repository.ts. */
+export async function stagePreviewThemeAction(config: Partial<SystemThemeConfig>) {
+  await requireAdmin();
+  await savePreviewThemeConfig(config);
   return { ok: true as const };
 }
 

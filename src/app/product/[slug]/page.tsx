@@ -8,6 +8,7 @@ import {
 import { getApprovedReviewsByProduct } from "@/lib/firebase/repositories/reviews";
 import { getActiveThemeConfig } from "@/lib/theme/theme-repository";
 import ThemeProductDetailAdapter from "@/components/theme/ThemeProductDetailAdapter";
+import ExtraPageSections from "@/components/collection/ExtraPageSections";
 
 import type { Metadata } from "next";
 
@@ -95,6 +96,7 @@ export default async function ProductDetailPage({
         productCardSettings={theme.productCard}
         productDetailSettings={theme.productDetail}
       />
+      <ExtraPageSections sections={theme.productDetail?.sections} theme={theme} />
     </>
   );
 }

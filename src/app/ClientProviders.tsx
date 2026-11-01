@@ -9,6 +9,7 @@ import MarketingPixels from "@/components/analytics/MarketingPixels";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import AnnouncementBar from "@/components/AnnouncementBar";
 import ThemeAnnouncementBarAdapter from "@/components/theme/ThemeAnnouncementBarAdapter";
+import { isThemeTopBarActive } from "@/lib/theme/announcement";
 import SiteHeader from "@/app/SiteHeader";
 import CommonClient from "./CommonClient";
 import Footer from "@/shared/Footer/Footer";
@@ -102,7 +103,7 @@ const ClientProviders: React.FC<ClientProvidersProps> = ({
           <CartHydrator />
           <PageViewTracker />
           <MarketingPixels />
-          <AnnouncementBar />
+          <AnnouncementBar hidden={isThemeTopBarActive(headerSettings.topBar)} />
           <ThemeAnnouncementBarAdapter announcementSettings={announcementBarSettings} topBar={headerSettings.topBar} />
           <SiteHeader headerSettings={headerSettings} cartSettings={cartSettings} logos={logos} storeName={storeName} />
           {children}

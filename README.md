@@ -2623,6 +2623,85 @@ build) showed no differences other than build-hash class names.
 - Secondary and Accent colours, and Layout → Animation speed (labelled in the editor).
 - Heading weight is overridden where a component sets its own `font-*` class.
 
+## Theme Customizer: editor stability, preview links & announcement bar
+
+### Preview model (no reload loops, unsaved changes never overwritten)
+
+- `theme-customizer-preview/PreviewRuntime.tsx` (client, inside the iframe):
+  - holds the theme being edited, sent by `CustomizeShell` via postMessage;
+  - renders the CSS variables and the storefront chrome (announcement bars, `SiteHeader`,
+    `Footer`, popup) from it, so colours, fonts, spacing, header (incl. height), footer,
+    announcement and popup changes show instantly - no save, no reload.
+- Settings rendered on the server (homepage sections, card / collection / product / cart
+  settings) are staged ~0.9 s after the last change to `themeSettings/preview`
+  (`stagePreviewThemeAction`). The iframe then does a soft `router.refresh()`: no remount,
+  scroll kept, editor selection untouched.
+  - **The draft is never written by the editor on its own.** "Save Draft" writes the draft and
+    "Publish Live" publishes it.
+  - The preview uses the staged config only while it is newer than the draft
+    (`getPreviewThemeConfig`).
+- `updateDraft` ignores patches that don't change anything (`draftPatchChanges`), so a
+  component re-sending identical values can't cause an update → render → update loop.
+- Removed the previous behaviour (auto-save the draft + full iframe remount after every
+  non-colour change), which made the preview reload repeatedly while editing.
+- The homepage preview now renders the **draft's** `homepageSections` (it used to read the
+  published sections collection, so section edits never showed in the preview).
+
+### Links inside the preview
+
+The iframe runs on the Store Admin host, where `/` is the admin dashboard and storefront
+routes don't exist. That is why "Home" opened Store Admin and product links returned Page Not
+Found. `PreviewRuntime` now intercepts clicks and form submits (capture phase), using
+`lib/theme/preview-links.ts`:
+
+| Link | Result |
+|---|---|
+| `/`, `/collection`, `/cart`, `/product/<slug>` | switches the preview to that page (the clicked product is loaded by slug from the same tenant) |
+| any other storefront page | opens on the public storefront in a new tab. The storefront origin is derived from the admin host (`admin-{slug}.root` → `{slug}.root`, `admin.<domain>` → `<domain>`), with `getStorefrontUrl` as fallback |
+| `/admin`, `/superadmin`, `/api/*`, `javascript:` | blocked |
+| external | new tab |
+
+Live storefront links were not affected.
+
+### Announcement bar
+
+- Two systems existed:
+  - Content → Announcements (`/admin/announcements`, e.g. "Welcome to our store");
+  - the theme's top bar (Customizer → Announcement Bar).
+- Both could show at once, and the Customizer only edits the second one.
+- Rule now (storefront and preview), `isThemeTopBarActive`: the theme bar shows when it is
+  on and has text, and the Announcements bar is then hidden. Otherwise the Announcements bar
+  shows as before.
+- The inspector shows which bar is live, and an unsaved theme bar defaults to off (it used to
+  show as on with placeholder text).
+- Text is rendered as plain text; HTML entities typed into it (`&amp;`, `&nbsp;`, `&#10022;`)
+  are decoded (`decodeHtmlEntities`).
+- Only one message per bar - neither system supports multiple slides.
+
+### Header
+
+- Header Height now applies to the Transparent and Mega-menu layouts as well (as a minimum
+  height; the logo and icons stay centred and are never clipped). The Centered layout uses a
+  minimum height too.
+- The input is a slider, so typing can't apply a 4 px header.
+- Logo alignment, header shadow and (except for the classic header) sticky are not used by
+  any header layout; they are disabled with a note in the inspector.
+
+### Page sections
+
+Sections added to the Collection / Product pages now render below the page content, in editor
+order (`ExtraPageSections`, using the homepage section renderer). The two built-in sections
+keep their place.
+
+### Backups
+
+`/Users/macbook/Documents/ECOM/webriiz-theme-backups/2026-11-01/` (outside the repo) holds:
+
+- `themes-BEFORE-neutralize-2026-10-31.json` - both stores' theme docs before the one-off
+  value change;
+- `themes-CURRENT-2026-11-01.json` - all stores' theme settings, menus, announcement bars and
+  homepage sections as of this pass.
+
 ## Tests
 
 Plain `node:test` scripts run with `tsx` (no test framework needed):
@@ -2635,6 +2714,7 @@ npx tsx --test scripts/test-store-assistant.ts      # assistant answers + regist
 npx tsx --test scripts/test-commission.ts           # commission policy, refunds, ledger netting, trends
 npx tsx --test scripts/test-notifications-checkout.ts # store notifications, poller cleanup, saved addresses
 npx tsx --test scripts/test-theme-settings.ts       # theme compiler, zero-diff defaults, preview reload rules, grids, fonts
+npx tsx --test scripts/test-editor-preview.ts       # preview link routing, announcement rules, no-op updates, page sections
 npx tsc --noEmit && npm run build
 ```
 
