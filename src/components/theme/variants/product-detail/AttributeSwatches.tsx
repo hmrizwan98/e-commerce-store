@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { colorSwatch, hexForColorName, isHexColor } from "@/lib/products/color-swatch";
 import type { Product } from "@/types/product";
 
 export interface AttributeSwatchesProps {
@@ -10,37 +11,70 @@ export interface AttributeSwatchesProps {
   skipAttributeName?: string;
 }
 
-/** Renders every non-size attribute's swatches, delegating selection to the authoritative useProductOptions().selectAttribute - never a second selection mechanism. */
+/** A colour attribute named after a colour itself (e.g. "Black") reads as "Colour". */
+function attributeHeading(name: string, type: string): string {
+  if (type === "color" && (hexForColorName(name) || isHexColor(name))) return "Colour";
+  return name;
+}
+
+/** Renders every non-size attribute's options, delegating selection to the authoritative useProductOptions().selectAttribute - never a second selection mechanism. */
 export default function AttributeSwatches({ product, selections, selectAttribute, skipAttributeName }: AttributeSwatchesProps) {
   return (
     <>
       {product.attributes.map((attribute) => {
         if (skipAttributeName && attribute.name.toLowerCase() === skipAttributeName.toLowerCase()) return null;
+        const isColor = attribute.type === "color";
+        const selected = selections[attribute.name];
+        const selectedName = selected ? (isColor ? colorSwatch(selected).name : selected) : undefined;
         return (
           <div key={attribute.id}>
-            <span className="text-sm font-medium">
-              {attribute.name}:<span className="ml-1 font-semibold">{selections[attribute.name]}</span>
-            </span>
-            <div className="flex flex-wrap gap-2 mt-3">
+            <p className="text-sm text-[var(--muted,#64748b)]">
+              {attributeHeading(attribute.name, attribute.type)}
+              {selectedName && <span className="ml-1.5 font-semibold text-[var(--heading,#0f172a)]">{selectedName}</span>}
+            </p>
+            <div className="flex flex-wrap gap-3 mt-3" role="radiogroup" aria-label={attributeHeading(attribute.name, attribute.type)}>
               {attribute.values.map((value, index) => {
                 const label = typeof value === "string" ? value : value.label;
-                const hex = typeof value === "string" ? undefined : value.hex;
-                const isActive = selections[attribute.name] === label;
+                const isActive = selected === label;
+                if (isColor) {
+                  const swatch = colorSwatch(value);
+                  return (
+                    <button
+                      key={index}
+                      type="button"
+                      role="radio"
+                      aria-checked={isActive}
+                      onClick={() => selectAttribute(attribute.name, label)}
+                      title={swatch.name}
+                      className="flex flex-col items-center gap-1.5 group"
+                    >
+                      <span
+                        className={`w-9 h-9 rounded-full border border-black/10 ring-offset-2 ring-offset-[var(--background,#fff)] transition ${
+                          isActive ? "ring-2 ring-[var(--heading,#0f172a)]" : "group-hover:ring-1 group-hover:ring-[var(--border,#e2e8f0)]"
+                        }`}
+                        style={{ backgroundColor: swatch.hex ?? "#e5e7eb" }}
+                      />
+                      <span className={`text-[11px] ${isActive ? "font-semibold text-[var(--heading,#0f172a)]" : "text-[var(--muted,#64748b)]"}`}>
+                        {swatch.name}
+                      </span>
+                    </button>
+                  );
+                }
                 return (
-                  <div
+                  <button
                     key={index}
+                    type="button"
+                    role="radio"
+                    aria-checked={isActive}
                     onClick={() => selectAttribute(attribute.name, label)}
-                    title={label}
-                    className={`relative flex-shrink-0 w-11 h-11 rounded-full border-2 cursor-pointer flex items-center justify-center ${
-                      isActive ? "border-primary-6000 dark:border-primary-500" : "border-transparent"
+                    className={`min-w-[3rem] px-4 py-2 rounded-full border text-sm transition ${
+                      isActive
+                        ? "bg-[var(--heading,#0f172a)] border-[var(--heading,#0f172a)] text-[var(--background,#fff)]"
+                        : "border-[var(--border,#e2e8f0)] text-[var(--heading,#0f172a)] hover:border-[var(--heading,#0f172a)]"
                     }`}
                   >
-                    {attribute.type === "color" ? (
-                      <div className="absolute inset-0.5 rounded-full" style={{ backgroundColor: hex || "#94a3b8" }} />
-                    ) : (
-                      <span className="text-xs font-medium">{label}</span>
-                    )}
-                  </div>
+                    {label}
+                  </button>
                 );
               })}
             </div>

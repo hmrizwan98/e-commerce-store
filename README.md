@@ -2702,6 +2702,38 @@ keep their place.
 - `themes-CURRENT-2026-11-01.json` - all stores' theme settings, menus, announcement bars and
   homepage sections as of this pass.
 
+## Product page (Luxury design) & product data honesty
+
+- **Layout (`LuxuryProductDetail.tsx`):**
+  - Main image with a thumbnail strip of **all** product images, vertical on desktop and
+    horizontal on phones (`ProductGallery layout="thumbnails"`), with prev/next arrows and an
+    image counter. Previously only images 2-3 of the product were shown.
+  - Compact serif title, price with compare-at and a `-x%` badge.
+  - Real rating, or "No reviews yet".
+  - Stock state: In stock / Only N left (≤ `lowStockThreshold`, default 5) / Sold out.
+  - Option swatches; quantity + Add to Bag + wishlist.
+  - "Delivery & Returns" and the product's own details.
+- **Colour options (`lib/products/color-swatch.ts`):**
+  - A value saved as just `#000000` showed "Black: #000000" with a grey placeholder swatch.
+    Swatches now use the hex wherever it is (field or label) and show a readable name;
+    unknown hex codes are shown as the code, never an invented name.
+  - A colour attribute named after a colour reads "Colour".
+  - The cart / toast variant label uses the colour name.
+  - The product form now saves `Black|#000000`, `Black #000000`, `#000000` or `Black` with
+    both a label and a hex.
+- **Removed fabricated content:**
+  - The hard-coded "Fabric + Care" text ("Belgian power micromesh, 74% Polyamide…") that every
+    product page showed (Luxury, Minimal, Bold, classic) is replaced by `productInfoSections`:
+    the description, plus "Product details" (attribute options, SKU) only when present.
+  - The template "Free shipping on orders over $50 / Very easy to return" block (`Policy`) is
+    replaced by `StoreDeliveryInfo`, built from the store's Shipping settings (flat rate /
+    free-shipping threshold) and Payments (COD), plus a link to the refund policy page. It is
+    passed as `storeInfo` from the product page.
+  - The Sleek Pill product card no longer shows a made-up "4.8 (98 reviews)" when a product
+    has no reviews.
+- `@tailwindcss/aspect-ratio` disables Tailwind's `aspect-square`; use inline `aspectRatio`
+  or the plugin's `aspect-w-*`/`aspect-h-*` classes.
+
 ## Tests
 
 Plain `node:test` scripts run with `tsx` (no test framework needed):
@@ -2715,6 +2747,7 @@ npx tsx --test scripts/test-commission.ts           # commission policy, refunds
 npx tsx --test scripts/test-notifications-checkout.ts # store notifications, poller cleanup, saved addresses
 npx tsx --test scripts/test-theme-settings.ts       # theme compiler, zero-diff defaults, preview reload rules, grids, fonts
 npx tsx --test scripts/test-editor-preview.ts       # preview link routing, announcement rules, no-op updates, page sections
+npx tsx --test scripts/test-product-page.ts         # colour swatch names/hex, product form colour parsing, product info sections
 npx tsc --noEmit && npm run build
 ```
 

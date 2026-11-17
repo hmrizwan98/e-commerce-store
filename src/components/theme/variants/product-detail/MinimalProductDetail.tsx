@@ -1,5 +1,7 @@
 "use client";
 
+import StoreDeliveryInfo from "@/components/theme/variants/product-detail/StoreDeliveryInfo";
+
 import React from "react";
 import { StarIcon } from "@heroicons/react/24/solid";
 import ButtonPrimary from "@/shared/Button/ButtonPrimary";
@@ -9,8 +11,8 @@ import BagIcon from "@/components/BagIcon";
 import NcInputNumber from "@/components/NcInputNumber";
 import Prices from "@/components/Prices";
 import AccordionInfo from "@/components/AccordionInfo";
+import { productInfoSections } from "@/lib/products/product-info";
 import ProductStatus from "@/components/ProductStatus";
-import Policy from "@/app/product-detail/Policy";
 import ProductGallery from "./ProductGallery";
 import AttributeSwatches from "./AttributeSwatches";
 import SizeGrid from "./SizeGrid";
@@ -32,6 +34,7 @@ export default function MinimalProductDetail({
   upsellProducts = [],
   productCardSettings,
   productDetailSettings,
+  storeInfo,
 }: MinimalProductDetailProps) {
   const s = useProductDetailState(product, variants);
   const showCompare = productDetailSettings?.showCompare ?? true;
@@ -92,28 +95,18 @@ export default function MinimalProductDetail({
               <hr className="2xl:!my-10 border-slate-200 dark:border-slate-700" />
 
               <AccordionInfo
-                data={[
-                  { name: "Description", content: product.description },
-                  {
-                    name: "Fabric + Care",
-                    content: `<ul class="list-disc list-inside leading-7">
-                      <li>Made from a sheer Belgian power micromesh.</li>
-                      <li>74% Polyamide (Nylon) 26% Elastane (Spandex)</li>
-                      <li>Hand wash in cold water, dry flat</li>
-                    </ul>`,
-                  },
-                ]}
+                data={productInfoSections(product)}
               />
 
               <div className="hidden xl:block">
-                <Policy />
+                <StoreDeliveryInfo info={storeInfo} />
               </div>
             </div>
           </div>
         </div>
 
         <div className="block xl:hidden mt-10">
-          <Policy />
+          <StoreDeliveryInfo info={storeInfo} />
         </div>
 
         <RelatedRailsAndReviews

@@ -1,5 +1,6 @@
 "use client";
 
+import { parseColorLine } from "@/lib/products/color-swatch";
 import NativeSelect from "@/components/ui/NativeSelect";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -58,10 +59,9 @@ function draftToAttribute(d: AttributeDraft): ProductAttribute {
     .filter(Boolean);
   const values =
     d.type === "color"
-      ? lines.map((line) => {
-          const [label, hex] = line.split("|").map((s) => s.trim());
-          return { label, hex: hex || undefined };
-        })
+      ? // "Black|#000000", "Black #000000", "#000000" or "Black" - a lone hex code gets a real
+        // name and a typed name gets its colour, so the storefront swatch is never a grey guess.
+        lines.map((line) => parseColorLine(line))
       : lines;
   return { id: d.id, name: d.name, type: d.type, values };
 }

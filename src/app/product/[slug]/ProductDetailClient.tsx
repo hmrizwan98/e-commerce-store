@@ -1,5 +1,7 @@
 "use client";
 
+import StoreDeliveryInfo from "@/components/theme/variants/product-detail/StoreDeliveryInfo";
+
 import React, { useEffect, useState } from "react";
 import ButtonPrimary from "@/shared/Button/ButtonPrimary";
 import LikeButton from "@/components/LikeButton";
@@ -11,13 +13,13 @@ import NcInputNumber from "@/components/NcInputNumber";
 import Prices from "@/components/Prices";
 import toast from "react-hot-toast";
 import SectionSliderProductCard from "@/components/SectionSliderProductCard";
-import Policy from "@/app/product-detail/Policy";
 import ReviewItem from "@/components/ReviewItem";
 import ButtonSecondary from "@/shared/Button/ButtonSecondary";
 import SectionPromo2 from "@/components/SectionPromo2";
 import ModalViewAllReviews from "@/app/product-detail/ModalViewAllReviews";
 import NotifyAddTocart from "@/components/NotifyAddTocart";
 import AccordionInfo from "@/components/AccordionInfo";
+import { productInfoSections } from "@/lib/products/product-info";
 import ProductStatus from "@/components/ProductStatus";
 import { useProductOptions } from "@/hooks/useProductOptions";
 import { recordRecentlyViewed } from "@/hooks/useRecentlyViewed";
@@ -37,6 +39,14 @@ export interface ProductDetailClientProps {
   upsellProducts?: Product[];
   productCardSettings?: ProductCardThemeConfig;
   productDetailSettings?: ProductDetailThemeConfig;
+  /** Real store delivery/payment facts for the product page (never invented). */
+  storeInfo?: PdpStoreInfo;
+}
+
+export interface PdpStoreInfo {
+  codEnabled?: boolean;
+  shippingFlatRate?: number;
+  freeShippingThreshold?: number;
 }
 
 const ProductDetailClient: React.FC<ProductDetailClientProps> = ({
@@ -48,6 +58,7 @@ const ProductDetailClient: React.FC<ProductDetailClientProps> = ({
   upsellProducts = [],
   productCardSettings,
   productDetailSettings,
+  storeInfo,
 }) => {
   const {
     selections,
@@ -256,21 +267,11 @@ const ProductDetailClient: React.FC<ProductDetailClientProps> = ({
         <hr className=" 2xl:!my-10 border-slate-200 dark:border-slate-700"></hr>
 
         <AccordionInfo
-          data={[
-            { name: "Description", content: product.description },
-            {
-              name: "Fabric + Care",
-              content: `<ul class="list-disc list-inside leading-7">
-            <li>Made from a sheer Belgian power micromesh.</li>
-            <li>74% Polyamide (Nylon) 26% Elastane (Spandex)</li>
-            <li>Hand wash in cold water, dry flat</li>
-          </ul>`,
-            },
-          ]}
+          data={productInfoSections(product)}
         />
 
         <div className="hidden xl:block">
-          <Policy />
+          <StoreDeliveryInfo info={storeInfo} />
         </div>
       </div>
     );
@@ -349,7 +350,7 @@ const ProductDetailClient: React.FC<ProductDetailClientProps> = ({
 
         <div className="mt-12 sm:mt-16 space-y-10 sm:space-y-16">
           <div className="block xl:hidden">
-            <Policy />
+            <StoreDeliveryInfo info={storeInfo} />
           </div>
 
           {(productDetailSettings?.showReviews ?? true) && (

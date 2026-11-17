@@ -8,6 +8,7 @@ import {
 import { getApprovedReviewsByProduct } from "@/lib/firebase/repositories/reviews";
 import { getActiveThemeConfig } from "@/lib/theme/theme-repository";
 import ThemeProductDetailAdapter from "@/components/theme/ThemeProductDetailAdapter";
+import { getPaymentSettings, getShippingSettings } from "@/lib/firebase/repositories/site-settings";
 import ExtraPageSections from "@/components/collection/ExtraPageSections";
 
 import type { Metadata } from "next";
@@ -57,14 +58,22 @@ export default async function ProductDetailPage({
     notFound();
   }
 
-  const [variants, relatedProducts, reviews, crossSellProducts, upsellProducts, theme] = await Promise.all([
+  const [variants, relatedProducts, reviews, crossSellProducts, upsellProducts, theme, shipping, payments] = await Promise.all([
     getProductVariants(product.id),
     getRelatedProducts(product),
     getApprovedReviewsByProduct(product.id, 6),
     getProductsByIds(product.crossSellProductIds ?? []),
     getProductsByIds(product.upsellProductIds ?? []),
     getActiveThemeConfig(),
+    getShippingSettings().catch(() => null),
+    getPaymentSettings().catch(() => null),
   ]);
+  // Real delivery / COD facts for the "Delivery & Returns" block (nothing invented).
+  const storeInfo = {
+    codEnabled: payments?.cod?.enabled ?? false,
+    shippingFlatRate: shipping?.flatRate,
+    freeShippingThreshold: shipping?.freeShippingThreshold,
+  };
 
   const productJsonLd = {
     "@context": "https://schema.org",
@@ -95,6 +104,7 @@ export default async function ProductDetailPage({
         upsellProducts={upsellProducts}
         productCardSettings={theme.productCard}
         productDetailSettings={theme.productDetail}
+        storeInfo={storeInfo}
       />
       <ExtraPageSections sections={theme.productDetail?.sections} theme={theme} />
     </>

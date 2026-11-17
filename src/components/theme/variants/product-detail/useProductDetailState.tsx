@@ -7,6 +7,7 @@ import { useProductOptions } from "@/hooks/useProductOptions";
 import { recordRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import { useAddToCart } from "@/hooks/useAddToCart";
 import { trackEvent } from "@/lib/analytics/track";
+import { colorSwatch } from "@/lib/products/color-swatch";
 import type { Product, ProductVariant } from "@/types/product";
 
 /**
@@ -37,12 +38,16 @@ export function useProductDetailState(product: Product, variants: ProductVariant
 
   const sizeAttribute = product.attributes.find((a) => a.name.toLowerCase() === "size");
   const sizeSelected = sizeAttribute ? selections[sizeAttribute.name] : undefined;
+  // Colour values show their name ("Black"), never a raw hex code, in the cart and toast.
+  const colorAttributeNames = new Set(product.attributes.filter((a) => a.type === "color").map((a) => a.name));
   const variantLabel = Object.entries(selections)
     .filter(([name]) => name !== sizeAttribute?.name)
-    .map(([, value]) => value)
+    .map(([name, value]) => (colorAttributeNames.has(name) ? colorSwatch(value).name : value))
     .join(" / ");
 
   const thumbnails = product.images.slice(1, 3);
+  /** Every product image (for galleries that show them all), without duplicates. */
+  const images = Array.from(new Set(product.images.filter(Boolean)));
   const addToCart = useAddToCart();
 
   const notifyAddTocart = (e?: { currentTarget?: EventTarget | null }) => {
@@ -86,6 +91,7 @@ export function useProductDetailState(product: Product, variants: ProductVariant
     sizeAttribute,
     sizeSelected,
     thumbnails,
+    images,
     notifyAddTocart,
   };
 }

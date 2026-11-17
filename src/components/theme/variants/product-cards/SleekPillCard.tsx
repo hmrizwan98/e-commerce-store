@@ -11,6 +11,7 @@ import ModalQuickView from "@/components/ModalQuickView";
 import Prices from "@/components/Prices";
 import { trackEvent } from "@/lib/analytics/track";
 import { safeImageSrc } from "@/utils/safeImageSrc";
+import { colorSwatch } from "@/lib/products/color-swatch";
 import { aspectRatioClass, type ProductCardVariantProps } from "./ProductCardVariantProps";
 
 const COLOR_NAME_MAP: Record<string, string> = {
@@ -53,8 +54,9 @@ export default function SleekPillCard({ data, className = "", productCardSetting
     badge,
     images,
     slug,
-    rating = 4.8,
-    numberOfReviews = 98,
+    // No made-up ratings: the rating row only shows when the product has real reviews.
+    rating,
+    numberOfReviews,
     attributes = [],
     colorFacets = [],
   } = data;
@@ -191,7 +193,7 @@ export default function SleekPillCard({ data, className = "", productCardSetting
             {colorValues.map((val: any, idx: number) => {
               const hex = typeof val === "object" ? val.hex : undefined;
               const label = typeof val === "object" ? val.label : String(val);
-              const computedBg = hex || getColorHexByName(label);
+              const computedBg = colorSwatch(typeof val === "object" ? val : String(val)).hex || getColorHexByName(label);
 
               return (
                 <button
@@ -231,12 +233,14 @@ export default function SleekPillCard({ data, className = "", productCardSetting
               <Prices price={price} compareAtPrice={compareAtPrice} contentClass="text-emerald-600 dark:text-emerald-400 font-bold text-sm" />
             </div>
 
-            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-300">
-              <StarIcon className="w-4 h-4 text-amber-400" />
-              <span>
-                {rating} <span className="font-normal text-slate-400">({numberOfReviews} reviews)</span>
-              </span>
-            </div>
+            {(numberOfReviews ?? 0) > 0 && (rating ?? 0) > 0 && (
+              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-300">
+                <StarIcon className="w-4 h-4 text-amber-400" />
+                <span>
+                  {Number(rating).toFixed(1)} <span className="font-normal text-slate-400">({numberOfReviews} reviews)</span>
+                </span>
+              </div>
+            )}
           </div>
         </div>
       </div>

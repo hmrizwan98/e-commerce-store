@@ -9,7 +9,7 @@ import { storefrontOriginFromAdminHost } from "@/lib/theme/preview-links";
 import { getStorefrontUrl } from "@/lib/platform/tenant-url";
 import { getPlatformBaseUrl } from "@/lib/platform/base-url";
 import { THEME_PRESETS } from "@/lib/theme/theme-presets";
-import { getGeneralSettings, getShippingSettings } from "@/lib/firebase/repositories/site-settings";
+import { getGeneralSettings, getPaymentSettings, getShippingSettings } from "@/lib/firebase/repositories/site-settings";
 import { getProducts, getProductBySlug, getProductVariants, getRelatedProducts } from "@/lib/firebase/repositories/products";
 import ThemeProductDetailAdapter from "@/components/theme/ThemeProductDetailAdapter";
 import ThemeCartAdapter from "@/components/theme/ThemeCartAdapter";
@@ -71,6 +71,8 @@ export default async function ThemeCustomizerPreviewPage({ searchParams }: Previ
   const storefrontOrigin =
     storefrontOriginFromAdminHost(h.get("x-forwarded-host") ?? h.get("host"), proto) ?? getStorefrontUrl(tenant, getPlatformBaseUrl());
 
+  const payments = previewSurface === "product" ? await getPaymentSettings().catch(() => null) : null;
+
   const renderSurfaceContent = () => {
     switch (previewSurface) {
       case "collection":
@@ -96,6 +98,11 @@ export default async function ThemeCustomizerPreviewPage({ searchParams }: Previ
             upsellProducts={[]}
             productCardSettings={draft.productCard}
             productDetailSettings={draft.productDetail}
+              storeInfo={{
+                codEnabled: payments?.cod?.enabled ?? false,
+                shippingFlatRate: shipping.flatRate,
+                freeShippingThreshold: shipping.freeShippingThreshold,
+              }}
             />
             <ExtraPageSections sections={draft.productDetail?.sections} theme={draft} />
           </>
