@@ -24,7 +24,7 @@ export async function getFeaturedProducts(limit = 8): Promise<Product[]> {
     return snap.docs
       .map((doc) => docData<Product>(doc))
       .filter((p): p is Product => p !== null);
-  });
+  }, [limit]);
 }
 
 async function getFlaggedProducts(flag: "isNewArrival" | "isBestSeller" | "isOnSale", limit: number): Promise<Product[]> {
@@ -458,7 +458,7 @@ export async function searchProductsByName(q: string, limit = 24): Promise<Produ
     return snap.docs
       .map((doc) => docData<Product>(doc))
       .filter((p): p is Product => p !== null);
-  });
+  }, [q, limit]);
 }
 
 /** For Super Admin store deletion, which needs an arbitrary store's product IDs (to join

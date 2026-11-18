@@ -12,6 +12,7 @@ import {
   ArrowPathIcon,
 } from "@heroicons/react/24/outline";
 import { saveThemeDraftAction, publishThemeAction } from "../actions";
+import { withoutMerchantAssets } from "@/lib/theme/theme-safety";
 import type { SystemThemeConfig, ThemePresetId } from "@/lib/theme/theme-types";
 
 export interface ThemesSelectorClientProps {
@@ -174,7 +175,8 @@ export default function ThemesSelectorClient({ activePresetId, presets }: Themes
     if (!window.confirm(message)) return;
     setLoadingAction(`publish-${preset.presetId}`);
     try {
-      const draftRes = await saveThemeDraftAction(preset);
+      // Design only: the preset's empty `logos: {}` used to replace the store's logo/favicon.
+      const draftRes = await saveThemeDraftAction(withoutMerchantAssets(preset));
       if (draftRes?.ok) {
         const pubRes = await publishThemeAction();
         if (pubRes?.ok) {

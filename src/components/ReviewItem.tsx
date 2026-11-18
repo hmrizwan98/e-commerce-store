@@ -12,20 +12,13 @@ interface ReviewItemDataType {
 
 export interface ReviewItemProps {
   className?: string;
-  data?: ReviewItemDataType;
+  /** A real, approved product review (no demo default). */
+  data: ReviewItemDataType;
 }
-
-const DEMO_DATA: ReviewItemDataType = {
-  name: "Cody Fisher",
-  date: "May 20, 2021",
-  comment:
-    "Very nice feeling sweater. I like it better than a regular hoody because it is tailored to be a slimmer fit. Perfect for going out when you want to stay comfy. The head opening is a little tight which makes it a little.",
-  starPoint: 5,
-};
 
 const ReviewItem: FC<ReviewItemProps> = ({
   className = "",
-  data = DEMO_DATA,
+  data,
 }) => {
   return (
     <div

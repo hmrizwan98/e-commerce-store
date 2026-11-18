@@ -4,6 +4,9 @@ import BackgroundSection from "@/components/BackgroundSection/BackgroundSection"
 import SectionPromo1 from "@/components/SectionPromo1";
 import ContactForm from "./ContactForm";
 import { getGeneralSettings, DEFAULT_GENERAL_SETTINGS } from "@/lib/firebase/repositories/site-settings";
+import { getFirstBanner } from "@/lib/firebase/repositories/banners";
+import { contactInfoRows } from "@/lib/contact/contact-info";
+import { activeSocialLinks } from "@/components/FooterSocials";
 
 export const dynamic = "force-dynamic";
 
@@ -15,20 +18,10 @@ const PageContact = async () => {
     console.warn("Contact page: site settings unavailable, using defaults.", err);
   }
 
-  const info = [
-    {
-      title: "🗺 ADDRESS",
-      desc: general.storeAddress || "Address not set yet.",
-    },
-    {
-      title: "💌 EMAIL",
-      desc: general.storeEmail,
-    },
-    {
-      title: "☎ PHONE",
-      desc: general.storePhone || "Phone not set yet.",
-    },
-  ];
+  // Settings → General (address, email, phone) - only what the merchant set; never placeholders.
+  const info = contactInfoRows(general);
+  const hasSocials = activeSocialLinks(general.socialLinks).length > 0;
+  const promoBanner = await getFirstBanner("promo1").catch(() => null);
 
   return (
     <div className={`nc-PageContact overflow-hidden`}>
@@ -49,12 +42,14 @@ const PageContact = async () => {
                   </span>
                 </div>
               ))}
-              <div>
-                <h3 className="uppercase font-semibold text-sm dark:text-neutral-200 tracking-wider">
-                  🌏 SOCIALS
-                </h3>
-                <SocialsList className="mt-2" />
-              </div>
+              {hasSocials && (
+                <div>
+                  <h3 className="uppercase font-semibold text-sm dark:text-neutral-200 tracking-wider">
+                    🌏 SOCIALS
+                  </h3>
+                  <SocialsList className="mt-2" />
+                </div>
+              )}
             </div>
             <div>
               <ContactForm />
@@ -63,13 +58,17 @@ const PageContact = async () => {
         </div>
       </div>
 
-      {/* OTHER SECTIONS */}
-      <div className="container">
-        <div className="relative my-24 lg:my-32 py-24 lg:py-32">
-          <BackgroundSection />
-          <SectionPromo1 />
+      {/* Store Admin → Promo Banners (promo1); nothing when the store has none. */}
+      {promoBanner ? (
+        <div className="container">
+          <div className="relative my-24 lg:my-32 py-24 lg:py-32">
+            <BackgroundSection />
+            <SectionPromo1 banner={promoBanner} />
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="my-24" />
+      )}
     </div>
   );
 };

@@ -4,7 +4,13 @@ import { requestMemo } from "@/lib/request-cache";
 import { getBrandingSettings } from "@/lib/firebase/repositories/site-settings";
 import { THEME_PRESETS, DEFAULT_SYSTEM_THEME } from "./theme-presets";
 import { isLoadableFontKey } from "./font-keys";
-import type { SystemThemeConfig, ThemePresetId } from "./theme-types";
+import { stripEmptyObjects, SECTION_STAGING_KEYS } from "./theme-safety";
+import { FieldValue } from "firebase-admin/firestore";
+import type { ThemeLogos } from "@/types/theme";
+import type { SystemThemeConfig, ThemePresetId, PopupThemeConfig } from "./theme-types";
+import { applyPopupOperation, type PopupOperation } from "./theme-popup";
+import { adminDb } from "@/lib/firebase/admin";
+import { requireCurrentTenant } from "@/lib/tenant/current";
 
 const THEME_SETTINGS_COLLECTION = "themeSettings";
 const THEMES_COLLECTION = "themes";
@@ -128,7 +134,8 @@ export async function setActiveThemeConfig(config: Partial<SystemThemeConfig>): 
   const now = Date.now();
   await activeRef.set(
     {
-      ...config,
+      // Empty maps are dropped: with merge an empty map would wipe the stored one (e.g. logos).
+      ...stripEmptyObjects(config),
       isPublished: true,
       updatedAt: now,
     },
@@ -144,7 +151,7 @@ export async function saveDraftThemeConfig(config: Partial<SystemThemeConfig>): 
   const now = Date.now();
   await draftRef.set(
     {
-      ...config,
+      ...stripEmptyObjects(config),
       isPublished: false,
       updatedAt: now,
     },
@@ -181,4 +188,41 @@ export async function getPreviewThemeConfig(): Promise<SystemThemeConfig> {
     console.error("Error reading preview theme config:", error);
   }
   return getDraftThemeConfig();
+}
+
+/**
+ * Removes the Customizer's homepage-section staging copy from the given theme docs, so the
+ * next Customizer session starts from the LIVE sections (the homepageSections collection) and
+ * no stale copy can be published or "discarded" back into the draft.
+ */
+export async function clearSectionStaging(docIds: ("draft" | "active")[]): Promise<void> {
+  const del = Object.fromEntries(SECTION_STAGING_KEYS.map((k) => [k, FieldValue.delete()]));
+  for (const id of docIds) {
+    const ref = await tenantDoc(THEME_SETTINGS_COLLECTION, id);
+    if ((await ref.get()).exists) await ref.update({ ...del, ...(id === "draft" ? { updatedAt: Date.now() } : {}) });
+  }
+}
+
+/**
+ * Store logos (header, dark, footer, favicon, Apple touch icon, loading logo) written to the
+ * canonical theme docs - the draft and, when the store already has a published theme, the live
+ * one. Field-level merge: only the given keys change; every other theme value is untouched.
+ */
+export async function saveThemeLogos(logos: Partial<ThemeLogos>): Promise<void> {
+  const clean = Object.fromEntries(Object.entries(logos).filter(([, v]) => typeof v === "string")) as Partial<ThemeLogos>;
+  if (!Object.keys(clean).length) return;
+  const now = Date.now();
+  const draftRef = await tenantDoc(THEME_SETTINGS_COLLECTION, "draft");
+  const activeRef = await tenantDoc(THEME_SETTINGS_COLLECTION, "active");
+  const [draftSnap, activeSnap] = await Promise.all([draftRef.get(), activeRef.get()]);
+  // A store without a theme doc yet: write the draft only (a partial live doc would make the
+  // storefront fall back to a different preset).
+  if (draftSnap.exists || !activeSnap.exists) await draftRef.set({ logos: clean, updatedAt: now }, { merge: true });
+  if (activeSnap.exists) await activeRef.set({ logos: clean, updatedAt: now }, { merge: true });
+}
+
+/** Popups & Modals page: popup-only draft save / publish / reset (see theme-popup.ts). */
+export async function applyPopupForCurrentStore(op: PopupOperation, popup?: PopupThemeConfig) {
+  const tenant = await requireCurrentTenant();
+  return applyPopupOperation(adminDb(), tenant.id, op, popup);
 }

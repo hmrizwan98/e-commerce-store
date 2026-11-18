@@ -12,6 +12,8 @@ export interface CardCategory2Props {
   featuredImage?: string | StaticImageData;
   name: string;
   desc: string;
+  /** The category's own page (/category/{slug}); falls back to all products. */
+  href?: string;
 }
 
 const CardCategory2: FC<CardCategory2Props> = ({
@@ -21,10 +23,11 @@ const CardCategory2: FC<CardCategory2Props> = ({
   featuredImage = ".",
   name,
   desc,
+  href,
 }) => {
   return (
     <Link
-      href={getTenantHref("/collection") as any}
+      href={getTenantHref(href || "/collection") as any}
       className={`nc-CardCategory2 ${className}`}
       data-nc-id="CardCategory2"
     >

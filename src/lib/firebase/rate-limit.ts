@@ -8,6 +8,10 @@ const MAX_ATTEMPTS: Record<string, number> = {
   "superadmin-sensitive": 20,
   checkout: 10,
   tracking: 15,
+  // Customer payment-screenshot uploads (per store + IP).
+  "payment-proof": 10,
+  // Storefront contact form (per store + IP).
+  contact: 5,
   // Custom domain add/check/remove - each check does DNS + hosting-provider calls.
   "custom-domain": 30,
 };

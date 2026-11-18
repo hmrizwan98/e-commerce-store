@@ -14,7 +14,7 @@ export async function getActivePageSections(pageId: string): Promise<PageSection
     return snap.docs
       .map((doc) => docData<PageSection>(doc))
       .filter((s): s is PageSection => s !== null);
-  });
+  }, [pageId]);
 }
 
 // --- Admin ---

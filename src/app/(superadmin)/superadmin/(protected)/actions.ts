@@ -14,6 +14,7 @@ import { DEFAULT_THEME } from "@/lib/firebase/repositories/themes";
 import { getWelcomeEmailService } from "@/lib/email";
 import { logStoreActivity } from "@/lib/firebase/repositories/store-activity-logs";
 import { installDefaultTheme } from "@/lib/firebase/services/theme-installer";
+import { themeConfigForClone } from "@/lib/theme/theme-safety";
 import { provisionCloudinaryMetadata } from "@/lib/firebase/services/cloudinary-provisioner";
 import { provisionDeploymentMetadata } from "@/lib/firebase/services/deployment-provisioner";
 import { syncDomainSettings } from "@/lib/superadmin/domain-settings";
@@ -475,7 +476,7 @@ export interface CloneStoreInput {
 }
 
 /**
- * Duplicates a store's CMS/homepage/navigation/settings/theme metadata into a brand-new
+ * Duplicates a store's CMS/homepage/navigation/settings/theme settings into a brand-new
  * tenant (its own Auth user, its own Store doc) via provisionStoreShell() - the exact same
  * shell createStore() uses. Deliberately never reads or writes products/categories/brands/
  * orders/customers/reviews - only structural/content configuration is copied.
@@ -549,8 +550,23 @@ export async function cloneStore(sourceStoreId: string, input: CloneStoreInput):
       await batch.commit();
     }
 
-    // Theme metadata only, matching the source - no theme document is copied/created.
     await ref.update({ themeId: source.themeId ?? DEFAULT_THEME.id });
+
+    // The source's published design (and its unpublished draft, if any) - so the clone looks the
+    // same. Only the source's own themeSettings docs are read and only the NEW store's docs are
+    // written; brand assets (logos/favicon) and the Customizer's section staging copy are not
+    // copied (see themeConfigForClone). The preview staging doc is not copied either.
+    const now = Date.now();
+    await Promise.all(
+      (["active", "draft"] as const).map(async (docId) => {
+        const themeSnap = await sourceDocRef.collection("themeSettings").doc(docId).get();
+        if (!themeSnap.exists) return;
+        await storeDocRef
+          .collection("themeSettings")
+          .doc(docId)
+          .set({ ...themeConfigForClone(themeSnap.data() ?? {}), updatedAt: now });
+      })
+    );
 
     // New store, new infra - Cloudinary folders and deployment status are per-store
     // provisioning concerns, not content, so they're freshly provisioned rather than copied.
@@ -718,12 +734,16 @@ export async function removeDomain(storeId: string, hostname: string): Promise<v
   revalidateStoreList();
 }
 
-/** Re-runs domain verification through the currently-active deployment provider
- * (architecture-only stub today - see src/lib/deployment/provider-registry.ts). Writes
+/** Re-runs domain verification through the currently-active deployment provider (real
+ * Vercel check when VERCEL_API_TOKEN + VERCEL_PROJECT_ID are set, otherwise the stub that
+ * reports "not configured" - see src/lib/deployment/provider-registry.ts). Writes
  * the result back into domainSettings and records it in both the deployment-logs
  * architecture and the store's activity log, so this is a real, exercised code path
  * ready to carry a genuine DNS/SSL check later without any caller changes. */
-export async function reverifyDomain(storeId: string, hostname: string): Promise<void> {
+export async function reverifyDomain(
+  storeId: string,
+  hostname: string
+): Promise<{ verified: boolean; dnsStatus: string; sslStatus: string; message: string }> {
   const decoded = await requireSuperAdmin();
   const store = await getStoreById(storeId);
   if (!store) throw new Error("Store not found.");
@@ -744,6 +764,8 @@ export async function reverifyDomain(storeId: string, hostname: string): Promise
   await logDeploymentEvent(storeId, result.verified ? "info" : "warning", result.message, provider.id);
   await logStoreActivity(storeId, "domain_reverified", decoded.uid, { hostname });
   revalidateStoreList();
+  // The provider's own result, so the banner says what was really found.
+  return { verified: result.verified, dnsStatus: result.dnsStatus, sslStatus: result.sslStatus, message: result.message };
 }
 
 /** Triggers a deployment through the currently-active deployment provider

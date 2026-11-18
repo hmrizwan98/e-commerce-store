@@ -35,6 +35,7 @@ import {
   ChevronDoubleRightIcon,
   SparklesIcon,
   BellIcon,
+  EnvelopeIcon,
 } from "@heroicons/react/24/outline";
 import dynamic from "next/dynamic";
 import { installChimeUnlock, playChime } from "@/lib/notifications/chime";
@@ -86,6 +87,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: "Orders", href: "/admin/orders", icon: ShoppingCartIcon },
       { label: "Customers", href: "/admin/customers", icon: UsersIcon },
+      { label: "Messages", href: "/admin/messages", icon: EnvelopeIcon },
       { label: "Finance", href: "/admin/finance", icon: BanknotesIcon },
     ],
   },

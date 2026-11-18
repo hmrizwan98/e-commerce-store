@@ -1,41 +1,31 @@
-import { SocialType } from "@/shared/SocialsShare/SocialsShare";
+"use client";
+
 import React, { FC } from "react";
-import facebook from "@/images/socials/facebook.svg";
-import twitter from "@/images/socials/twitter.svg";
-import telegram from "@/images/socials/telegram.svg";
-import youtube from "@/images/socials/youtube.svg";
+import { activeSocialLinks } from "@/components/FooterSocials";
+import { useSocialLinks } from "@/lib/tenant/SocialLinksContext";
 
 export interface SocialsList1Props {
   className?: string;
 }
 
-const socials: SocialType[] = [
-  { name: "Facebook", icon: facebook, href: "#" },
-  { name: "Youtube", icon: youtube, href: "#" },
-  { name: "Telegram", icon: telegram, href: "#" },
-  { name: "Twitter", icon: twitter, href: "#" },
-];
-
+/** The store's own social links only (Settings → General); none set -> nothing rendered. */
 const SocialsList1: FC<SocialsList1Props> = ({ className = "space-y-3" }) => {
-  const renderItem = (item: SocialType, index: number) => {
-    return (
-      <a
-        href={item.href}
-        className="flex items-center text-2xl text-neutral-700 hover:text-black dark:text-neutral-300 dark:hover:text-white leading-none space-x-2 group"
-        key={index}
-      >
-        <div className="flex-shrink-0 w-5 ">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={(item.icon as unknown as { src: string }).src} alt="" className="w-5 h-5" />
-        </div>
-        <span className="hidden lg:block text-sm">{item.name}</span>
-      </a>
-    );
-  };
-
+  const items = activeSocialLinks(useSocialLinks());
+  if (!items.length) return null;
   return (
     <div className={`nc-SocialsList1 ${className}`} data-nc-id="SocialsList1">
-      {socials.map(renderItem)}
+      {items.map((item) => (
+        <a
+          key={item.key}
+          href={item.href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center text-2xl text-neutral-700 hover:text-black dark:text-neutral-300 dark:hover:text-white leading-none space-x-2 group"
+        >
+          <div className="flex-shrink-0 w-5 flex items-center justify-center">{item.icon}</div>
+          <span className="hidden lg:block text-sm">{item.name}</span>
+        </a>
+      ))}
     </div>
   );
 };

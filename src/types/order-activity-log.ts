@@ -8,7 +8,8 @@ export type OrderActivityAction =
   | "return_updated"
   | "document_queued"
   | "verification_approved"
-  | "verification_rejected";
+  | "verification_rejected"
+  | "payment_proof_uploaded";
 
 /** Per-store order audit trail - tenant-scoped: stores/{storeId}/orderActivityLogs/{id}.
  * Mirrors productActivityLogs' exact shape. */

@@ -1,10 +1,6 @@
 import React, { FC } from "react";
 import { StaticImageData } from "next/image";
 import NcImage from "@/shared/NcImage/NcImage";
-import HIW1img from "@/images/HIW1img.png";
-import HIW2img from "@/images/HIW2img.png";
-import HIW3img from "@/images/HIW3img.png";
-import HIW4img from "@/images/HIW4img.png";
 import { safeImageSrc } from "@/utils/safeImageSrc";
 
 export interface HowItWorkItem {
@@ -22,46 +18,13 @@ export interface SectionHowItWorkProps {
   data?: HowItWorkItem[];
 }
 
-const DEMO_DATA: HowItWorkItem[] = [
-  {
-    id: 1,
-    img: HIW1img,
-    imgDark: HIW1img,
-    badge: "Step 1",
-    title: "Filter & Discover",
-    desc: "Smart filtering and suggestions make it easy to find products",
-  },
-  {
-    id: 2,
-    img: HIW2img,
-    imgDark: HIW2img,
-    badge: "Step 2",
-    title: "Add to bag",
-    desc: "Easily select the correct items and add them to your cart",
-  },
-  {
-    id: 3,
-    img: HIW3img,
-    imgDark: HIW3img,
-    badge: "Step 3",
-    title: "Fast shipping",
-    desc: "The carrier will confirm and ship quickly to your doorstep",
-  },
-  {
-    id: 4,
-    img: HIW4img,
-    imgDark: HIW4img,
-    badge: "Step 4",
-    title: "Enjoy the product",
-    desc: "Have fun and enjoy your premium quality products",
-  },
-];
 
 const SectionHowItWork: FC<SectionHowItWorkProps> = ({
   className = "",
-  data = DEMO_DATA,
+  data = [],
 }) => {
-  const itemList = data && data.length > 0 ? data : DEMO_DATA;
+  // The merchant's own steps (Customizer → How It Works) only; none -> nothing rendered.
+  const itemList = data;
   const count = itemList.length;
 
   // Compute dynamic grid layout classes based on item count
@@ -73,6 +36,8 @@ const SectionHowItWork: FC<SectionHowItWorkProps> = ({
     if (count === 5) return "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5 sm:gap-6";
     return "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-6 gap-5 sm:gap-6";
   };
+
+  if (!itemList.length) return null;
 
   return (
     <div className={`nc-SectionHowItWork relative ${className}`}>

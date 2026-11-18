@@ -1,5 +1,5 @@
 import { StarIcon } from "@heroicons/react/24/solid";
-import { productImgs } from "@/contains/fakeData";
+import { PLACEHOLDER_IMAGE_URL } from "@/lib/images/config";
 import React, { FC } from "react";
 import NcImage from "@/shared/NcImage/NcImage";
 import Prices from "./Prices";
@@ -20,15 +20,16 @@ export interface CollectionCard2Props {
 
 const CollectionCard2: FC<CollectionCard2Props> = ({
   className,
-  imgs = [productImgs[9], productImgs[10], productImgs[11], productImgs[8]],
-  name = "Product Name",
-  description = "Product Description",
+  imgs = [],
+  name = "",
+  description = "",
   price,
   rating,
   numberOfReviews,
-  href = "/product-detail-2",
+  href = "/collection",
 }) => {
-  const mainImg = imgs[0];
+  // A product's own images only; without any, the neutral placeholder (never demo photos).
+  const mainImg = imgs.find(Boolean) ?? PLACEHOLDER_IMAGE_URL;
   const thumb = (index: number) => imgs[index] ?? mainImg;
 
   return (
@@ -76,14 +77,18 @@ const CollectionCard2: FC<CollectionCard2Props> = ({
           <h2 className="font-semibold text-lg sm:text-xl ">{name}</h2>
           {/* AUTHOR */}
           <div className="mt-3 flex items-center text-slate-500 dark:text-slate-400">
-            <span className="text-sm ">
-              <span className="line-clamp-1">{description}</span>
-            </span>
-            <span className="h-5 mx-1 sm:mx-2 border-l border-slate-200 dark:border-slate-700"></span>
+            {description && (
+              <>
+                <span className="text-sm ">
+                  <span className="line-clamp-1">{description}</span>
+                </span>
+                <span className="h-5 mx-1 sm:mx-2 border-l border-slate-200 dark:border-slate-700"></span>
+              </>
+            )}
             <StarIcon className="w-4 h-4 text-orange-400" />
             <span className="text-sm ml-1 ">
               <span className="line-clamp-1">
-                {rating || "New"} ({numberOfReviews || 0} reviews)
+                {numberOfReviews && rating ? `${rating} (${numberOfReviews} reviews)` : "No reviews yet"}
               </span>
             </span>
           </div>

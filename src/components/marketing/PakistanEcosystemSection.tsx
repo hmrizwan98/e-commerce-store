@@ -117,7 +117,7 @@ function PakistanEcosystemSection() {
                 JazzCash, EasyPaisa &amp; COD
               </h3>
               <p className="text-sm text-neutral-300 leading-relaxed">
-                Let customers pay the way they prefer. Clear instructions and your account details appear at checkout, and prepaid orders come with a payment proof for you to check.
+                Let customers pay the way they prefer. Clear instructions and your account details appear at checkout, and prepaid orders come with the customer&apos;s transaction ID and payment screenshot for you to check.
               </p>
 
               <div className="space-y-2.5">

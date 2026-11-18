@@ -1,6 +1,5 @@
 import { avatarColors } from "@/contains/contants";
 import React, { FC } from "react";
-import { avatarImgs } from "@/contains/fakeData";
 import VerifyIcon from "@/components/VerifyIcon";
 import Image, { StaticImageData } from "next/image";
 
@@ -18,13 +17,14 @@ const Avatar: FC<AvatarProps> = ({
   containerClassName = "ring-1 ring-white dark:ring-neutral-900",
   sizeClass = "h-6 w-6 text-sm",
   radius = "rounded-full",
-  imgUrl = avatarImgs[0],
+  imgUrl,
   userName,
   hasChecked,
   hasCheckedClass = "w-4 h-4 bottom-1 -right-0.5",
 }) => {
   const url = imgUrl || "";
-  const name = userName || "John Doe";
+  // No photo -> coloured initial (it used to show a stock photo of a stranger / "John Doe").
+  const name = (userName || "").trim() || "?";
   const _setBgColor = (name: string) => {
     const backgroundIndex = Math.floor(
       name.charCodeAt(0) % avatarColors.length

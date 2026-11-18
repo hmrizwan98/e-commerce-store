@@ -1,14 +1,13 @@
 import React, { FC } from 'react';
 import NcImage from '@/shared/NcImage/NcImage';
-import SocialsShare from '@/shared/SocialsShare/SocialsShare';
-import { imgHigtQualitys, _getTitleRd } from '@/contains/fakeData';
 import Link from 'next/link';
 import type { BlogPost } from '@/types/blog-post';
 import { safeImageSrc } from '@/utils/safeImageSrc';
 
 export interface Card12Props {
   className?: string;
-  post?: BlogPost;
+  /** A real, published post (no demo fallback). */
+  post: BlogPost;
   showDate?: boolean;
   showReadMore?: boolean;
   readMoreText?: string;
@@ -21,11 +20,11 @@ const Card12: FC<Card12Props> = ({
   showReadMore = true,
   readMoreText = 'Read Article',
 }) => {
-  const title = post?.title ?? _getTitleRd();
-  const image = post?.coverImage ?? imgHigtQualitys[0];
-  const excerpt = post?.excerpt;
-  const publishedAt = post?.publishedAt;
-  const postHref = (post?.slug ? `/blog/${post.slug}` : '/blog-single') as any;
+  const title = post.title;
+  const image = post.coverImage;
+  const excerpt = post.excerpt;
+  const publishedAt = post.publishedAt;
+  const postHref = `/blog/${encodeURIComponent(post.slug)}` as any;
 
   return (
     <div className={`nc-Card12 group relative flex flex-col h-full ${className}`}>
@@ -43,8 +42,6 @@ const Card12: FC<Card12Props> = ({
           sizes="(max-width: 768px) 100vw, 50vw"
         />
       </Link>
-
-      <SocialsShare className="absolute hidden md:grid gap-[5px] right-6 top-6 opacity-0 z-10 group-hover:opacity-100 transition-all duration-300 bg-white/90 dark:bg-slate-900/90 p-1.5 rounded-full shadow-lg backdrop-blur-md" />
 
       {/* Content Area */}
       <div className="flex flex-col flex-1 mt-5 sm:mt-6 justify-between">

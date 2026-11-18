@@ -4,18 +4,10 @@
 import Glide from "@glidejs/glide/dist/glide.esm";
 import Heading from "@/components/Heading/Heading";
 import React, { FC, useRef, useState, useEffect } from "react";
-import clientSayMain from "@/images/clientSayMain.png";
-import clientSay1 from "@/images/clientSay1.png";
-import clientSay2 from "@/images/clientSay2.png";
-import clientSay3 from "@/images/clientSay3.png";
-import clientSay4 from "@/images/clientSay4.png";
-import clientSay5 from "@/images/clientSay5.png";
-import clientSay6 from "@/images/clientSay6.png";
 import quotationImg from "@/images/quotation.png";
 import quotationImg2 from "@/images/quotation2.png";
 import { StarIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
-import { DEMO_DATA } from "./data";
 import { safeImageSrc } from "@/utils/safeImageSrc";
 
 export interface SectionClientSayItem {
@@ -42,7 +34,8 @@ const SectionClientSay: FC<SectionClientSayProps> = ({
   subHeading,
   data,
 }) => {
-  const testimonials = data?.length ? data : DEMO_DATA;
+  // Real, published testimonials only (seed samples are filtered out upstream); none -> nothing.
+  const testimonials = data ?? [];
   const sliderRef = useRef(null);
 
   const [isShow, setIsShow] = useState(false);
@@ -79,37 +72,33 @@ const SectionClientSay: FC<SectionClientSayProps> = ({
   // Extract uploaded satellite images from list for surrounding circles
   const customerAvatars = testimonials.map((t) => (t.image ? safeImageSrc(t.image) : null)).filter(Boolean);
 
+  // Floating avatars = only the real photos merchants uploaded for their testimonials
+  // (they used to fall back to stock photos of people).
   const renderBg = () => {
-    const staticSatellites = [clientSay1, clientSay2, clientSay3, clientSay4, clientSay5, clientSay6];
-    
+    const positions = [
+      "top-9 -left-20",
+      "bottom-[100px] right-full mr-40",
+      "top-full left-[140px]",
+      "-bottom-10 right-[140px]",
+      "left-full ml-32 bottom-[80px]",
+      "-right-10 top-10",
+    ];
     return (
       <div className="hidden md:block">
-        {[
-          { posClass: "top-9 -left-20", defaultImg: clientSay1, idx: 0 },
-          { posClass: "bottom-[100px] right-full mr-40", defaultImg: clientSay2, idx: 1 },
-          { posClass: "top-full left-[140px]", defaultImg: clientSay3, idx: 2 },
-          { posClass: "-bottom-10 right-[140px]", defaultImg: clientSay4, idx: 3 },
-          { posClass: "left-full ml-32 bottom-[80px]", defaultImg: clientSay5, idx: 4 },
-          { posClass: "-right-10 top-10", defaultImg: clientSay6, idx: 5 },
-        ].map((sat, i) => {
-          const customSrc = customerAvatars[i];
-          return (
-            <div
-              key={i}
-              className={`absolute ${sat.posClass} w-12 h-12 rounded-full overflow-hidden border-2 border-white dark:border-neutral-800 shadow-md transition-all duration-300 hover:scale-110`}
-            >
-              {customSrc ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={customSrc} alt="" className="w-full h-full object-cover" />
-              ) : (
-                <Image sizes="100px" src={sat.defaultImg} alt="" className="w-full h-full object-cover" />
-              )}
-            </div>
-          );
-        })}
+        {customerAvatars.slice(0, positions.length).map((src, i) => (
+          <div
+            key={i}
+            className={`absolute ${positions[i]} w-12 h-12 rounded-full overflow-hidden border-2 border-white dark:border-neutral-800 shadow-md transition-all duration-300 hover:scale-110`}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={src as string} alt="" className="w-full h-full object-cover" />
+          </div>
+        ))}
       </div>
     );
   };
+
+  if (!testimonials.length) return null;
 
   return (
     <div
@@ -135,11 +124,9 @@ const SectionClientSay: FC<SectionClientSayProps> = ({
                 className="w-full h-full object-cover transition-all duration-500 ease-out"
               />
             ) : (
-              <Image
-                src={clientSayMain}
-                alt="Customer"
-                className="w-full h-full object-cover"
-              />
+              <span className="w-full h-full flex items-center justify-center text-3xl sm:text-4xl font-semibold text-neutral-500 dark:text-neutral-300">
+                {(currentItem?.clientName || "?").trim().charAt(0).toUpperCase()}
+              </span>
             )}
           </div>
         </div>
@@ -161,7 +148,8 @@ const SectionClientSay: FC<SectionClientSayProps> = ({
           <div className="glide__track " data-glide-el="track">
             <ul className="glide__slides ">
               {testimonials.map((item) => {
-                const rating = item.rating ?? 5;
+                // Stars only when the merchant entered a rating (no assumed 5 stars).
+                const rating = typeof item.rating === "number" ? Math.max(0, Math.min(5, item.rating)) : null;
                 const meta = [item.designation, item.company, item.country].filter(Boolean).join(" · ");
                 return (
                   <li
@@ -177,14 +165,16 @@ const SectionClientSay: FC<SectionClientSayProps> = ({
                     {meta && (
                       <span className="block mt-1 text-sm font-medium text-neutral-500 dark:text-neutral-400">{meta}</span>
                     )}
-                    <div className="flex items-center space-x-1 mt-3 text-amber-400">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <StarIcon
-                          key={star}
-                          className={`w-5 h-5 ${star > rating ? "text-neutral-300 dark:text-neutral-700" : ""}`}
-                        />
-                      ))}
-                    </div>
+                    {rating !== null && (
+                      <div className="flex items-center space-x-1 mt-3 text-amber-400" aria-label={`${rating} out of 5`}>
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <StarIcon
+                            key={star}
+                            className={`w-5 h-5 ${star > rating ? "text-neutral-300 dark:text-neutral-700" : ""}`}
+                          />
+                        ))}
+                      </div>
+                    )}
                   </li>
                 );
               })}

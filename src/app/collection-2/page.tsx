@@ -1,6 +1,4 @@
 import React from "react";
-import SectionSliderCollections from "@/components/SectionSliderLargeProduct";
-import SectionPromo1 from "@/components/SectionPromo1";
 import ThemeProductCardAdapter from "@/components/theme/ThemeProductCardAdapter";
 import Pagination from "@/shared/Pagination/Pagination";
 import { searchProducts } from "@/lib/firebase/repositories/products";
@@ -34,13 +32,11 @@ const PageCollection2 = async ({
         <div className="space-y-10 lg:space-y-14">
           {/* HEADING */}
           <div className="max-w-screen-sm">
-            <h2 className="block text-2xl sm:text-3xl lg:text-4xl font-semibold">
-              Man collection
-            </h2>
-            <span className="block mt-4 text-neutral-500 dark:text-neutral-400 text-sm sm:text-base">
-              We not only help you design exceptional products, but also make it
-              easy for you to share your designs with more like-minded people.
-            </span>
+            {/* Linked from every store's menu ("Best Sellers"/"Collections"): a real listing of the
+                store's own products with filters - the old template heading/copy was demo text. */}
+            <h1 className="block text-2xl sm:text-3xl lg:text-4xl font-semibold">
+              All products
+            </h1>
           </div>
 
           <hr className="border-slate-200 dark:border-slate-700" />
@@ -73,15 +69,6 @@ const PageCollection2 = async ({
             </div>
           </main>
         </div>
-
-        {/* === SECTION 5 === */}
-        <hr className="border-slate-200 dark:border-slate-700" />
-
-        <SectionSliderCollections />
-        <hr className="border-slate-200 dark:border-slate-700" />
-
-        {/* SUBCRIBES */}
-        <SectionPromo1 />
       </div>
     </div>
   );

@@ -198,10 +198,11 @@ const ProductCard: FC<ProductCardProps> = ({
           <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 space-y-2">
             <div className="flex items-center justify-between gap-2">
               <Prices price={price} compareAtPrice={compareAtPrice} />
-              {(rating || numberOfReviews) ? (
+              {/* Real rating only - it used to show a made-up "4.8". */}
+              {(numberOfReviews ?? 0) > 0 && (rating ?? 0) > 0 ? (
                 <div className="flex items-center gap-1 bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-300 font-bold text-xs px-2 py-0.5 rounded-lg border border-amber-200/50 dark:border-amber-900/30">
                   <StarIcon className="w-3.5 h-3.5 text-amber-400" />
-                  <span>{rating || "4.8"}</span>
+                  <span>{rating}</span>
                   {numberOfReviews ? <span className="text-[10px] text-amber-600/70 font-normal">({numberOfReviews})</span> : null}
                 </div>
               ) : null}

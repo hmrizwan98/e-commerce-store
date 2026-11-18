@@ -13,7 +13,7 @@ export async function getActiveFaqs(): Promise<FaqItem[]> {
       .orderBy("order", "asc")
       .get();
     return snap.docs.map((doc) => docData<FaqItem>(doc)).filter((f): f is FaqItem => f !== null);
-  });
+  }, []);
 }
 
 // --- Admin ---

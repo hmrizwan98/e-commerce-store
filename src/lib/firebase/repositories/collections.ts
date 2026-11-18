@@ -19,7 +19,7 @@ export async function getCollections(): Promise<Collection[]> {
     return snap.docs
       .map((doc) => docData<Collection>(doc))
       .filter((c): c is Collection => c !== null);
-  });
+  }, []);
 }
 
 export async function getCollectionBySlug(slug: string): Promise<Collection | null> {
@@ -45,7 +45,7 @@ export async function getProductsByCollectionId(collectionId: string, limit = 24
     return snap.docs
       .map((doc) => docData<Product>(doc))
       .filter((p): p is Product => p !== null);
-  });
+  }, [collectionId, limit]);
 }
 
 // --- Admin ---

@@ -35,6 +35,7 @@ export default function MinimalProductDetail({
   productCardSettings,
   productDetailSettings,
   storeInfo,
+  promoBanner,
 }: MinimalProductDetailProps) {
   const s = useProductDetailState(product, variants);
   const showCompare = productDetailSettings?.showCompare ?? true;
@@ -49,7 +50,16 @@ export default function MinimalProductDetail({
         <div className="lg:flex">
           <div className="w-full lg:w-[55%]">
             <div className="relative">
-              <ProductGallery activeImage={s.activeImage} thumbnails={s.thumbnails} alt={product.name} clickable={clickableGallery} />
+              {/* Same image slider as the Luxury page (all product images, thumbnails, prev/next) - it was
+                  only wired into Luxury, so stores on other product-page designs kept the old grid. */}
+              <ProductGallery
+                layout="thumbnails"
+                images={s.images}
+                activeImage={s.activeImage}
+                thumbnails={s.thumbnails}
+                alt={product.name}
+                clickable={clickableGallery}
+              />
               <ProductStatus status={product.badge} />
               {showWishlist && <LikeButton productId={product.id} className="absolute right-3 top-3" />}
               {showCompare && <CompareButton productId={product.id} className="absolute right-3 top-16" />}
@@ -113,6 +123,7 @@ export default function MinimalProductDetail({
           product={product}
           reviews={reviews}
           relatedProducts={relatedProducts}
+          promoBanner={promoBanner}
           crossSellProducts={crossSellProducts}
           upsellProducts={upsellProducts}
           productCardSettings={productCardSettings}

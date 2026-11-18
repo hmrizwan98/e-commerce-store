@@ -19,22 +19,8 @@ const SectionMagazine5: FC<SectionMagazine5Props> = ({
   const hasRealPosts = Boolean(posts && posts.length);
   const postList = hasRealPosts ? posts! : [];
 
-  if (!hasRealPosts || postList.length === 0) {
-    return (
-      <div className="nc-SectionMagazine5">
-        <div className="grid lg:grid-cols-12 gap-8 lg:gap-12 items-stretch">
-          <div className="lg:col-span-7 flex flex-col h-full">
-            <Card12 showDate={showDate} showReadMore={showReadMore} readMoreText={readMoreText} />
-          </div>
-          <div className="lg:col-span-5 flex flex-col justify-between h-full">
-            <Card13 showDate={showDate} />
-            <Card13 showDate={showDate} />
-            <Card13 showDate={showDate} />
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // No published posts: render nothing (never demo articles). Callers hide their heading too.
+  if (!hasRealPosts || postList.length === 0) return null;
 
   // 1 Post Layout
   if (postList.length === 1) {

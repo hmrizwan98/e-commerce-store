@@ -3,19 +3,17 @@ import { tenantCollection } from "../tenant-scope";
 import { docData } from "./utils";
 import { safeQuery } from "./safe-query";
 import type { Testimonial } from "@/types/testimonial";
+import { isPublicTestimonial } from "@/lib/testimonials/seed";
+import { queryPublicTestimonials } from "./storefront-queries";
+import { adminDb } from "../admin";
+import { requireCurrentTenant } from "@/lib/tenant/current";
 
 const COLLECTION = "testimonials";
 
 export async function getActiveTestimonials(): Promise<Testimonial[]> {
-  return safeQuery("getActiveTestimonials", [], async () => {
-    const snap = await (await tenantCollection(COLLECTION))
-      .where("isActive", "==", true)
-      .orderBy("order", "asc")
-      .get();
-    return snap.docs
-      .map((doc) => docData<Testimonial>(doc))
-      .filter((t): t is Testimonial => t !== null);
-  });
+  // Storefront: unchanged installer samples are never presented as real customers.
+  const tenant = await requireCurrentTenant();
+  return safeQuery("getActiveTestimonials", [], () => queryPublicTestimonials(adminDb(), tenant.id), []);
 }
 
 export async function getTestimonialsByIds(ids: string[]): Promise<Testimonial[]> {
@@ -27,7 +25,7 @@ export async function getTestimonialsByIds(ids: string[]): Promise<Testimonial[]
 
     const all = snap.docs
       .map((doc) => docData<Testimonial>(doc))
-      .filter((t): t is Testimonial => t !== null);
+      .filter((t): t is Testimonial => t !== null && isPublicTestimonial(t));
 
     return ids
       .map((id) => all.find((t) => t.id === id))

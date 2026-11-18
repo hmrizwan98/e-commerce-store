@@ -12,6 +12,7 @@ import {
 import OrderActions from "../OrderActions";
 import OrderLifecycleActions from "../OrderLifecycleActions";
 import OrderVerificationCard from "../OrderVerificationCard";
+import OrderMessagesCard from "../OrderMessagesCard";
 import { ensureOrderVerification } from "@/lib/firebase/repositories/order-verifications";
 
 import Link from "next/link";
@@ -189,6 +190,8 @@ export default async function AdminOrderDetailPage({ params }: { params: { id: s
               </div>
               <OrderActions order={order} fulfillmentBlockedReason={fulfillmentBlockedReason} />
             </div>
+
+            <OrderMessagesCard order={JSON.parse(JSON.stringify(order))} />
 
             {/* Order Analytics Card */}
             <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-xs h-fit">

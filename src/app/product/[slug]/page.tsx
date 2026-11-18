@@ -7,8 +7,9 @@ import {
 } from "@/lib/firebase/repositories/products";
 import { getApprovedReviewsByProduct } from "@/lib/firebase/repositories/reviews";
 import { getActiveThemeConfig } from "@/lib/theme/theme-repository";
+import { getFirstBanner } from "@/lib/firebase/repositories/banners";
 import ThemeProductDetailAdapter from "@/components/theme/ThemeProductDetailAdapter";
-import { getPaymentSettings, getShippingSettings } from "@/lib/firebase/repositories/site-settings";
+import { getPaymentSettings, getShippingSettings, getGeneralSettings } from "@/lib/firebase/repositories/site-settings";
 import ExtraPageSections from "@/components/collection/ExtraPageSections";
 
 import type { Metadata } from "next";
@@ -28,7 +29,7 @@ export async function generateMetadata({
   const title = product.name;
   const description = product.description
     ? product.description.replace(/<[^>]*>?/gm, "").slice(0, 160)
-    : `Buy ${product.name} at the best price. Quality guaranteed.`;
+    : `Buy ${product.name} online.`;
   const image = product.images?.[0];
 
   return {
@@ -58,7 +59,7 @@ export default async function ProductDetailPage({
     notFound();
   }
 
-  const [variants, relatedProducts, reviews, crossSellProducts, upsellProducts, theme, shipping, payments] = await Promise.all([
+  const [variants, relatedProducts, reviews, crossSellProducts, upsellProducts, theme, shipping, payments, promoBanner, general] = await Promise.all([
     getProductVariants(product.id),
     getRelatedProducts(product),
     getApprovedReviewsByProduct(product.id, 6),
@@ -67,6 +68,9 @@ export default async function ProductDetailPage({
     getActiveThemeConfig(),
     getShippingSettings().catch(() => null),
     getPaymentSettings().catch(() => null),
+    // Store Admin → Promo Banners, slot "promo2" (the product page's promo block).
+    getFirstBanner("promo2").catch(() => null),
+    getGeneralSettings().catch(() => null),
   ]);
   // Real delivery / COD facts for the "Delivery & Returns" block (nothing invented).
   const storeInfo = {
@@ -84,7 +88,8 @@ export default async function ProductDetailPage({
     offers: {
       "@type": "Offer",
       price: product.price,
-      priceCurrency: "PKR",
+      // The store's own currency (Settings → General), not a hardcoded one.
+      priceCurrency: general?.currency || "PKR",
       availability: product.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
     },
   };
@@ -105,6 +110,7 @@ export default async function ProductDetailPage({
         productCardSettings={theme.productCard}
         productDetailSettings={theme.productDetail}
         storeInfo={storeInfo}
+        promoBanner={promoBanner}
       />
       <ExtraPageSections sections={theme.productDetail?.sections} theme={theme} />
     </>

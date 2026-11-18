@@ -1,5 +1,6 @@
 "use client";
 
+import PaymentProofUpload from "@/components/payments/PaymentProofUpload";
 import { useFormatMoney } from "@/lib/currency/CurrencyContext";
 import { useEffect, useState, useRef } from "react";
 import Prices from "@/components/Prices";
@@ -276,6 +277,10 @@ const CheckoutClient: React.FC<CheckoutClientProps> = ({
                 </a>
               </div>
             ) : null}
+
+            {paymentMethod !== "cod" && (
+              <PaymentProofUpload orderNumber={confirmedOrder.orderNumber} contact={email.trim() || phone.trim()} />
+            )}
 
             {/* Returning-customer opt-in: details stay on this device only. */}
             <div className="w-full text-left rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/30 p-5 space-y-3" aria-live="polite">
@@ -566,7 +571,7 @@ const CheckoutClient: React.FC<CheckoutClientProps> = ({
               </ButtonPrimary>
 
               <p className="text-[11px] text-slate-400 text-center flex items-center justify-center gap-1">
-                🔒 256-bit Encrypted Checkout · 100% Guaranteed Delivery
+                🔒 Secure checkout
               </p>
             </div>
           </div>

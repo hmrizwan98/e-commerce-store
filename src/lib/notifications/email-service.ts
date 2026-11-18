@@ -172,54 +172,108 @@ export function buildOrderEmailHtml(
   `;
 }
 
+/** What actually happened to a customer email - stored on the order and shown in Admin. */
+export type EmailDeliveryStatus =
+  | "pending" // queued after checkout, attempt not finished yet
+  | "sent" // the provider accepted it
+  | "failed" // the provider rejected it or could not be reached
+  | "not_configured" // no email provider on this platform - nothing was sent
+  | "no_recipient" // the customer gave no (valid) email address
+  | "disabled"; // turned off in Settings (Notifications -> Email or Email Templates)
+
+export interface EmailDeliveryResult {
+  status: EmailDeliveryStatus;
+  /** True only when the provider accepted the email. */
+  success: boolean;
+  /** Safe, admin-facing text - never contains credentials or raw provider responses. */
+  message: string;
+}
+
+export const EMAIL_STATUS_MESSAGES: Record<EmailDeliveryStatus, string> = {
+  pending: "Sending the confirmation email…",
+  sent: "Confirmation email sent to the customer.",
+  failed: "The confirmation email could not be delivered by the email provider.",
+  not_configured: "Not sent - no email provider is configured on this platform.",
+  no_recipient: "Not sent - the customer didn't give a valid email address.",
+  disabled: "Not sent - order confirmation emails are turned off in Settings.",
+};
+
+export function emailResult(status: EmailDeliveryStatus): EmailDeliveryResult {
+  return { status, success: status === "sent", message: EMAIL_STATUS_MESSAGES[status] };
+}
+
+/** Default subject = exactly what order emails have always used. */
+export const DEFAULT_ORDER_SUBJECT_TEMPLATE = "{{storeName}}: Order Confirmation #{{orderNumber}}";
+
 /**
- * Sends order confirmation email via SMTP / Resend / SendGrid or logs payload if no provider is configured
+ * Subject from the store's Email Templates setting. Only {{storeName}} and {{orderNumber}}
+ * are replaced; line breaks are removed (header injection) and the length is capped. An empty
+ * template falls back to the default.
+ */
+export function renderOrderSubject(template: string | undefined | null, vars: { storeName: string; orderNumber: string }): string {
+  const source = template && template.trim() ? template : DEFAULT_ORDER_SUBJECT_TEMPLATE;
+  const out = source
+    .replace(/\{\{\s*storeName\s*\}\}/g, vars.storeName)
+    .replace(/\{\{\s*orderNumber\s*\}\}/g, vars.orderNumber)
+    .replace(/[\r\n]+/g, " ")
+    .trim();
+  return (out || `${vars.storeName}: Order Confirmation #${vars.orderNumber}`).slice(0, 200);
+}
+
+export interface OrderEmailSendOptions extends OrderEmailOptions {
+  /** Store setting (Email Templates -> Order Confirmation subject). */
+  subjectTemplate?: string;
+  /** Settings -> Notifications -> Email AND Email Templates -> Order Confirmation enabled. */
+  enabled?: boolean;
+  /** Injected in tests; defaults to global fetch. */
+  fetchImpl?: typeof fetch;
+}
+
+/**
+ * Sends the order confirmation email through Resend (the platform's existing provider) and
+ * reports what REALLY happened. It used to return success:true even when Resend rejected the
+ * email or no provider was configured.
  */
 export async function sendOrderConfirmationEmail(
   order: Partial<Order> & { orderNumber: string; guestEmail?: string },
-  options: OrderEmailOptions = {}
-): Promise<{ success: boolean; message: string }> {
-  const recipientEmail = order.guestEmail;
+  options: OrderEmailSendOptions = {}
+): Promise<EmailDeliveryResult> {
+  if (options.enabled === false) return emailResult("disabled");
+  const recipientEmail = order.guestEmail?.trim();
+  if (!isValidEmail(recipientEmail)) return emailResult("no_recipient");
 
-  if (!recipientEmail || !recipientEmail.includes("@")) {
-    console.log(`[Email Service] No recipient email address for Order #${order.orderNumber}`);
-    return { success: false, message: "No recipient email address." };
+  const resendApiKey = process.env.RESEND_API_KEY;
+  if (!resendApiKey) {
+    console.warn(`[Email Service] No email provider configured - order #${order.orderNumber} confirmation not sent.`);
+    return emailResult("not_configured");
   }
 
   const html = buildOrderEmailHtml(order, options);
   const storeName = (options.brand?.storeName || "Order Update").replace(/[\r\n<>\"]/g, "").trim();
   const replyTo = isValidEmail(options.brand?.replyTo) ? options.brand!.replyTo!.trim() : undefined;
+  const doFetch = options.fetchImpl ?? fetch;
 
-  // Check for RESEND_API_KEY or SMTP credentials
-  const resendApiKey = process.env.RESEND_API_KEY;
-
-  if (resendApiKey) {
-    try {
-      const res = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${resendApiKey}`,
-        },
-        body: JSON.stringify({
-          from: `${storeName} <${orderSenderAddress()}>`,
-          to: recipientEmail,
-          ...(replyTo ? { reply_to: replyTo } : {}),
-          subject: `${storeName}: Order Confirmation #${order.orderNumber}`,
-          html,
-        }),
-      });
-
-      if (res.ok) {
-        console.log(`[Email Service] Email sent successfully to ${recipientEmail} for Order #${order.orderNumber}`);
-        return { success: true, message: "Email sent successfully via Resend API." };
-      }
-      console.error("[Email Service] Resend API returned an error:", res.status, await res.text().catch(() => ""));
-    } catch (err: any) {
-      console.error("[Email Send Error]:", err?.message || err);
-    }
+  try {
+    const res = await doFetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${resendApiKey}`,
+      },
+      body: JSON.stringify({
+        from: `${storeName} <${orderSenderAddress()}>`,
+        to: recipientEmail,
+        ...(replyTo ? { reply_to: replyTo } : {}),
+        subject: renderOrderSubject(options.subjectTemplate, { storeName, orderNumber: order.orderNumber }),
+        html,
+      }),
+    });
+    if (res.ok) return emailResult("sent");
+    // Status code only in the server log - the provider's body can echo request details.
+    console.error(`[Email Service] Resend rejected order #${order.orderNumber} email (HTTP ${res.status}).`);
+    return emailResult("failed");
+  } catch (err: any) {
+    console.error(`[Email Service] Could not reach the email provider for order #${order.orderNumber}:`, err?.name || "error");
+    return emailResult("failed");
   }
-
-  console.log(`[Email Prepared] Order #${order.orderNumber} email ready for ${recipientEmail}.`);
-  return { success: true, message: "Order confirmation email generated." };
 }

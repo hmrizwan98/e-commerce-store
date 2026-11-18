@@ -80,6 +80,11 @@ export interface Order {
   paymentMethod: PaymentMethod;
   paymentStatus: PaymentStatus;
   paymentProofUrl?: string;
+  /** Payment screenshots uploaded by the customer (private Cloudinary assets - never public URLs;
+   * Admin views them through short-lived signed links). */
+  paymentProofs?: PaymentProof[];
+  /** What really happened to the automatic customer messages for this order. */
+  notificationDelivery?: OrderNotificationDelivery;
   paymentTransactionRef?: string;
   orderStatus: OrderStatus;
   trackingNumber?: string;
@@ -122,4 +127,26 @@ export interface Order {
   returnRequestedAt?: number;
   returnResolvedAt?: number;
   returnResolvedBy?: string;
+}
+
+export interface PaymentProof {
+  /** Cloudinary public id of a `type: "private"` asset. */
+  publicId: string;
+  format: string;
+  bytes: number;
+  uploadedAt: number;
+}
+
+export type DeliveryStatus = "pending" | "sent" | "failed" | "not_configured" | "no_recipient" | "disabled";
+
+export interface DeliveryRecord {
+  status: DeliveryStatus;
+  /** Safe admin-facing text (no provider internals). */
+  message: string;
+  at: number;
+}
+
+export interface OrderNotificationDelivery {
+  confirmationEmail?: DeliveryRecord;
+  confirmationWhatsApp?: DeliveryRecord;
 }

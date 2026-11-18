@@ -6,12 +6,6 @@ import NcImage from "@/shared/NcImage/NcImage";
 import Heading from "@/components/Heading/Heading";
 import { safeImageSrc } from "@/utils/safeImageSrc";
 
-import collection1 from "@/images/collections/1.png";
-import collection2 from "@/images/collections/2.png";
-import collection3 from "@/images/collections/3.png";
-import collection4 from "@/images/collections/4.png";
-import collection5 from "@/images/collections/5.png";
-import collection6 from "@/images/collections/6.png";
 
 export interface SocialGalleryItem {
   image: string;
@@ -25,22 +19,17 @@ export interface SectionSocialGalleryProps {
   data?: SocialGalleryItem[];
 }
 
-const DEFAULT_GALLERY: SocialGalleryItem[] = [
-  { image: collection1.src, href: "#" },
-  { image: collection2.src, href: "#" },
-  { image: collection3.src, href: "#" },
-  { image: collection4.src, href: "#" },
-  { image: collection5.src, href: "#" },
-  { image: collection6.src, href: "#" },
-];
 
 const SectionSocialGallery: FC<SectionSocialGalleryProps> = ({
   className = "",
   heading = "Follow us on Instagram",
-  subHeading = "Tag us @GlamixStore to be featured on our page",
+  // Was one store's handle ("@GlamixStore") shown on every store.
+  subHeading,
   data = [],
 }) => {
-  const displayItems = data && data.length ? data : DEFAULT_GALLERY;
+  // The merchant's own gallery tiles only (no demo photos); none -> nothing rendered.
+  const displayItems = data;
+  if (!displayItems.length) return null;
 
   return (
     <div className={`nc-SectionSocialGallery relative ${className}`}>

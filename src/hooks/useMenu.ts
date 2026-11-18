@@ -5,6 +5,8 @@ import { fetchMenu } from "@/lib/firebase/client-data/menus";
 import { useTenantId } from "@/lib/tenant/TenantContext";
 import { useMenuContext } from "@/lib/tenant/MenuContext";
 import type { NavItemType } from "@/shared/Navigation/NavigationItem";
+import { filterNavItems } from "@/lib/nav/filter-nav";
+import { useMemo } from "react";
 
 /**
  * Returns Firestore-backed menu (`header` or `footer`). Initial state is fed
@@ -39,5 +41,7 @@ export function useMenu(id: "header" | "footer"): NavItemType[] {
     };
   }, [id, tenantId, contextItems]);
 
-  return items;
+  // Links to pages the store doesn't have (e.g. /about without an About page) never show.
+  const hidden = menuContext.hiddenHrefs;
+  return useMemo(() => filterNavItems(items, hidden), [items, hidden]);
 }

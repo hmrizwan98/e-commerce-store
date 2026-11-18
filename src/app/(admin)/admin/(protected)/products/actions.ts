@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { ProductInputError, productSaveError, duplicateSlugMessage, isNextControlFlowError, type ProductSaveResult } from "@/lib/products/product-save";
 import { FieldValue } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase/admin";
 import { tenantCollection } from "@/lib/firebase/tenant-scope";
@@ -102,7 +103,7 @@ function validateProductNumbers(input: {
   ];
   for (const [label, value] of checks) {
     if (value !== undefined && (!Number.isFinite(value) || value < 0)) {
-      throw new Error(`${label} cannot be negative.`);
+      throw new ProductInputError(`${label} cannot be negative.`);
     }
   }
 }
@@ -135,6 +136,15 @@ export async function createProduct(input: ProductFormInput): Promise<string> {
   const { variants, ...rest } = input;
   const facets = computeFacets(input.attributes, input.name);
   const col = await tenantCollection("products");
+
+  // One product per slug in this store. Without this, a second click while the first save was
+  // still running created an identical product (e.g. three "steel-bucket" products), and the
+  // storefront could only ever open one of them. Deleted (trashed) products don't count.
+  const sameSlug = await col.where("slug", "==", input.slug).limit(10).get();
+  if (sameSlug.docs.some((d) => d.data().isDeleted !== true)) {
+    throw new ProductInputError(duplicateSlugMessage(input.slug));
+  }
+
   const ref = col.doc();
 
   await ref.set({
@@ -154,6 +164,22 @@ export async function createProduct(input: ProductFormInput): Promise<string> {
   revalidateStorefront(input.slug);
   await logProductActivity(ref.id, "created", decoded.uid);
   return ref.id;
+}
+
+/**
+ * What the product form calls: same creation as createProduct, but the outcome is RETURNED
+ * (not thrown) so the merchant sees the real reason in production - a thrown Server Action
+ * error's message is hidden by Next.js in production builds.
+ */
+export async function createProductAction(input: ProductFormInput): Promise<ProductSaveResult> {
+  try {
+    const id = await createProduct(input);
+    return { ok: true, id };
+  } catch (err) {
+    if (isNextControlFlowError(err)) throw err;
+    if (!(err instanceof ProductInputError)) console.error("[createProduct] failed", err);
+    return { ok: false, error: productSaveError(err) };
+  }
 }
 
 export async function updateProduct(id: string, input: ProductFormInput): Promise<void> {

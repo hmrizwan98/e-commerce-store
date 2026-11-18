@@ -24,10 +24,28 @@ export type WhatsAppNotificationType =
   | "ORDER_DISPATCHED"
   | "ORDER_DELIVERED";
 
+export type WhatsAppDeliveryStatus = "sent" | "failed" | "not_configured" | "no_recipient" | "disabled";
+
 export interface SendWhatsAppResult {
+  status: WhatsAppDeliveryStatus;
+  /** True only when the WhatsApp gateway accepted the message. */
   success: boolean;
   message: string;
+  /** Click-to-chat link the admin can open manually (always built when there is a phone). */
   waLink: string;
+}
+
+export const WHATSAPP_STATUS_MESSAGES: Record<WhatsAppDeliveryStatus, string> = {
+  sent: "WhatsApp message sent automatically.",
+  failed: "The WhatsApp gateway could not deliver the message.",
+  not_configured: "Not sent automatically - no WhatsApp gateway is configured on this platform. Use the order's WhatsApp button to message the customer.",
+  no_recipient: "Not sent - the order has no phone number.",
+  disabled: "Not sent - automatic WhatsApp alerts are turned off in Settings → Notifications.",
+};
+
+/** True when the platform has an automated WhatsApp gateway (env only - values never exposed). */
+export function isWhatsAppGatewayConfigured(): boolean {
+  return Boolean(process.env.WHATSAPP_API_URL && process.env.WHATSAPP_API_TOKEN);
 }
 
 /**
@@ -109,66 +127,43 @@ Thank you for shopping with us!`;
 }
 
 /**
- * Sends automated WhatsApp notification via WhatsApp Cloud API / UltraMsg / Gateway API
- * AND generates direct wa.me link for manual admin fallback.
+ * Sends an automated WhatsApp message through the platform's gateway (if one is configured)
+ * and reports what REALLY happened. It used to return success:true ("link generated") even
+ * when nothing was sent. The click-to-chat link is still returned for manual use.
  */
 export async function sendWhatsAppNotification(
   type: WhatsAppNotificationType,
   order: Partial<Order> & { orderNumber: string; shippingAddress?: any },
   currency?: CurrencySettings | null,
-  storefrontUrl?: string | null
+  storefrontUrl?: string | null,
+  opts: { enabled?: boolean; fetchImpl?: typeof fetch } = {}
 ): Promise<SendWhatsAppResult> {
   const rawPhone = order.shippingAddress?.phone || (order as any).guestPhone || "";
   const phone = formatPhoneNumber(rawPhone);
   const messageText = buildWhatsAppMessageText(type, order, currency, storefrontUrl);
-  const encodedText = encodeURIComponent(messageText);
-  const waLink = phone ? `https://wa.me/${phone}?text=${encodedText}` : "";
-
-  if (!phone) {
-    return {
-      success: false,
-      message: "No phone number provided for WhatsApp notification.",
-      waLink: "",
-    };
-  }
-
-  // Check for environment keys for automated gateway (WhatsApp Cloud API / UltraMsg / GreenAPI / Twilio)
-  const apiUrl = process.env.WHATSAPP_API_URL; // e.g. https://graph.facebook.com/v18.0/PHONE_NUMBER_ID/messages or UltraMsg endpoint
-  const apiToken = process.env.WHATSAPP_API_TOKEN;
-
-  if (apiUrl && apiToken) {
-    try {
-      const response = await fetch(apiUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${apiToken}`,
-        },
-        body: JSON.stringify({
-          messaging_product: "whatsapp",
-          to: phone,
-          type: "text",
-          text: { body: messageText },
-        }),
-      });
-
-      if (response.ok) {
-        console.log(`[WhatsApp] Sent ${type} notification to ${phone} for Order #${order.orderNumber}`);
-        return { success: true, message: "WhatsApp message sent successfully via Gateway API.", waLink };
-      } else {
-        const errorBody = await response.text();
-        console.warn(`[WhatsApp API Warning] Gateway returned status ${response.status}:`, errorBody);
-      }
-    } catch (err: any) {
-      console.error("[WhatsApp Send Error]:", err?.message || err);
-    }
-  }
-
-  // Fallback: log link for click-to-chat
-  console.log(`[WhatsApp Link Ready] For Order #${order.orderNumber} -> ${waLink}`);
-  return {
-    success: true,
-    message: "WhatsApp Click-to-Chat link generated.",
+  const waLink = phone ? `https://wa.me/${phone}?text=${encodeURIComponent(messageText)}` : "";
+  const result = (status: WhatsAppDeliveryStatus): SendWhatsAppResult => ({
+    status,
+    success: status === "sent",
+    message: WHATSAPP_STATUS_MESSAGES[status],
     waLink,
-  };
+  });
+
+  if (opts.enabled === false) return result("disabled");
+  if (!phone) return result("no_recipient");
+  if (!isWhatsAppGatewayConfigured()) return result("not_configured");
+
+  try {
+    const response = await (opts.fetchImpl ?? fetch)(process.env.WHATSAPP_API_URL!, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${process.env.WHATSAPP_API_TOKEN}` },
+      body: JSON.stringify({ messaging_product: "whatsapp", to: phone, type: "text", text: { body: messageText } }),
+    });
+    if (response.ok) return result("sent");
+    console.warn(`[WhatsApp] Gateway rejected ${type} for order #${order.orderNumber} (HTTP ${response.status}).`);
+    return result("failed");
+  } catch (err: any) {
+    console.error(`[WhatsApp] Gateway unreachable for order #${order.orderNumber}:`, err?.name || "error");
+    return result("failed");
+  }
 }

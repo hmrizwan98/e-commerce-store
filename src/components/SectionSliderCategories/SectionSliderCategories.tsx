@@ -5,10 +5,6 @@ import Heading from "@/components/Heading/Heading";
 // @ts-ignore
 import Glide from "@glidejs/glide/dist/glide.esm";
 import CardCategory2 from "@/components/CardCategories/CardCategory2";
-import department1Png from "@/images/collections/department1.png";
-import department2Png from "@/images/collections/department2.png";
-import department3Png from "@/images/collections/department3.png";
-import department4Png from "@/images/collections/department4.png";
 import { StaticImageData } from "next/image";
 import Link from "next/link";
 
@@ -17,33 +13,9 @@ export interface CardCategoryData {
   desc: string;
   img: string | StaticImageData;
   color?: string;
+  /** Real category page (/category/{slug}). */
+  href?: string;
 }
-const CATS: CardCategoryData[] = [
-  {
-    name: "Travel Kits",
-    desc: "20+ categories",
-    img: department1Png,
-    color: "bg-indigo-100",
-  },
-  {
-    name: "Beauty Products",
-    desc: "10+ categories",
-    img: department2Png,
-    color: "bg-slate-100",
-  },
-  {
-    name: "Sport Kits",
-    desc: "34+ categories",
-    img: department3Png,
-    color: "bg-sky-100",
-  },
-  {
-    name: "Pets Food",
-    desc: "12+ categories",
-    img: department4Png,
-    color: "bg-orange-100",
-  },
-];
 export interface SectionSliderCategoriesProps {
   className?: string;
   itemClassName?: string;
@@ -57,7 +29,8 @@ const SectionSliderCategories: FC<SectionSliderCategoriesProps> = ({
   subHeading = "",
   className = "",
   itemClassName = "",
-  data = CATS,
+  // The store's own categories only (no demo departments); callers hide the section when empty.
+  data = [],
 }) => {
   const sliderRef = useRef(null);
   const [isShow, setIsShow] = useState(false);
@@ -100,6 +73,8 @@ const SectionSliderCategories: FC<SectionSliderCategoriesProps> = ({
     };
   }, [sliderRef]);
 
+  if (!data.length) return null;
+
   return (
     <div className={`nc-SectionSliderCategories ${className}`}>
       <div ref={sliderRef} className={`flow-root ${isShow ? "" : "invisible"}`}>
@@ -115,6 +90,7 @@ const SectionSliderCategories: FC<SectionSliderCategoriesProps> = ({
                   name={item.name}
                   desc={item.desc}
                   bgClass={item.color}
+                  href={item.href}
                 />
               </li>
             ))}

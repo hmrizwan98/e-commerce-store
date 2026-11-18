@@ -1,4 +1,5 @@
 import React from "react";
+import { isSeedFaq } from "@/lib/seed-content";
 import Link from "next/link";
 import { getAllFaqsForAdmin } from "@/lib/firebase/repositories/faqs";
 import FaqRowActions from "./FaqRowActions";
@@ -45,6 +46,14 @@ export default async function AdminFaqsPage() {
                     <Link href={`/admin/faqs/${f.id}/edit` as any} className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
                       {f.question}
                     </Link>
+                    {isSeedFaq(f) && (
+                      <span
+                        className="ml-2 inline-block px-2 py-0.5 text-xs font-medium rounded-full bg-amber-100 text-amber-800 dark:bg-amber-500/10 dark:text-amber-300"
+                        title="Sample question & answer from store setup. It is shown on your storefront and may describe shipping/return terms you don't offer - edit it to match your real policy or disable it."
+                      >
+                        Sample – review policy text
+                      </span>
+                    )}
                   </td>
                   <td className="p-4 text-slate-600 dark:text-slate-400">
                     <span className="inline-block px-2.5 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 font-mono text-xs">

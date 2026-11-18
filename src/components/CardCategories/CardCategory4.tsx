@@ -16,6 +16,8 @@ export interface CardCategory4Props {
   desc?: string;
   color?: string;
   count?: number;
+  /** The category's own page (/category/{slug}). */
+  href?: string;
 }
 
 const CardCategory4: FC<CardCategory4Props> = ({
@@ -27,8 +29,10 @@ const CardCategory4: FC<CardCategory4Props> = ({
   desc,
   color = "bg-rose-50",
   count,
+  href,
 }) => {
-  const collectionHref = getTenantHref(id ? `/collection/${id}` : "/collection") as any;
+  // /collection/{id} does not exist (it 404ed) - use the category page, else all products.
+  const collectionHref = getTenantHref(href || "/collection") as any;
   const bgSvgSrc =
     typeof bgSVG === "string"
       ? bgSVG

@@ -169,3 +169,21 @@ export async function requestBackupExport(): Promise<BackupRequestResult> {
 export async function requestBackupImport(): Promise<BackupRequestResult> {
   return requestBackup("import");
 }
+
+/**
+ * Settings → Branding used to have free-text logo/favicon/loading-logo URL fields the
+ * storefront never read. The Theme Customizer is the single source of truth now; an old
+ * value can be copied into the theme ONLY when the theme has no image in that slot.
+ */
+export async function adoptLegacyBrandingLogoAction(field: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  await requireAdmin();
+  const { getBrandingSettings } = await import("@/lib/firebase/repositories/site-settings");
+  const { getActiveThemeConfig, saveThemeLogos } = await import("@/lib/theme/theme-repository");
+  const { legacyLogoAdoption } = await import("@/lib/theme/theme-safety");
+  const [branding, theme] = await Promise.all([getBrandingSettings(), getActiveThemeConfig()]);
+  const decision = legacyLogoAdoption(field, (branding as unknown as Record<string, unknown>)[field], (theme.logos ?? {}) as Record<string, string | undefined>);
+  if (!decision.ok) return decision;
+  await saveThemeLogos({ [decision.key]: decision.value });
+  revalidatePath("/", "layout");
+  return { ok: true };
+}

@@ -23,6 +23,7 @@ const ACTIVITY_LABELS: Record<OrderActivityLog["action"], string> = {
   document_queued: "Document queued",
   verification_approved: "COD verification approved",
   verification_rejected: "COD verification rejected",
+  payment_proof_uploaded: "Customer uploaded a payment screenshot",
 };
 
 export function buildOrderTimeline(order: Order, activity: OrderActivityLog[]): OrderTimelineEvent[] {

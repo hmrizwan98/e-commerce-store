@@ -3,23 +3,20 @@ import { tenantCollection } from "../tenant-scope";
 import { docData } from "./utils";
 import { safeQuery } from "./safe-query";
 import type { Banner, BannerPlacement } from "@/types/banner";
+import { queryLiveBanners } from "./storefront-queries";
+import { adminDb } from "../admin";
+import { requireCurrentTenant } from "@/lib/tenant/current";
 
 const COLLECTION = "banners";
 
-export async function getBannersByPlacement(
-  placement: BannerPlacement
-): Promise<Banner[]> {
-  return safeQuery("getBannersByPlacement", [], async () => {
-    const snap = await (await tenantCollection(COLLECTION))
-      .where("placement", "==", placement)
-      .where("isActive", "==", true)
-      .orderBy("order", "asc")
-      .get();
+export async function getBannersByPlacement(placement: BannerPlacement): Promise<Banner[]> {
+  const tenant = await requireCurrentTenant();
+  return safeQuery("getBannersByPlacement", [], () => queryLiveBanners(adminDb(), tenant.id, placement), [placement]);
+}
 
-    return snap.docs
-      .map((doc) => docData<Banner>(doc))
-      .filter((b): b is Banner => b !== null);
-  });
+/** The first live banner in a promo slot, or null - callers render nothing without one. */
+export async function getFirstBanner(placement: BannerPlacement): Promise<Banner | null> {
+  return (await getBannersByPlacement(placement))[0] ?? null;
 }
 
 // --- Admin ---

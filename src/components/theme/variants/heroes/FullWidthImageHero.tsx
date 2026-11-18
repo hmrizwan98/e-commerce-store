@@ -1,15 +1,16 @@
 "use client";
 
-import React, { FC, useState } from "react";
+import React, { FC, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import useInterval from "react-use/lib/useInterval";
 import useBoolean from "react-use/lib/useBoolean";
 import Next from "@/shared/NextPrev/Next";
 import Prev from "@/shared/NextPrev/Prev";
-import { HERO2_DEMO_DATA, Hero2DataType } from "@/components/SectionHero/data";
+import type { Hero2DataType } from "@/components/SectionHero/data";
 import type { ThemeBanner } from "@/types/theme";
 import { safeImageSrc } from "@/utils/safeImageSrc";
+import { getObjectPositionClass } from "@/lib/banners/position";
 
 export interface FullWidthImageHeroProps {
   className?: string;
@@ -26,8 +27,14 @@ const FullWidthImageHero: FC<FullWidthImageHeroProps> = ({
 }) => {
   const [indexActive, setIndexActive] = useState(0);
   const [isRunning, toggleIsRunning] = useBoolean(true);
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
 
-  const slides = DATA.length > 0 ? DATA : HERO2_DEMO_DATA;
+  // The merchant's own slides only (Store Admin → Hero Slides) - no demo slides, no stock photos.
+  const slides = DATA.filter((item) => {
+    const raw = typeof item.image === "string" ? item.image : (item.image as any)?.src;
+    return Boolean(raw);
+  });
 
   useInterval(
     () => {
@@ -60,26 +67,96 @@ const FullWidthImageHero: FC<FullWidthImageHeroProps> = ({
     }, 1500);
   };
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null || touchStartY.current === null) return;
+    const deltaX = e.changedTouches[0].clientX - touchStartX.current;
+    const deltaY = e.changedTouches[0].clientY - touchStartY.current;
+    touchStartX.current = null;
+    touchStartY.current = null;
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 40) {
+      if (deltaX < 0) {
+        handleClickNext();
+      } else {
+        handleClickPrev();
+      }
+    }
+  };
+
   if (!slides.length) {
     return null;
   }
 
   const heightPx = banner?.heightPx ?? 480;
+  // If any slide has a dedicated mobile image, give the mobile container comfortable height for portrait/square art.
+  // Otherwise, use a natural landscape aspect ratio (aspect-[16/9]) so desktop banners aren't cropped into squares.
+  const hasAnyMobileImage = slides.some((s) => Boolean(s.imageMobile));
+  const mobileContainerClass = hasAnyMobileImage
+    ? "h-[400px] sm:h-[460px] md:h-[var(--hero-h-desktop,500px)]"
+    : "aspect-[16/9] sm:aspect-[21/9] md:aspect-auto md:h-[var(--hero-h-desktop,500px)] min-h-[220px]";
 
   return (
     <div
-      className={`relative w-full overflow-hidden rounded-2xl md:rounded-3xl shadow-sm border border-slate-200/60 dark:border-slate-800 bg-slate-900 group ${className}`}
-      style={{ minHeight: `${Math.min(heightPx, 300)}px` }}
+      className={`relative w-full overflow-hidden rounded-2xl md:rounded-3xl shadow-sm border border-slate-200/60 dark:border-slate-800 bg-slate-900 group select-none ${className}`}
+      style={{
+        ["--hero-h-desktop" as any]: `${heightPx}px`,
+      }}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
     >
       {/* Slides Container */}
-      <div className="relative w-full h-[260px] sm:h-[380px] md:h-[480px] lg:h-[560px] overflow-hidden">
+      <div className={`relative w-full ${mobileContainerClass} overflow-hidden`}>
         {slides.map((item, index) => {
           const isActive = indexActive === index;
-          const rawImg = typeof item.image === "string" ? item.image : (item.image as any)?.src;
-          const fallbackImg = HERO2_DEMO_DATA[index % HERO2_DEMO_DATA.length]?.image;
-          const fallbackSrc = typeof fallbackImg === "string" ? fallbackImg : (fallbackImg as any)?.src;
-          const imgSrc = rawImg && !rawImg.includes("placeholder") ? safeImageSrc(rawImg) : safeImageSrc(fallbackSrc);
+          const rawDesktop = typeof item.image === "string" ? item.image : (item.image as any)?.src;
+          const desktopSrc = safeImageSrc(rawDesktop);
+          const rawMobile = item.imageMobile;
+          const mobileSrc = rawMobile ? safeImageSrc(rawMobile) : null;
           const href = item.btnLink || (item as any).href || undefined;
+          const bgPosClass = getObjectPositionClass(item.backgroundPosition);
+
+          const content = mobileSrc ? (
+            <>
+              {/* Mobile Viewport (< md): Renders dedicated mobile image */}
+              <Image
+                fill
+                sizes="(max-width: 768px) 100vw, 1px"
+                className={`md:hidden w-full h-full object-cover ${bgPosClass}`}
+                src={mobileSrc}
+                alt={item.heading || "Hero slide"}
+                priority={index === 0}
+                loading={index === 0 ? "eager" : "lazy"}
+                fetchPriority={index === 0 ? "high" : "low"}
+              />
+              {/* Tablet & Desktop Viewport (>= md): Renders desktop image */}
+              <Image
+                fill
+                sizes="100vw"
+                className={`hidden md:block w-full h-full object-cover ${bgPosClass}`}
+                src={desktopSrc}
+                alt={item.heading || "Hero slide"}
+                priority={index === 0}
+                loading={index === 0 ? "eager" : "lazy"}
+                fetchPriority={index === 0 ? "high" : "low"}
+              />
+            </>
+          ) : (
+            /* Universal Desktop Image with merchant focal alignment */
+            <Image
+              fill
+              sizes="100vw"
+              className={`w-full h-full object-cover ${bgPosClass}`}
+              src={desktopSrc}
+              alt={item.heading || "Hero slide"}
+              priority={index === 0}
+              loading={index === 0 ? "eager" : "lazy"}
+              fetchPriority={index === 0 ? "high" : "low"}
+            />
+          );
 
           return (
             <div
@@ -90,29 +167,11 @@ const FullWidthImageHero: FC<FullWidthImageHeroProps> = ({
             >
               {href ? (
                 <Link href={href} className="block w-full h-full relative cursor-pointer">
-                  <Image
-                    fill
-                    sizes="100vw"
-                    className="w-full h-full object-cover object-center"
-                    src={imgSrc}
-                    alt="Hero slide"
-                    priority={index === 0}
-                    loading={index === 0 ? "eager" : "lazy"}
-                    fetchPriority={index === 0 ? "high" : "low"}
-                  />
+                  {content}
                 </Link>
               ) : (
                 <div className="w-full h-full relative">
-                  <Image
-                    fill
-                    sizes="100vw"
-                    className="w-full h-full object-cover object-center"
-                    src={imgSrc}
-                    alt="Hero slide"
-                    priority={index === 0}
-                    loading={index === 0 ? "eager" : "lazy"}
-                    fetchPriority={index === 0 ? "high" : "low"}
-                  />
+                  {content}
                 </div>
               )}
             </div>
@@ -124,20 +183,20 @@ const FullWidthImageHero: FC<FullWidthImageHeroProps> = ({
       {slides.length > 1 && (
         <>
           <Prev
-            className="absolute start-3 sm:start-5 top-1/2 -translate-y-1/2 z-20 opacity-90 group-hover:opacity-100 transition-opacity"
-            btnClassName="w-10 h-10 sm:w-12 sm:h-12 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-white/20 text-slate-900 dark:text-white hover:bg-white dark:hover:bg-slate-900 shadow-md"
-            svgSize="w-5 h-5 sm:w-6 sm:h-6"
+            className="absolute start-2 sm:start-5 top-1/2 -translate-y-1/2 z-20 opacity-80 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+            btnClassName="w-8 h-8 sm:w-11 sm:h-11 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-white/20 text-slate-900 dark:text-white hover:bg-white dark:hover:bg-slate-900 shadow-md"
+            svgSize="w-4 h-4 sm:w-5 sm:h-5"
             onClickPrev={handleClickPrev}
           />
           <Next
-            className="absolute end-3 sm:end-5 top-1/2 -translate-y-1/2 z-20 opacity-90 group-hover:opacity-100 transition-opacity"
-            btnClassName="w-10 h-10 sm:w-12 sm:h-12 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-white/20 text-slate-900 dark:text-white hover:bg-white dark:hover:bg-slate-900 shadow-md"
-            svgSize="w-5 h-5 sm:w-6 sm:h-6"
+            className="absolute end-2 sm:end-5 top-1/2 -translate-y-1/2 z-20 opacity-80 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+            btnClassName="w-8 h-8 sm:w-11 sm:h-11 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-white/20 text-slate-900 dark:text-white hover:bg-white dark:hover:bg-slate-900 shadow-md"
+            svgSize="w-4 h-4 sm:w-5 sm:h-5"
             onClickNext={handleClickNext}
           />
 
           {/* Bottom Pagination Dots */}
-          <div className="absolute bottom-4 inset-x-0 z-20 flex justify-center items-center gap-2">
+          <div className="absolute bottom-3 sm:bottom-4 inset-x-0 z-20 flex justify-center items-center gap-1.5 sm:gap-2">
             {slides.map((_, index) => {
               const isActive = indexActive === index;
               return (
@@ -148,10 +207,10 @@ const FullWidthImageHero: FC<FullWidthImageHeroProps> = ({
                     setIndexActive(index);
                     handleAfterClick();
                   }}
-                  className={`h-2.5 rounded-full transition-all duration-300 ${
+                  className={`h-2 sm:h-2.5 rounded-full transition-all duration-300 ${
                     isActive
-                      ? "w-8 bg-white shadow-md"
-                      : "w-2.5 bg-white/50 hover:bg-white/80"
+                      ? "w-6 sm:w-8 bg-white shadow-md"
+                      : "w-2 sm:w-2.5 bg-white/50 hover:bg-white/80"
                   }`}
                   aria-label={`Go to slide ${index + 1}`}
                 />

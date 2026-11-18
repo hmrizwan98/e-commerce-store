@@ -27,45 +27,66 @@ export async function stagePreviewThemeAction(config: Partial<SystemThemeConfig>
   return { ok: true as const };
 }
 
-import { tenantCollection } from "@/lib/firebase/tenant-scope";
-import { FieldValue } from "firebase-admin/firestore";
+import { adminDb } from "@/lib/firebase/admin";
+import { requireCurrentTenant } from "@/lib/tenant/current";
+import { clearSectionStaging } from "@/lib/theme/theme-repository";
+import { publishHomepageSections } from "@/lib/theme/homepage-publish";
+import { withoutSectionStaging } from "@/lib/theme/theme-safety";
+import type { SectionConflict } from "@/lib/theme/homepage-sections-sync";
+import { getAllHomepageSectionsForAdmin } from "@/lib/firebase/repositories/homepage-sections";
+import type { HomepageSection } from "@/types/homepage-section";
 
-/** Publishes whatever is currently saved as the draft. Callers must save the draft first. */
-export async function publishCustomizerAction() {
+export type PublishCustomizerResult =
+  | { ok: true; sectionsBaseline: Record<string, number> | null }
+  | { ok: false; reason: "sections-conflict"; conflicts: SectionConflict[] };
+
+/**
+ * Publishes the saved draft. Homepage sections (if the draft has edited them) are published
+ * NON-destructively first (lib/theme/homepage-publish.ts): if the live sections changed since the
+ * Customizer copied them, nothing at all is published and the conflicts are returned, unless the
+ * merchant explicitly chose `force` ("Publish anyway"). Theme settings are published only after
+ * the sections succeed. The section staging copy is then cleared from the draft and is never
+ * stored in the live theme doc.
+ */
+export async function publishCustomizerAction(opts: { force?: boolean } = {}): Promise<PublishCustomizerResult> {
   await requireAdmin();
+  const tenant = await requireCurrentTenant();
   const currentDraft = await getDraftThemeConfig();
-  await setActiveThemeConfig(currentDraft);
 
+  let sectionsBaseline: Record<string, number> | null = null;
   if (currentDraft.homepageSections !== undefined) {
-    const col = await tenantCollection("homepageSections");
-    const snap = await col.get();
-    const batch = col.firestore.batch();
-    snap.docs.forEach((doc) => batch.delete(doc.ref));
-
-    currentDraft.homepageSections.forEach((sec, idx) => {
-      const docRef = col.doc(sec.id || `sec-${idx}`);
-      batch.set(docRef, {
-        type: sec.type,
-        title: sec.title,
-        order: sec.order ?? idx,
-        isActive: sec.isActive ?? true,
-        config: sec.config ?? {},
-        updatedAt: FieldValue.serverTimestamp(),
-      });
+    const draftSections = currentDraft.homepageSections.map((sec, idx) => ({ ...sec, id: sec.id || `sec-${Date.now()}-${idx}` }));
+    const res = await publishHomepageSections(adminDb(), tenant.id, {
+      draft: draftSections,
+      baseline: currentDraft.homepageSectionsBaseline ?? null,
+      draftUpdatedAt: (currentDraft as { updatedAt?: number }).updatedAt,
+      force: Boolean(opts.force),
     });
-    await batch.commit();
+    if (!res.ok) return { ok: false, reason: "sections-conflict", conflicts: res.conflicts };
+    sectionsBaseline = res.baseline;
   }
+
+  await setActiveThemeConfig(withoutSectionStaging(currentDraft as unknown as Record<string, unknown>) as Partial<SystemThemeConfig>);
+  await clearSectionStaging(["draft", "active"]);
 
   revalidatePath("/", "layout");
   revalidatePath("/admin/appearance/customize/preview");
-  return { ok: true as const };
+  return { ok: true, sectionsBaseline };
 }
 
-/** Overwrites the draft with the currently-published config - the customizer's "Discard" action. */
+/** Overwrites the draft with the currently-published config - the customizer's "Discard" action.
+ * The section staging copy is cleared too, so the editor reloads the LIVE sections. */
 export async function discardCustomizerDraftAction() {
   await requireAdmin();
   const activeConfig = await getActiveThemeConfig();
-  await saveDraftThemeConfig(activeConfig);
+  await saveDraftThemeConfig(withoutSectionStaging(activeConfig as unknown as Record<string, unknown>) as Partial<SystemThemeConfig>);
+  await clearSectionStaging(["draft"]);
   revalidatePath("/admin/appearance/customize/preview");
-  return { ok: true as const, config: activeConfig };
+  return { ok: true as const, config: withoutSectionStaging(activeConfig as unknown as Record<string, unknown>) as unknown as SystemThemeConfig };
+}
+
+/** The LIVE homepage sections right now (for "Load live sections" after a conflict). */
+export async function getLiveHomepageSectionsAction(): Promise<HomepageSection[]> {
+  await requireAdmin();
+  return JSON.parse(JSON.stringify(await getAllHomepageSectionsForAdmin()));
 }

@@ -88,7 +88,8 @@ export const DEFAULT_SEO_SETTINGS: SeoSettings = {
 
 export const DEFAULT_EMAIL_TEMPLATES_SETTINGS: EmailTemplatesSettings = {
   welcome: { subject: "Welcome to {{storeName}}!", enabled: true },
-  orderConfirmation: { subject: "Your order {{orderNumber}} is confirmed", enabled: true },
+  // Same subject order emails have always had (no store has a saved emailTemplates doc yet).
+  orderConfirmation: { subject: "{{storeName}}: Order Confirmation #{{orderNumber}}", enabled: true },
   passwordReset: { subject: "Reset your password", enabled: true },
   contact: { subject: "We received your message", enabled: true },
   newsletter: { subject: "What's new at {{storeName}}", enabled: false },

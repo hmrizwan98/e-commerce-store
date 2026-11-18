@@ -1,5 +1,6 @@
 "use client";
 
+import { isSampleBanner } from "@/lib/seed-content";
 import React, { useState } from "react";
 import Link from "next/link";
 import toast from "react-hot-toast";
@@ -96,6 +97,14 @@ const HeroSlidesList: React.FC<{ initialSlides: Banner[] }> = ({ initialSlides }
               >
                 {slide.isActive ? "Enabled" : "Disabled"}
               </span>
+              {isSampleBanner(slide) && (
+                <span
+                className="px-2 py-0.5 text-xs font-medium rounded-full bg-amber-100 text-amber-800 dark:bg-amber-500/10 dark:text-amber-300"
+                title="Sample banner from store setup (stock photo). It is shown on your storefront - replace the image and text with your own, or disable it."
+              >
+                Sample content – please review
+              </span>
+              )}
             </div>
             {slide.subtitle && <p className="text-xs text-neutral-500 mt-0.5">{slide.subtitle}</p>}
           </div>

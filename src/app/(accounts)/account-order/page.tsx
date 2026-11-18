@@ -10,7 +10,7 @@ const AccountOrder = () => {
       <h2 className="text-2xl sm:text-3xl font-semibold">Order History</h2>
       <p className="text-slate-500 dark:text-slate-400">
         Orders are placed as a guest. Look up an order using its order number
-        and the email address used at checkout.
+        and the email or phone number used at checkout.
       </p>
       <ButtonPrimary href={"/order-tracking" as any}>Track an order</ButtonPrimary>
     </div>

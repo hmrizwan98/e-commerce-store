@@ -31,6 +31,8 @@ import {
   LinkIcon,
 } from "@heroicons/react/24/outline";
 import CustomDomainPanel from "./CustomDomainPanel";
+import { describeChannels, TEMPLATE_SUPPORT, type PlatformChannels } from "@/lib/notifications/channel-availability";
+import { adoptLegacyBrandingLogoAction } from "./actions";
 import CommissionRequestPanel from "./CommissionRequestPanel";
 import type { EffectiveCommissionPolicy } from "@/lib/finance/commission";
 import type { CommissionChangeRequest } from "@/types/commission";
@@ -353,6 +355,8 @@ export default function SettingsPageClient({
   tax: initialTax,
   domain,
   initialTab,
+  channels,
+  themeLogos,
 }: {
   general: GeneralSettings;
   shipping: ShippingSettings;
@@ -373,6 +377,10 @@ export default function SettingsPageClient({
   domain: CustomDomainView;
   /** From ?tab= (e.g. a notification link to the Commission or Backup tab). */
   initialTab?: string;
+  /** Which notification providers the platform really has (booleans only). */
+  channels: PlatformChannels;
+  /** The store's live logos from the Theme Customizer (the single source of truth). */
+  themeLogos: { logoLight?: string; favicon?: string; appleTouchIcon?: string; loadingLogo?: string };
 }) {
   const [tab, setTab] = useState<Tab>(() => (TABS as readonly string[]).includes(initialTab ?? "") ? (initialTab as Tab) : "General");
 
@@ -541,17 +549,69 @@ export default function SettingsPageClient({
           <SectionHeader icon={PaintBrushIcon} title="Branding & Identity" subtitle="Configure logo URLs, brand colors, typography and store admin theme presets." />
 
           <div className="grid sm:grid-cols-2 gap-4">
-            <div>
-              <label className={labelClass}>Logo URL</label>
-              <input className={inputClass} value={branding.logoUrl ?? ""} onChange={(e) => setBranding({ ...branding, logoUrl: e.target.value })} />
-            </div>
-            <div>
-              <label className={labelClass}>Favicon URL</label>
-              <input className={inputClass} value={branding.faviconUrl ?? ""} onChange={(e) => setBranding({ ...branding, faviconUrl: e.target.value })} />
-            </div>
-            <div>
-              <label className={labelClass}>Loading logo URL</label>
-              <input className={inputClass} value={branding.loadingLogoUrl ?? ""} onChange={(e) => setBranding({ ...branding, loadingLogoUrl: e.target.value })} />
+            {/* Logos live in ONE place - the Theme Customizer. These used to be free-text URL
+                fields here that the storefront never read. */}
+            <div className="sm:col-span-2 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/30 space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-sm font-extrabold text-slate-900 dark:text-slate-100">Logo, favicon &amp; loading logo</p>
+                <Link href={"/admin/appearance/customize" as any} className="text-xs font-bold text-primary-6000 hover:underline">
+                  Edit in Customize Storefront → Header &amp; Navigation →
+                </Link>
+              </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Upload these in the Theme Customizer - that is what your storefront uses. Current live values:
+              </p>
+              <ul className="grid sm:grid-cols-2 gap-2 text-xs">
+                {(
+                  [
+                    ["Main logo", themeLogos.logoLight],
+                    ["Favicon", themeLogos.favicon],
+                    ["Apple touch icon", themeLogos.appleTouchIcon],
+                    ["Loading screen logo", themeLogos.loadingLogo],
+                  ] as const
+                ).map(([label, url]) => (
+                  <li key={label} className="flex items-center gap-2">
+                    {url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={url} alt="" className="w-8 h-8 object-contain rounded bg-white border border-slate-200 dark:border-slate-700" />
+                    ) : (
+                      <span className="w-8 h-8 rounded border border-dashed border-slate-300 dark:border-slate-700" />
+                    )}
+                    <span className="text-slate-600 dark:text-slate-300">{label}: {url ? "set" : "not set"}</span>
+                  </li>
+                ))}
+              </ul>
+              {(
+                [
+                  ["logoUrl", "Logo URL", themeLogos.logoLight],
+                  ["faviconUrl", "Favicon URL", themeLogos.favicon],
+                  ["loadingLogoUrl", "Loading logo URL", themeLogos.loadingLogo],
+                ] as const
+              )
+                .filter(([key]) => Boolean(initialBranding[key]))
+                .map(([key, label, themeValue]) => (
+                  <div key={key} className="text-xs p-3 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 space-y-1.5">
+                    <p>
+                      An older &quot;{label}&quot; value is saved here but isn&apos;t used by your storefront:{" "}
+                      <span className="font-mono break-all">{initialBranding[key]}</span>
+                    </p>
+                    {themeValue ? (
+                      <p>Your Customizer already has its own image, so nothing will be replaced.</p>
+                    ) : (
+                      <button
+                        type="button"
+                        className="font-bold underline"
+                        onClick={async () => {
+                          const res = await adoptLegacyBrandingLogoAction(key);
+                          if (res.ok) toast.success("Copied to your theme. Refresh to see it in the Customizer.");
+                          else toast.error(res.error);
+                        }}
+                      >
+                        Use this image in the Customizer
+                      </button>
+                    )}
+                  </div>
+                ))}
             </div>
             <div>
               <label className={labelClass}>Font family</label>
@@ -934,13 +994,18 @@ export default function SettingsPageClient({
               <input className={inputClass} value={email.fromName} onChange={(e) => setEmail({ ...email, fromName: e.target.value })} />
             </div>
             <div>
-              <label className={labelClass}>From Email Address</label>
+              <label className={labelClass}>Reply-to Email Address</label>
               <input className={inputClass} value={email.fromEmail} onChange={(e) => setEmail({ ...email, fromEmail: e.target.value })} />
             </div>
             <div className="sm:col-span-2">
               <label className={labelClass}>Support Email Address</label>
               <input className={inputClass} value={email.supportEmail ?? ""} onChange={(e) => setEmail({ ...email, supportEmail: e.target.value })} />
             </div>
+            <p className="sm:col-span-2 text-xs text-slate-500 dark:text-slate-400">
+              Order emails are sent from the platform&apos;s verified address with your store name as the sender name. Customer
+              replies go to your Support email (or the Reply-to address above).{" "}
+              {channels.emailProvider ? "" : "No email provider is configured on this platform, so no emails are sent right now."}
+            </p>
           </div>
           <SaveButton onClick={() => updateEmailSettings(email)} />
         </section>
@@ -950,33 +1015,32 @@ export default function SettingsPageClient({
       {tab === "Email Templates" && (
         <section className={cardClass}>
           <SectionHeader icon={EnvelopeOpenIcon} title="Email Templates" subtitle="Configure automated subjects and active status for customer triggers." />
-          {(
-            [
-              ["welcome", "Welcome Email"],
-              ["orderConfirmation", "Order Confirmation Email"],
-              ["passwordReset", "Password Reset Email"],
-              ["contact", "Contact Form Response"],
-              ["newsletter", "Newsletter Subscription"],
-            ] as const
-          ).map(([key, label]) => (
-            <div key={key} className="border border-slate-200 dark:border-slate-800 rounded-2xl p-4 space-y-2 bg-slate-50/50 dark:bg-slate-800/30">
-              <label className="flex items-center gap-3 text-sm font-extrabold text-slate-900 dark:text-slate-100 cursor-pointer">
+          {(["orderConfirmation", "welcome", "passwordReset", "contact", "newsletter"] as const).map((key) => {
+            const info = TEMPLATE_SUPPORT[key];
+            return (
+              <div key={key} className={`border border-slate-200 dark:border-slate-800 rounded-2xl p-4 space-y-2 bg-slate-50/50 dark:bg-slate-800/30 ${info.supported ? "" : "opacity-60"}`}>
+                <label className={`flex items-center gap-3 text-sm font-extrabold text-slate-900 dark:text-slate-100 ${info.supported ? "cursor-pointer" : "cursor-not-allowed"}`}>
+                  <input
+                    type="checkbox"
+                    disabled={!info.supported}
+                    className="w-4 h-4 rounded-md text-primary-6000 focus:ring-primary-500/20 border-slate-300 dark:border-slate-700"
+                    checked={emailTemplates[key].enabled}
+                    onChange={(e) => updateEmailTemplate(key, { enabled: e.target.checked })}
+                  />
+                  {info.label}
+                  {!info.supported && <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Not available</span>}
+                </label>
                 <input
-                  type="checkbox"
-                  className="w-4 h-4 rounded-md text-primary-6000 focus:ring-primary-500/20 border-slate-300 dark:border-slate-700"
-                  checked={emailTemplates[key].enabled}
-                  onChange={(e) => updateEmailTemplate(key, { enabled: e.target.checked })}
+                  placeholder="Subject Line"
+                  disabled={!info.supported}
+                  className={inputClass}
+                  value={emailTemplates[key].subject}
+                  onChange={(e) => updateEmailTemplate(key, { subject: e.target.value })}
                 />
-                {label}
-              </label>
-              <input
-                placeholder="Subject Line"
-                className={inputClass}
-                value={emailTemplates[key].subject}
-                onChange={(e) => updateEmailTemplate(key, { subject: e.target.value })}
-              />
-            </div>
-          ))}
+                <p className="text-xs text-slate-500 dark:text-slate-400">{info.note}</p>
+              </div>
+            );
+          })}
           <SaveButton onClick={() => updateEmailTemplatesSettings(emailTemplates)} />
         </section>
       )}
@@ -1061,9 +1125,14 @@ export default function SettingsPageClient({
 
           <section className={cardClass}>
             <SectionHeader icon={EnvelopeIcon} title="SMTP Server Config" subtitle="Custom mail server settings for transactional email routing." />
-            <label className="flex items-center gap-3 text-sm font-extrabold text-slate-900 dark:text-slate-100 cursor-pointer">
+            <p className="text-xs font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800/60 p-3 rounded-xl">
+              Not available - stores can&apos;t use their own mail server yet. Emails go through the platform&apos;s email
+              provider. These fields have no effect.
+            </p>
+            <label className="flex items-center gap-3 text-sm font-extrabold text-slate-900 dark:text-slate-100 cursor-not-allowed opacity-60">
               <input
                 type="checkbox"
+                disabled
                 className="w-4 h-4 rounded-md text-primary-6000 focus:ring-primary-500/20 border-slate-300 dark:border-slate-700"
                 checked={integrations.smtp.enabled}
                 onChange={(e) => setIntegrations({ ...integrations, smtp: { ...integrations.smtp, enabled: e.target.checked } })}
@@ -1071,15 +1140,16 @@ export default function SettingsPageClient({
               Enable Custom SMTP Server
             </label>
             <div className="grid sm:grid-cols-2 gap-4">
-              <input placeholder="Host (e.g. smtp.mailgun.org)" className={inputClass} value={integrations.smtp.host ?? ""} onChange={(e) => setIntegrations({ ...integrations, smtp: { ...integrations.smtp, host: e.target.value } })} />
+              <input disabled placeholder="Host (e.g. smtp.mailgun.org)" className={inputClass} value={integrations.smtp.host ?? ""} onChange={(e) => setIntegrations({ ...integrations, smtp: { ...integrations.smtp, host: e.target.value } })} />
               <input
+                disabled
                 placeholder="Port (e.g. 587)"
                 type="number"
                 className={inputClass}
                 value={integrations.smtp.port ?? ""}
                 onChange={(e) => setIntegrations({ ...integrations, smtp: { ...integrations.smtp, port: Number(e.target.value) || undefined } })}
               />
-              <input placeholder="Username" className={inputClass} value={integrations.smtp.username ?? ""} onChange={(e) => setIntegrations({ ...integrations, smtp: { ...integrations.smtp, username: e.target.value } })} />
+              <input disabled placeholder="Username" className={inputClass} value={integrations.smtp.username ?? ""} onChange={(e) => setIntegrations({ ...integrations, smtp: { ...integrations.smtp, username: e.target.value } })} />
             </div>
           </section>
 
@@ -1105,23 +1175,25 @@ export default function SettingsPageClient({
         <section className={cardClass}>
           <SectionHeader icon={BellIcon} title="Notification Channels" subtitle="Select active communication channels for operational notifications." />
           <div className="grid sm:grid-cols-2 gap-4">
-            {(
-              [
-                ["email", "Email Notifications"],
-                ["push", "Push Notifications"],
-                ["sms", "SMS Notifications"],
-                ["whatsapp", "WhatsApp Alerts"],
-              ] as const
-            ).map(([key, label]) => (
-              <label key={key} className="flex items-center gap-3 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 text-sm font-extrabold text-slate-900 dark:text-slate-100 cursor-pointer">
-                <input
-                  type="checkbox"
-                  className="w-4 h-4 rounded-md text-primary-6000 focus:ring-primary-500/20 border-slate-300 dark:border-slate-700"
-                  checked={notifications[key].enabled}
-                  onChange={(e) => setNotifications({ ...notifications, [key]: { enabled: e.target.checked } })}
-                />
-                {label}
-              </label>
+            {describeChannels(channels).map((c) => (
+              <div key={c.key} className={`p-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 space-y-1.5 ${c.implemented ? "" : "opacity-60"}`}>
+                <label className={`flex items-center gap-3 text-sm font-extrabold text-slate-900 dark:text-slate-100 ${c.implemented ? "cursor-pointer" : "cursor-not-allowed"}`}>
+                  <input
+                    type="checkbox"
+                    disabled={!c.implemented}
+                    className="w-4 h-4 rounded-md text-primary-6000 focus:ring-primary-500/20 border-slate-300 dark:border-slate-700"
+                    checked={c.implemented ? notifications[c.key].enabled : false}
+                    onChange={(e) => setNotifications({ ...notifications, [c.key]: { enabled: e.target.checked } })}
+                  />
+                  {c.label}
+                  {!c.implemented ? (
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Not available</span>
+                  ) : !c.configured ? (
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">Not configured</span>
+                  ) : null}
+                </label>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{c.description}</p>
+              </div>
             ))}
           </div>
           <SaveButton onClick={() => updateNotificationsSettings(notifications)} />

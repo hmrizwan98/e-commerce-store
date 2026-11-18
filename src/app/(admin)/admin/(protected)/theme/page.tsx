@@ -1,23 +1,11 @@
-import React from "react";
-import { getAllThemesForAdmin, DEFAULT_THEME } from "@/lib/firebase/repositories/themes";
-import ThemeEditor from "./ThemeEditor";
+import { redirect } from "next/navigation";
 
-export const dynamic = "force-dynamic";
-
-export default async function AdminThemePage() {
-  const themes = await getAllThemesForAdmin();
-  const active = themes.find((t) => t.isActive) ?? DEFAULT_THEME;
-
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Theme</h1>
-        <p className="text-sm text-neutral-500 mt-1">
-          Customize the storefront&apos;s brand identity, colors, typography, and layout. Changes go live on the
-          storefront only after you publish a theme.
-        </p>
-      </div>
-      <ThemeEditor themes={themes} activeThemeId={active.id} defaultTheme={DEFAULT_THEME} />
-    </div>
-  );
+/**
+ * Kept as a safe redirect so old links and bookmarks keep working.
+ * The old Theme Editor wrote the legacy `themes` collection, which the storefront ignores once a
+ * store has published theme settings (every current store). Theme settings - including logos,
+ * favicon, Apple touch icon and loading logo - are edited in the Theme Customizer.
+ */
+export default function LegacyThemeEditorRedirect() {
+  redirect("/admin/appearance/customize");
 }

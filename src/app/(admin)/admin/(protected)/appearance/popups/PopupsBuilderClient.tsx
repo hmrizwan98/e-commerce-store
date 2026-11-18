@@ -7,16 +7,16 @@ import ButtonPrimary from "@/shared/Button/ButtonPrimary";
 import ButtonSecondary from "@/shared/Button/ButtonSecondary";
 import Input from "@/shared/Input/Input";
 import ImageUploader from "@/components/admin/ImageUploader";
-import { saveThemeDraftAction, publishThemeAction, resetThemeDraftAction } from "../actions";
-import type { SystemThemeConfig, PopupThemeConfig } from "@/lib/theme/theme-types";
+import { savePopupDraftAction, publishPopupAction, resetPopupDraftAction } from "../actions";
+import type { PopupThemeConfig } from "@/lib/theme/theme-types";
 
 export interface PopupsBuilderClientProps {
-  draftTheme: SystemThemeConfig;
-  activeTheme: SystemThemeConfig;
+  /** Only the popup settings - this page never sends the rest of the theme back. */
+  draftPopup: PopupThemeConfig | null;
 }
 
-export default function PopupsBuilderClient({ draftTheme, activeTheme }: PopupsBuilderClientProps) {
-  const initialPopup: PopupThemeConfig = draftTheme.popup ?? {
+export default function PopupsBuilderClient({ draftPopup }: PopupsBuilderClientProps) {
+  const defaultPopup: PopupThemeConfig = {
     enabled: false,
     title: "Exclusive Store Discount",
     description: "Subscribe to our VIP newsletter to unlock 15% off your first purchase!",
@@ -27,6 +27,7 @@ export default function PopupsBuilderClient({ draftTheme, activeTheme }: PopupsB
     frequency: "once-per-session",
     styleVariant: "center-modal",
   };
+  const initialPopup: PopupThemeConfig = draftPopup ?? defaultPopup;
 
   const [popup, setPopup] = useState<PopupThemeConfig>(initialPopup);
   const [loading, setLoading] = useState(false);
@@ -34,11 +35,8 @@ export default function PopupsBuilderClient({ draftTheme, activeTheme }: PopupsB
   const handleSaveDraft = async () => {
     setLoading(true);
     try {
-      const updatedConfig: Partial<SystemThemeConfig> = {
-        ...draftTheme,
-        popup,
-      };
-      const res = await saveThemeDraftAction(updatedConfig);
+      // Popup fields only - never a page-load snapshot of the whole draft.
+      const res = await savePopupDraftAction(popup);
       if (res?.ok) {
         toast.success("Saved draft popup configuration!");
       } else {
@@ -55,20 +53,12 @@ export default function PopupsBuilderClient({ draftTheme, activeTheme }: PopupsB
   const handlePublish = async () => {
     setLoading(true);
     try {
-      const updatedConfig: Partial<SystemThemeConfig> = {
-        ...draftTheme,
-        popup,
-      };
-      const draftRes = await saveThemeDraftAction(updatedConfig);
-      if (draftRes?.ok) {
-        const pubRes = await publishThemeAction();
-        if (pubRes?.ok) {
-          toast.success("Published popup settings live to storefront!");
-        } else {
-          toast.error(pubRes?.message || "Failed to publish popup.");
-        }
+      // Publishes the popup only - other unpublished Customizer changes stay in the draft.
+      const pubRes = await publishPopupAction(popup);
+      if (pubRes?.ok) {
+        toast.success("Published popup settings live to storefront!");
       } else {
-        toast.error(draftRes?.message || "Failed to save draft.");
+        toast.error(pubRes?.message || "Failed to publish popup.");
       }
     } catch (err: any) {
       console.error(err);
@@ -81,10 +71,11 @@ export default function PopupsBuilderClient({ draftTheme, activeTheme }: PopupsB
   const handleReset = async () => {
     setLoading(true);
     try {
-      const res = await resetThemeDraftAction();
+      // Resets the popup only - the rest of the draft is untouched.
+      const res = await resetPopupDraftAction();
       if (res?.ok) {
         toast.success("Reset draft to active published popup settings!");
-        setPopup(activeTheme.popup ?? initialPopup);
+        setPopup(res.popup ?? defaultPopup);
       } else {
         toast.error(res?.message || "Failed to reset draft.");
       }

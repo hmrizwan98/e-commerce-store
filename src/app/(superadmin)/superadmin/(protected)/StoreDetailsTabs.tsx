@@ -50,9 +50,10 @@ const StoreDetailsTabs: React.FC<{
   deployment: DeploymentMetadata | null;
   deploymentLogs: DeploymentLog[];
   platformBaseUrl: string;
+  hostingConnected: boolean;
   commission: StoreCommissionOverview;
   initialTab?: string;
-}> = ({ store, activity, deployment, deploymentLogs, platformBaseUrl, commission, initialTab }) => {
+}> = ({ store, activity, deployment, deploymentLogs, platformBaseUrl, hostingConnected, commission, initialTab }) => {
   const [tab, setTab] = useState<Tab>(TABS.some((t) => t.id === initialTab) ? (initialTab as Tab) : "General");
 
   return (
@@ -128,13 +129,14 @@ const StoreDetailsTabs: React.FC<{
         </div>
       )}
 
-      {tab === "Domains" && <DomainManagementPanel store={store} platformBaseUrl={platformBaseUrl} />}
+      {tab === "Domains" && <DomainManagementPanel store={store} platformBaseUrl={platformBaseUrl} hostingConnected={hostingConnected} />}
 
       {tab === "Deployment" && (
         <DeploymentPanel
           store={store}
           deployment={deployment}
           platformBaseUrl={platformBaseUrl}
+          hostingConnected={hostingConnected}
           deploymentLogs={deploymentLogs}
           activity={activity}
         />

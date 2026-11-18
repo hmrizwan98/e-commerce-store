@@ -157,6 +157,9 @@ export interface SystemThemeConfig extends Omit<Theme, "header" | "footer" | "pr
   promo?: PromoThemeConfig;
   announcementBar?: AnnouncementBarThemeConfig;
   homepageSections?: HomepageSection[];
+  /** Customizer staging: id -> live updatedAt (ms) of the homepage sections when the Customizer
+   * copied them (see lib/theme/homepage-sections-sync.ts). Never published. */
+  homepageSectionsBaseline?: Record<string, number> | null;
 }
 
 export type ThemeTokens = {

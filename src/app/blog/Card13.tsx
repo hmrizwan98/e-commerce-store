@@ -1,22 +1,22 @@
 import React, { FC } from 'react';
 import NcImage from '@/shared/NcImage/NcImage';
-import { _getImgRd, _getTitleRd } from '@/contains/fakeData';
 import Link from 'next/link';
 import type { BlogPost } from '@/types/blog-post';
 import { safeImageSrc } from '@/utils/safeImageSrc';
 
 export interface Card13Props {
   className?: string;
-  post?: BlogPost;
+  /** A real, published post (no demo fallback). */
+  post: BlogPost;
   showDate?: boolean;
 }
 
 const Card13: FC<Card13Props> = ({ className = '', post, showDate = true }) => {
-  const title = post?.title ?? _getTitleRd();
-  const image = post?.coverImage ?? _getImgRd();
-  const excerpt = post?.excerpt;
-  const publishedAt = post?.publishedAt;
-  const postHref = (post?.slug ? `/blog/${post.slug}` : '/blog-single') as any;
+  const title = post.title;
+  const image = post.coverImage;
+  const excerpt = post.excerpt;
+  const publishedAt = post.publishedAt;
+  const postHref = `/blog/${encodeURIComponent(post.slug)}` as any;
 
   return (
     <div
@@ -26,13 +26,11 @@ const Card13: FC<Card13Props> = ({ className = '', post, showDate = true }) => {
       {/* Left Text Content */}
       <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
         <div>
-          {showDate && (
+          {showDate && publishedAt ? (
             <span className="block text-[11px] font-bold uppercase tracking-wider text-sky-600 dark:text-sky-400 mb-1">
-              {publishedAt
-                ? new Date(publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-                : 'Recent Article'}
+              {new Date(publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
             </span>
-          )}
+          ) : null}
 
           <h3 className="nc-card-title block font-bold text-slate-900 dark:text-slate-100 text-base sm:text-lg leading-snug group-hover:text-sky-600 transition-colors">
             <Link href={postHref} className="line-clamp-2" title={title}>

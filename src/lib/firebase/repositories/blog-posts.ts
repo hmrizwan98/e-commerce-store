@@ -5,6 +5,8 @@ import { docData } from "./utils";
 import { safeQuery } from "./safe-query";
 import { getCurrentTenant, requireCurrentTenant } from "@/lib/tenant/current";
 import type { BlogPost } from "@/types/blog-post";
+import { isPublicBlogPost } from "@/lib/blog/visibility";
+import { queryPublicBlogPosts, queryPublicBlogPostBySlug } from "./storefront-queries";
 
 const COLLECTION = "blogPosts";
 
@@ -13,20 +15,7 @@ const COLLECTION = "blogPosts";
 export async function getActiveBlogPosts(limit?: number): Promise<BlogPost[]> {
   const tenant = await getCurrentTenant();
   if (!tenant) return [];
-  return safeQuery("getActiveBlogPosts", [], async () => {
-    let query: FirebaseFirestore.Query = adminDb()
-      .collection(COLLECTION)
-      .where("storeId", "==", tenant.id)
-      .where("isActive", "==", true)
-      .orderBy("publishedAt", "desc");
-    if (limit) {
-      query = query.limit(limit);
-    }
-    const snap = await query.get();
-    return snap.docs
-      .map((doc) => docData<BlogPost>(doc))
-      .filter((p): p is BlogPost => p !== null);
-  });
+  return safeQuery("getActiveBlogPosts", [], () => queryPublicBlogPosts(adminDb(), tenant.id, limit), [limit ?? null]);
 }
 
 export async function getBlogPostsByIds(ids: string[]): Promise<BlogPost[]> {
@@ -40,23 +29,15 @@ export async function getBlogPostsByIds(ids: string[]): Promise<BlogPost[]> {
       .where(FieldPath.documentId(), "in", ids.slice(0, 30))
       .get();
     const map = new Map(snap.docs.map((doc) => [doc.id, docData<BlogPost>(doc)]));
-    return ids.map((id) => map.get(id)).filter((p): p is BlogPost => Boolean(p && p.isActive));
+    return ids.map((id) => map.get(id)).filter((p): p is BlogPost => Boolean(p && p.storeId === tenant.id && isPublicBlogPost(p)));
   });
 }
 
 export async function getBlogPostBySlug(slug: string): Promise<BlogPost | null> {
   const tenant = await getCurrentTenant();
   if (!tenant) return null;
-  return safeQuery("getBlogPostBySlug", null, async () => {
-    const snap = await adminDb()
-      .collection(COLLECTION)
-      .where("storeId", "==", tenant.id)
-      .where("slug", "==", slug)
-      .limit(1)
-      .get();
-    if (snap.empty) return null;
-    return docData<BlogPost>(snap.docs[0]);
-  });
+  // Public lookup: drafts, inactive and future-dated posts (and other stores' posts) are "not found".
+  return safeQuery("getBlogPostBySlug", null, () => queryPublicBlogPostBySlug(adminDb(), tenant.id, slug), [slug]);
 }
 
 // --- Admin ---

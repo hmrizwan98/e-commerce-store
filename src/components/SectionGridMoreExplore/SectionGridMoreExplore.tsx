@@ -7,7 +7,7 @@ import Heading from "@/components/Heading/Heading";
 import CardCategory6 from "@/components/CardCategories/CardCategory6";
 import Nav from "@/shared/Nav/Nav";
 import NavItem2 from "@/components/NavItem2";
-import { DEMO_MORE_EXPLORE_DATA, ExploreType } from "./data";
+import type { ExploreType } from "./data";
 
 import explore1Svg from "@/images/collections/explore1.svg";
 import explore2Svg from "@/images/collections/explore2.svg";
@@ -88,13 +88,14 @@ const SectionGridMoreExplore: FC<SectionGridMoreExploreProps> = ({
   className = "",
   boxCard = "box4",
   gridClassName = "grid-cols-1 md:grid-cols-2 xl:grid-cols-3",
-  data = DEMO_MORE_EXPLORE_DATA.filter((_, i) => i < 6),
+  data = [],
   heading = "Shop by Category",
   subHeading = "CURATED SELECTION",
 }) => {
   const [tabActive, setTabActive] = useState("All");
 
-  const categoryList = data && data.length ? data : DEMO_MORE_EXPLORE_DATA.filter((_, i) => i < 6);
+  // The store's own categories only (no demo categories); callers hide the section when empty.
+  const categoryList = data;
 
   // Extract unique category names for dynamic tabs
   const uniqueNames = Array.from(new Set(categoryList.map((item) => item.name).filter(Boolean)));
@@ -147,6 +148,8 @@ const SectionGridMoreExplore: FC<SectionGridMoreExploreProps> = ({
         );
     }
   };
+
+  if (!categoryList.length) return null;
 
   return (
     <div className={`nc-SectionGridMoreExplore relative ${className}`}>

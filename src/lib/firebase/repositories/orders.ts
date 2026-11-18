@@ -6,7 +6,8 @@ import { tenantCollection } from "@/lib/firebase/tenant-scope";
 import { docData, stripUndefined } from "./utils";
 import { safeQuery } from "./safe-query";
 import { computeOrderTotals } from "@/lib/checkout/totals";
-import { getShippingSettings, getGeneralSettings, getPaymentSettings, getEmailSettings } from "./site-settings";
+import { getShippingSettings, getGeneralSettings, getPaymentSettings, getEmailSettings, getEmailTemplatesSettings, getNotificationsSettings } from "./site-settings";
+import { getActiveThemeConfig } from "@/lib/theme/theme-repository";
 import { getActiveTheme } from "./themes";
 import { isValidEmail } from "@/lib/notifications/email-service";
 import { waitUntil } from "@vercel/functions";
@@ -356,6 +357,12 @@ export async function createGuestOrder(input: CreateGuestOrderInput): Promise<Cr
         paymentTransactionRef: input.paymentTransactionRef || undefined,
         orderStatus: "pending",
         statusHistory: [{ status: "pending", at: now }],
+        // Updated with the real outcome once the background send finishes (see below).
+        notificationDelivery: {
+          confirmationEmail: isValidEmail(input.guestEmail)
+            ? { status: "pending", message: "Sending the confirmation email…", at: now }
+            : { status: "no_recipient", message: "Not sent - the customer didn't give a valid email address.", at: now },
+        },
       }),
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
@@ -385,7 +392,13 @@ export async function createGuestOrder(input: CreateGuestOrderInput): Promise<Cr
       : null;
     const orderRef = ordersCol.doc(result.orderId);
     // Started here (tenant scope needs the request), awaited in the background below.
-    const brandPromise = Promise.all([getEmailSettings(), getActiveTheme()]).catch((err) => {
+    const brandPromise = Promise.all([
+      getEmailSettings(),
+      getActiveTheme(),
+      getActiveThemeConfig(),
+      getEmailTemplatesSettings(),
+      getNotificationsSettings(),
+    ]).catch((err) => {
       console.error("[order-email] could not load store branding", err);
       return null;
     });
@@ -401,19 +414,40 @@ export async function createGuestOrder(input: CreateGuestOrderInput): Promise<Cr
                 console.error(`[order-verification] failed for order ${result.orderId}`, err)
               )
             : null,
-          brandPromise.then((branding) => {
-            const [emailSettings, theme] = branding ?? [];
-            return sendOrderConfirmationEmail(order, {
-              currency: general,
-              brand: {
-                storeName: general.storeName || emailSettings?.fromName || "Our Store",
-                logoUrl: theme?.logos?.logoLight || theme?.logos?.logoDark || undefined,
-                primaryColor: theme?.colors?.primary,
-                replyTo: [emailSettings?.supportEmail, emailSettings?.fromEmail, general.storeEmail].find((e) => isValidEmail(e)),
-              },
-            });
-          }),
-          sendWhatsAppNotification("ORDER_PLACED", order, general),
+          brandPromise
+            .then((branding) => {
+              const [emailSettings, legacyTheme, themeConfig, templates, notifications] = branding ?? [];
+              return sendOrderConfirmationEmail(order, {
+                currency: general,
+                // Both switches must be on: Settings -> Notifications -> Email, and
+                // Settings -> Email Templates -> Order Confirmation. Defaults are on.
+                enabled: notifications?.email.enabled !== false && templates?.orderConfirmation.enabled !== false,
+                subjectTemplate: templates?.orderConfirmation.subject,
+                brand: {
+                  storeName: general.storeName || emailSettings?.fromName || "Our Store",
+                  // Logos come from the Theme Customizer (the single source of truth); the legacy
+                  // themes doc is only a fallback.
+                  logoUrl:
+                    themeConfig?.logos?.logoLight || themeConfig?.logos?.logoDark ||
+                    legacyTheme?.logos?.logoLight || legacyTheme?.logos?.logoDark || undefined,
+                  // Unchanged on purpose (keeps today's email colour) - see PLATFORM_AUDIT_PROGRESS.md.
+                  primaryColor: legacyTheme?.colors?.primary,
+                  replyTo: [emailSettings?.supportEmail, emailSettings?.fromEmail, general.storeEmail].find((e) => isValidEmail(e)),
+                },
+              });
+            })
+            .then((res) =>
+              orderRef.update({
+                "notificationDelivery.confirmationEmail": { status: res.status, message: res.message, at: Date.now() },
+              })
+            ),
+          brandPromise
+            .then((branding) => sendWhatsAppNotification("ORDER_PLACED", order, general, null, { enabled: branding?.[4]?.whatsapp.enabled === true }))
+            .then((res) =>
+              orderRef.update({
+                "notificationDelivery.confirmationWhatsApp": { status: res.status, message: res.message, at: Date.now() },
+              })
+            ),
         ]);
       })().catch((err) => console.error("[Order Notification Trigger Error]:", err))
     );

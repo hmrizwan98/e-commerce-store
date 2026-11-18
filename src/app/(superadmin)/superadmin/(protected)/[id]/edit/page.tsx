@@ -1,4 +1,5 @@
 import React from "react";
+import { vercelConfigFromEnv } from "@/lib/deployment/providers/vercel";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getStoreById } from "@/lib/firebase/repositories/stores";
@@ -62,6 +63,8 @@ export default async function EditStorePage({ params, searchParams }: { params: 
         deployment={deployment}
         deploymentLogs={deploymentLogs}
         platformBaseUrl={getPlatformBaseUrl()}
+        // Whether Vercel domain checks are real (API token + project configured) - a boolean only.
+        hostingConnected={vercelConfigFromEnv() !== null}
         commission={commission}
         initialTab={searchParams.tab}
       />

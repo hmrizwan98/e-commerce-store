@@ -18,7 +18,7 @@ export async function getCategories(): Promise<Category[]> {
     return snap.docs
       .map((doc) => docData<Category>(doc))
       .filter((c): c is Category => c !== null);
-  });
+  }, []);
 }
 
 export async function getHomepageCategories(): Promise<Category[]> {

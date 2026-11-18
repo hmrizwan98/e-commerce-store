@@ -127,6 +127,9 @@ const BannerForm: React.FC<BannerFormProps> = ({ mode, banner, placement }) => {
 
       <div className={cardClass}>
         <h2 className={sectionTitleClass}>Images</h2>
+        <p className="text-xs text-neutral-500 dark:text-neutral-400 -mt-2">
+          Recommended: wide landscape (16:9 or 21:9) for desktop; portrait (4:5 or 9:16) for mobile. If no mobile image is uploaded, the desktop image automatically adapts to mobile screens using your chosen focal position.
+        </p>
         <ImageUploader
           value={imageDesktop}
           onChange={setImageDesktop}
@@ -144,7 +147,10 @@ const BannerForm: React.FC<BannerFormProps> = ({ mode, banner, placement }) => {
           onUploadingChange={setMobileUploading}
         />
         <div>
-          <label className={labelClass}>Background position</label>
+          <label className={labelClass}>Image focal position</label>
+          <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-1.5">
+            Controls which part of the image stays visible when viewed on different screen sizes.
+          </p>
           <NativeSelect
             className={inputClass}
             value={backgroundPosition}

@@ -28,6 +28,7 @@ import { useAddToCart } from "@/hooks/useAddToCart";
 import { trackEvent } from "@/lib/analytics/track";
 import type { Product, ProductVariant } from "@/types/product";
 import type { Review } from "@/types/review";
+import type { Banner } from "@/types/banner";
 import type { ProductCardThemeConfig, ProductDetailThemeConfig } from "@/lib/theme/theme-types";
 
 export interface ProductDetailClientProps {
@@ -41,6 +42,8 @@ export interface ProductDetailClientProps {
   productDetailSettings?: ProductDetailThemeConfig;
   /** Real store delivery/payment facts for the product page (never invented). */
   storeInfo?: PdpStoreInfo;
+  /** Store Admin → Promo Banners, slot "promo2" - no banner, no promo block. */
+  promoBanner?: Banner | null;
 }
 
 export interface PdpStoreInfo {
@@ -59,6 +62,7 @@ const ProductDetailClient: React.FC<ProductDetailClientProps> = ({
   productCardSettings,
   productDetailSettings,
   storeInfo,
+  promoBanner,
 }) => {
   const {
     selections,
@@ -88,6 +92,8 @@ const ProductDetailClient: React.FC<ProductDetailClientProps> = ({
     .join(" / ");
 
   const thumbnails = product.images.slice(1, 3);
+  // Every product image, once each - for the image slider (same as the Luxury page).
+  const galleryImages = Array.from(new Set(product.images.filter(Boolean)));
 
   const addToCart = useAddToCart();
 
@@ -332,7 +338,7 @@ const ProductDetailClient: React.FC<ProductDetailClientProps> = ({
         <div className="lg:flex">
           <div className="w-full lg:w-[55%] ">
             <div className="relative">
-              <ProductGallery activeImage={activeImage} thumbnails={thumbnails} alt={product.name} />
+              <ProductGallery layout="thumbnails" images={galleryImages} activeImage={activeImage} thumbnails={thumbnails} alt={product.name} />
               <ProductStatus status={product.badge} />
               {(productDetailSettings?.showWishlist ?? true) && (
                 <LikeButton productId={product.id} className="absolute right-3 top-3 " />
@@ -360,7 +366,7 @@ const ProductDetailClient: React.FC<ProductDetailClientProps> = ({
             </>
           )}
 
-          {(productDetailSettings?.showRelatedProducts ?? true) && (
+          {(productDetailSettings?.showRelatedProducts ?? true) && relatedProducts.length > 0 && (
             <>
               <hr className="border-slate-200 dark:border-slate-700" />
               <SectionSliderProductCard
@@ -368,7 +374,7 @@ const ProductDetailClient: React.FC<ProductDetailClientProps> = ({
                 subHeading=""
                 headingFontClassName="text-2xl font-semibold"
                 headingClassName="mb-10 text-neutral-900 dark:text-neutral-50"
-                data={relatedProducts.length ? relatedProducts : undefined}
+                data={relatedProducts}
                 productCardSettings={productCardSettings}
               />
             </>
@@ -398,9 +404,9 @@ const ProductDetailClient: React.FC<ProductDetailClientProps> = ({
 
           <RecentlyViewedSection excludeProductId={product.id} productCardSettings={productCardSettings} />
 
-          {(productDetailSettings?.showBottomPromo ?? true) && (
+          {(productDetailSettings?.showBottomPromo ?? true) && promoBanner && (
             <div className="pb-20 xl:pb-28 lg:pt-14">
-              <SectionPromo2 />
+              <SectionPromo2 banner={promoBanner ?? undefined} />
             </div>
           )}
         </div>

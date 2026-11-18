@@ -5,7 +5,6 @@ import Link from "next/link";
 import NcImage from "@/shared/NcImage/NcImage";
 import type { ExploreType } from "@/components/SectionGridMoreExplore/data";
 import { safeImageSrc } from "@/utils/safeImageSrc";
-import { getThemeDefaultAssets } from "@/lib/theme/theme-assets";
 import type { ThemePresetId } from "@/lib/theme/theme-types";
 
 export interface TechCategoriesProps {
@@ -21,10 +20,9 @@ export default function TechCategories({
   heading = "Explore Tech Categories",
   subHeading,
 }: TechCategoriesProps) {
-  const defaults = getThemeDefaultAssets(presetId).categories;
-  const categories = data?.length
-    ? data
-    : defaults.map((d, i) => ({ id: String(i + 1), name: d.name, desc: d.desc, count: 29 + i * 10, image: d.image }));
+  // The store's own categories only (Store Admin → Categories); none -> no section.
+  const categories = data ?? [];
+  if (!categories.length) return null;
 
   return (
     <div className="space-y-6">
@@ -47,7 +45,7 @@ export default function TechCategories({
         {categories.slice(0, 6).map((item) => (
           <Link
             key={item.id}
-            href={`/collection/${item.id}` as any}
+            href={(item.href ?? "/collection") as any}
             className="group relative flex flex-col bg-slate-900 border border-slate-800 hover:border-blue-500 rounded-2xl p-4 transition-all shadow-md block"
           >
             <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden bg-slate-950 mb-3">

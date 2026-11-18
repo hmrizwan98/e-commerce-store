@@ -22,7 +22,9 @@ async function decide(orderId: string, input: VerificationDecisionInput): Promis
     if (result.statusChangedTo === "confirmed") {
       try {
         const { sendWhatsAppNotification } = await import("@/lib/notifications/whatsapp-service");
-        await sendWhatsAppNotification("ORDER_CONFIRMED", result.order);
+        const { getNotificationsSettings } = await import("@/lib/firebase/repositories/site-settings");
+        const enabled = (await getNotificationsSettings()).whatsapp.enabled === true;
+        await sendWhatsAppNotification("ORDER_CONFIRMED", result.order, undefined, null, { enabled });
       } catch (err) {
         console.error("[WhatsApp Status Update Trigger Error]:", err);
       }

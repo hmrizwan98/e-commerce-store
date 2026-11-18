@@ -2,11 +2,12 @@
 
 import { parseColorLine } from "@/lib/products/color-swatch";
 import NativeSelect from "@/components/ui/NativeSelect";
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
+import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import ImageUploader from "@/components/admin/ImageUploader";
 import {
-  createProduct,
+  createProductAction,
   updateProduct,
   generateProductSku,
   type ProductFormInput,
@@ -114,6 +115,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
 }) => {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
+  const submitLockRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
 
   const [name, setName] = useState(product?.name ?? "");
@@ -282,6 +284,9 @@ const ProductForm: React.FC<ProductFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Synchronous lock: a second click before React re-renders the disabled button must not
+    // send a second create (that is how identical duplicate products were created).
+    if (submitLockRef.current) return;
     setError(null);
 
     if (!name.trim() || !slug.trim()) {
@@ -346,20 +351,41 @@ const ProductForm: React.FC<ProductFormProps> = ({
       variants: parsedVariants,
     };
 
+    const showError = (message: string) => {
+      setError(message);
+      toast.error(message);
+      // The error box is at the top of the form; the button is at the bottom.
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+
+    submitLockRef.current = true;
     setSubmitting(true);
     try {
       if (mode === "create") {
-        const id = await createProduct(payload);
-        router.push(`/admin/products/${id}/edit`);
-      } else if (product) {
+        const res = await createProductAction(payload);
+        if (!res.ok) {
+          showError(res.error); // the entered data stays in the form
+          submitLockRef.current = false;
+          setSubmitting(false);
+          return;
+        }
+        // Saved: say so, and go to the product list where it now appears. The button stays
+        // disabled ("Saving…") until the page changes, so it can't be submitted twice.
+        toast.success(`"${payload.name}" was created.`);
+        router.push("/admin/products");
+        router.refresh();
+        return;
+      }
+      if (product) {
         await updateProduct(product.id, payload);
+        toast.success("Changes saved.");
         router.refresh();
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong.");
-    } finally {
-      setSubmitting(false);
+      showError(err instanceof Error && err.message ? err.message : "Something went wrong. Please try again.");
     }
+    submitLockRef.current = false;
+    setSubmitting(false);
   };
 
   const inputClass =

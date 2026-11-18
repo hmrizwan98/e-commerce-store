@@ -10,12 +10,15 @@ import ModalViewAllReviews from "@/app/product-detail/ModalViewAllReviews";
 import RecentlyViewedSection from "@/components/RecentlyViewedSection";
 import type { Product } from "@/types/product";
 import type { Review } from "@/types/review";
+import type { Banner } from "@/types/banner";
 import type { ProductCardThemeConfig, ProductDetailThemeConfig } from "@/lib/theme/theme-types";
 
 export interface RelatedRailsAndReviewsProps {
   product: Product;
   reviews: Review[];
   relatedProducts: Product[];
+  /** Store Admin → Promo Banners, slot "promo2" - no banner, no promo block. */
+  promoBanner?: Banner | null;
   crossSellProducts: Product[];
   upsellProducts: Product[];
   productCardSettings?: ProductCardThemeConfig;
@@ -28,6 +31,7 @@ export default function RelatedRailsAndReviews({
   product,
   reviews,
   relatedProducts,
+  promoBanner,
   crossSellProducts,
   upsellProducts,
   productCardSettings,
@@ -85,7 +89,7 @@ export default function RelatedRailsAndReviews({
         </>
       )}
 
-      {showRelated && (
+      {showRelated && relatedProducts.length > 0 && (
         <>
           <hr className="border-slate-200 dark:border-slate-700" />
           <SectionSliderProductCard
@@ -93,7 +97,7 @@ export default function RelatedRailsAndReviews({
             subHeading=""
             headingFontClassName="text-2xl font-semibold"
             headingClassName="mb-10 text-neutral-900 dark:text-neutral-50"
-            data={relatedProducts.length ? relatedProducts : undefined}
+            data={relatedProducts}
             productCardSettings={productCardSettings}
           />
         </>
@@ -123,9 +127,9 @@ export default function RelatedRailsAndReviews({
 
       <RecentlyViewedSection excludeProductId={product.id} productCardSettings={productCardSettings} />
 
-      {showPromo && (
+      {showPromo && promoBanner && (
         <div className="pb-20 xl:pb-28 lg:pt-14">
-          <SectionPromo2 />
+          <SectionPromo2 banner={promoBanner} />
         </div>
       )}
 

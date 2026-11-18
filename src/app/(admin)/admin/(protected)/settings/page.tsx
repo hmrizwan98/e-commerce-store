@@ -21,6 +21,8 @@ import { requireCurrentTenant } from "@/lib/tenant/current";
 import { getStoreById } from "@/lib/firebase/repositories/stores";
 import { getCustomDomainView } from "@/lib/domains/custom-domain-service";
 import { getEffectiveCommissionPolicy, getPendingCommissionRequest } from "@/lib/finance/commission-service";
+import { getActiveThemeConfig } from "@/lib/theme/theme-repository";
+import { isWhatsAppGatewayConfigured } from "@/lib/notifications/whatsapp-service";
 
 export const dynamic = "force-dynamic";
 
@@ -68,6 +70,7 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
     getPendingCommissionRequest(commissionStoreId),
   ]);
   const commissionState = { effective: effectiveCommission, pending: pendingCommission };
+  const themeLogos = (await getActiveThemeConfig()).logos ?? {};
 
   return (
     <div className="space-y-6">
@@ -101,6 +104,14 @@ export default async function AdminSettingsPage({ searchParams }: { searchParams
         commissionState={commissionState}
         tax={tax}
         domain={getCustomDomainView(store ?? (await requireCurrentTenant()))}
+        // Booleans only - provider keys/URLs never reach the browser.
+        channels={{ emailProvider: Boolean(process.env.RESEND_API_KEY), whatsappGateway: isWhatsAppGatewayConfigured() }}
+        themeLogos={{
+          logoLight: themeLogos.logoLight || undefined,
+          favicon: themeLogos.favicon || undefined,
+          appleTouchIcon: themeLogos.appleTouchIcon || undefined,
+          loadingLogo: themeLogos.loadingLogo || undefined,
+        }}
       />
     </div>
   );

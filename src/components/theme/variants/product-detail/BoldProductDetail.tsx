@@ -37,6 +37,7 @@ export default function BoldProductDetail({
   productCardSettings,
   productDetailSettings,
   storeInfo,
+  promoBanner,
 }: BoldProductDetailProps) {
   const s = useProductDetailState(product, variants);
   const showCompare = productDetailSettings?.showCompare ?? true;
@@ -53,10 +54,19 @@ export default function BoldProductDetail({
         <div className="lg:flex lg:items-start">
           <div className="w-full lg:w-1/2">
             <div className="relative">
-              <ProductGallery activeImage={s.activeImage} thumbnails={s.thumbnails} alt={product.name} clickable={clickableGallery} />
+              {/* Same image slider as the Luxury page (it was only wired into Luxury). */}
+              <ProductGallery
+                layout="thumbnails"
+                images={s.images}
+                activeImage={s.activeImage}
+                thumbnails={s.thumbnails}
+                alt={product.name}
+                clickable={clickableGallery}
+              />
               <ProductStatus status={product.badge} position="top-right" />
-              {showWishlist && <LikeButton productId={product.id} className="absolute left-3 top-3" />}
-              {showCompare && <CompareButton productId={product.id} className="absolute left-3 top-16" />}
+              {/* On desktop the thumbnail strip is on the left - keep these buttons on the main image. */}
+              {showWishlist && <LikeButton productId={product.id} className={`absolute left-3 top-3 ${s.images.length > 1 ? "lg:left-[6.75rem]" : ""}`} />}
+              {showCompare && <CompareButton productId={product.id} className={`absolute left-3 top-16 ${s.images.length > 1 ? "lg:left-[6.75rem]" : ""}`} />}
             </div>
           </div>
 
@@ -116,6 +126,7 @@ export default function BoldProductDetail({
           product={product}
           reviews={reviews}
           relatedProducts={relatedProducts}
+          promoBanner={promoBanner}
           crossSellProducts={crossSellProducts}
           upsellProducts={upsellProducts}
           productCardSettings={productCardSettings}

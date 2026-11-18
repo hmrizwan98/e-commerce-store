@@ -5,7 +5,6 @@ import Heading from './Heading/Heading';
 import CardCategory3 from './CardCategories/CardCategory3';
 // @ts-ignore
 import Glide from '@glidejs/glide/dist/glide.esm';
-import { CATS_DISCOVER } from './CardCategories/data';
 
 export interface DiscoverMoreSliderProps {
   heading?: string;
@@ -69,7 +68,9 @@ const DiscoverMoreSlider: React.FC<DiscoverMoreSliderProps> = ({
     };
   }, [sliderRef]);
 
-  const items = data && data.length ? data : CATS_DISCOVER;
+  // The merchant's own tiles only (no demo gift cards / "80% off" tiles); none -> nothing.
+  const items = data ?? [];
+  if (!items.length) return null;
 
   return (
     <div

@@ -39,9 +39,10 @@ const DeploymentPanel: React.FC<{
   store: Store;
   deployment: DeploymentMetadata | null;
   platformBaseUrl: string;
+  hostingConnected: boolean;
   deploymentLogs: DeploymentLog[];
   activity: StoreActivityLog[];
-}> = ({ store, deployment, platformBaseUrl, deploymentLogs, activity }) => {
+}> = ({ store, deployment, platformBaseUrl, hostingConnected, deploymentLogs, activity }) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
@@ -107,8 +108,9 @@ const DeploymentPanel: React.FC<{
           </div>
         </div>
         <p className="text-xs text-neutral-500">
-          No real deployment provider is connected yet - this is architecture only, ready
-          to swap in a real Vercel/Cloudflare integration behind the same action.
+          {hostingConnected
+            ? "All stores are served by the same Vercel deployment, so there is nothing to deploy per store - new code ships through the normal platform deploy. Domain checks use Vercel (see the Domains tab)."
+            : "Vercel isn't connected on this server, so no hosting actions run from here."}
         </p>
       </div>
 

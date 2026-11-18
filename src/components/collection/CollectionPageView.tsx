@@ -3,7 +3,8 @@ import Pagination from "@/shared/Pagination/Pagination";
 import SectionSliderCollections from "@/components/SectionSliderLargeProduct";
 import SectionPromo1 from "@/components/SectionPromo1";
 import ThemeProductCardAdapter from "@/components/theme/ThemeProductCardAdapter";
-import { searchProducts } from "@/lib/firebase/repositories/products";
+import { searchProducts, getFeaturedProducts } from "@/lib/firebase/repositories/products";
+import { getFirstBanner } from "@/lib/firebase/repositories/banners";
 import { getCategories } from "@/lib/firebase/repositories/categories";
 import { parseProductSearchParams, buildPageHref, type RawSearchParams } from "@/lib/filters/parse-search-params";
 import TabFilters from "@/components/TabFilters";
@@ -28,11 +29,16 @@ export default async function CollectionPageView({
   basePath?: string;
 }) {
   const params = parseProductSearchParams(searchParams, theme.collection?.productsPerPage);
-  const [{ products, totalPages }, categories, extraSections] = await Promise.all([
+  const showFeatured = theme.collection?.showFeaturedSection ?? true;
+  const showPromo = theme.collection?.showBottomPromo ?? true;
+  const [{ products, totalPages }, categories, extraSections, featured, promoBanner] = await Promise.all([
     searchProducts(params),
     getCategories(),
     // Sections the admin added to this page in the Customizer, below the page content.
     Promise.all(extraPageSections(theme.collection?.sections).map((sec) => renderSection(sec, theme))),
+    // Bottom sections use the store's own featured products / promo1 banner - empty -> hidden.
+    showFeatured ? getFeaturedProducts(3).catch(() => []) : Promise.resolve([]),
+    showPromo ? getFirstBanner("promo1").catch(() => null) : Promise.resolve(null),
   ]);
 
   const isSidebarFilter = theme.collection?.filterPosition !== "top";
@@ -40,7 +46,8 @@ export default async function CollectionPageView({
   const showSorting = theme.collection?.showSorting ?? true;
   const showHero = theme.collection?.showHeroBanner ?? true;
   const heroTitle = theme.collection?.heroTitle || "Collection";
-  const heroSubtitle = theme.collection?.heroSubtitle || "Discover exceptional products handcrafted for your everyday lifestyle.";
+  // Customizer → Shop page subtitle only (no invented copy).
+  const heroSubtitle = theme.collection?.heroSubtitle?.trim() || "";
   const heroImage = theme.collection?.heroImageUrl;
   const heroHeight = theme.collection?.heroHeight || "medium";
   const desktopCols = theme.collection?.gridColumnsDesktop ?? 3;
@@ -69,9 +76,11 @@ export default async function CollectionPageView({
                 <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight drop-shadow-xs">
                   {heroTitle}
                 </h1>
-                <p className="text-sm sm:text-base text-slate-200 font-medium leading-relaxed max-w-xl drop-shadow-xs">
-                  {heroSubtitle}
-                </p>
+                {heroSubtitle && (
+                  <p className="text-sm sm:text-base text-slate-200 font-medium leading-relaxed max-w-xl drop-shadow-xs">
+                    {heroSubtitle}
+                  </p>
+                )}
               </div>
             </div>
           )}
@@ -141,17 +150,17 @@ export default async function CollectionPageView({
         </div>
 
         {/* BOTTOM SECTIONS */}
-        {(theme.collection?.showFeaturedSection ?? true) && (
+        {showFeatured && featured.length > 0 && (
           <>
             <hr className="border-slate-200 dark:border-slate-700" />
-            <SectionSliderCollections />
+            <SectionSliderCollections data={featured} />
           </>
         )}
 
-        {(theme.collection?.showBottomPromo ?? true) && (
+        {showPromo && promoBanner && (
           <>
             <hr className="border-slate-200 dark:border-slate-700" />
-            <SectionPromo1 />
+            <SectionPromo1 banner={promoBanner} />
           </>
         )}
 

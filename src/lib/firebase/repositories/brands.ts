@@ -18,7 +18,7 @@ export async function getBrands(): Promise<Brand[]> {
     return snap.docs
       .map((doc) => docData<Brand>(doc))
       .filter((b): b is Brand => b !== null);
-  });
+  }, []);
 }
 
 export async function getBrandsByIds(ids: string[]): Promise<Brand[]> {

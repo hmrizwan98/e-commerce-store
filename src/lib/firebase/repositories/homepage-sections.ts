@@ -14,7 +14,7 @@ export async function getActiveHomepageSections(): Promise<HomepageSection[]> {
     return snap.docs
       .map((doc) => docData<HomepageSection>(doc))
       .filter((s): s is HomepageSection => s !== null);
-  });
+  }, []);
 }
 
 export async function getAllHomepageSectionsForAdmin(): Promise<HomepageSection[]> {

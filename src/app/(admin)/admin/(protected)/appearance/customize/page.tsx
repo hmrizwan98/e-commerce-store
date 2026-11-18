@@ -9,6 +9,7 @@ import { getMenu } from "@/lib/firebase/repositories/menus";
 import { getBlogPostsPageForAdmin } from "@/lib/firebase/repositories/blog-posts";
 import { getAllTestimonialsForAdmin } from "@/lib/firebase/repositories/testimonials";
 import CustomizeShell from "./CustomizeShell";
+import { baselineFromLive, planSectionPublish, type SectionConflict } from "@/lib/theme/homepage-sections-sync";
 
 export const dynamic = "force-dynamic";
 
@@ -39,6 +40,22 @@ export default async function AdminCustomizePage() {
     getAllTestimonialsForAdmin(),
   ]);
 
+  // Is the draft's copy of the homepage sections still based on the live sections? (They can be
+  // changed elsewhere after the copy was taken.) Conflicts are shown in the editor and block an
+  // accidental overwrite on Publish.
+  let sectionsBaseline: Record<string, number> | null = baselineFromLive(homepageSections);
+  let sectionConflicts: SectionConflict[] = [];
+  if (draftTheme.homepageSections) {
+    const plan = planSectionPublish({
+      live: homepageSections,
+      draft: draftTheme.homepageSections,
+      baseline: draftTheme.homepageSectionsBaseline ?? null,
+      draftUpdatedAt: (draftTheme as { updatedAt?: number }).updatedAt,
+    });
+    sectionConflicts = plan.conflicts;
+    sectionsBaseline = draftTheme.homepageSectionsBaseline ?? (plan.conflicts.length ? null : baselineFromLive(homepageSections));
+  }
+
   const cleanDraftTheme = JSON.parse(JSON.stringify(draftTheme));
   const cleanSections = JSON.parse(JSON.stringify(homepageSections));
   const cleanHeaderMenu = JSON.parse(JSON.stringify(headerMenuItems));
@@ -47,6 +64,7 @@ export default async function AdminCustomizePage() {
   return (
     <CustomizeShell
       initialDraft={cleanDraftTheme}
+      sectionsSync={JSON.parse(JSON.stringify({ baseline: sectionsBaseline, conflicts: sectionConflicts }))}
       homepage={{
         sections: cleanSections,
         categoryOptions: categories.map((c) => ({ id: c.id, name: c.name })),

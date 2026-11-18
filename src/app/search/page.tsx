@@ -8,7 +8,9 @@ import SearchForm from "./SearchForm";
 import {
   searchProducts,
   searchProductsByName,
+  getFeaturedProducts,
 } from "@/lib/firebase/repositories/products";
+import { getFirstBanner } from "@/lib/firebase/repositories/banners";
 import { getCategories } from "@/lib/firebase/repositories/categories";
 import { getActiveThemeConfig } from "@/lib/theme/theme-repository";
 import { GRID_GAP_WIDE, themeListingColsClass } from "@/lib/theme/grid";
@@ -24,10 +26,13 @@ const PageSearch = async ({ searchParams }: { searchParams: RawSearchParams }) =
   const q = typeof searchParams.q === "string" ? searchParams.q : undefined;
   const params = parseProductSearchParams(searchParams, (await getActiveThemeConfig()).collection?.productsPerPage);
 
-  const [result, categories, theme] = await Promise.all([
+  const [result, categories, theme, featured, promoBanner] = await Promise.all([
     q ? searchProductsByName(q, params.pageSize) : searchProducts(params),
     getCategories(),
     getActiveThemeConfig(),
+    // The store's own featured products and promo1 banner - hidden when there are none.
+    getFeaturedProducts(3).catch(() => []),
+    getFirstBanner("promo1").catch(() => null),
   ]);
   const products = Array.isArray(result) ? result : result.products;
   const totalPages = Array.isArray(result) ? 1 : result.totalPages;
@@ -79,13 +84,18 @@ const PageSearch = async ({ searchParams }: { searchParams: RawSearchParams }) =
           )}
         </main>
 
-        {/* === SECTION 5 === */}
-        <hr className="border-slate-200 dark:border-slate-700" />
-        <SectionSliderCollections />
-        <hr className="border-slate-200 dark:border-slate-700" />
-
-        {/* SUBCRIBES */}
-        <SectionPromo1 />
+        {featured.length > 0 && (
+          <>
+            <hr className="border-slate-200 dark:border-slate-700" />
+            <SectionSliderCollections data={featured} />
+          </>
+        )}
+        {promoBanner && (
+          <>
+            <hr className="border-slate-200 dark:border-slate-700" />
+            <SectionPromo1 banner={promoBanner} />
+          </>
+        )}
       </div>
     </div>
   );

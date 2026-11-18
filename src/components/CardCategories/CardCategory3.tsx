@@ -3,7 +3,6 @@ import Link from "next/link";
 import { getTenantHref } from "@/utils/getTenantHref";
 import { StaticImageData } from "next/image";
 import type { Route } from "next";
-import { CATS_DISCOVER } from "./data";
 import { safeImageSrc } from "@/utils/safeImageSrc";
 import { useAutoImageColor } from "@/utils/useAutoImageColor";
 import NcImage from "@/shared/NcImage/NcImage";
@@ -21,9 +20,10 @@ export interface CardCategory3Props {
 
 const CardCategory3: FC<CardCategory3Props> = ({
   className = "",
-  featuredImage = CATS_DISCOVER[2].featuredImage,
-  name = CATS_DISCOVER[2].name,
-  desc = CATS_DISCOVER[2].desc,
+  // Merchant tile data only (no "Sale collection / 80% off" demo defaults).
+  featuredImage = "",
+  name = "",
+  desc = "",
   color,
   href = "/collection",
   btnText = "Show me all",

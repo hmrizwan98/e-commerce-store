@@ -26,16 +26,19 @@ export default function MultiColumnFooter({ footerSettings, logos, storeName = "
   const copyrightText = footerSettings?.copyrightText || `© ${new Date().getFullYear()} ${storeName}. All rights reserved.`;
 
   const footerLogoImage = footerSettings?.footerLogo || logos?.footerLogo || logos?.logoLight;
-  const descriptionText = footerSettings?.description || "Discover modern essentials crafted for everyday living. High quality products delivered directly to your doorstep.";
+  // Customizer → Footer description only (it used to fall back to invented store copy).
+  const descriptionText = footerSettings?.description?.trim() || "";
 
   return (
     <footer className="relative py-16 lg:py-20 border-t border-[var(--border,#e5e7eb)] dark:border-slate-800 bg-[var(--footer-bg,white)] dark:bg-slate-950 text-[var(--text,#111827)] dark:text-slate-100">
       <div className="container grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-10">
         <div className="md:col-span-2 lg:col-span-2 space-y-4">
           <Logo img={footerLogoImage} storeName={storeName} logoHeightPx={footerSettings?.logoHeightPx} />
-          <p className="text-sm text-[var(--muted)] max-w-sm">
-            {descriptionText}
-          </p>
+          {descriptionText && (
+            <p className="text-sm text-[var(--muted)] max-w-sm">
+              {descriptionText}
+            </p>
+          )}
         </div>
 
         {footerItems.map((item, idx) => (

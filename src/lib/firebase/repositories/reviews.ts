@@ -24,7 +24,7 @@ export async function getApprovedReviewsByProduct(
     return snap.docs
       .map((doc) => docData<Review>(doc))
       .filter((r): r is Review => r !== null);
-  });
+  }, [productId, limit]);
 }
 
 /** Read-only - for the Customer CRM's analytics/timeline (Total Reviews, review

@@ -26,7 +26,7 @@ const HEALTH_BADGE_CLASS: Record<DomainHealthStatus, string> = {
   unknown: "bg-neutral-200 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400",
 };
 
-const DomainManagementPanel: React.FC<{ store: Store; platformBaseUrl: string }> = ({ store, platformBaseUrl }) => {
+const DomainManagementPanel: React.FC<{ store: Store; platformBaseUrl: string; hostingConnected: boolean }> = ({ store, platformBaseUrl, hostingConnected }) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [expandedDns, setExpandedDns] = useState<string | null>(null);
@@ -58,8 +58,10 @@ const DomainManagementPanel: React.FC<{ store: Store; platformBaseUrl: string }>
   const handleReverify = (hostname: string) => {
     startTransition(async () => {
       try {
-        await reverifyDomain(store.id, hostname);
-        toast.success(`Re-verification requested for ${hostname}`);
+        // Shows what the check actually found (live / DNS not pointing yet / SSL pending / not attached).
+        const result = await reverifyDomain(store.id, hostname);
+        if (result.verified) toast.success(result.message);
+        else toast(result.message, { icon: "⚠️" });
         router.refresh();
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Failed to re-verify domain");
@@ -72,9 +74,9 @@ const DomainManagementPanel: React.FC<{ store: Store; platformBaseUrl: string }>
   return (
     <div className={cardClass}>
       <p className="text-xs text-neutral-500">
-        DNS/SSL verification here is architecture only - no real check is performed yet.
-        Re-verify and Trigger deployment call a stub deployment provider, ready to be
-        swapped for a real Vercel/Cloudflare integration later.
+        {hostingConnected
+          ? "Re-verify runs a real check: it asks Vercel whether the domain is attached to the platform project and its DNS is correct, then tests HTTPS. The DNS/SSL badges show the result of the last check."
+          : "Vercel isn't connected on this server (no API token / project id), so Re-verify can't check anything - every domain stays \"pending\". The DNS/SSL badges don't reflect the real domain state."}
       </p>
       <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
         <div className="py-2 text-sm flex items-center justify-between">

@@ -22,12 +22,13 @@ export default function ThemePopupModal({
   const isSuppressed = useChromeSuppressed();
   const isPreview = useIsThemePreviewMode();
 
-  const enabled = popupConfig?.enabled ?? false;
-  const title = popupConfig?.title || "Special Offer";
-  const description = popupConfig?.description || "Subscribe today to get exclusive deals and new arrivals.";
+  // Only what the merchant wrote in Appearance → Popups & Modals - no invented "Special Offer".
+  const title = popupConfig?.title?.trim() || "";
+  const description = popupConfig?.description?.trim() || "";
+  const enabled = (popupConfig?.enabled ?? false) && Boolean(title || description);
   const imageUrl = popupConfig?.imageUrl;
-  const buttonText = popupConfig?.buttonText || "Claim Offer";
-  const buttonUrl = popupConfig?.buttonUrl || "#";
+  const buttonUrl = popupConfig?.buttonUrl?.trim() || "";
+  const buttonText = buttonUrl ? popupConfig?.buttonText?.trim() || "Shop now" : "";
   const trigger = popupConfig?.trigger || "page-load";
   const delaySeconds = popupConfig?.delaySeconds ?? 3;
   const frequency = popupConfig?.frequency || "once-per-session";
@@ -35,7 +36,7 @@ export default function ThemePopupModal({
 
   // The editor preview keeps its own "seen" state, so dismissing the popup while editing
   // doesn't hide it on the live store in the same browser (and vice versa).
-  const storageKey = `${isPreview ? "preview_" : ""}popup_seen_${tenantId}_${title.replace(/\s+/g, "_").toLowerCase()}`;
+  const storageKey = `${isPreview ? "preview_" : ""}popup_seen_${tenantId}_${(title || "popup").replace(/\s+/g, "_").toLowerCase()}`;
 
   const shouldShowPopup = useCallback(() => {
     if (!enabled) return false;
@@ -189,14 +190,19 @@ export default function ThemePopupModal({
         )}
 
         <div className="space-y-2 text-left">
-          <h2 id="popup-modal-title" className={titleClasses}>
-            {title}
-          </h2>
-          <p className={`text-sm leading-relaxed ${isLuxury ? "font-serif text-[#78716c]" : "text-slate-600 dark:text-slate-400"}`}>
-            {description}
-          </p>
+          {title && (
+            <h2 id="popup-modal-title" className={titleClasses}>
+              {title}
+            </h2>
+          )}
+          {description && (
+            <p className={`text-sm leading-relaxed ${isLuxury ? "font-serif text-[#78716c]" : "text-slate-600 dark:text-slate-400"}`}>
+              {description}
+            </p>
+          )}
         </div>
 
+        {buttonUrl && (
         <div className="pt-2 flex flex-col gap-3">
           {/* One link styled as a button (a <button> nested in an <a> is invalid HTML). */}
           <a
@@ -207,9 +213,10 @@ export default function ThemePopupModal({
             {buttonText}
           </a>
         </div>
+        )}
 
         <div className="pt-2 text-center text-xs text-slate-400">
-          Already subscribed? <button onClick={handleClose} className="text-pink-600 font-semibold hover:underline">Dismiss</button>
+          <button onClick={handleClose} className="text-pink-600 font-semibold hover:underline">No thanks</button>
         </div>
       </div>
     </div>

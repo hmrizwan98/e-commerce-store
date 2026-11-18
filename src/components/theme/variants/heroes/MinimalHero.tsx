@@ -5,7 +5,7 @@ import Link from "next/link";
 import NcImage from "@/shared/NcImage/NcImage";
 import type { Hero2DataType } from "@/components/SectionHero/data";
 import { safeImageSrc } from "@/utils/safeImageSrc";
-import { getThemeDefaultAssets } from "@/lib/theme/theme-assets";
+import { getObjectPositionClass } from "@/lib/banners/position";
 import type { ThemePresetId } from "@/lib/theme/theme-types";
 import type { ThemeBanner } from "@/types/theme";
 
@@ -16,16 +16,14 @@ export interface MinimalHeroProps {
 }
 
 export default function MinimalHero({ data, presetId, banner }: MinimalHeroProps) {
-  const defaults = getThemeDefaultAssets(presetId).hero;
-  const slide = data?.[0] ?? {
-    heading: defaults.heading ?? "Style That Inspires",
-    subHeading: defaults.subHeading ?? "Discover the latest trends & exclusive minimal designs.",
-    btnText: "Shop Now →",
-    btnLink: "/collection",
-    image: defaults.image,
-  };
+  // Merchant data only (Store Admin → Hero Slides).
+  const slide = data?.[0];
+  if (!slide) return null;
 
   const imageSrc = typeof slide.image === "string" ? safeImageSrc(slide.image) : slide.image;
+  const mobileSrc = slide.imageMobile ? safeImageSrc(slide.imageMobile) : null;
+  const bgPosClass = getObjectPositionClass(slide.backgroundPosition);
+  const imageAspectClass = mobileSrc ? "aspect-[4/3]" : "aspect-[16/10] sm:aspect-[4/3]";
   const textAlignClass = banner?.textAlign === "center" ? "text-center items-center" : banner?.textAlign === "right" ? "text-right items-end" : "";
 
   return (
@@ -39,9 +37,11 @@ export default function MinimalHero({ data, presetId, banner }: MinimalHeroProps
       <div className={`container relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center ${textAlignClass}`}>
         {/* Left Copy */}
         <div className="lg:col-span-6 space-y-6">
-          <span className="inline-block text-xs font-mono font-bold uppercase tracking-widest text-slate-400">
-            SPRING / SUMMER 2026
-          </span>
+          {slide.badgeText && (
+            <span className="inline-block text-xs font-mono font-bold uppercase tracking-widest text-slate-400">
+              {slide.badgeText}
+            </span>
+          )}
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-slate-900 dark:text-white leading-tight">
             {slide.heading}
           </h1>
@@ -54,50 +54,47 @@ export default function MinimalHero({ data, presetId, banner }: MinimalHeroProps
               href={(slide.btnLink as any) || "/collection"}
               className="inline-flex items-center gap-2 px-8 py-4 bg-orange-600 hover:bg-orange-700 text-white font-semibold text-sm rounded-2xl shadow-lg shadow-orange-600/20 transition-all"
             >
-              {slide.btnText || "Shop Now →"}
+              {slide.btnText || "Shop now"}
             </Link>
           </div>
         </div>
 
         {/* Right Lifestyle Banner */}
         <div className="lg:col-span-6">
-          <div className="relative w-full aspect-[4/3] rounded-3xl overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-800">
-            <NcImage
-              src={imageSrc}
-              alt={slide.heading}
-              fill
-              containerClassName="w-full h-full"
-              className="object-cover w-full h-full"
-              priority
-            />
+          <div className={`relative w-full ${imageAspectClass} rounded-3xl overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-800`}>
+            {mobileSrc ? (
+              <>
+                <NcImage
+                  src={mobileSrc}
+                  alt={slide.heading}
+                  fill
+                  containerClassName="md:hidden w-full h-full"
+                  className={`object-cover w-full h-full ${bgPosClass}`}
+                  priority
+                />
+                <NcImage
+                  src={imageSrc}
+                  alt={slide.heading}
+                  fill
+                  containerClassName="hidden md:block w-full h-full"
+                  className={`object-cover w-full h-full ${bgPosClass}`}
+                  priority
+                />
+              </>
+            ) : (
+              <NcImage
+                src={imageSrc}
+                alt={slide.heading}
+                fill
+                containerClassName="w-full h-full"
+                className={`object-cover w-full h-full ${bgPosClass}`}
+                priority
+              />
+            )}
           </div>
         </div>
       </div>
 
-      {/* 3-Column Trust Strip matching reference Theme 02 */}
-      <div className="container mt-12 pt-8 border-t border-slate-100 dark:border-slate-800 grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
-        <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex items-center justify-center gap-3">
-          <span className="text-2xl">🚚</span>
-          <div className="text-left">
-            <span className="block text-xs font-bold text-slate-900 dark:text-white">Free Shipping</span>
-            <span className="block text-[11px] text-slate-400">On all orders over $50</span>
-          </div>
-        </div>
-        <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex items-center justify-center gap-3">
-          <span className="text-2xl">🎁</span>
-          <div className="text-left">
-            <span className="block text-xs font-bold text-slate-900 dark:text-white">Special Offers</span>
-            <span className="block text-[11px] text-slate-400">Up to 30% discount on bundles</span>
-          </div>
-        </div>
-        <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex items-center justify-center gap-3">
-          <span className="text-2xl">🛡️</span>
-          <div className="text-left">
-            <span className="block text-xs font-bold text-slate-900 dark:text-white">Secure Checkout</span>
-            <span className="block text-[11px] text-slate-400">Encrypted payment processing</span>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

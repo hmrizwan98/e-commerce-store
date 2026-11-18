@@ -8,6 +8,7 @@ import { CurrencyProvider } from "@/lib/currency/CurrencyContext";
 import { getActiveTheme, DEFAULT_THEME } from "@/lib/firebase/repositories/themes";
 import { getGeneralSettings, DEFAULT_GENERAL_SETTINGS } from "@/lib/firebase/repositories/site-settings";
 import { getMenuOrNull } from "@/lib/firebase/repositories/menus";
+import { getPageBySlug } from "@/lib/firebase/repositories/pages";
 import { themeToCssText } from "@/lib/theme/css-variables";
 import { poppins } from "@/lib/theme/default-font";
 import { getCurrentTenant } from "@/lib/tenant/current";
@@ -47,6 +48,7 @@ async function resolveThemeAndSettings(): Promise<{
   suspended: boolean;
   headerMenu: NavItem[] | null;
   footerMenu: NavItem[] | null;
+  hiddenNavHrefs?: string[];
 }> {
   return requestMemo("theme-and-settings", () => computeThemeAndSettings());
 }
@@ -58,6 +60,7 @@ async function computeThemeAndSettings(): Promise<{
   suspended: boolean;
   headerMenu: NavItem[] | null;
   footerMenu: NavItem[] | null;
+  hiddenNavHrefs?: string[];
 }> {
   // Checked BEFORE calling getCurrentTenant() - that function has a
   // local-dev-only "no slug matched -> fall back to the first available
@@ -84,13 +87,16 @@ async function computeThemeAndSettings(): Promise<{
   if (tenant.status !== "active") {
     return { tenantId: tenant.id, theme: DEFAULT_THEME, general: DEFAULT_GENERAL_SETTINGS, suspended: true, headerMenu: null, footerMenu: null };
   }
-  const [theme, general, headerMenu, footerMenu] = await Promise.all([
+  const [theme, general, headerMenu, footerMenu, aboutPage] = await Promise.all([
     getActiveTheme(),
     getGeneralSettings(),
     getMenuOrNull("header"),
     getMenuOrNull("footer"),
+    getPageBySlug("about").catch(() => null),
   ]);
-  return { tenantId: tenant.id, theme, general, suspended: false, headerMenu, footerMenu };
+  // No published About page (Store Admin → Pages, slug "about") -> no About links.
+  const hiddenNavHrefs = aboutPage ? [] : ["/about"];
+  return { tenantId: tenant.id, theme, general, suspended: false, headerMenu, footerMenu, hiddenNavHrefs };
 }
 
 export const viewport: Viewport = {
@@ -137,7 +143,8 @@ export async function generateMetadata(): Promise<Metadata> {
 
   const storeName = general.storeName || "Online Store";
   const storeTitle = general.seoTitle || storeName;
-  const storeDesc = general.seoDescription || `Shop the latest quality products and exclusive deals at ${storeName}. Fast shipping, easy returns, and secure local payment options.`;
+  // Settings → SEO description; otherwise a neutral line (no invented shipping/returns claims).
+  const storeDesc = general.seoDescription || `Shop online at ${storeName}.`;
   const storeLogo = theme.logos.logoLight || theme.logos.logoDark || theme.logos.favicon;
 
   return {
@@ -180,7 +187,7 @@ export default async function RootLayout({
   children: React.ReactNode;
   params: any;
 }) {
-  const { tenantId, theme, general, suspended, headerMenu, footerMenu } = await resolveThemeAndSettings();
+  const { tenantId, theme, general, suspended, headerMenu, footerMenu, hiddenNavHrefs } = await resolveThemeAndSettings();
   // A store with a live custom domain: visitors on its default {slug}.ROOT_DOMAIN /
   // admin-{slug}.ROOT_DOMAIN address go to the same page on the custom domain.
   // getCurrentTenant() is request-memoized - no extra read.
@@ -239,6 +246,7 @@ export default async function RootLayout({
             announcementBarSettings={(theme as any).announcementBar}
             headerMenu={headerMenu as any}
             footerMenu={footerMenu as any}
+            hiddenNavHrefs={hiddenNavHrefs}
             logos={theme.logos}
             socialLinks={general.socialLinks}
           >

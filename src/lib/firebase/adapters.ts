@@ -23,6 +23,7 @@ export function toCardCategoryData(category: FirestoreCategory, productCount?: n
     desc,
     img: category.image ?? "",
     color: "bg-slate-100",
+    href: `/category/${category.slug}`,
   };
 }
 
@@ -34,12 +35,15 @@ export function toExploreType(category: FirestoreCategory, productCount?: number
     image: category.image ?? "",
     svgBg: "",
     count: productCount,
+    href: `/category/${category.slug}`,
   };
 }
 
 export function toHeroSlide(banner: FirestoreBanner): Hero2DataType {
   return {
     image: banner.imageDesktop,
+    imageMobile: banner.imageMobile,
+    backgroundPosition: banner.backgroundPosition,
     heading: banner.title,
     subHeading: banner.subtitle ?? "",
     btnText: banner.ctaText ?? "Explore now",

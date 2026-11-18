@@ -105,7 +105,7 @@ export const TROUBLESHOOTING_REGISTRY: TroubleshootingEntry[] = [
     checklist: [
       { urdu: "Upload poora hone diya (button par 'Uploading image…' / 'Uploading images…' khatam hone tak ruke) aur koi error toast to nahi aaya?", english: "Did you let the upload finish (wait until 'Uploading image…' / 'Uploading images…' disappears) with no error toast?" },
       { urdu: "Upload ke baad Create / Save changes (ya Customize Storefront mein Publish Live) dabaya?", english: "Did you click Create / Save changes (or Publish Live in Customize Storefront) after uploading?" },
-      { urdu: "Store logo ke liye: logo Customize Storefront → Header & Navigation (ya /admin/theme → Logos & icons) mein upload kiya? Settings → Branding ke 'Logo URL' field abhi storefront par istemal nahi hote.", english: "For the store logo: did you upload it in Customize Storefront → Header & Navigation (or /admin/theme → Logos & icons)? The Settings → Branding 'Logo URL' field isn't used by the storefront yet." },
+      { urdu: "Store logo ke liye: logo Customize Storefront → Header & Navigation mein upload kiya? Settings → Branding ke 'Logo URL' field abhi storefront par istemal nahi hote.", english: "For the store logo: did you upload it in Customize Storefront → Header & Navigation? The Settings → Branding 'Logo URL' field isn't used by the storefront yet." },
     ],
     fixUrdu:
       "Image dobara upload karein, upload khatam hone ka intezar karein, phir Save karein. Logo ke liye Customize Storefront mein upload kar ke 'Save Draft' aur '🚀 Publish Live' dabayein.",
@@ -281,9 +281,9 @@ export const TROUBLESHOOTING_REGISTRY: TroubleshootingEntry[] = [
       { urdu: "Storefront hard-refresh kiya (Ctrl+Shift+R)?", english: "Did you hard-refresh the storefront (Ctrl+Shift+R)?" },
     ],
     fixUrdu:
-      "Customize Storefront aur Popups & Modals mein 'Publish Live' (Theme Editor /admin/theme mein 'Publish') zaroori hai. Publish ke baad storefront refresh karein.",
+      "Customize Storefront aur Popups & Modals mein 'Publish Live' zaroori hai. Publish ke baad storefront refresh karein.",
     fixEnglish:
-      "Customize Storefront and Popups & Modals need 'Publish Live' (the Theme Editor at /admin/theme needs 'Publish'). Refresh the storefront after publishing.",
+      "Customize Storefront and Popups & Modals need 'Publish Live'. Refresh the storefront after publishing.",
     route: "/admin/appearance/customize",
     actionLabel: "Open Customize Storefront",
     exampleQuestions: ["Theme changes nahi dikh rahe", "Why aren't my customization changes showing up?"],
@@ -365,7 +365,8 @@ export const TROUBLESHOOTING_REGISTRY: TroubleshootingEntry[] = [
     symptomEnglish: "A created page (About, Privacy, etc.) doesn't open on the storefront.",
     checklist: [
       { urdu: "Page ka Status 'Published (visible on storefront)' hai? Naya page default 'Draft' hota hai.", english: "Is the page Status 'Published (visible on storefront)'? New pages default to 'Draft'." },
-      { urdu: "URL bilkul Slug ke mutabiq hai (jaise slug 'privacy' → /privacy)?", english: "Does the URL match the Slug exactly (e.g. slug 'privacy' → /privacy)?" },
+      { urdu: "URL sahi hai? Custom page /pages/{slug} par khulta hai; sirf about, privacy, terms aur refund apne /about, /privacy, /terms, /refund par khulte hain.", english: "Is the URL right? A custom page opens at /pages/{slug}; only about, privacy, terms and refund open at /about, /privacy, /terms, /refund." },
+      { urdu: "About page: slug bilkul 'about' hai aur Published hai? Is ke baghair /about 404 deta hai aur About menu links chhup jate hain.", english: "About page: is the slug exactly 'about' and Published? Without it /about is a 404 and the About menu links are hidden." },
     ],
     fixUrdu: "Content → Pages mein page Edit kar ke Status 'Published' karein aur Save changes dabayein; menu mein dikhana ho to Content → Menus mein Internal Page link add karein.",
     fixEnglish: "Edit the page in Content → Pages, set Status to 'Published' and Save changes; to show it in the menu, add an Internal Page link in Content → Menus.",

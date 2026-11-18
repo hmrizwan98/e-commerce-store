@@ -1,12 +1,11 @@
 import React, { FC } from "react";
-import NcImage from "@/shared/NcImage/NcImage";
-import rightImgDemo from "@/images/promo2.png";
 import ButtonPrimary from "@/shared/Button/ButtonPrimary";
 import Logo from "@/shared/Logo/Logo";
 import backgroundLineSvg from "@/images/Moon.svg";
 import type { Banner } from "@/types/banner";
 import type { Route } from "@/routers/types";
 import { safeImageSrc } from "@/utils/safeImageSrc";
+import { getObjectPositionClass } from "@/lib/banners/position";
 
 export interface SectionPromo2Props {
   className?: string;
@@ -27,17 +26,17 @@ const SectionPromo2: FC<SectionPromo2Props> = ({
   ctaHref: customCtaHref,
   badgeText: customBadgeText,
 }) => {
-  const heading = banner?.title ?? customHeading ?? "Exclusive Offers & Special Deals";
-  const subHeading =
-    banner?.subtitle ??
-    banner?.description ??
-    customSubHeading ??
-    "Explore our handpicked collection with exclusive limited-time discounts and premium quality.";
-  const ctaText = banner?.ctaText ?? customCtaText ?? "Discover More";
-  const ctaHref = banner?.ctaHref ?? customCtaHref ?? "/collection";
-  const badgeText = customBadgeText ?? banner?.subtitle ?? "PROMO";
+  // Store Admin → Promo Banners (or the section's own text) only - no demo copy or illustration.
+  const heading = banner?.title || customHeading;
+  const subHeading = banner?.description || banner?.subtitle || customSubHeading;
+  const ctaText = banner?.ctaText || customCtaText || "Shop now";
+  const ctaHref = banner?.ctaHref || customCtaHref || "/collection";
+  const badgeText = customBadgeText || banner?.badgeText;
 
   const bannerImg = (banner as any)?.imageDesktop || (banner as any)?.image ? safeImageSrc((banner as any).imageDesktop || (banner as any).image) : null;
+  const mobileImg = (banner as any)?.imageMobile ? safeImageSrc((banner as any).imageMobile) : null;
+  const bgPosClass = getObjectPositionClass((banner as any)?.backgroundPosition);
+  if (!heading && !bannerImg) return null;
 
   return (
     <div className={`nc-SectionPromo2 ${className}`}>
@@ -53,20 +52,18 @@ const SectionPromo2: FC<SectionPromo2Props> = ({
 
         {/* Image Container on Left */}
         <div className="relative w-full lg:w-1/2 flex items-center justify-center z-[1]">
-          {bannerImg ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={bannerImg}
-              alt={banner?.title || "Promo"}
-              className="w-full max-h-[420px] object-cover rounded-2xl shadow-lg"
-            />
-          ) : (
-            <NcImage
-              alt=""
-              containerClassName="w-full max-h-[420px] rounded-2xl overflow-hidden shadow-sm"
-              src={rightImgDemo}
-              sizes="(max-width: 768px) 100vw, 50vw"
-            />
+          {bannerImg && (
+            <picture className="block w-full">
+              {mobileImg && (
+                <source media="(max-width: 767px)" srcSet={mobileImg} />
+              )}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={bannerImg}
+                alt={heading || "Promotion"}
+                className={`w-full max-h-[420px] object-cover rounded-2xl shadow-lg ${bgPosClass}`}
+              />
+            </picture>
           )}
           {banner?.overlayColor && (banner.overlayOpacity ?? 0) > 0 && (
             <div
@@ -78,18 +75,22 @@ const SectionPromo2: FC<SectionPromo2Props> = ({
 
         {/* Text Copy on Right */}
         <div className="w-full lg:w-1/2 relative z-[1] space-y-4">
-          {badgeText && badgeText !== "STORE" && (
+          {badgeText && (
             <span className="text-xs font-bold tracking-widest text-amber-700 dark:text-amber-400 uppercase block">
               {badgeText}
             </span>
           )}
           <Logo className="w-28" />
-          <h2 className="font-bold text-3xl sm:text-4xl xl:text-5xl !leading-[1.15] tracking-tight text-slate-900 dark:text-white">
-            {heading}
-          </h2>
-          <p className="text-slate-600 dark:text-slate-300 text-sm sm:text-base leading-relaxed">
-            {subHeading}
-          </p>
+          {heading && (
+            <h2 className="font-bold text-3xl sm:text-4xl xl:text-5xl !leading-[1.15] tracking-tight text-slate-900 dark:text-white">
+              {heading}
+            </h2>
+          )}
+          {subHeading && (
+            <p className="text-slate-600 dark:text-slate-300 text-sm sm:text-base leading-relaxed">
+              {subHeading}
+            </p>
+          )}
           <div className="pt-4 flex items-center gap-4">
             <ButtonPrimary
               href={ctaHref as Route}

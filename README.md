@@ -2734,6 +2734,202 @@ keep their place.
 - `@tailwindcss/aspect-ratio` disables Tailwind's `aspect-square`; use inline `aspectRatio`
   or the plugin's `aspect-w-*`/`aspect-h-*` classes.
 
+## P0 data-safety fixes (Customizer publish, logos, clone, newsletter)
+
+Progress and the remaining roadmap are in `PLATFORM_AUDIT_PROGRESS.md`.
+
+### Homepage sections: non-destructive publish
+- **Live sections** are the `stores/{id}/homepageSections` docs. The Customizer edits a copy in
+  `themeSettings/draft.homepageSections`, plus `homepageSectionsBaseline`: the `id -> updatedAt`
+  of every live section at the moment the copy was taken.
+- **Publish** (`publishHomepageSections`, `lib/theme/homepage-publish.ts`) runs in a
+  transaction. Previously it deleted every section and rewrote them all, so ids changed and
+  `createdAt` was lost.
+  - Re-reads the live sections and plans with `planSectionPublish`
+    (`lib/theme/homepage-sections-sync.ts`, pure).
+  - Writes only new or changed sections, keeping each section's id, `createdAt` and other
+    stored fields.
+  - Deletes only sections the merchant removed in the Customizer.
+  - Never deletes a section added elsewhere, and never brings back one deleted elsewhere.
+- **Conflicts:**
+  - If live sections changed after the copy was taken (another tab, or an old editor
+    route), nothing is written. The Customizer shows a banner: **Load live sections
+    (recommended)**, or **Publish anyway** (still never deletes sections added elsewhere).
+  - A draft saved before baselines existed is accepted only if it equals live, or was saved
+    after every live change. Otherwise it is a *stale draft* and is blocked even with
+    "Publish anyway". So an empty or old draft can't erase the live homepage.
+- After a publish or discard the staging copy is removed (`clearSectionStaging`). The next
+  session starts from the live sections, and the copy is never written into
+  `themeSettings/active`.
+
+### One editor
+- `/admin/homepage`, `/admin/appearance/homepage` and `/admin/theme` now **redirect** to
+  `/admin/appearance/customize`, so old links still work.
+  - The old pages wrote the live sections directly, a theme field the storefront never reads,
+    or the legacy `themes` collection, which is ignored once `themeSettings/active` exists.
+- The Customizer reuses their section components and actions. Those set `updatedAt`, so the
+  conflict check sees them.
+
+### Logos & favicon
+- **Customizer → Header & Navigation** now has **Favicon**, **Apple Touch Icon** and
+  **Loading Screen Logo**, alongside the light and dark logos. They go through
+  draft → preview → Save Draft → Publish Live like every other setting.
+- The storefront loading screen uses `loadingLogo`, falling back to the main logo.
+- **Onboarding → Logo & favicon** now saves through `saveThemeLogosAction` → `saveThemeLogos`.
+  - This field-level merge writes only the logo keys the merchant changed into
+    `themeSettings/draft` and `/active`. Previously it wrote the legacy `themes` doc.
+- **Root cause of lost logos:** with `set(..., {merge:true})`, an empty map such as a preset's
+  `logos: {}` *replaces* the stored map. This was reproduced in the emulator.
+  - `saveDraftThemeConfig` and `setActiveThemeConfig` now drop empty maps
+    (`stripEmptyObjects`).
+  - The Theme Catalog applies presets through `withoutMerchantAssets`, with no
+    `logos`/`footer.footerLogo`.
+
+### Clone Store
+- `cloneStore` now also copies the source's `themeSettings/active` and `/draft` into the new
+  store, so the clone has the same design. It uses `themeConfigForClone` and leaves out:
+  - logos, favicon and footer logo;
+  - the Customizer staging copy;
+  - timestamps.
+- Still never copied: auth users, customers, orders, products, payment settings or
+  credentials. Only the new store's docs are written; the source is only read.
+
+### Newsletter (per store)
+- `newsletterSubscribers` used the email as the document id. The same email subscribing on a
+  second store overwrote the first store's `storeId`, so the first store lost the subscriber.
+- New subscriptions are stored as `{storeId}__{email}` (`lib/newsletter/subscriber-id.ts`).
+  - An existing email-keyed doc that belongs to the same store is reused.
+  - One that belongs to another store is never touched.
+- Existing documents are not migrated or deleted. Counts and cleanup use the `storeId` field,
+  so old and new docs both count.
+
+### Popups & Modals page (popup-only writes)
+- The page sends only the popup settings. `applyPopupOperation` (`lib/theme/theme-popup.ts`)
+  changes only the `popup` field of the theme docs, inside a transaction.
+- **Save Draft** writes the draft's popup only. It used to save a snapshot of the whole draft
+  taken when the page loaded, overwriting newer unpublished Customizer edits.
+- **Publish Live** puts only the popup live, in both active and draft. It used to publish
+  every other unpublished draft change too.
+- **Reset Draft** resets only the draft popup to the live popup. It used to reset the whole
+  draft.
+- A store with no draft gets one started from the live theme, never a partial doc that would
+  switch the preset.
+
+### Clone Store references (documented, behaviour unchanged)
+See `PLATFORM_AUDIT_PROGRESS.md` → "Clone Store references".
+- Every id-based section reference resolves through tenant-scoped repositories. So a source
+  id copied into a clone resolves to nothing; it never shows source-store data.
+- Image URLs are not separated: they point into the source store's Cloudinary folder.
+
+### Backup taken before these changes
+- `/Users/macbook/Documents/ECOM/webriiz-theme-backups/2026-11-17-p0/p0-config-backup.json`
+  (read-only export; outside the repo).
+- It holds, for all stores: theme settings, legacy themes, homepage sections, menus, banners,
+  announcement bars, pages, testimonials and site settings, plus root newsletter subscribers.
+- Firestore timestamps are stored as `{"__timestamp": ISO}`.
+
+## P1: admin controls & real functionality
+
+Progress and the remaining roadmap are in `PLATFORM_AUDIT_PROGRESS.md`.
+
+### Order email & WhatsApp - real delivery status
+- `sendOrderConfirmationEmail` (`lib/notifications/email-service.ts`) returns what really
+  happened: `sent | failed | not_configured | no_recipient | disabled`.
+  - It used to return `success: true` even when Resend rejected the email or no provider was
+    configured.
+  - Provider responses and errors only go to the server log as an HTTP status code, never to
+    the UI.
+- `sendWhatsAppNotification` returns the same kind of status: without a gateway it is
+  `not_configured`, no longer "success". The `wa.me` link is still returned for manual use.
+- **Checkout is unchanged.** The order is created first; sending happens afterwards in the
+  background. The result is written to
+  `order.notificationDelivery.{confirmationEmail,confirmationWhatsApp}` (`pending` at
+  creation), and Admin shows it in the order's **Customer Messages** card. A failed email
+  never affects the order.
+- The order email logo now comes from the Theme Customizer (legacy `themes` doc as fallback).
+  The email colour is unchanged (still the legacy value, i.e. indigo); see the progress doc.
+
+### Settings that do what they say
+- **Notifications** (`lib/notifications/channel-availability.ts`):
+  - **Email** is the master switch for the order email.
+  - **WhatsApp Alerts** switches automatic WhatsApp. It is off by default and only works with
+    `WHATSAPP_API_URL` + `WHATSAPP_API_TOKEN`; otherwise the tab says "Not configured".
+  - **Push** and **SMS** are disabled and labelled **Not available**.
+  - Stored values are never changed.
+- **Email Templates:** only **Order Confirmation** is connected.
+  - The on/off switch and the subject (`{{storeName}}`, `{{orderNumber}}`) are applied.
+  - The default subject is exactly the old one: `{{storeName}}: Order Confirmation
+    #{{orderNumber}}`.
+  - The other templates are labelled **Not available**.
+- **Integrations → SMTP:** labelled **Not available**; no store can use its own mail server.
+- **Email tab:** the "From Email Address" field is relabelled **Reply-to Email Address**,
+  because mail is always sent from the platform's verified address.
+- Only booleans about provider setup reach the browser.
+
+### Contact messages inbox (`/admin/messages`, Sales → Messages)
+- Contact page submissions stay in the root `contactSubmissions` collection, keyed by
+  `storeId`. Existing documents are untouched; ones without `read` show as unread.
+- The repository (`lib/firebase/repositories/contact-submissions.ts`) always takes the store
+  id from the admin session. It filters and re-checks the `storeId` field, so another store's
+  messages can't be listed or changed.
+- Features:
+  - list, newest first;
+  - an Unread filter;
+  - open a message to read it in full (this marks it read);
+  - mark as unread, or mark all as read;
+  - a safe `mailto:` reply link.
+- The contact form now validates lengths, rate-limits by store and IP (`contact`: 5 per
+  window) and saves `read: false`.
+
+### Payment proof upload (bank transfer / JazzCash / EasyPaisa)
+- **Where customers upload:**
+  - the order confirmation screen after checkout, for non-COD orders;
+  - the Order Tracking page.
+- **Checks** (`POST /api/payment-proof`):
+  - order number plus the checkout email or phone, looked up only in the current store;
+  - rate limit (`payment-proof`: 10 per store and IP);
+  - file type detected from the bytes (JPG/PNG/WEBP; SVG, PDF and HTML are rejected), ≤ 4 MB;
+  - re-encoded with sharp, which strips metadata;
+  - up to 3 per order, enforced in a transaction.
+- **Storage:** Cloudinary `type: "private"` at `{store}/payment-proofs/{orderId}/…`. There is
+  no public URL.
+  - Admin → order → **Customer Messages → Payment Proof → View** opens a signed link that
+    expires after 10 minutes.
+  - The link is only issued for this store's own order and folder.
+- An `unpaid` order moves to `proof_submitted`. Store deletion now also removes private assets
+  under the store prefix.
+
+### Super Admin domain banner
+- The Domains and Deployment panels no longer say "architecture only".
+- They state whether Vercel is connected (`VERCEL_API_TOKEN` + `VERCEL_PROJECT_ID`) and what
+  Re-verify really checks.
+- Re-verify now shows the provider's actual result. The verification logic is unchanged.
+
+### Branding (one source of truth)
+- The free-text **Logo / Favicon / Loading logo URL** fields in Settings → Branding were never
+  used. They are replaced by a read-only view of the Customizer's live logos and a link to
+  Header & Navigation.
+- If an old value exists, it is shown and can be copied into the theme **only when that theme
+  slot is empty** (`legacyLogoAdoption`). No production store has such values today.
+
+## P2: real storefront content (no demo/fabricated content)
+
+Details, inventory and the Store Admin source of every section: `PLATFORM_AUDIT_PROGRESS.md` → "P2".
+
+- **About** (`/about`) = Store Admin → Pages, slug `about` (published). Without it: 404, and About links are filtered out of the header/footer menus (`lib/nav/filter-nav.ts`, `MenuContext` `hiddenHrefs`; storefront + Customizer preview only).
+- **Blog**: `/blog` and `/blog/[slug]` from Blog Posts; public = Active **and** published date reached (`lib/blog/visibility.ts`); plain-text body.
+- **Customer accounts**: not available (guest checkout) - `/login`, `/signup`, `/forgot-pass` explain this; account pages redirect to `/account-order`.
+- **Testimonials**: unchanged installer samples are hidden on the storefront (`lib/testimonials/seed.ts`) and labelled in Admin. Sample banners/FAQs are only labelled (`lib/seed-content.ts`).
+- **Sections and promos** render only tenant data and hide when empty; the demo libraries (`theme-assets.ts`, `contains/fakeData.ts`, `data/data.ts`, demo data files) are gone. Promo slots on product/collection/search/contact pages use the store's own promo banner.
+- **Demo routes**: `/home-2` → `/`, `/product-detail(-2)` → `/collection`, `/blog-single` → `/blog`, `/subscription` → 404; `/collection-2` is a real listing.
+- **safeQuery cache**: opt-in per call with the query's arguments in the key (was tenant+label only - different slugs/placements/products shared one cached result).
+- **Public storefront queries** live in `lib/firebase/repositories/storefront-queries.ts` (store id passed in; also used by the emulator tests).
+- **Audit tools**: `python3 scripts/audit/storefront-content-scan.py [--summary]` (hardcoded/demo content scan of public code) and `python3 scripts/audit/reachability.py` (files no route imports).
+
+## Product page slider & product creation (2026-11-18)
+- The product image slider (`ProductGallery layout="thumbnails"`: all images, thumbnails, prev/next, counter) is used by **every** product-page design (Luxury, Minimal, Bold, default) - it was only in Luxury, so stores on another design (e.g. Zyvora on Modern Minimal) showed the old grid.
+- Admin → Add product: `createProductAction` returns the real result; a slug already used by a live product in the store is refused; the form can't submit twice, shows a "created" toast and opens the product list; errors keep the entered data.
+
 ## Tests
 
 Plain `node:test` scripts run with `tsx` (no test framework needed):
@@ -2748,8 +2944,28 @@ npx tsx --test scripts/test-notifications-checkout.ts # store notifications, pol
 npx tsx --test scripts/test-theme-settings.ts       # theme compiler, zero-diff defaults, preview reload rules, grids, fonts
 npx tsx --test scripts/test-editor-preview.ts       # preview link routing, announcement rules, no-op updates, page sections
 npx tsx --test scripts/test-product-page.ts         # colour swatch names/hex, product form colour parsing, product info sections
+npx tsx --test scripts/test-p0-safety.ts           # section publish planner, logo-safe theme writes, clone theme copy, newsletter ids, popup-only page
+npx tsx scripts/test-routing-resolution.ts         # hostname parsing, admin-{slug} admin URLs, live custom-domain URLs
+npx tsx --require ./scripts/stub-server-only.cjs --test scripts/test-p1.ts   # P1: delivery status, channels/templates, contact, payment proof, branding, domain banner
+npx tsx --require ./scripts/stub-server-only.cjs --test scripts/test-p2.ts   # P2: nav filtering, blog visibility, seed samples, no demo fallbacks, demo routes, cache keys
+npx tsx --require ./scripts/stub-server-only.cjs --test scripts/test-targeted-bugs.ts   # product image slider on every product-page design; product create flow
 npx tsc --noEmit && npm run build
 ```
+
+Integration tests for the P0 data-safety fixes run **only against the local Firestore
+emulator** (the script refuses to start unless `FIRESTORE_EMULATOR_HOST` points to
+`127.0.0.1`/`localhost`, and uses the `demo-p0` project, which can't reach production):
+
+```bash
+npx firebase emulators:start --only firestore --project demo-p0   # separate terminal (Java 11+)
+FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 npx tsx --require ./scripts/stub-server-only.cjs --test scripts/test-p0-emulator.ts
+```
+
+P1/P2 tenant-isolation tests (contact inbox, payment proofs; blog/testimonials/about/banners queries) use the same emulator setup
+(`scripts/test-p1-emulator.ts`, `scripts/test-p2-emulator.ts`):
+`FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 npx tsx --require ./scripts/stub-server-only.cjs --test scripts/test-p1-emulator.ts`
+
+`scripts/stub-server-only.cjs` lets test scripts import `server-only` modules; the app never loads it.
 
 ## Marketing Website Copy & Animations
 

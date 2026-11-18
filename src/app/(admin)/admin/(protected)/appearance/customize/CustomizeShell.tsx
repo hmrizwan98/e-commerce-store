@@ -38,7 +38,13 @@ import {
 } from "@heroicons/react/24/outline";
 import ButtonPrimary from "@/shared/Button/ButtonPrimary";
 import ButtonSecondary from "@/shared/Button/ButtonSecondary";
-import { saveCustomizerDraftAction, publishCustomizerAction, discardCustomizerDraftAction, stagePreviewThemeAction } from "./actions";
+import {
+  saveCustomizerDraftAction,
+  publishCustomizerAction,
+  discardCustomizerDraftAction,
+  stagePreviewThemeAction,
+  getLiveHomepageSectionsAction,
+} from "./actions";
 import ThemeTab from "./tabs/ThemeTab";
 import ColorsTab from "./tabs/ColorsTab";
 import TypographyTab from "./tabs/TypographyTab";
@@ -69,6 +75,7 @@ import GenericSectionInspector from "./inspectors/GenericSectionInspector";
 import HomepageSections, { AddSectionModal, type PickerOption } from "../../homepage/HomepageSections";
 import { SECTION_META } from "../../homepage/section-meta";
 import { draftPatchChanges, patchNeedsPreviewReload } from "@/lib/theme/preview-reload";
+import { baselineFromLive, type SectionConflict } from "@/lib/theme/homepage-sections-sync";
 import type { SystemThemeConfig } from "@/lib/theme/theme-types";
 import type { HomepageSection, HomepageSectionType } from "@/types/homepage-section";
 import type { NavItem } from "@/types/nav";
@@ -183,9 +190,11 @@ export interface CustomizeShellProps {
     footerItems: NavItem[];
     options: LinkPickerOptions;
   };
+  /** Homepage-section sync state computed on the server (see customize/page.tsx). */
+  sectionsSync?: { baseline: Record<string, number> | null; conflicts: SectionConflict[] };
 }
 
-export default function CustomizeShell({ initialDraft, homepage, navigation }: CustomizeShellProps) {
+export default function CustomizeShell({ initialDraft, homepage, navigation, sectionsSync }: CustomizeShellProps) {
   const [editorMode, setEditorMode] = useState<"sections" | "global">("sections");
   const [activeGlobalTab, setActiveGlobalTab] = useState<GlobalSettingsTabKey | null>(null);
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
@@ -274,13 +283,32 @@ export default function CustomizeShell({ initialDraft, homepage, navigation }: C
   );
   const [addModalOpen, setAddModalOpen] = useState(false);
 
+  // What the section list was copied from: id -> live updatedAt. Saved with every section edit so
+  // Publish can tell whether the live sections changed elsewhere in the meantime.
+  const sectionsBaselineRef = useRef<Record<string, number> | null>(sectionsSync?.baseline ?? null);
+  const [sectionConflicts, setSectionConflicts] = useState<SectionConflict[]>(sectionsSync?.conflicts ?? []);
+
   const updateDraftSections = useCallback(
     (nextSections: HomepageSection[]) => {
       setSections(nextSections);
-      updateDraft({ homepageSections: nextSections });
+      updateDraft({ homepageSections: nextSections, homepageSectionsBaseline: sectionsBaselineRef.current });
     },
     [updateDraft]
   );
+
+  /** Replace the editor's section list with the live sections (drops unpublished section edits). */
+  const loadLiveSections = useCallback(async () => {
+    try {
+      // Fresh from the server - the copy from page load may itself be out of date by now.
+      const live = await getLiveHomepageSectionsAction();
+      sectionsBaselineRef.current = baselineFromLive(live);
+      setSectionConflicts([]);
+      updateDraftSections(live);
+      toast.success("Loaded the live homepage sections. Save Draft to keep this.");
+    } catch {
+      toast.error("Couldn't load the live sections - please reload the page.");
+    }
+  }, [updateDraftSections]);
 
   // The storefront shows/hides the two built-in sections from the booleans
   // (collection.showBottomPromo / showFeaturedSection), so those booleans are the single source
@@ -581,7 +609,7 @@ export default function CustomizeShell({ initialDraft, homepage, navigation }: C
     }
   };
 
-  const handlePublish = async () => {
+  const handlePublish = async (force = false) => {
     setPublishingLive(true);
     try {
       const saveRes = await saveCustomizerDraftAction(draft);
@@ -589,13 +617,19 @@ export default function CustomizeShell({ initialDraft, homepage, navigation }: C
         toast.error("Failed to save draft before publishing.");
         return;
       }
-      const pubRes = await publishCustomizerAction();
+      const pubRes = await publishCustomizerAction({ force });
       if (pubRes.ok) {
+        if (pubRes.sectionsBaseline) sectionsBaselineRef.current = pubRes.sectionsBaseline;
+        setSectionConflicts([]);
         toast.success("Published theme live to your storefront!");
         setDirty(false);
       } else {
-        toast.error("Failed to publish.");
+        // Nothing was published: the live homepage sections changed since this editor copied them.
+        setSectionConflicts(pubRes.conflicts);
+        toast.error("Not published - your homepage sections changed elsewhere. Review the notice above.");
       }
+    } catch {
+      toast.error("Failed to publish.");
     } finally {
       setPublishingLive(false);
     }
@@ -610,6 +644,8 @@ export default function CustomizeShell({ initialDraft, homepage, navigation }: C
         setDraft(res.config);
         setDirty(false);
         toast.success("Draft discarded - reverted to published live theme.");
+        // Reload so the editor shows the LIVE homepage sections (the draft copy was cleared).
+        setTimeout(() => window.location.reload(), 600);
       } else {
         toast.error("Failed to discard draft.");
       }
@@ -732,6 +768,38 @@ export default function CustomizeShell({ initialDraft, homepage, navigation }: C
 
   return (
     <div className="flex-1 flex flex-col min-h-0 space-y-4 font-sans text-slate-900 dark:text-slate-100 h-full">
+      {sectionConflicts.length > 0 && (
+        <div role="alert" className="p-3.5 rounded-2xl border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 text-xs space-y-2 shrink-0">
+          <p className="font-bold text-sm">Your homepage sections changed outside this editor</p>
+          <p>
+            Since this draft copied the homepage sections, the live sections were changed somewhere else
+            {sectionConflicts.some((c) => "title" in c)
+              ? ` (${sectionConflicts
+                  .filter((c): c is Extract<SectionConflict, { title: string }> => "title" in c)
+                  .map((c) => `${c.title || c.id}: ${c.kind === "added-elsewhere" ? "added" : c.kind === "deleted-elsewhere" ? "deleted" : "edited"}`)
+                  .join(", ")})`
+              : ""}
+            . Publishing now would overwrite those changes, so nothing has been published.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" onClick={() => void loadLiveSections()} className="px-3 py-1.5 rounded-lg bg-amber-600 text-white font-bold">
+              Load live sections (recommended)
+            </button>
+            {!sectionConflicts.some((c) => c.kind === "stale-draft") && (
+              <button
+                type="button"
+                disabled={saving}
+                onClick={() => {
+                  if (window.confirm("Publish anyway? Live section changes made elsewhere will be replaced by this draft (sections added elsewhere are kept).")) void handlePublish(true);
+                }}
+                className="px-3 py-1.5 rounded-lg border border-amber-400 font-bold disabled:opacity-50"
+              >
+                Publish anyway
+              </button>
+            )}
+          </div>
+        </div>
+      )}
       {/* Top Shopify-Style Editor Action Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xs shrink-0">
         <div className="flex items-center gap-3">
@@ -827,7 +895,7 @@ export default function CustomizeShell({ initialDraft, homepage, navigation }: C
 
           <button
             type="button"
-            onClick={handlePublish}
+            onClick={() => void handlePublish()}
             disabled={savingDraft || publishingLive}
             className="px-6 py-2.5 text-xs font-extrabold rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 shrink-0 shadow-md shadow-indigo-500/25 active:scale-95 disabled:opacity-50 transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap"
           >

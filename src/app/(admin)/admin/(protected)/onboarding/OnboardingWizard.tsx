@@ -4,12 +4,12 @@ import React, { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CheckIcon } from "@heroicons/react/24/outline";
 import { updateGeneralSettings, updateShippingSettings, updatePaymentSettings } from "../settings/actions";
-import { updateTheme } from "../theme/actions";
+import { saveThemeLogosAction } from "../appearance/actions";
 import { saveOnboardingStep, launchStore } from "./actions";
 import { computeStoreHealth } from "./health";
 import { ONBOARDING_STEP_IDS, type OnboardingProgress, type OnboardingStepId } from "@/types/onboarding";
 import type { GeneralSettings, ShippingSettings, PaymentSettings } from "@/types/site-settings";
-import type { Theme } from "@/types/theme";
+import type { ThemeLogos } from "@/types/theme";
 
 import WelcomeStep from "./steps/WelcomeStep";
 import BrandStep from "./steps/BrandStep";
@@ -40,7 +40,8 @@ export interface OnboardingWizardProps {
   initialGeneral: GeneralSettings;
   initialShipping: ShippingSettings;
   initialPayments: PaymentSettings;
-  initialTheme: Theme;
+  /** The store's live theme logos (themeSettings - the same ones the Customizer edits). */
+  initialLogos: ThemeLogos;
 }
 
 export default function OnboardingWizard({
@@ -48,14 +49,17 @@ export default function OnboardingWizard({
   initialGeneral,
   initialShipping,
   initialPayments,
-  initialTheme,
+  initialLogos,
 }: OnboardingWizardProps) {
   const router = useRouter();
 
   const [general, setGeneral] = useState(initialGeneral);
   const [shipping, setShipping] = useState(initialShipping);
   const [payments, setPayments] = useState(initialPayments);
-  const [theme, setTheme] = useState(initialTheme);
+  const [logos, setLogos] = useState<ThemeLogos>(initialLogos ?? {});
+  // Only the logo fields the merchant changed here are saved, so an unpublished logo in the
+  // Customizer draft is never replaced by the value this page loaded.
+  const [logoChanges, setLogoChanges] = useState<Partial<ThemeLogos>>({});
   const [completedSteps, setCompletedSteps] = useState<OnboardingStepId[]>(initialProgress.completedSteps);
   const [launchedAt, setLaunchedAt] = useState<number | undefined>(initialProgress.launchedAt);
   const [stepIndex, setStepIndex] = useState(() => {
@@ -66,8 +70,8 @@ export default function OnboardingWizard({
   const [error, setError] = useState<string | null>(null);
 
   const health = useMemo(
-    () => computeStoreHealth(general, shipping, payments, theme.logos),
-    [general, shipping, payments, theme.logos]
+    () => computeStoreHealth(general, shipping, payments, logos),
+    [general, shipping, payments, logos]
   );
 
   const currentStepId = ONBOARDING_STEP_IDS[stepIndex];
@@ -92,8 +96,12 @@ export default function OnboardingWizard({
         await updateGeneralSettings(general);
         return;
       case "logo": {
-        const { id, createdAt, updatedAt, ...themeInput } = theme;
-        await updateTheme(id, themeInput);
+        // Writes the canonical theme settings (draft + live) - not the legacy `themes` collection,
+        // which the storefront ignores once a store has published theme settings.
+        if (Object.keys(logoChanges).length) {
+          await saveThemeLogosAction(logoChanges);
+          setLogoChanges({});
+        }
         return;
       }
       case "shipping":
@@ -195,8 +203,13 @@ export default function OnboardingWizard({
         )}
         {currentStepId === "logo" && (
           <LogoStep
-            logos={theme.logos}
-            onChange={(patch) => setTheme((t) => ({ ...t, logos: { ...t.logos, ...patch } }))}
+            logos={logos}
+            onChange={(patch) => {
+              // A removed image is saved as "" (cleared), never as a missing key.
+              const normalized = Object.fromEntries(Object.entries(patch).map(([k, v]) => [k, v ?? ""])) as Partial<ThemeLogos>;
+              setLogos((l) => ({ ...l, ...normalized }));
+              setLogoChanges((c) => ({ ...c, ...normalized }));
+            }}
             onBack={goBack}
             onNext={() => handleSaveAndContinue("logo")}
             saving={saving}

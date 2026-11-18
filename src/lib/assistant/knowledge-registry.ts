@@ -427,6 +427,20 @@ export const KNOWLEDGE_REGISTRY: KnowledgeEntry[] = [
     exampleQuestions: ["Refund kaise karun?", "How do I process a return?"],
   },
   {
+    id: "contact_messages",
+    title: "Customer Messages (Contact Page Inbox)",
+    category: "sales",
+    keywords: ["messages", "contact messages", "contact form", "inbox", "customer message", "contact us", "contact submissions", "message aaya", "unread messages"],
+    navigationPath: ["Sales", "Messages"],
+    route: "/admin/messages",
+    actionLabel: "Open Messages",
+    instructionsUrdu:
+      "1. Sidebar mein **Sales → Messages** kholein.\n2. Store ke **Contact** page se aaye saare messages yahan hain (sab se naye upar). Naye messages **Unread** filter mein hain.\n3. Message par click karein - poora message khulta hai aur **read** ho jata hai.\n4. **Reply by email** se customer ko apni email se jawab dein; **Mark as unread** / **Mark all as read** bhi hai.\nSirf aap ke store ke messages nazar aate hain.",
+    instructionsEnglish:
+      "1. Open **Sales → Messages** in the sidebar.\n2. Every message sent from your store's **Contact** page is listed here (newest first); new ones are under the **Unread** filter.\n3. Click a message to open it in full - it's marked **read**.\n4. Use **Reply by email** to answer from your own email; **Mark as unread** and **Mark all as read** are there too.\nOnly your own store's messages are shown.",
+    exampleQuestions: ["Contact form ke messages kahan dekhun?", "Where can I read customer messages?"],
+  },
+  {
     id: "order_payment_status",
     title: "Order Payment Status (Paid / Unpaid)",
     category: "sales",
@@ -440,14 +454,17 @@ export const KNOWLEDGE_REGISTRY: KnowledgeEntry[] = [
       "payment confirm",
       "payment received",
       "payment aa gayi",
+      "payment screenshot",
+      "screenshot",
+      "transaction id",
     ],
     navigationPath: ["Sales", "Orders", "Open an order", "Payment Status"],
     route: "/admin/orders",
     actionLabel: "Open Orders",
     instructionsUrdu:
-      "1. **Sales → Orders** mein order kholein.\n2. **Manage Order** mein **Payment Status** dropdown se **Unpaid**, **Proof Submitted**, **Paid**, **Failed** ya **Refunded** chunein.\nBank transfer / JazzCash ke paise apne account mein check kar ke **Paid** karein. **Paid** karne par Finance mein payment record (commission ke saath) banta hai.",
+      "1. **Sales → Orders** mein order kholein.\n2. **Customer Messages** card ke **Payment Proof** hisse mein customer ka **Transaction reference** aur upload kiye gaye **payment screenshots** hain - **View** dabayein (link 10 minute chalta hai, screenshot private hai).\n3. Paise apne account mein check kar ke **Manage Order** mein **Payment Status** ko **Paid** karein (ya **Unpaid**, **Proof Submitted**, **Failed**, **Refunded**).\nCustomer screenshot checkout ke baad wale page ya **Order Tracking** page se upload karta hai (har order par 3 tak). **Paid** karne par Finance mein payment record (commission ke saath) banta hai.",
     instructionsEnglish:
-      "1. Open the order in **Sales → Orders**.\n2. In **Manage Order**, set **Payment Status** to **Unpaid**, **Proof Submitted**, **Paid**, **Failed** or **Refunded**.\nCheck the bank transfer / JazzCash money in your account, then mark it **Paid**. Marking **Paid** records the payment (with commission) in Finance.",
+      "1. Open the order in **Sales → Orders**.\n2. The **Payment Proof** part of the **Customer Messages** card shows the customer's **Transaction reference** and any uploaded **payment screenshots** - click **View** (the link works for 10 minutes; screenshots are private).\n3. Check the money in your account, then set **Payment Status** in **Manage Order** to **Paid** (or **Unpaid**, **Proof Submitted**, **Failed**, **Refunded**).\nCustomers upload a screenshot from the page after checkout or from **Order Tracking** (up to 3 per order). Marking **Paid** records the payment (with commission) in Finance.",
     exampleQuestions: ["Order ko paid kaise mark karun?", "How do I mark payment as received?"],
   },
   {
@@ -623,6 +640,20 @@ export const KNOWLEDGE_REGISTRY: KnowledgeEntry[] = [
   },
 
   // ─────────────────────────────── Sales: customers & money ───────────────────────────────
+  {
+    id: "storefront_customer_accounts",
+    title: "Customer Accounts on the Storefront (Guest Checkout)",
+    category: "sales",
+    keywords: ["customer login", "customer account", "customers create an account", "create an account", "account on my store", "customer signup", "customer register", "sign up page", "login page storefront", "customer password", "my account page", "account banana", "account bana"],
+    navigationPath: ["Storefront", "Track Order"],
+    route: "/admin/orders",
+    actionLabel: "Open Orders",
+    instructionsUrdu:
+      "Abhi storefront par customer accounts (sign up / log in) **available nahi** hain - checkout guest ke taur par hota hai. Customer ke liye **/login**, **/signup** aur **/forgot-pass** pages yahi batate hain aur **Track an order** ka button dete hain. Customer apna order **Order Tracking** page par order number aur checkout wali email ya phone se dekh sakta hai. Wishlist customer ke apne device par save hoti hai. Store Admin ka login is se alag hai.",
+    instructionsEnglish:
+      "Customer accounts (sign up / log in) are **not available** on the storefront yet - checkout is guest checkout. The **/login**, **/signup** and **/forgot-pass** pages say so and offer a **Track an order** button. Customers check an order on the **Order Tracking** page with the order number and the email or phone used at checkout. The wishlist is saved on the customer's own device. Store Admin sign-in is separate and unaffected.",
+    exampleQuestions: ["Kya customer account bana sakta hai?", "Can customers create an account on my store?"],
+  },
   {
     id: "view_customers",
     title: "Customers",
@@ -839,9 +870,9 @@ export const KNOWLEDGE_REGISTRY: KnowledgeEntry[] = [
     route: "/admin/pages",
     actionLabel: "Open Pages",
     instructionsUrdu:
-      "1. Sidebar mein **Content → Pages** kholein aur **Create Page** dabayein.\n2. **Title** aur **Slug** (dono zaroori) likhein - slug hi URL hai (jaise 'privacy' → /privacy).\n3. **Content (HTML allowed)** likhein, ya **Page sections** mein **Add a section** se Hero Banner, Rich Text, Image + Text, FAQ, Product Grid waghaira jorein.\n4. **Status** ko **Published (visible on storefront)** karein - naya page default **Draft** hota hai jo storefront par nahi dikhta.\n5. **Create page** dabayein. Page ko menu mein dalne ke liye **Content → Menus** mein **Internal Page** link add karein.",
+      "1. **Content → Pages** kholein aur **Create Page** dabayein.\n2. **Title** aur **Slug** likhein (dono zaroori). Page **/pages/{slug}** par khulta hai; slug **about**, **privacy**, **terms** aur **refund** wale pages **/about**, **/privacy**, **/terms**, **/refund** par khulte hain.\n3. **Content (HTML allowed)** likhein, ya **Page sections → Add a section** se Hero Banner, Rich Text, Image + Text, FAQ, Product Grid waghaira lagayein.\n4. **Status** ko **Published (visible on storefront)** karein - naya page default **Draft** hota hai jo chhupa rehta hai.\n5. **Create page** dabayein. Menu mein dikhane ke liye **Content → Menus** mein **Internal Page** link add karein.\n**About page:** store ka koi built-in About text nahi - slug **about** wala page publish karein. Jab tak ye page publish nahi hota, **/about** 404 deta hai aur header/footer ke About links khud chhup jate hain.",
     instructionsEnglish:
-      "1. Open **Content → Pages** and click **Create Page**.\n2. Enter a **Title** and **Slug** (both required) - the slug is the URL (e.g. 'privacy' → /privacy).\n3. Write **Content (HTML allowed)**, or use **Page sections → Add a section** for Hero Banner, Rich Text, Image + Text, FAQ, Product Grid etc.\n4. Set **Status** to **Published (visible on storefront)** - new pages default to **Draft**, which is hidden.\n5. Click **Create page**. To put it in the menu, add an **Internal Page** link in **Content → Menus**.",
+      "1. Open **Content → Pages** and click **Create Page**.\n2. Enter a **Title** and **Slug** (both required). The page opens at **/pages/{slug}**; pages with the slug **about**, **privacy**, **terms** or **refund** open at **/about**, **/privacy**, **/terms**, **/refund**.\n3. Write **Content (HTML allowed)**, or use **Page sections → Add a section** for Hero Banner, Rich Text, Image + Text, FAQ, Product Grid etc.\n4. Set **Status** to **Published (visible on storefront)** - new pages default to **Draft**, which is hidden.\n5. Click **Create page**. To put it in the menu, add an **Internal Page** link in **Content → Menus**.\n**About page:** there is no built-in About text - publish a page with the slug **about**. Until it is published, **/about** is a 404 and the About links in the header/footer are hidden automatically.",
     exampleQuestions: ["Privacy Policy page kaise banaun?", "How do I create an About Us page?"],
   },
   {
@@ -853,9 +884,9 @@ export const KNOWLEDGE_REGISTRY: KnowledgeEntry[] = [
     route: "/admin/faqs",
     actionLabel: "Open FAQs",
     instructionsUrdu:
-      "1. **Content → FAQs** kholein aur **+ Add FAQ** dabayein.\n2. **Question** aur **Answer** (dono zaroori), **Sort order** bharein aur **Active** tick rakhein.\n3. **Create FAQ** dabayein. Active FAQs storefront ke /faq page par dikhte hain.",
+      "1. **Content → FAQs** kholein aur **+ Add FAQ** dabayein.\n2. **Question** aur **Answer** (dono zaroori) aur **Sort order** bharein, **Active** tick rakhein.\n3. **Create FAQ** dabayein. Active FAQs storefront ke /faq page par dikhte hain.\nStore banate waqt add hue sample FAQs par **Sample – review policy text** likha hota hai: ye storefront par dikhte hain aur un mein shipping/return ki misaal wali baatein hain - inhein apni asal policy ke mutabiq edit karein ya Active hata dein.",
     instructionsEnglish:
-      "1. Open **Content → FAQs** and click **+ Add FAQ**.\n2. Fill **Question** and **Answer** (both required) and **Sort order**, keeping **Active** ticked.\n3. Click **Create FAQ**. Active FAQs appear on the storefront /faq page.",
+      "1. Open **Content → FAQs** and click **+ Add FAQ**.\n2. Fill **Question** and **Answer** (both required) and **Sort order**, keeping **Active** ticked.\n3. Click **Create FAQ**. Active FAQs appear on the storefront /faq page.\nSample FAQs added when the store was created are labelled **Sample – review policy text**: they are shown on the storefront and contain example shipping/return statements - edit them to match your real policy or untick Active.",
     exampleQuestions: ["FAQ kaise add karun?", "How do I edit FAQs?"],
   },
   {
@@ -881,9 +912,9 @@ export const KNOWLEDGE_REGISTRY: KnowledgeEntry[] = [
     route: "/admin/blog-posts",
     actionLabel: "Open Blog Posts",
     instructionsUrdu:
-      "1. **Content → Blog Posts** kholein aur **+ Add post** dabayein.\n2. **Title**, **Slug**, **Excerpt** aur **Cover image** zaroori hain; **Published date** bhi zaroori hai. **Content** likhein.\n3. **SEO title/description** (optional), **Sort order** aur **Active** set karein.\n4. **Create post** dabayein. Posts blog page aur homepage ke 'Latest Blog' section mein dikhte hain.",
+      "1. **Content → Blog Posts** kholein aur **+ Add post** dabayein.\n2. **Title**, **Slug**, **Excerpt**, **Cover image** aur **Published date** zaroori hain. **Content** likhein (sada text; khali line se naya paragraph).\n3. Optional **SEO title/description**, **Sort order** aur **Active** set karein.\n4. **Create post** dabayein.\nPost storefront par tabhi dikhti hai jab **Active** ho **aur** uski **Published date** aa chuki ho - inactive ya aage ki date wali post chhupi rehti hai. Har post **/blog/{slug}** par khulti hai; list **/blog** par hai. Koi post publish na ho to homepage ka 'Latest Blog' section nahi dikhta.",
     instructionsEnglish:
-      "1. Open **Content → Blog Posts** and click **+ Add post**.\n2. **Title**, **Slug**, **Excerpt** and **Cover image** are required, and so is the **Published date**. Write the **Content**.\n3. Set optional **SEO title/description**, **Sort order** and **Active**.\n4. Click **Create post**. Posts show on the blog page and the homepage 'Latest Blog' section.",
+      "1. Open **Content → Blog Posts** and click **+ Add post**.\n2. **Title**, **Slug**, **Excerpt**, **Cover image** and **Published date** are required. Write the **Content** (plain text; a blank line starts a new paragraph).\n3. Set optional **SEO title/description**, **Sort order** and **Active**.\n4. Click **Create post**.\nA post shows on the storefront only when it is **Active** **and** its **Published date** has arrived - inactive or future-dated posts stay hidden. Each post opens at **/blog/{slug}**; the list is at **/blog**. With no published posts, the homepage 'Latest Blog' section is hidden.",
     exampleQuestions: ["Blog post kaise add karun?", "How do I write a blog article?"],
   },
   {
@@ -895,9 +926,9 @@ export const KNOWLEDGE_REGISTRY: KnowledgeEntry[] = [
     route: "/admin/testimonials",
     actionLabel: "Open Testimonials",
     instructionsUrdu:
-      "Testimonials ka sidebar mein link nahi - **/admin/testimonials** kholein (ya Customize Storefront ke Testimonials section mein manage link).\n1. **+ Add testimonial** dabayein.\n2. **Customer name** aur **Review text** (dono zaroori), **Rating**, **Customer photo**, **Designation**, **Company**, **Country** bharein, **Active** rakhein.\n3. **Create testimonial** dabayein. Ye homepage ke **Testimonials** section mein dikhte hain.",
+      "Testimonials ka sidebar link nahi - **/admin/testimonials** kholein (ya Customize Storefront ke Testimonials section ka manage link).\n1. **+ Add testimonial** dabayein.\n2. **Customer name** aur **Review text** (dono zaroori), **Rating**, **Customer photo**, **Designation**, **Company**, **Country** bharein, **Active** rakhein.\n3. **Create testimonial** dabayein. Ye homepage ke **Testimonials** section mein dikhte hain.\nStore banate waqt jo sample testimonial (jaise 'Jordan Smith') add hua tha us par **Sample – hidden on storefront** likha hota hai - wo storefront par nahi dikhta. Use asal customer ki baat se edit karein to dikhne lagega. Koi asli testimonial na ho to section chhup jata hai. Rating na di ho to stars nahi dikhte.",
     instructionsEnglish:
-      "Testimonials have no sidebar link - open **/admin/testimonials** (or the manage link inside Customize Storefront's Testimonials section).\n1. Click **+ Add testimonial**.\n2. Fill **Customer name** and **Review text** (both required), **Rating**, **Customer photo**, **Designation**, **Company**, **Country**, keep **Active**.\n3. Click **Create testimonial**. They show in the homepage **Testimonials** section.",
+      "Testimonials have no sidebar link - open **/admin/testimonials** (or the manage link inside Customize Storefront's Testimonials section).\n1. Click **+ Add testimonial**.\n2. Fill **Customer name** and **Review text** (both required), **Rating**, **Customer photo**, **Designation**, **Company**, **Country**, keep **Active**.\n3. Click **Create testimonial**. They show in the homepage **Testimonials** section.\nThe sample testimonial added when the store was created (e.g. 'Jordan Smith') is labelled **Sample – hidden on storefront** and is not shown. Edit it into a real customer's words and it appears. With no real testimonials the section is hidden; without a rating no stars are shown.",
     exampleQuestions: ["Testimonial kaise add karun?", "How do I add customer testimonials?"],
   },
   {
@@ -983,9 +1014,9 @@ export const KNOWLEDGE_REGISTRY: KnowledgeEntry[] = [
     route: "/admin/appearance/customize",
     actionLabel: "Open Customize Storefront",
     instructionsUrdu:
-      "1. Sidebar mein **Appearance → Customize Storefront** kholein. Left side **Page Sections** mein Announcement Bar, Header & Navigation, homepage sections aur Footer hain.\n2. **Add Section** se Hero Slider, Featured Products, New Arrivals, Best Sellers, On Sale, Shop by Category, Promo Banner, Testimonials, Latest Blog, Newsletter, Brands waghaira jorein.\n3. Kisi section par click kar ke right side settings badlein; aankh icon se hide/show, delete icon se hatayein, drag se tarteeb badlein.\n4. Upar Desktop / Tablet / Mobile preview dekhein.\n5. **Save Draft** sirf draft save karta hai; storefront par lane ke liye **🚀 Publish Live** dabayein. **Discard** draft ko live wali halat par wapas le aata hai.",
+      "1. **Appearance → Customize Storefront** kholein. Baen taraf **Page Sections** mein Announcement Bar, Header & Navigation, homepage sections aur Footer hain.\n2. **Add Section** se Hero Slider, Featured Products, New Arrivals, Best Sellers, On Sale, Shop by Category, Promo Banner, Testimonials, Latest Blog, Newsletter, Brands waghaira lagayein.\n3. Section par click kar ke daen taraf edit karein; aankh wale icon se hide/show, delete icon se hatayein, drag se order badlein.\n4. Upar Desktop / Tablet / Mobile preview check karein.\n5. **Save Draft** sirf draft save karta hai; storefront par lane ke liye **🚀 Publish Live** dabayein. **Discard** draft ko live jaisa kar deta hai.\nHar section sirf store ka asal data dikhata hai: products/categories (**Catalog**), slides (**Hero Slides**), promos (**Promo Banners**), posts (**Blog Posts**), testimonials, brands, aur Discover / How It Works / Gallery ke tiles (section settings). Data na ho to wo section storefront par chhup jata hai.",
     instructionsEnglish:
-      "1. Open **Appearance → Customize Storefront**. On the left, **Page Sections** lists the Announcement Bar, Header & Navigation, homepage sections and Footer.\n2. Use **Add Section** for Hero Slider, Featured Products, New Arrivals, Best Sellers, On Sale, Shop by Category, Promo Banner, Testimonials, Latest Blog, Newsletter, Brands and more.\n3. Click a section to edit it on the right; use the eye icon to hide/show, the delete icon to remove, and drag to reorder.\n4. Check the Desktop / Tablet / Mobile preview at the top.\n5. **Save Draft** only saves a draft; click **🚀 Publish Live** to put it on the storefront. **Discard** resets the draft to what's live.",
+      "1. Open **Appearance → Customize Storefront**. On the left, **Page Sections** lists the Announcement Bar, Header & Navigation, homepage sections and Footer.\n2. Use **Add Section** for Hero Slider, Featured Products, New Arrivals, Best Sellers, On Sale, Shop by Category, Promo Banner, Testimonials, Latest Blog, Newsletter, Brands and more.\n3. Click a section to edit it on the right; use the eye icon to hide/show, the delete icon to remove, and drag to reorder.\n4. Check the Desktop / Tablet / Mobile preview at the top.\n5. **Save Draft** only saves a draft; click **🚀 Publish Live** to put it on the storefront. **Discard** resets the draft to what's live.\nEvery section shows only your store's real data: products/categories (**Catalog**), slides (**Hero Slides**), promos (**Promo Banners**), posts (**Blog Posts**), testimonials, brands, and the Discover / How It Works / Gallery tiles (section settings). A section with no data is hidden on the storefront.",
     exampleQuestions: ["Homepage customize kesy krni hy?", "How do I add a section to the homepage?"],
   },
   {
@@ -1025,14 +1056,14 @@ export const KNOWLEDGE_REGISTRY: KnowledgeEntry[] = [
     id: "store_logo",
     title: "Store Logo & Favicon",
     category: "appearance",
-    keywords: ["logo", "logos", "store logo", "logo change", "logo upload", "favicon", "site icon", "browser icon", "footer logo"],
+    keywords: ["logo", "logos", "store logo", "logo change", "logo upload", "favicon", "site icon", "browser icon", "footer logo", "apple touch icon", "loading logo", "loader logo"],
     navigationPath: ["Appearance", "Customize Storefront", "Header & Navigation"],
     route: "/admin/appearance/customize",
     actionLabel: "Open Customize Storefront",
     instructionsUrdu:
-      "1. **Appearance → Customize Storefront** kholein, **Page Sections** mein **Header & Navigation** par click karein.\n2. Logo (Light) aur Logo (Dark) upload karein aur upload poora hone dein.\n3. **Save Draft** phir **🚀 Publish Live** dabayein.\n**Favicon**, Footer Logo aur Loading Logo ke liye Theme Editor (**/admin/theme** → **Brand Identity → Logos & icons**) use karein aur wahan publish karein. Yahi logo order emails mein bhi jata hai.\nNote: **Settings → Branding** ke 'Logo URL' / 'Favicon URL' fields abhi storefront par istemal nahi hote.",
+      "1. **Appearance → Customize Storefront** kholein, **Page Sections** mein **Header & Navigation** par click karein.\n2. Logo (Light), Logo (Dark), **Favicon**, **Apple Touch Icon** aur **Loading Screen Logo** wahin upload karein aur upload poora hone dein.\n3. **Save Draft** phir **🚀 Publish Live** dabayein (favicon publish ke baad browser tab mein nazar aata hai).\nFooter Logo **Footer** section mein hai. Yahi logo order emails mein bhi jata hai.\nNote: **Settings → Branding** ke 'Logo URL' / 'Favicon URL' fields abhi storefront par istemal nahi hote.",
     instructionsEnglish:
-      "1. Open **Appearance → Customize Storefront** and click **Header & Navigation** under **Page Sections**.\n2. Upload Logo (Light) and Logo (Dark) and let the upload finish.\n3. Click **Save Draft**, then **🚀 Publish Live**.\nFor the **Favicon**, Footer Logo and Loading Logo use the Theme Editor (**/admin/theme** → **Brand Identity → Logos & icons**) and publish there. The same logo is used in order emails.\nNote: the 'Logo URL' / 'Favicon URL' fields under **Settings → Branding** aren't used by the storefront yet.",
+      "1. Open **Appearance → Customize Storefront** and click **Header & Navigation** under **Page Sections**.\n2. Upload Logo (Light), Logo (Dark), the **Favicon**, **Apple Touch Icon** and **Loading Screen Logo** there and let each upload finish.\n3. Click **Save Draft**, then **🚀 Publish Live** (the favicon shows in the browser tab after publishing).\nThe Footer Logo is in the **Footer** section. The same logo is used in order emails.\nNote: the 'Logo URL' / 'Favicon URL' fields under **Settings → Branding** aren't used by the storefront yet.",
     exampleQuestions: ["Logo kaise change karun?", "How do I upload a favicon?"],
   },
   {
@@ -1058,9 +1089,9 @@ export const KNOWLEDGE_REGISTRY: KnowledgeEntry[] = [
     route: "/admin/hero-slides",
     actionLabel: "Open Hero Slides",
     instructionsUrdu:
-      "1. **/admin/hero-slides** kholein (ya **Appearance → Customize Storefront** mein Hero Slider section par click kar ke **Manage & Reorder All Slides**).\n2. **+ Add slide** dabayein.\n3. **Desktop image (required)** upload karein, **Mobile image** optional hai. **Heading** bhi zaroori hai.\n4. Sub-heading, **Primary button text/link**, text alignment, overlay waghaira set karein, **Active** tick rakhein.\n5. **Create slide** dabayein. List mein handle se drag kar ke slides ki tarteeb badlein.\nHomepage par slider tabhi dikhega jab Customize Storefront mein Hero Slider section maujood aur visible ho.",
+      "1. **/admin/hero-slides** kholein (ya **Appearance → Customize Storefront** mein Hero Slider section → **Manage & Reorder All Slides**).\n2. **+ Add slide** dabayein.\n3. **Desktop image (required)** upload karein; **Mobile image** optional hai. **Heading** bhi zaroori hai.\n4. Sub-heading, **Primary button text/link**, text alignment, overlay waghaira set karein aur **Active** tick rakhein.\n5. **Create slide** dabayein. Handle se drag kar ke order badlein.\nSlider tabhi dikhta hai jab Customize Storefront mein Hero Slider section visible ho **aur** kam az kam ek active slide ho - koi slide na ho to hero section nahi dikhta (demo slide nahi aati). Stock photo wale setup slides par **Sample content – please review** likha hota hai.",
     instructionsEnglish:
-      "1. Open **/admin/hero-slides** (or click the Hero Slider section in **Appearance → Customize Storefront** → **Manage & Reorder All Slides**).\n2. Click **+ Add slide**.\n3. Upload the **Desktop image (required)**; the **Mobile image** is optional. A **Heading** is also required.\n4. Set sub-heading, **Primary button text/link**, text alignment, overlay etc. and keep **Active** ticked.\n5. Click **Create slide**. Drag rows by the handle to reorder slides.\nThe slider only shows if a visible Hero Slider section exists in Customize Storefront.",
+      "1. Open **/admin/hero-slides** (or click the Hero Slider section in **Appearance → Customize Storefront** → **Manage & Reorder All Slides**).\n2. Click **+ Add slide**.\n3. Upload the **Desktop image (required)**; the **Mobile image** is optional. A **Heading** is also required.\n4. Set sub-heading, **Primary button text/link**, text alignment, overlay etc. and keep **Active** ticked.\n5. Click **Create slide**. Drag rows by the handle to reorder slides.\nThe slider shows only when a visible Hero Slider section exists in Customize Storefront **and** there is at least one active slide - with no slides the hero is hidden (no demo slides). Setup slides that still use a stock photo are labelled **Sample content – please review**.",
     exampleQuestions: ["Slider me new image kesy lagani hy?", "Main banner kaise change karun?"],
   },
   {
@@ -1072,9 +1103,9 @@ export const KNOWLEDGE_REGISTRY: KnowledgeEntry[] = [
     route: "/admin/promo-banners",
     actionLabel: "Open Promo Banners",
     instructionsUrdu:
-      "1. **/admin/promo-banners** kholein (ya Customize Storefront ke Promo Banner section mein **Banners Manager**).\n2. Upar **Promo Banner 1 / 2 / 3** tab chunein aur **+ Add banner** dabayein.\n3. **Heading** aur **Desktop image** zaroori hain; button text/link, colors set karein, **Active** rakhein.\n4. **Create banner** dabayein.\nHomepage par dikhane ke liye Customize Storefront mein Promo Banner section add aur **Publish Live** karein.",
+      "1. **/admin/promo-banners** kholein (ya Customize Storefront ke Promo Banner section mein **Banners Manager**).\n2. **Promo Banner 1 / 2 / 3** tab chun kar **+ Add banner** dabayein.\n3. **Heading** aur **Desktop image** zaroori hain; button text/link aur colours set karein, **Active** rakhein.\n4. **Create banner** dabayein.\nHomepage par dikhane ke liye Customize Storefront mein Promo Banner section add kar ke **Publish Live** karein. **Promo Banner 1** Shop, Search aur Contact pages ke neeche bhi dikhta hai; **Promo Banner 2** product page ke neeche (Customizer → Product Page → **Promotional Deals Banner** on ho to). Banner na ho to ye jagah khali rehti hai - koi demo promo nahi dikhta. Stock photo wale setup banners par **Sample content – please review** likha hota hai.",
     instructionsEnglish:
-      "1. Open **/admin/promo-banners** (or **Banners Manager** inside Customize Storefront's Promo Banner section).\n2. Pick the **Promo Banner 1 / 2 / 3** tab and click **+ Add banner**.\n3. **Heading** and **Desktop image** are required; set button text/link and colours, keep **Active**.\n4. Click **Create banner**.\nTo show it on the homepage, add a Promo Banner section in Customize Storefront and **Publish Live**.",
+      "1. Open **/admin/promo-banners** (or **Banners Manager** inside Customize Storefront's Promo Banner section).\n2. Pick the **Promo Banner 1 / 2 / 3** tab and click **+ Add banner**.\n3. **Heading** and **Desktop image** are required; set button text/link and colours, keep **Active**.\n4. Click **Create banner**.\nTo show it on the homepage, add a Promo Banner section in Customize Storefront and **Publish Live**. **Promo Banner 1** also shows at the bottom of the Shop, Search and Contact pages; **Promo Banner 2** below product pages (when Customizer → Product Page → **Promotional Deals Banner** is on). Without a banner nothing is shown there - no demo promos. Setup banners that still use a stock photo are labelled **Sample content – please review**.",
     exampleQuestions: ["Promo banner kaise lagayein?", "How do I add a sale banner?"],
   },
   {
@@ -1086,9 +1117,9 @@ export const KNOWLEDGE_REGISTRY: KnowledgeEntry[] = [
     route: "/admin/appearance/popups",
     actionLabel: "Open Popups & Modals",
     instructionsUrdu:
-      "1. Sidebar mein **Appearance → Popups & Modals** kholein.\n2. **Enable Storefront Popup** on karein.\n3. **Popup Title**, **Description**, **Button Text**, **Button Target URL** aur **Image Banner** (optional) bharein.\n4. **Trigger Event** (**Page Load**, **Time Delay**, **Exit Intent (Desktop)**), **Delay (Seconds)** aur **Frequency Limit** (**Always (Every Page)**, **Once Per Session**, **Once Per Day**) chunein.\n5. **Save Draft** ke baad **Publish Live** dabayein. **Reset Draft** live settings wapas le aata hai.",
+      "1. Sidebar mein **Appearance → Popups & Modals** kholein.\n2. **Enable Storefront Popup** on karein.\n3. **Popup Title**, **Description**, **Button Text**, **Button Target URL** aur **Image Banner** (optional) bharein.\n4. **Trigger Event** (**Page Load**, **Time Delay**, **Exit Intent (Desktop)**), **Delay (Seconds)** aur **Frequency Limit** (**Always (Every Page)**, **Once Per Session**, **Once Per Day**) chunein.\n5. **Save Draft** ke baad **Publish Live** dabayein. Ye sirf popup ko live karta hai - Customize Storefront ke baqi unpublished changes draft mein hi rehte hain. **Reset Draft** sirf popup ko live popup jaisa kar deta hai.",
     instructionsEnglish:
-      "1. Open **Appearance → Popups & Modals**.\n2. Turn on **Enable Storefront Popup**.\n3. Fill **Popup Title**, **Description**, **Button Text**, **Button Target URL** and optional **Image Banner**.\n4. Choose **Trigger Event** (**Page Load**, **Time Delay**, **Exit Intent (Desktop)**), **Delay (Seconds)** and **Frequency Limit** (**Always (Every Page)**, **Once Per Session**, **Once Per Day**).\n5. **Save Draft**, then **Publish Live**. **Reset Draft** restores the live settings.",
+      "1. Open **Appearance → Popups & Modals**.\n2. Turn on **Enable Storefront Popup**.\n3. Fill **Popup Title**, **Description**, **Button Text**, **Button Target URL** and optional **Image Banner**.\n4. Choose **Trigger Event** (**Page Load**, **Time Delay**, **Exit Intent (Desktop)**), **Delay (Seconds)** and **Frequency Limit** (**Always (Every Page)**, **Once Per Session**, **Once Per Day**).\n5. **Save Draft**, then **Publish Live**. This publishes only the popup - other unpublished Customize Storefront changes stay in the draft. **Reset Draft** resets only the popup to the live popup.",
     exampleQuestions: ["Popup banner kaise lagayein?", "How do I enable a discount popup?"],
   },
   {
@@ -1096,13 +1127,13 @@ export const KNOWLEDGE_REGISTRY: KnowledgeEntry[] = [
     title: "Theme Editor (Advanced)",
     category: "appearance",
     keywords: ["theme editor", "advanced theme", "dark mode", "theme import", "theme duplicate", "sticky header", "transparent header"],
-    navigationPath: ["Theme Editor (direct URL /admin/theme - no sidebar link)"],
-    route: "/admin/theme",
-    actionLabel: "Open Theme Editor",
+    navigationPath: ["Appearance", "Customize Storefront"],
+    route: "/admin/appearance/customize",
+    actionLabel: "Open Customize Storefront",
     instructionsUrdu:
-      "Advanced Theme Editor ka sidebar mein link nahi - **/admin/theme** kholein. Is mein tabs hain: **Presets, Brand Identity** (Logos & icons, favicon), **Colors, Typography, Buttons & Cards, Layout, Header** (sticky/transparent header, top bar), **Footer, Product Card, Banners, Dark Mode**. Themes ko duplicate/import bhi kar sakte hain. Changes save karne ke baad **Publish** karna zaroori hai, tabhi storefront par aate hain. Rozmarra ke kaam ke liye **Appearance → Customize Storefront** asaan hai.",
+      "Purana Theme Editor (**/admin/theme**) ab seedha **Appearance → Customize Storefront** par le jata hai - sab theme settings ab wahin hain: **Global Settings** (**Colors & Palette** + Dark Mode, **Typography & Fonts**, **Buttons & Cards**, **Layout & Container**, **Product Cards**), **Header & Navigation** (logos, favicon, header), **Footer** aur homepage sections. Design badalne ke liye **Appearance → Theme Catalog**. Changes ke baad **Save Draft** aur **🚀 Publish Live** zaroori hai.",
     instructionsEnglish:
-      "The advanced Theme Editor has no sidebar link - open **/admin/theme**. Its tabs are **Presets, Brand Identity** (Logos & icons, favicon), **Colors, Typography, Buttons & Cards, Layout, Header** (sticky/transparent header, top bar), **Footer, Product Card, Banners, Dark Mode**. You can also duplicate/import themes. After saving you must **Publish** for changes to reach the storefront. For everyday changes **Appearance → Customize Storefront** is easier.",
+      "The old Theme Editor (**/admin/theme**) now opens **Appearance → Customize Storefront** - every theme setting lives there: **Global Settings** (**Colors & Palette** + Dark Mode, **Typography & Fonts**, **Buttons & Cards**, **Layout & Container**, **Product Cards**), **Header & Navigation** (logos, favicon, header), **Footer** and the homepage sections. To switch design use **Appearance → Theme Catalog**. After changes, **Save Draft** and **🚀 Publish Live**.",
     exampleQuestions: ["Theme editor kahan hai?", "How do I enable dark mode?"],
   },
 
@@ -1295,9 +1326,9 @@ export const KNOWLEDGE_REGISTRY: KnowledgeEntry[] = [
     route: "/admin/settings",
     actionLabel: "Open Settings",
     instructionsUrdu:
-      "**Settings → Social** mein **Facebook**, **Instagram**, **TikTok**, **LinkedIn**, **X (Twitter)** aur **YouTube** ke poore links paste karein aur **Save Changes** dabayein. Ye icons storefront ke footer mein dikhte hain.",
+      "**Settings → Social** mein **Facebook**, **Instagram**, **TikTok**, **LinkedIn**, **X (Twitter)** aur **YouTube** ke poore links (https:// se shuru) paste karein, phir **Save Changes** dabayein. Sirf wahi icons dikhte hain jin ka link diya ho - footer, Contact page, mobile menu aur top bar mein. Koi link na ho to social icons nahi dikhte.",
     instructionsEnglish:
-      "In **Settings → Social** paste the full links for **Facebook**, **Instagram**, **TikTok**, **LinkedIn**, **X (Twitter)** and **YouTube**, then click **Save Changes**. The icons appear in the storefront footer.",
+      "In **Settings → Social** paste the full links (starting with https://) for **Facebook**, **Instagram**, **TikTok**, **LinkedIn**, **X (Twitter)** and **YouTube**, then click **Save Changes**. Only the icons with a link are shown - in the footer, the Contact page, the mobile menu and the top bar. With no links, no social icons appear.",
     exampleQuestions: ["Instagram link kaise lagayein?", "Where do I add social media links?"],
   },
   {
@@ -1309,9 +1340,9 @@ export const KNOWLEDGE_REGISTRY: KnowledgeEntry[] = [
     route: "/admin/settings",
     actionLabel: "Open Settings",
     instructionsUrdu:
-      "**Settings → Branding** mein neeche Store Admin panel ka rang (admin theme) chun kar **Save Changes** karein. **Suggested colour pairs** se ek click mein Primary/Secondary color bhar sakte hain (order emails mein istemal hote hain). **Primary color** aur **Font family** sirf tab istemal hote hain jab theme mein ye set na hon. Storefront ke asal rang/fonts **Appearance → Customize Storefront → Global Settings** mein, aur logo **Header & Navigation** mein badlein - 'Logo URL', 'Favicon URL' aur 'Loading logo URL' fields abhi storefront par istemal nahi hote.",
+      "**Settings → Branding** mein neeche Store Admin panel ka rang (admin theme) chun kar **Save Changes** karein. **Suggested colour pairs** se ek click mein Primary/Secondary color bhar sakte hain. **Primary color** aur **Font family** sirf tab istemal hote hain jab theme mein ye set na hon. Logo, favicon, Apple touch icon aur loading logo ab sirf **Appearance → Customize Storefront → Header & Navigation** mein upload hote hain - Branding tab mein inki live halat nazar aati hai aur wahan ka link hai.",
     instructionsEnglish:
-      "In **Settings → Branding** pick the Store Admin panel colour (admin theme) at the bottom and click **Save Changes**. **Suggested colour pairs** fill Primary/Secondary color in one click (used in order emails). **Primary color** and **Font family** are only used when the theme doesn't set them. Change the storefront's real colours/fonts in **Appearance → Customize Storefront → Global Settings** and the logo in **Header & Navigation** - the 'Logo URL', 'Favicon URL' and 'Loading logo URL' fields aren't used by the storefront yet.",
+      "In **Settings → Branding** pick the Store Admin panel colour (admin theme) at the bottom and click **Save Changes**. **Suggested colour pairs** fill Primary/Secondary color in one click. **Primary color** and **Font family** are only used when the theme doesn't set them. The logo, favicon, Apple touch icon and loading logo are uploaded only in **Appearance → Customize Storefront → Header & Navigation** - the Branding tab shows their live state and links there.",
     exampleQuestions: ["Admin panel ka color kaise badlun?", "What does the Branding tab do?"],
   },
   {
@@ -1361,23 +1392,23 @@ export const KNOWLEDGE_REGISTRY: KnowledgeEntry[] = [
     route: "/admin/settings",
     actionLabel: "Open Settings",
     instructionsUrdu:
-      "Jab customer checkout par apna email deta hai to use order confirmation email jati hai - **aap ke store ke naam, logo aur theme color ke saath** (Webriiz ke naam se nahi), jis mein products, total aur delivery address hota hai. Customer email ka **reply karega to wo aap ke store ke email par aayega** - is ke liye **Settings → Email** mein **Support Email Address** set karein (warna **From Email Address** ya store email use hota hai). Email checkout par optional hai; jo customer email na de use email nahi jati.",
+      "Jab customer checkout par apna email deta hai to use order confirmation email jati hai - **aap ke store ke naam aur logo ke saath** (Webriiz ke naam se nahi), jis mein products, total aur delivery address hota hai. Har order ke page par **Customer Messages** card batata hai ke email asal mein **Sent**, **Failed**, **Not configured**, **Turned off** ya **Pending** hai. Customer ka reply **Settings → Email** ke **Support Email Address** (ya **Reply-to Email Address** / store email) par aata hai. Email checkout par optional hai; jo customer email na de use email nahi jati. Email ko **Settings → Notifications → Email** ya **Email Templates → Order Confirmation** se band kar sakte hain.",
     instructionsEnglish:
-      "When a customer gives their email at checkout, they get an order confirmation email branded with your store's name, logo and theme colour (not Webriiz), listing the products, total and delivery address. When the customer replies, it goes to your store's email - set **Support Email Address** under **Settings → Email** (otherwise the **From Email Address** or store email is used). Email is optional at checkout; customers who don't give one don't get the email.",
+      "When a customer gives their email at checkout, they get an order confirmation email with your store's name and logo (not Webriiz), listing the products, total and delivery address. On each order page the **Customer Messages** card shows whether the email was really **Sent**, **Failed**, **Not configured**, **Turned off** or is **Pending**. Customer replies go to the **Support Email Address** in **Settings → Email** (or the **Reply-to Email Address** / store email). Email is optional at checkout; customers who don't give one don't get it. You can turn the email off in **Settings → Notifications → Email** or **Email Templates → Order Confirmation**.",
     exampleQuestions: ["Customer ko order ki email kis naam se jati hai?", "Customer email ka reply kahan aayega?"],
   },
   {
     id: "email_templates",
-    title: "Email Templates Tab (saved only)",
+    title: "Email Templates Tab",
     category: "settings",
     keywords: ["email template", "email templates", "email subject", "welcome email template", "newsletter email"],
     navigationPath: ["Settings", "Email Templates"],
     route: "/admin/settings",
     actionLabel: "Open Settings",
     instructionsUrdu:
-      "**Settings → Email Templates** mein Welcome, Order Confirmation, Password Reset, Contact aur Newsletter emails ke on/off aur **Subject Line** save hote hain, lekin ye settings abhi asal emails par apply **nahi** hotin (feature abhi available nahi). Order confirmation email khud ba khud store ke naam aur logo ke saath jati hai.",
+      "**Settings → Email Templates** mein abhi sirf **Order Confirmation Email** kaam karta hai: tick hata dein to order email nahi jati, aur **Subject Line** mein `{{storeName}}` aur `{{orderNumber}}` likh sakte hain. **Save Changes** dabayein. Welcome, Password Reset, Contact aur Newsletter wale **Not available** hain - ye emails abhi store se nahi jatin.",
     instructionsEnglish:
-      "**Settings → Email Templates** saves on/off and a **Subject Line** for Welcome, Order Confirmation, Password Reset, Contact and Newsletter emails, but these settings are **not** applied to real emails yet (not available). The order confirmation email is sent automatically with your store's name and logo.",
+      "In **Settings → Email Templates** only the **Order Confirmation Email** works today: untick it to stop the order email, and use `{{storeName}}` and `{{orderNumber}}` in its **Subject Line**. Click **Save Changes**. Welcome, Password Reset, Contact and Newsletter are marked **Not available** - stores don't send those emails yet.",
     exampleQuestions: ["Email template kaise badlun?", "Can I change the order email subject?"],
   },
   {
@@ -1389,23 +1420,23 @@ export const KNOWLEDGE_REGISTRY: KnowledgeEntry[] = [
     route: "/admin/settings",
     actionLabel: "Open Settings",
     instructionsUrdu:
-      "**Settings → Integrations** mein **Connected Services Status** (Cloudinary, Firebase, GA4, Meta Pixel) nazar aata hai; GA4/Pixel lagane ke liye **Manage GA4 / Meta Pixel Settings →** dabayein. **SMTP Server Config** aur **Google reCAPTCHA** ki settings save to hoti hain lekin abhi kahin apply nahi hotin - emails platform ke zariye hi jati hain.",
+      "**Settings → Integrations** mein **Connected Services Status** (Cloudinary, Firebase, GA4, Meta Pixel) nazar aata hai; GA4/Pixel lagane ke liye **Manage GA4 / Meta Pixel Settings →** dabayein. **SMTP Server Config** **Not available** hai (apna mail server abhi use nahi ho sakta - emails platform ke zariye jati hain). **Google reCAPTCHA** ki setting save hoti hai lekin abhi apply nahi hoti.",
     instructionsEnglish:
-      "**Settings → Integrations** shows **Connected Services Status** (Cloudinary, Firebase, GA4, Meta Pixel); click **Manage GA4 / Meta Pixel Settings →** to add GA4/Pixel. The **SMTP Server Config** and **Google reCAPTCHA** settings are saved but not applied anywhere yet - emails are sent through the platform.",
+      "**Settings → Integrations** shows **Connected Services Status** (Cloudinary, Firebase, GA4, Meta Pixel); click **Manage GA4 / Meta Pixel Settings →** to add GA4/Pixel. **SMTP Server Config** is **Not available** (stores can't use their own mail server yet - emails go through the platform). The **Google reCAPTCHA** setting is saved but not applied yet.",
     exampleQuestions: ["SMTP kaise set karun?", "What is in the Integrations tab?"],
   },
   {
     id: "notifications_settings",
-    title: "Notification Channels Tab (saved only)",
+    title: "Notification Channels Tab",
     category: "settings",
     keywords: ["notification settings", "notifications tab", "sms notification", "sms alerts", "push notification", "email notifications"],
     navigationPath: ["Settings", "Notifications"],
     route: "/admin/settings",
     actionLabel: "Open Settings",
     instructionsUrdu:
-      "**Settings → Notifications** mein Email, Push, SMS aur WhatsApp Alerts ke toggles save hote hain, lekin ye abhi kisi notification ko on/off **nahi** karte (feature abhi available nahi). Naye order ki alert Store Admin mein khud aati hai (awaz + notification).",
+      "**Settings → Notifications** mein:\n- **Email Notifications** - customer ko order confirmation email (sath mein **Email Templates → Order Confirmation** bhi on hona chahiye).\n- **WhatsApp Alerts** - order placed/confirmed/dispatched/delivered par automatic WhatsApp, **sirf tab jab platform par WhatsApp gateway configured ho**; warna **Not configured** likha hota hai aur kuch automatic nahi jata - order page ke WhatsApp button se khud message karein.\n- **Push** aur **SMS** **Not available** hain.\nNaye order ki alert Store Admin mein khud aati hai (awaz + notification).",
     instructionsEnglish:
-      "**Settings → Notifications** saves toggles for Email, Push, SMS and WhatsApp Alerts, but they don't switch any notification on/off yet (not available). New-order alerts appear in Store Admin automatically (sound + notification).",
+      "In **Settings → Notifications**:\n- **Email Notifications** - the order confirmation email to the customer (**Email Templates → Order Confirmation** must also be on).\n- **WhatsApp Alerts** - automatic WhatsApp when an order is placed/confirmed/dispatched/delivered, **only when the platform has a WhatsApp gateway configured**; otherwise it shows **Not configured** and nothing is sent automatically - message customers yourself with the order page's WhatsApp button.\n- **Push** and **SMS** are **Not available**.\nNew-order alerts appear in Store Admin automatically (sound + notification).",
     exampleQuestions: ["SMS notification kaise on karun?", "What does the Notifications tab do?"],
   },
   {

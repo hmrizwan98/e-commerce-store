@@ -1,5 +1,6 @@
 "use client";
 
+import { isSeedTestimonial } from "@/lib/testimonials/seed";
 import React, { useState } from "react";
 import Link from "next/link";
 import toast from "react-hot-toast";
@@ -112,6 +113,14 @@ const TestimonialsList: React.FC<{ initialTestimonials: Testimonial[] }> = ({ in
               >
                 {t.isActive ? "Active" : "Inactive"}
               </span>
+              {isSeedTestimonial(t) && (
+                <span
+                  className="px-2 py-0.5 text-xs font-medium rounded-full bg-amber-100 text-amber-800 dark:bg-amber-500/10 dark:text-amber-300"
+                  title="Sample text added when the store was created. It is not shown on your storefront until you edit it into a real customer testimonial."
+                >
+                  Sample – hidden on storefront
+                </span>
+              )}
             </div>
             <p className="text-xs text-neutral-500 mt-0.5">
               {[t.designation, t.company, t.country].filter(Boolean).join(" · ") || "—"}

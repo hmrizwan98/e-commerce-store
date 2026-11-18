@@ -78,6 +78,47 @@ export default function HeaderInspector({ draft, onChange }: HeaderInspectorProp
         </div>
 
         <div className="space-y-1.5 pt-2 border-t border-slate-200/60 dark:border-slate-700/60">
+          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+            Favicon (browser tab icon)
+          </label>
+          <p className="text-[11px] text-slate-500 dark:text-slate-400">Square image, e.g. 64×64 or larger. Shows after you publish.</p>
+          <ImageUploader
+            imageType="themeLogo"
+            subfolder="favicon"
+            value={logos.favicon ? [logos.favicon] : []}
+            onChange={(urls) => updateLogos({ favicon: urls[0] ?? "" })}
+            multiple={false}
+          />
+        </div>
+
+        <div className="space-y-1.5 pt-1">
+          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+            Apple Touch Icon (Optional)
+          </label>
+          <p className="text-[11px] text-slate-500 dark:text-slate-400">Used when the store is added to an iPhone home screen (180×180). Falls back to the favicon.</p>
+          <ImageUploader
+            imageType="themeLogo"
+            subfolder="favicon"
+            value={logos.appleTouchIcon ? [logos.appleTouchIcon] : []}
+            onChange={(urls) => updateLogos({ appleTouchIcon: urls[0] ?? "" })}
+            multiple={false}
+          />
+        </div>
+
+        <div className="space-y-1.5 pt-1">
+          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+            Loading Screen Logo (Optional)
+          </label>
+          <p className="text-[11px] text-slate-500 dark:text-slate-400">Shown on the store&apos;s loading screen. Falls back to the main logo.</p>
+          <ImageUploader
+            imageType="themeLogo"
+            value={logos.loadingLogo ? [logos.loadingLogo] : []}
+            onChange={(urls) => updateLogos({ loadingLogo: urls[0] ?? "" })}
+            multiple={false}
+          />
+        </div>
+
+        <div className="space-y-1.5 pt-2 border-t border-slate-200/60 dark:border-slate-700/60">
           <div className="flex items-center justify-between">
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
               Logo Display Height ({header.logoHeightPx ?? 40}px)

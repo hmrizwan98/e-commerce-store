@@ -5,7 +5,6 @@ import Link from "next/link";
 import NcImage from "@/shared/NcImage/NcImage";
 import type { ExploreType } from "@/components/SectionGridMoreExplore/data";
 import { safeImageSrc } from "@/utils/safeImageSrc";
-import { getThemeDefaultAssets } from "@/lib/theme/theme-assets";
 import type { ThemePresetId } from "@/lib/theme/theme-types";
 
 export interface BoldStreetCategoriesProps {
@@ -21,10 +20,9 @@ export default function BoldStreetCategories({
   heading = "CATEGORIES DROP",
   subHeading,
 }: BoldStreetCategoriesProps) {
-  const defaults = getThemeDefaultAssets(presetId).categories;
-  const categories = data?.length
-    ? data
-    : defaults.map((d, i) => ({ id: String(i + 1), name: d.name.toUpperCase(), desc: d.desc, count: 19 + i * 6, image: d.image }));
+  // The store's own categories only (Store Admin → Categories); none -> no section.
+  const categories = data ?? [];
+  if (!categories.length) return null;
 
   return (
     <div className="space-y-6">
@@ -47,7 +45,7 @@ export default function BoldStreetCategories({
         {categories.slice(0, 6).map((item) => (
           <Link
             key={item.id}
-            href={`/collection/${item.id}` as any}
+            href={(item.href ?? "/collection") as any}
             className="group relative flex flex-col bg-neutral-900 border-2 border-neutral-800 hover:border-rose-600 rounded-none overflow-hidden transition-colors block"
           >
             <div className="relative w-full aspect-[4/3] bg-neutral-950 overflow-hidden">

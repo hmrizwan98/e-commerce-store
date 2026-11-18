@@ -37,6 +37,7 @@ export default function LuxuryProductDetail({
   productCardSettings,
   productDetailSettings,
   storeInfo,
+  promoBanner,
 }: LuxuryProductDetailProps) {
   const s = useProductDetailState(product, variants);
   const showCompare = productDetailSettings?.showCompare ?? true;
@@ -154,6 +155,7 @@ export default function LuxuryProductDetail({
           product={product}
           reviews={reviews}
           relatedProducts={relatedProducts}
+          promoBanner={promoBanner}
           crossSellProducts={crossSellProducts}
           upsellProducts={upsellProducts}
           productCardSettings={productCardSettings}

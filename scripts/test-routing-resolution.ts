@@ -39,7 +39,14 @@ function runTests() {
   const test5 = parseHost("admin.glamix.webriiz.com", rootDomain);
   assert.strictEqual(test5.type, "tenant-admin", "Test 5 Failed: admin.glamix.webriiz.com should parse as tenant-admin");
   assert.strictEqual(test5.slug, "glamix", "Test 5 Failed: slug should be glamix");
-  console.log("✓ Test 5 Passed: admin.glamix.webriiz.com -> tenant admin (slug: glamix)");
+  console.log("✓ Test 5 Passed: admin.glamix.webriiz.com -> tenant admin (slug: glamix) - legacy form, still parsed");
+
+  // Test 5b: admin-{slug}.webriiz.com -> Tenant Store Admin (the CURRENT generated form: one
+  // label, so the single-level *.webriiz.com wildcard certificate covers it)
+  const test5b = parseHost("admin-glamix.webriiz.com", rootDomain);
+  assert.strictEqual(test5b.type, "tenant-admin", "Test 5b Failed: admin-glamix.webriiz.com should parse as tenant-admin");
+  assert.strictEqual(test5b.slug, "glamix", "Test 5b Failed: slug should be glamix");
+  console.log("✓ Test 5b Passed: admin-glamix.webriiz.com -> tenant admin (slug: glamix)");
 
   // Test 6: custom storefront domain (glamix.pk)
   const test6 = parseHost("glamix.pk", rootDomain);
@@ -61,16 +68,27 @@ function runTests() {
   // Test 9: buildTenantUrl & buildTenantAdminUrl output validation
   const baseUrl = "https://webriiz.com";
   assert.strictEqual(buildTenantUrl(baseUrl, "glamix"), "https://glamix.webriiz.com", "Test 9a Failed");
-  assert.strictEqual(buildTenantAdminUrl(baseUrl, "glamix"), "https://admin.glamix.webriiz.com", "Test 9b Failed");
+  // admin-{slug} (not admin.{slug}): see buildTenantAdminUrl - single-level wildcard SSL, and
+  // the middleware's /admin redirect uses the same form.
+  assert.strictEqual(buildTenantAdminUrl(baseUrl, "glamix"), "https://admin-glamix.webriiz.com", "Test 9b Failed");
   console.log("✓ Test 9 Passed: Platform URL generator outputs (website & admin URLs)");
 
   // Test 10: Store record helper functions (getStorefrontUrl & getStoreAdminUrl)
   const platformStore = { slug: "glamix", domains: [] };
   assert.strictEqual(getStorefrontUrl(platformStore, baseUrl), "https://glamix.webriiz.com", "Test 10a Failed");
-  assert.strictEqual(getStoreAdminUrl(platformStore, baseUrl), "https://admin.glamix.webriiz.com", "Test 10b Failed");
+  assert.strictEqual(getStoreAdminUrl(platformStore, baseUrl), "https://admin-glamix.webriiz.com", "Test 10b Failed");
 
-  const customStore = { slug: "glamix", domains: ["glamix.pk"] };
-  assert.strictEqual(getStorefrontUrl(customStore, baseUrl), "https://glamix.pk", "Test 10c Failed");
+  // A custom domain is only used once it is live (primary + DNS verified + SSL active - see
+  // getActivePrimaryCustomDomain); until then the platform address, which always works.
+  const pendingCustomStore = { slug: "glamix", domains: ["glamix.pk"] };
+  assert.strictEqual(getStorefrontUrl(pendingCustomStore, baseUrl), "https://glamix.webriiz.com", "Test 10c Failed (domain not live yet)");
+  assert.strictEqual(getStoreAdminUrl(pendingCustomStore, baseUrl), "https://admin-glamix.webriiz.com", "Test 10c Failed (domain not live yet)");
+  const customStore = {
+    slug: "glamix",
+    domains: ["glamix.pk"],
+    domainSettings: { "glamix.pk": { isPrimary: true, dnsStatus: "verified", sslStatus: "active" } },
+  };
+  assert.strictEqual(getStorefrontUrl(customStore, baseUrl), "https://glamix.pk", "Test 10d Failed");
   assert.strictEqual(getStoreAdminUrl(customStore, baseUrl), "https://admin.glamix.pk", "Test 10d Failed");
   console.log("✓ Test 10 Passed: Storefront & Admin URL resolution for custom domains");
 

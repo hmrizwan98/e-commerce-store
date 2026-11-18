@@ -120,9 +120,11 @@ export default function DealCard({ data, className = "", productCardSettings }: 
             </div>
 
             {/* Subtitle / Short Description */}
-            <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5">
-              {shortDescription || description || "High quality product"}
-            </p>
+            {(shortDescription || description) && (
+              <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5">
+                {shortDescription || description}
+              </p>
+            )}
           </div>
 
           {/* Bottom Row: Price & Buy Now Button */}

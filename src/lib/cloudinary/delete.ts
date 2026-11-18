@@ -20,5 +20,8 @@ export async function deleteByPublicId(publicId: string): Promise<void> {
  */
 export async function deleteAllByPrefix(prefix: string): Promise<{ deleted: number }> {
   const result = await cloudinary.api.delete_resources_by_prefix(prefix);
-  return { deleted: Object.keys(result?.deleted ?? {}).length };
+  // Private assets (payment proofs) live under the same store prefix but are a different
+  // delivery type, which delete_resources_by_prefix only removes when asked explicitly.
+  const privateResult = await cloudinary.api.delete_resources_by_prefix(prefix, { type: "private" });
+  return { deleted: Object.keys(result?.deleted ?? {}).length + Object.keys(privateResult?.deleted ?? {}).length };
 }

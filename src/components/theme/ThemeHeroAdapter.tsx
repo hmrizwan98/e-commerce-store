@@ -4,7 +4,6 @@ import LuxeHero from "./variants/heroes/LuxeHero";
 import MinimalHero from "./variants/heroes/MinimalHero";
 import BoldStreetHero from "./variants/heroes/BoldStreetHero";
 import TechHero from "./variants/heroes/TechHero";
-import SectionHero2 from "@/components/SectionHero/SectionHero2";
 import type { HeroThemeConfig, ThemePresetId } from "@/lib/theme/theme-types";
 import type { Hero2DataType } from "@/components/SectionHero/data";
 import type { ThemeBanner } from "@/types/theme";
@@ -14,9 +13,14 @@ export interface ThemeHeroAdapterProps {
   data?: Hero2DataType[];
   presetId?: ThemePresetId;
   banner?: ThemeBanner;
+  /** The store's own categories - only the "tech" hero shows them (sidebar). */
+  categories?: { name: string; href: string }[];
 }
 
-export default function ThemeHeroAdapter({ heroSettings, data, presetId, banner }: ThemeHeroAdapterProps) {
+/** Renders only the merchant's own hero slides (Store Admin → Hero Slides). Callers don't render
+ * this at all when there are none - no variant has demo slides anymore. */
+export default function ThemeHeroAdapter({ heroSettings, data, presetId, banner, categories }: ThemeHeroAdapterProps) {
+  if (!data?.length) return null;
   // Use FullWidthImageHero for generic, image-only, or default to ensure pure clean full-width image slider
   switch (heroSettings?.variant) {
     case "luxe":
@@ -26,7 +30,7 @@ export default function ThemeHeroAdapter({ heroSettings, data, presetId, banner 
     case "bold-street":
       return <BoldStreetHero data={data} presetId={presetId} banner={banner} />;
     case "tech":
-      return <TechHero data={data} presetId={presetId} banner={banner} />;
+      return <TechHero data={data} presetId={presetId} banner={banner} categories={categories} />;
     case "image-only":
     case "generic":
     default:

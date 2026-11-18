@@ -16,7 +16,9 @@ import ButtonPrimary from "@/shared/Button/ButtonPrimary";
 import { getOrderByOrderNumber } from "@/lib/firebase/repositories/orders";
 import { getShippingSettings, getGeneralSettings } from "@/lib/firebase/repositories/site-settings";
 import { formatMoney } from "@/lib/currency/format";
-import { normalizePhone } from "@/lib/orders/verification/phone";
+import { orderMatchesContact } from "@/lib/orders/contact-match";
+import { proofUploadEligibility } from "@/lib/payments/payment-proof";
+import PaymentProofUpload from "@/components/payments/PaymentProofUpload";
 import { checkRateLimit } from "@/lib/firebase/rate-limit";
 import { getCurrentTenant } from "@/lib/tenant/current";
 import type { Order, OrderStatus } from "@/types/order";
@@ -87,21 +89,6 @@ function resolveCourierUrl(courierName?: string, trackingNumber?: string, custom
     return `https://callcourier.com.pk/tracking/?tc=${trackingNumber}`;
   }
   return null;
-}
-
-/** Order number + the email OR phone given at checkout. Phones are compared after
- * normalization (0300-1234567 == +92 300 1234567); unparseable numbers fall back to a
- * digits-only comparison, and need at least 7 digits so a short guess can't match. */
-function orderMatchesContact(order: Order, contact: string): boolean {
-  if (contact.includes("@")) {
-    return !!order.guestEmail && order.guestEmail.trim().toLowerCase() === contact.toLowerCase();
-  }
-  const orderPhone = order.shippingAddress?.phone ?? "";
-  const a = normalizePhone(contact);
-  const b = normalizePhone(orderPhone);
-  if (a.isValid && b.isValid) return a.digits === b.digits;
-  const digitsA = contact.replace(/\D/g, "");
-  return digitsA.length >= 7 && digitsA === orderPhone.replace(/\D/g, "");
 }
 
 const OrderTrackingPage = async ({
@@ -352,7 +339,7 @@ const OrderTrackingPage = async ({
                     <div>
                       <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">Delivery Provider</h3>
                       <p className="text-sm font-extrabold text-slate-900 dark:text-slate-100">
-                        {matched.courierName || shippingSettings.defaultCourierName || "Standard Delivery Service"}
+                        {matched.courierName || shippingSettings.defaultCourierName || "Store delivery"}
                         {matched.trackingMode === "in_house" && " (In-House Rider)"}
                       </p>
                     </div>
@@ -443,6 +430,11 @@ const OrderTrackingPage = async ({
                   <span className="font-mono">{formatMoney(matched.total, general)}</span>
                 </div>
               </div>
+              {contact && proofUploadEligibility(matched).ok && (
+                <div className="mt-5">
+                  <PaymentProofUpload orderNumber={matched.orderNumber} contact={contact} alreadyUploaded={matched.paymentProofs?.length ?? 0} />
+                </div>
+              )}
             </div>
 
             <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 rounded-3xl p-6 shadow-xl shadow-slate-900/5 space-y-6">

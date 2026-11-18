@@ -1,5 +1,6 @@
 "use client";
 
+import { isSampleBanner } from "@/lib/seed-content";
 import React, { useState } from "react";
 import Link from "next/link";
 import toast from "react-hot-toast";
@@ -103,6 +104,14 @@ const PromoBannersList: React.FC<{ initialBanners: Banner[]; placement: BannerPl
               >
                 {banner.isActive ? "Enabled" : "Disabled"}
               </span>
+              {isSampleBanner(banner) && (
+                <span
+                className="px-2 py-0.5 text-xs font-medium rounded-full bg-amber-100 text-amber-800 dark:bg-amber-500/10 dark:text-amber-300"
+                title="Sample banner from store setup (stock photo). It is shown on your storefront - replace the image and text with your own, or disable it."
+              >
+                Sample content – please review
+              </span>
+              )}
             </div>
             {banner.subtitle && <p className="text-xs text-neutral-500 mt-0.5">{banner.subtitle}</p>}
           </div>

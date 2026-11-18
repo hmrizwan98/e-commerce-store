@@ -5,7 +5,6 @@ import Link from "next/link";
 import NcImage from "@/shared/NcImage/NcImage";
 import type { ExploreType } from "@/components/SectionGridMoreExplore/data";
 import { safeImageSrc } from "@/utils/safeImageSrc";
-import { getThemeDefaultAssets } from "@/lib/theme/theme-assets";
 import type { ThemePresetId } from "@/lib/theme/theme-types";
 
 export interface LuxeCategoriesProps {
@@ -16,10 +15,9 @@ export interface LuxeCategoriesProps {
 }
 
 export default function LuxeCategories({ data, presetId, heading = "Shop By Luxe Category", subHeading }: LuxeCategoriesProps) {
-  const defaults = getThemeDefaultAssets(presetId).categories;
-  const categories = data?.length
-    ? data
-    : defaults.map((d, i) => ({ id: String(i + 1), name: d.name, desc: d.desc, count: 30 + i * 7, image: d.image }));
+  // The store's own categories only (Store Admin → Categories); none -> no section.
+  const categories = data ?? [];
+  if (!categories.length) return null;
 
   return (
     <div className="space-y-8">
@@ -39,7 +37,7 @@ export default function LuxeCategories({ data, presetId, heading = "Shop By Luxe
         {categories.slice(0, 6).map((item) => (
           <Link
             key={item.id}
-            href={`/collection/${item.id}` as any}
+            href={(item.href ?? "/collection") as any}
             className="group relative flex flex-col bg-white dark:bg-stone-900 rounded-3xl overflow-hidden border border-stone-200 dark:border-stone-800 shadow-md hover:shadow-2xl transition-all block"
           >
             <div className="relative w-full aspect-[4/5] overflow-hidden bg-stone-100 dark:bg-stone-800">

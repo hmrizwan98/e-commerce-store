@@ -41,24 +41,11 @@ export default function AnnouncementBar({ hidden = false }: { hidden?: boolean }
     }
   }, [bar]);
 
-  const activeBar: AnnouncementBarData = bar ?? {
-    id: "default",
-    title: "✦ FREE SHIPPING ON ALL ORDERS ✦",
-    subtitle: "",
-    backgroundColor: "#000000",
-    textColor: "#ffffff",
-    showOnDesktop: true,
-    showOnMobile: true,
-    isClosable: false,
-    autoScroll: false,
-    priority: 1,
-    isActive: true,
-    order: 1,
-    createdAt: 0,
-    updatedAt: 0,
-  };
+  // Store Admin → Announcements only. There is no built-in fallback text: it used to show
+  // "FREE SHIPPING ON ALL ORDERS" (flashing on every page load before the real bar arrived).
+  const activeBar = bar;
 
-  if (hidden || isAdminRoute || dismissed) return null;
+  if (hidden || isAdminRoute || dismissed || !activeBar) return null;
   if (!activeBar.showOnDesktop && !activeBar.showOnMobile) return null;
 
   const visibilityClass =

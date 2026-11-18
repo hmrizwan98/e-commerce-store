@@ -111,17 +111,20 @@ export default function TrendGlassCard({ data, className = "", productCardSettin
               <h3 className="font-bold text-base text-slate-900 dark:text-slate-100 group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors line-clamp-1">
                 {name}
               </h3>
-              {(rating || numberOfReviews) && (
+              {/* Real rating only - it used to show a made-up "4.9". */}
+              {(numberOfReviews ?? 0) > 0 && (rating ?? 0) > 0 && (
                 <span className="flex-shrink-0 inline-flex items-center gap-1 bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-300 font-bold text-[11px] px-2 py-0.5 rounded-md border border-amber-200/50 dark:border-amber-900/30">
                   <StarIcon className="w-3 h-3 text-amber-400" />
-                  {rating || "4.9"}
+                  {rating}
                 </span>
               )}
             </div>
 
-            <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1 mt-1 font-normal">
-              {shortDescription || description || "Trending luxury item"}
-            </p>
+            {(shortDescription || description) && (
+              <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1 mt-1 font-normal">
+                {shortDescription || description}
+              </p>
+            )}
           </div>
 
           {/* Bottom Pricing & Action */}

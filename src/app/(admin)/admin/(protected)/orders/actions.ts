@@ -109,14 +109,18 @@ export async function updateOrderStatus(id: string, status: OrderStatus, note?: 
     // Trigger WhatsApp notification for status transition
     try {
       const { sendWhatsAppNotification } = await import("@/lib/notifications/whatsapp-service");
+      const { getNotificationsSettings } = await import("@/lib/firebase/repositories/site-settings");
+      // Settings -> Notifications -> WhatsApp Alerts (off by default). Without a platform
+      // gateway nothing is sent automatically either way.
+      const waEnabled = (await getNotificationsSettings()).whatsapp.enabled === true;
       if (status === "confirmed") {
-        await sendWhatsAppNotification("ORDER_CONFIRMED", order);
+        await sendWhatsAppNotification("ORDER_CONFIRMED", order, undefined, null, { enabled: waEnabled });
       } else if (status === "shipped" || status === "packed") {
         // The store's real storefront (custom domain or {slug}.webriiz.com) for the tracking link.
         const storefrontUrl = getReliableStorefrontUrl(await requireCurrentTenant(), getPlatformBaseUrl());
-        await sendWhatsAppNotification("ORDER_DISPATCHED", order, undefined, storefrontUrl);
+        await sendWhatsAppNotification("ORDER_DISPATCHED", order, undefined, storefrontUrl, { enabled: waEnabled });
       } else if (status === "delivered") {
-        await sendWhatsAppNotification("ORDER_DELIVERED", order);
+        await sendWhatsAppNotification("ORDER_DELIVERED", order, undefined, null, { enabled: waEnabled });
       }
     } catch (err) {
       console.error("[WhatsApp Status Update Trigger Error]:", err);
