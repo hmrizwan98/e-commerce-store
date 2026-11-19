@@ -1,13 +1,14 @@
 "use client";
 
 import { useFormatMoney } from "@/lib/currency/CurrencyContext";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Checkbox from "@/shared/Checkbox/Checkbox";
 import Slider from "rc-slider";
 import "rc-slider/assets/index.css";
 import Radio from "@/shared/Radio/Radio";
 import MySwitch from "@/components/MySwitch";
-import { FILTER_COLORS, FILTER_SIZES, PRICE_RANGE, SORT_OPTIONS } from "@/lib/filters/constants";
+import { SORT_OPTIONS } from "@/lib/filters/constants";
+import { facetLabel } from "@/lib/filters/facets";
 import { useFilterParams } from "@/hooks/useFilterParams";
 import type { FilterCategoryOption } from "@/components/TabFilters";
 
@@ -15,6 +16,8 @@ export interface SidebarFiltersProps {
   categories?: FilterCategoryOption[];
   availableColors?: string[];
   availableSizes?: string[];
+  /** [min, max] of the store's product prices (getFilterFacets); none -> no price filter. */
+  priceRange?: [number, number] | null;
   showHeader?: boolean;
   /** Theme Collection setting "Show sorting". */
   showSorting?: boolean;
@@ -23,8 +26,10 @@ export interface SidebarFiltersProps {
 // Every filter change commits straight to the URL
 const SidebarFilters = ({
   categories = [],
-  availableColors = FILTER_COLORS,
-  availableSizes = FILTER_SIZES,
+  // The store's own values only (getFilterFacets) - no demo colours/sizes/categories.
+  availableColors = [],
+  availableSizes = [],
+  priceRange = null,
   showHeader = true,
   showSorting = true,
 }: SidebarFiltersProps) => {
@@ -32,17 +37,13 @@ const SidebarFilters = ({
   const { filters, applyFilters, clearAll } = useFilterParams();
 
   // Dynamic Categories from props (or fallbacks)
-  const DATA_categories = categories.length > 0
-    ? categories.map((c) => ({ name: c.name }))
-    : [
-        { name: "All Categories" },
-        { name: "Clothing" },
-        { name: "Accessories" },
-        { name: "Footwear" },
-      ];
-
-  const DATA_colors = availableColors.map((name) => ({ name }));
-  const DATA_sizes = availableSizes.map((name) => ({ name }));
+  const priceMin = priceRange?.[0] ?? 0;
+  const priceMax = priceRange?.[1] ?? 0;
+  const PRICE_RANGE = useMemo<[number, number]>(() => [priceMin, priceMax], [priceMin, priceMax]);
+  const hasPrice = Boolean(priceRange && priceRange[1] > priceRange[0]);
+  const DATA_categories = categories.map((c) => ({ name: c.name }));
+  const DATA_colors = availableColors.map((name) => ({ name, label: facetLabel(name) }));
+  const DATA_sizes = availableSizes.map((name) => ({ name, label: facetLabel(name) }));
   const DATA_sortOrderRadios = SORT_OPTIONS;
 
   const [isOnSale, setIsIsOnSale] = useState(filters.sale);
@@ -66,7 +67,7 @@ const SidebarFilters = ({
       filters.minPrice ?? PRICE_RANGE[0],
       filters.maxPrice ?? PRICE_RANGE[1],
     ]);
-  }, [filters]);
+  }, [filters, PRICE_RANGE]);
 
   const hasActiveFilters =
     categoriesState.length > 0 ||
@@ -138,7 +139,7 @@ const SidebarFilters = ({
               key={item.name}
               id={`cat-filter-${item.name.toLowerCase().replace(/[^a-z0-9]/g, "-")}`}
               name={item.name}
-              label={item.name}
+              label={(item as { label?: string }).label ?? item.name}
               checked={categoriesState.includes(item.name)}
               sizeClassName="w-4 h-4 rounded"
               labelClassName="text-xs font-semibold text-slate-700 dark:text-slate-300"
@@ -162,7 +163,7 @@ const SidebarFilters = ({
               sizeClassName="w-4 h-4 rounded"
               labelClassName="text-xs font-semibold text-slate-700 dark:text-slate-300"
               name={item.name}
-              label={item.name}
+              label={(item as { label?: string }).label ?? item.name}
               checked={colorsState.includes(item.name)}
               onChange={(checked) => handleChangeColors(checked, item.name)}
             />
@@ -190,7 +191,7 @@ const SidebarFilters = ({
                     : "bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-indigo-400"
                 }`}
               >
-                {item.name}
+                {(item as { label?: string }).label ?? item.name}
               </button>
             );
           })}
@@ -281,10 +282,10 @@ const SidebarFilters = ({
         </div>
       )}
       <div className="divide-y divide-slate-100 dark:divide-slate-800">
-        {renderTabsCategories()}
-        {renderTabsColor()}
-        {renderTabsSize()}
-        {renderTabsPriceRange()}
+        {DATA_categories.length > 0 && renderTabsCategories()}
+        {DATA_colors.length > 0 && renderTabsColor()}
+        {DATA_sizes.length > 0 && renderTabsSize()}
+        {hasPrice && renderTabsPriceRange()}
         <div className="py-5">
           <MySwitch
             label="On Sale Only"

@@ -14,9 +14,10 @@ export interface ThemeFooterAdapterProps {
   logos?: ThemeLogos;
   storeName?: string;
   socialLinks?: GeneralSettings["socialLinks"];
+  storeContact?: Pick<GeneralSettings, "storeAddress" | "storeEmail" | "storePhone">;
 }
 
-export default function ThemeFooterAdapter({ footerSettings, logos, storeName, socialLinks }: ThemeFooterAdapterProps) {
+export default function ThemeFooterAdapter({ footerSettings, logos, storeName, socialLinks, storeContact }: ThemeFooterAdapterProps) {
   const variant = footerSettings?.variant || "multi-column";
 
   switch (variant) {
@@ -26,6 +27,6 @@ export default function ThemeFooterAdapter({ footerSettings, logos, storeName, s
       return <MinimalFooter footerSettings={footerSettings} logos={logos} storeName={storeName} socialLinks={socialLinks} />;
     case "multi-column":
     default:
-      return <MultiColumnFooter footerSettings={footerSettings} logos={logos} storeName={storeName} socialLinks={socialLinks} />;
+      return <MultiColumnFooter footerSettings={footerSettings} logos={logos} storeName={storeName} socialLinks={socialLinks} storeContact={storeContact} />;
   }
 }

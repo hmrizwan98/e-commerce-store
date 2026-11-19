@@ -1,4 +1,5 @@
 import "server-only";
+import { buildFilterFacets, type FacetProduct, type FilterFacets } from "@/lib/filters/facets";
 import { FieldPath, Timestamp } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase/admin";
 import { tenantCollection } from "@/lib/firebase/tenant-scope";
@@ -469,3 +470,29 @@ export async function getProductIdsForStore(storeId: string): Promise<string[]> 
   const snap = await adminDb().collection("stores").doc(storeId).collection(COLLECTION).select().get();
   return snap.docs.map((doc) => doc.id);
 }
+
+/**
+ * Filter options from this store's active products (colours, sizes, price range, categories
+ * that have products) - used by the product filters on collection/search pages and the
+ * homepage "trending" grid instead of hardcoded demo values. One lean read (only the fields
+ * needed), capped, cached 30s per store.
+ */
+export async function getFilterFacets(): Promise<FilterFacets> {
+  const empty: FilterFacets = { colors: [], sizes: [], priceRange: null, categoryIds: [] };
+  return safeQuery(
+    "getFilterFacets",
+    empty,
+    async () => {
+      const col = await tenantCollection(COLLECTION);
+      const snap = await col
+        .where("status", "==", "active")
+        .where("isDeleted", "==", false)
+        .select("price", "colorFacets", "sizeFacets", "categoryIds")
+        .limit(1000)
+        .get();
+      return buildFilterFacets(snap.docs.map((d) => d.data() as FacetProduct));
+    },
+    []
+  );
+}
+

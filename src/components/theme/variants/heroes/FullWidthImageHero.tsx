@@ -92,16 +92,49 @@ const FullWidthImageHero: FC<FullWidthImageHeroProps> = ({
   }
 
   const heightPx = banner?.heightPx ?? 480;
-  // If any slide has a dedicated mobile image, give the mobile container comfortable height for portrait/square art.
-  // Otherwise, use a natural landscape aspect ratio (aspect-[16/9]) so desktop banners aren't cropped into squares.
+  const fit = banner?.imageFit ?? "full";
+  const rounded = banner?.rounded === true;
+  // "cover": fixed height (merchant's Banner Height), crops to fill. "full": no fixed height -
+  // all slides share one grid cell and the banner is as tall as the tallest image, so the whole
+  // image is visible (it used to crop text that is part of the banner image).
   const hasAnyMobileImage = slides.some((s) => Boolean(s.imageMobile));
-  const mobileContainerClass = hasAnyMobileImage
+  const coverContainerClass = hasAnyMobileImage
     ? "h-[400px] sm:h-[460px] md:h-[var(--hero-h-desktop,500px)]"
     : "aspect-[16/9] sm:aspect-[21/9] md:aspect-auto md:h-[var(--hero-h-desktop,500px)] min-h-[220px]";
 
+  const renderImage = (src: string, extraClass: string, sizes: string, index: number, alt: string, bgPosClass: string) =>
+    fit === "cover" ? (
+      <Image
+        fill
+        sizes={sizes}
+        className={`${extraClass} w-full h-full object-cover ${bgPosClass}`}
+        src={src}
+        alt={alt}
+        priority={index === 0}
+        loading={index === 0 ? "eager" : "lazy"}
+        fetchPriority={index === 0 ? "high" : "low"}
+      />
+    ) : (
+      <Image
+        width={0}
+        height={0}
+        sizes={sizes}
+        style={{ width: "100%", height: "auto" }}
+        className={`${extraClass} block`}
+        src={src}
+        alt={alt}
+        priority={index === 0}
+        loading={index === 0 ? "eager" : "lazy"}
+        fetchPriority={index === 0 ? "high" : "low"}
+      />
+    );
+
   return (
+    <div className={rounded ? "container" : ""}>
     <div
-      className={`relative w-full overflow-hidden rounded-2xl md:rounded-3xl shadow-sm border border-slate-200/60 dark:border-slate-800 bg-slate-900 group select-none ${className}`}
+      className={`relative w-full overflow-hidden group select-none ${
+        rounded ? "rounded-2xl md:rounded-3xl" : ""
+      } ${fit === "cover" ? "bg-slate-900" : ""} ${className}`}
       style={{
         ["--hero-h-desktop" as any]: `${heightPx}px`,
       }}
@@ -109,7 +142,7 @@ const FullWidthImageHero: FC<FullWidthImageHeroProps> = ({
       onTouchEnd={handleTouchEnd}
     >
       {/* Slides Container */}
-      <div className={`relative w-full ${mobileContainerClass} overflow-hidden`}>
+      <div className={fit === "cover" ? `relative w-full ${coverContainerClass} overflow-hidden` : "grid w-full"}>
         {slides.map((item, index) => {
           const isActive = indexActive === index;
           const rawDesktop = typeof item.image === "string" ? item.image : (item.image as any)?.src;
@@ -118,59 +151,35 @@ const FullWidthImageHero: FC<FullWidthImageHeroProps> = ({
           const mobileSrc = rawMobile ? safeImageSrc(rawMobile) : null;
           const href = item.btnLink || (item as any).href || undefined;
           const bgPosClass = getObjectPositionClass(item.backgroundPosition);
+          const alt = item.heading || "Hero slide";
 
           const content = mobileSrc ? (
             <>
-              {/* Mobile Viewport (< md): Renders dedicated mobile image */}
-              <Image
-                fill
-                sizes="(max-width: 768px) 100vw, 1px"
-                className={`md:hidden w-full h-full object-cover ${bgPosClass}`}
-                src={mobileSrc}
-                alt={item.heading || "Hero slide"}
-                priority={index === 0}
-                loading={index === 0 ? "eager" : "lazy"}
-                fetchPriority={index === 0 ? "high" : "low"}
-              />
-              {/* Tablet & Desktop Viewport (>= md): Renders desktop image */}
-              <Image
-                fill
-                sizes="100vw"
-                className={`hidden md:block w-full h-full object-cover ${bgPosClass}`}
-                src={desktopSrc}
-                alt={item.heading || "Hero slide"}
-                priority={index === 0}
-                loading={index === 0 ? "eager" : "lazy"}
-                fetchPriority={index === 0 ? "high" : "low"}
-              />
+              {/* Phones (< md): the dedicated mobile image; tablet/desktop: the desktop image. */}
+              {renderImage(mobileSrc, "md:hidden", "(max-width: 768px) 100vw, 1px", index, alt, bgPosClass)}
+              {renderImage(desktopSrc, "hidden md:block", "100vw", index, alt, bgPosClass)}
             </>
           ) : (
-            /* Universal Desktop Image with merchant focal alignment */
-            <Image
-              fill
-              sizes="100vw"
-              className={`w-full h-full object-cover ${bgPosClass}`}
-              src={desktopSrc}
-              alt={item.heading || "Hero slide"}
-              priority={index === 0}
-              loading={index === 0 ? "eager" : "lazy"}
-              fetchPriority={index === 0 ? "high" : "low"}
-            />
+            renderImage(desktopSrc, "", "100vw", index, alt, bgPosClass)
           );
 
+          const slideClass =
+            fit === "cover"
+              ? `absolute inset-0 w-full h-full transition-all duration-700 ease-in-out ${
+                  isActive ? "opacity-100 scale-100 z-10" : "opacity-0 scale-105 z-0 pointer-events-none"
+                }`
+              : `[grid-area:1/1] self-center w-full transition-opacity duration-700 ease-in-out ${
+                  isActive ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none"
+                }`;
+
           return (
-            <div
-              key={(item as any).id ?? index}
-              className={`absolute inset-0 w-full h-full transition-all duration-700 ease-in-out ${
-                isActive ? "opacity-100 scale-100 z-10" : "opacity-0 scale-105 z-0 pointer-events-none"
-              }`}
-            >
+            <div key={(item as any).id ?? index} className={slideClass} aria-hidden={!isActive}>
               {href ? (
-                <Link href={href} className="block w-full h-full relative cursor-pointer">
+                <Link href={href} className={`block w-full relative cursor-pointer ${fit === "cover" ? "h-full" : ""}`} tabIndex={isActive ? 0 : -1}>
                   {content}
                 </Link>
               ) : (
-                <div className="w-full h-full relative">
+                <div className={`w-full relative ${fit === "cover" ? "h-full" : ""}`}>
                   {content}
                 </div>
               )}
@@ -219,6 +228,7 @@ const FullWidthImageHero: FC<FullWidthImageHeroProps> = ({
           </div>
         </>
       )}
+    </div>
     </div>
   );
 };

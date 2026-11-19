@@ -1,5 +1,6 @@
 "use client";
 
+import type { FilterFacets } from "@/lib/filters/facets";
 import React, { FC, useState } from "react";
 import Nav from "@/shared/Nav/Nav";
 import NavItem from "@/shared/NavItem/NavItem";
@@ -12,11 +13,14 @@ import { useFilterParams } from "@/hooks/useFilterParams";
 export interface HeaderFilterSearchPageProps {
   className?: string;
   categories?: FilterCategoryOption[];
+  /** The store's own filter options (getFilterFacets). */
+  facets?: Pick<FilterFacets, "colors" | "sizes" | "priceRange">;
 }
 
 const HeaderFilterSearchPage: FC<HeaderFilterSearchPageProps> = ({
   className = "mb-12",
   categories = [],
+  facets,
 }) => {
   const [isOpen, setIsOpen] = useState(true);
   const { filters, applyFilters } = useFilterParams();
@@ -102,7 +106,7 @@ const HeaderFilterSearchPage: FC<HeaderFilterSearchPageProps> = ({
         leaveTo="opacity-0"
       >
         <div className="w-full border-b border-neutral-200/70 dark:border-neutral-700 my-8"></div>
-        <TabFilters categories={categories} />
+        <TabFilters categories={categories} colors={facets?.colors} sizes={facets?.sizes} priceRange={facets?.priceRange} />
       </Transition>
     </div>
   );

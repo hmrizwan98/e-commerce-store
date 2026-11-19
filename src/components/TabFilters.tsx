@@ -11,7 +11,9 @@ import "rc-slider/assets/index.css";
 import Radio from "@/shared/Radio/Radio";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
 import MySwitch from "@/components/MySwitch";
-import { FILTER_COLORS, FILTER_SIZES, PRICE_RANGE, SORT_OPTIONS } from "@/lib/filters/constants";
+import { SORT_OPTIONS } from "@/lib/filters/constants";
+import { useFormatMoney } from "@/lib/currency/CurrencyContext";
+import { facetLabel } from "@/lib/filters/facets";
 import { useFilterParams } from "@/hooks/useFilterParams";
 
 export interface FilterCategoryOption {
@@ -23,13 +25,22 @@ export interface TabFiltersProps {
   categories?: FilterCategoryOption[];
   /** Theme Collection setting "Show sorting". */
   showSorting?: boolean;
+  /** The store's own option values (from its products - see getFilterFacets). A filter with no
+   * values is hidden; nothing is invented (it used to list demo colours/sizes and a $1-$500 range). */
+  colors?: string[];
+  sizes?: string[];
+  /** [min, max] of the store's product prices; no range -> no price filter. */
+  priceRange?: [number, number] | null;
 }
 
-const DATA_colors = FILTER_COLORS.map((name) => ({ name }));
-const DATA_sizes = FILTER_SIZES.map((name) => ({ name }));
 const DATA_sortOrderRadios = SORT_OPTIONS;
 
-const TabFilters = ({ categories = [], showSorting = true }: TabFiltersProps) => {
+const TabFilters = ({ categories = [], showSorting = true, colors = [], sizes = [], priceRange = null }: TabFiltersProps) => {
+  const formatMoney = useFormatMoney();
+  const PRICE_RANGE: [number, number] = priceRange ?? [0, 0];
+  const hasPrice = Boolean(priceRange && priceRange[1] > priceRange[0]);
+  const DATA_colors = colors.map((name) => ({ name, label: facetLabel(name) }));
+  const DATA_sizes = sizes.map((name) => ({ name, label: facetLabel(name) }));
   const { filters, applyFilters, clearAll } = useFilterParams();
   // Category filter values round-trip through the URL as category *names*
   // (matching this component's existing name-keyed state) - searchProducts()
@@ -221,7 +232,7 @@ const TabFilters = ({ categories = [], showSorting = true }: TabFiltersProps) =>
                       <div key={item.name} className="">
                         <Checkbox
                           name={item.name}
-                          label={item.name}
+                          label={(item as { label?: string }).label ?? item.name}
                           defaultChecked={categoriesState.includes(item.name)}
                           onChange={(checked) =>
                             handleChangeCategories(checked, item.name)
@@ -484,7 +495,7 @@ const TabFilters = ({ categories = [], showSorting = true }: TabFiltersProps) =>
                       <div key={item.name} className="">
                         <Checkbox
                           name={item.name}
-                          label={item.name}
+                          label={(item as { label?: string }).label ?? item.name}
                           defaultChecked={colorsState.includes(item.name)}
                           onChange={(checked) =>
                             handleChangeColors(checked, item.name)
@@ -605,7 +616,7 @@ const TabFilters = ({ categories = [], showSorting = true }: TabFiltersProps) =>
                       <div key={item.name} className="">
                         <Checkbox
                           name={item.name}
-                          label={item.name}
+                          label={(item as { label?: string }).label ?? item.name}
                           defaultChecked={sizesState.includes(item.name)}
                           onChange={(checked) =>
                             handleChangeSizes(checked, item.name)
@@ -682,7 +693,7 @@ const TabFilters = ({ categories = [], showSorting = true }: TabFiltersProps) =>
                 />
               </svg>
 
-              <span className="ml-2 min-w-[90px]">{`${rangePrices[0]}$ - ${rangePrices[1]}$`}</span>
+              <span className="ml-2 min-w-[90px]">{`${formatMoney(rangePrices[0])} - ${formatMoney(rangePrices[1])}`}</span>
               {rangePrices[0] === PRICE_RANGE[0] &&
               rangePrices[1] === PRICE_RANGE[1] ? null : (
                 <span
@@ -731,16 +742,13 @@ const TabFilters = ({ categories = [], showSorting = true }: TabFiltersProps) =>
                           Min price
                         </label>
                         <div className="mt-1 relative rounded-md">
-                          <span className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-neutral-500 sm:text-sm">
-                            $
-                          </span>
                           <input
                             type="text"
                             name="minPrice"
                             disabled
                             id="minPrice"
                             className="block w-32 pr-10 pl-4 sm:text-sm border-neutral-200 dark:border-neutral-700 rounded-full bg-transparent"
-                            value={rangePrices[0]}
+                            value={formatMoney(rangePrices[0])}
                           />
                         </div>
                       </div>
@@ -752,16 +760,13 @@ const TabFilters = ({ categories = [], showSorting = true }: TabFiltersProps) =>
                           Max price
                         </label>
                         <div className="mt-1 relative rounded-md">
-                          <span className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-neutral-500 sm:text-sm">
-                            $
-                          </span>
                           <input
                             type="text"
                             disabled
                             name="maxPrice"
                             id="maxPrice"
                             className="block w-32 pr-10 pl-4 sm:text-sm border-neutral-200 dark:border-neutral-700 rounded-full bg-transparent"
-                            value={rangePrices[1]}
+                            value={formatMoney(rangePrices[1])}
                           />
                         </div>
                       </div>
@@ -1015,31 +1020,38 @@ const TabFilters = ({ categories = [], showSorting = true }: TabFiltersProps) =>
                     <div className="px-6 sm:px-8 md:px-10 divide-y divide-neutral-200 dark:divide-neutral-800">
                       {/* --------- */}
                       {/* ---- */}
+                      {DATA_categories.length > 0 && (
                       <div className="py-7">
                         <h3 className="text-xl font-medium">Categories</h3>
                         <div className="mt-6 relative ">
                           {renderMoreFilterItem(DATA_categories)}
                         </div>
                       </div>
+                      )}
                       {/* --------- */}
                       {/* ---- */}
+                      {DATA_colors.length > 0 && (
                       <div className="py-7">
                         <h3 className="text-xl font-medium">Colors</h3>
                         <div className="mt-6 relative ">
                           {renderMoreFilterItem(DATA_colors)}
                         </div>
                       </div>
+                      )}
                       {/* --------- */}
                       {/* ---- */}
+                      {DATA_sizes.length > 0 && (
                       <div className="py-7">
                         <h3 className="text-xl font-medium">Size</h3>
                         <div className="mt-6 relative ">
                           {renderMoreFilterItem(DATA_sizes)}
                         </div>
                       </div>
+                      )}
 
                       {/* --------- */}
                       {/* ---- */}
+                      {hasPrice && (
                       <div className="py-7">
                         <h3 className="text-xl font-medium">Range Prices</h3>
                         <div className="mt-6 relative ">
@@ -1067,18 +1079,13 @@ const TabFilters = ({ categories = [], showSorting = true }: TabFiltersProps) =>
                                   Min price
                                 </label>
                                 <div className="mt-1 relative rounded-md">
-                                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <span className="text-neutral-500 sm:text-sm">
-                                      $
-                                    </span>
-                                  </div>
                                   <input
                                     type="text"
                                     name="minPrice"
                                     disabled
                                     id="minPrice"
                                     className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-7 pr-3 sm:text-sm border-neutral-200 rounded-full text-neutral-900"
-                                    value={rangePrices[0]}
+                                    value={formatMoney(rangePrices[0])}
                                   />
                                 </div>
                               </div>
@@ -1090,18 +1097,13 @@ const TabFilters = ({ categories = [], showSorting = true }: TabFiltersProps) =>
                                   Max price
                                 </label>
                                 <div className="mt-1 relative rounded-md">
-                                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <span className="text-neutral-500 sm:text-sm">
-                                      $
-                                    </span>
-                                  </div>
                                   <input
                                     type="text"
                                     disabled
                                     name="maxPrice"
                                     id="maxPrice"
                                     className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-7 pr-3 sm:text-sm border-neutral-200 rounded-full text-neutral-900"
-                                    value={rangePrices[1]}
+                                    value={formatMoney(rangePrices[1])}
                                   />
                                 </div>
                               </div>
@@ -1109,6 +1111,7 @@ const TabFilters = ({ categories = [], showSorting = true }: TabFiltersProps) =>
                           </div>
                         </div>
                       </div>
+                      )}
 
                       {/* --------- */}
                       {/* ---- */}
@@ -1185,10 +1188,10 @@ const TabFilters = ({ categories = [], showSorting = true }: TabFiltersProps) =>
     <div className="flex lg:space-x-4">
       {/* FOR DESKTOP */}
       <div className="hidden lg:flex flex-1 space-x-4">
-        {renderTabsPriceRage()}
-        {renderTabsCategories()}
-        {renderTabsColor()}
-        {renderTabsSize()}
+        {hasPrice && renderTabsPriceRage()}
+        {DATA_categories.length > 0 && renderTabsCategories()}
+        {DATA_colors.length > 0 && renderTabsColor()}
+        {DATA_sizes.length > 0 && renderTabsSize()}
         {renderTabIsOnsale()}
         {showSorting && <div className="!ml-auto">{renderTabsSortOrder()}</div>}
       </div>

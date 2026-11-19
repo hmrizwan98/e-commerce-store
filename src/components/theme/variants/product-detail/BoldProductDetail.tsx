@@ -37,7 +37,6 @@ export default function BoldProductDetail({
   productCardSettings,
   productDetailSettings,
   storeInfo,
-  promoBanner,
 }: BoldProductDetailProps) {
   const s = useProductDetailState(product, variants);
   const showCompare = productDetailSettings?.showCompare ?? true;
@@ -126,7 +125,6 @@ export default function BoldProductDetail({
           product={product}
           reviews={reviews}
           relatedProducts={relatedProducts}
-          promoBanner={promoBanner}
           crossSellProducts={crossSellProducts}
           upsellProducts={upsellProducts}
           productCardSettings={productCardSettings}

@@ -6,6 +6,8 @@ import ThemeProductCardAdapter from "@/components/theme/ThemeProductCardAdapter"
 import { searchProducts, getFeaturedProducts } from "@/lib/firebase/repositories/products";
 import { getFirstBanner } from "@/lib/firebase/repositories/banners";
 import { getCategories } from "@/lib/firebase/repositories/categories";
+import { getFilterFacets } from "@/lib/firebase/repositories/products";
+import { categoriesWithProducts } from "@/lib/filters/facets";
 import { parseProductSearchParams, buildPageHref, type RawSearchParams } from "@/lib/filters/parse-search-params";
 import TabFilters from "@/components/TabFilters";
 import SidebarFilters from "@/components/SidebarFilters";
@@ -31,7 +33,7 @@ export default async function CollectionPageView({
   const params = parseProductSearchParams(searchParams, theme.collection?.productsPerPage);
   const showFeatured = theme.collection?.showFeaturedSection ?? true;
   const showPromo = theme.collection?.showBottomPromo ?? true;
-  const [{ products, totalPages }, categories, extraSections, featured, promoBanner] = await Promise.all([
+  const [{ products, totalPages }, allCategories, extraSections, featured, promoBanner, facets] = await Promise.all([
     searchProducts(params),
     getCategories(),
     // Sections the admin added to this page in the Customizer, below the page content.
@@ -39,8 +41,12 @@ export default async function CollectionPageView({
     // Bottom sections use the store's own featured products / promo1 banner - empty -> hidden.
     showFeatured ? getFeaturedProducts(3).catch(() => []) : Promise.resolve([]),
     showPromo ? getFirstBanner("promo1").catch(() => null) : Promise.resolve(null),
+    // Filter options from the store's own products (no demo colours/sizes or $1-$500 range).
+    getFilterFacets(),
   ]);
 
+  // Only categories that actually have products.
+  const categories = categoriesWithProducts(allCategories, facets);
   const isSidebarFilter = theme.collection?.filterPosition !== "top";
   const showFilters = theme.collection?.showSidebarFilter ?? true;
   const showSorting = theme.collection?.showSorting ?? true;
@@ -92,7 +98,7 @@ export default async function CollectionPageView({
                 {showFilters && (
                   <div className="w-full lg:w-64 xl:w-72 shrink-0">
                     <div className="sticky top-28 bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-sm">
-                      <SidebarFilters categories={categories} showHeader={true} showSorting={showSorting} />
+                      <SidebarFilters categories={categories} availableColors={facets.colors} availableSizes={facets.sizes} priceRange={facets.priceRange} showHeader={true} showSorting={showSorting} />
                     </div>
                   </div>
                 )}
@@ -126,7 +132,7 @@ export default async function CollectionPageView({
             ) : (
               /* Top Tab Filters */
               <div>
-                {showFilters && <TabFilters categories={categories} showSorting={showSorting} />}
+                {showFilters && <TabFilters categories={categories} colors={facets.colors} sizes={facets.sizes} priceRange={facets.priceRange} showSorting={showSorting} />}
                 <div className={`grid ${gridColsClass} ${GRID_GAP_WIDE} mt-8 lg:mt-10`}>
                   {products.map((item) => (
                     <ThemeProductCardAdapter data={item} productCardSettings={theme.productCard} key={item.id} />

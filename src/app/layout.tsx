@@ -249,6 +249,7 @@ export default async function RootLayout({
             hiddenNavHrefs={hiddenNavHrefs}
             logos={theme.logos}
             socialLinks={general.socialLinks}
+            storeContact={{ storeAddress: general.storeAddress, storeEmail: general.storeEmail, storePhone: general.storePhone }}
           >
             {suspended ? (
               <div className="flex min-h-[60vh] flex-col items-center justify-center gap-2 px-6 text-center">

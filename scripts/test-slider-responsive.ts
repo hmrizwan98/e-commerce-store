@@ -66,7 +66,9 @@ test("FullWidthImageHero: desktop-only image uses landscape aspect ratio on mobi
   );
 
   const html = ReactDOMServer.renderToStaticMarkup(
-    React.createElement(FullWidthImageHero, { data: [slide] })
+    // "cover" (fill a fixed height) is now an opt-in Customizer setting; the default shows the
+    // whole image - checked in the next test.
+    React.createElement(FullWidthImageHero, { data: [slide], banner: { imageFit: "cover" } })
   );
 
   // When no mobile image is set, mobile container uses aspect-[16/9] so wide landscape banners aren't cropped into squares
@@ -75,6 +77,16 @@ test("FullWidthImageHero: desktop-only image uses landscape aspect ratio on mobi
   assert.ok(html.includes("object-left"), "Expected object-left to be applied from backgroundPosition");
   // Single image: no redundant arrows
   assert.ok(!html.includes("aria-label=\"Go to slide 2\""), "Single slide should not have pagination for slide 2");
+});
+
+test("FullWidthImageHero: default shows the WHOLE image (no fixed height, no crop, no forced rounding)", () => {
+  const slide = toHeroSlide(makeBanner({ imageDesktop: "/images/wide-banner-1584x672.webp" }));
+  const html = ReactDOMServer.renderToStaticMarkup(React.createElement(FullWidthImageHero, { data: [slide] }));
+  assert.ok(html.includes("height:auto"), "image keeps its own aspect ratio");
+  assert.ok(!html.includes("object-cover"), "no cropping by default");
+  assert.ok(!html.includes("rounded-2xl"), "no rounded corners unless enabled");
+  const rounded = ReactDOMServer.renderToStaticMarkup(React.createElement(FullWidthImageHero, { data: [slide], banner: { rounded: true } }));
+  assert.ok(rounded.includes("rounded-2xl") && rounded.includes('class="container"'), "rounded = inset inside the container");
 });
 
 test("FullWidthImageHero: mobile image provides dedicated mobile and desktop artwork and taller mobile container", () => {
@@ -87,7 +99,7 @@ test("FullWidthImageHero: mobile image provides dedicated mobile and desktop art
   );
 
   const html = ReactDOMServer.renderToStaticMarkup(
-    React.createElement(FullWidthImageHero, { data: [slide] })
+    React.createElement(FullWidthImageHero, { data: [slide], banner: { imageFit: "cover" } })
   );
 
   // Container adapts to comfortable height for portrait mobile image

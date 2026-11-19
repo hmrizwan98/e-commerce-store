@@ -1,6 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
+import { useFilterParams } from "@/hooks/useFilterParams";
+import { applyClientFilters, buildFilterFacets } from "@/lib/filters/facets";
 import HeaderFilterSection from "@/components/HeaderFilterSection";
 import ThemeProductCardAdapter from "@/components/theme/ThemeProductCardAdapter";
 import type { Product } from "@/types/product";
@@ -22,9 +24,16 @@ export default function SectionGridFeatureItems({
   productCardSettings,
 }: SectionGridFeatureItemsProps) {
   const [activeTab, setActiveTab] = useState("All items");
+  const { filters } = useFilterParams();
+  // Filter options (colours, sizes, price range) come from THIS section's products, in the
+  // store's currency - never demo values.
+  const facets = useMemo(() => buildFilterFacets(data), [data]);
 
-  // Build dynamic category tabs list
-  const categoryNames = (categories ?? []).map((c) => c.name).filter(Boolean);
+  // Tabs: only categories that have products in this section.
+  const categoryNames = (categories ?? [])
+    .filter((c) => data.some((p) => p.categoryIds?.includes(c.id)))
+    .map((c) => c.name)
+    .filter(Boolean);
   const tabs = ["All items", ...categoryNames];
 
   // Dynamic filtering based on active category tab
@@ -41,7 +50,9 @@ export default function SectionGridFeatureItems({
     return tags.some((t) => t.includes(catName)) || name.includes(catName);
   });
 
-  const displayProducts = activeTab === "All items" ? data : filteredProducts;
+  // The Filter panel writes URL params (same as the collection page); here they are applied to
+  // the loaded list (it used to change the URL without filtering anything on the homepage).
+  const displayProducts = applyClientFilters(activeTab === "All items" ? data : filteredProducts, filters);
 
   return (
     <div className="nc-SectionGridFeatureItems relative">
@@ -51,6 +62,9 @@ export default function SectionGridFeatureItems({
         tabs={tabs}
         activeTab={activeTab}
         onTabChange={(tab) => setActiveTab(tab)}
+        filterColors={facets.colors}
+        filterSizes={facets.sizes}
+        filterPriceRange={facets.priceRange}
       />
       
       {displayProducts.length > 0 ? (

@@ -9,7 +9,9 @@ import {
   searchProducts,
   searchProductsByName,
   getFeaturedProducts,
+  getFilterFacets,
 } from "@/lib/firebase/repositories/products";
+import { categoriesWithProducts } from "@/lib/filters/facets";
 import { getFirstBanner } from "@/lib/firebase/repositories/banners";
 import { getCategories } from "@/lib/firebase/repositories/categories";
 import { getActiveThemeConfig } from "@/lib/theme/theme-repository";
@@ -26,14 +28,16 @@ const PageSearch = async ({ searchParams }: { searchParams: RawSearchParams }) =
   const q = typeof searchParams.q === "string" ? searchParams.q : undefined;
   const params = parseProductSearchParams(searchParams, (await getActiveThemeConfig()).collection?.productsPerPage);
 
-  const [result, categories, theme, featured, promoBanner] = await Promise.all([
+  const [result, allCategories, theme, featured, promoBanner, facets] = await Promise.all([
     q ? searchProductsByName(q, params.pageSize) : searchProducts(params),
     getCategories(),
     getActiveThemeConfig(),
     // The store's own featured products and promo1 banner - hidden when there are none.
     getFeaturedProducts(3).catch(() => []),
     getFirstBanner("promo1").catch(() => null),
+    getFilterFacets(),
   ]);
+  const categories = categoriesWithProducts(allCategories, facets);
   const products = Array.isArray(result) ? result : result.products;
   const totalPages = Array.isArray(result) ? 1 : result.totalPages;
 
@@ -51,7 +55,7 @@ const PageSearch = async ({ searchParams }: { searchParams: RawSearchParams }) =
       <div className="container py-16 lg:pb-28 lg:pt-20 space-y-16 lg:space-y-28">
         <main>
           {/* FILTER */}
-          <HeaderFilterSearchPage categories={categories} />
+          <HeaderFilterSearchPage categories={categories} facets={facets} />
 
           {q && (
             <p className="mb-6 text-slate-500 dark:text-slate-400">

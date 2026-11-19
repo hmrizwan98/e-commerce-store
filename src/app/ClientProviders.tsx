@@ -42,6 +42,8 @@ export interface ClientProvidersProps {
   hiddenNavHrefs?: string[];
   logos?: ThemeLogos;
   socialLinks?: GeneralSettings["socialLinks"];
+  /** Settings → General address/email/phone for the footer's contact column. */
+  storeContact?: Pick<GeneralSettings, "storeAddress" | "storeEmail" | "storePhone">;
 }
 
 /**
@@ -64,6 +66,7 @@ const ClientProviders: React.FC<ClientProvidersProps> = ({
   hiddenNavHrefs,
   logos,
   socialLinks,
+  storeContact,
 }) => {
   const pathname = usePathname();
   const isAdminRoute = Boolean(
@@ -119,7 +122,7 @@ const ClientProviders: React.FC<ClientProvidersProps> = ({
           <SiteHeader headerSettings={headerSettings} cartSettings={cartSettings} logos={logos} storeName={storeName} />
           {children}
           <CommonClient />
-          <Footer footerSettings={footerSettings} logos={logos} storeName={storeName} socialLinks={socialLinks} />
+          <Footer footerSettings={footerSettings} logos={logos} storeName={storeName} socialLinks={socialLinks} storeContact={storeContact} />
           <WhatsAppButton />
           <ThemePopupModal popupConfig={popupConfig} tenantId={tenantId} themePresetId={themePresetId} />
         </Provider>

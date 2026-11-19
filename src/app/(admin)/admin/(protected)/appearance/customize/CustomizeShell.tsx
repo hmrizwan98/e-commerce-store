@@ -373,7 +373,8 @@ export default function CustomizeShell({ initialDraft, homepage, navigation, sec
     },
   ]).map((sec) =>
     sec.id === "sec-prod-promo"
-      ? { ...sec, isActive: draft.productDetail?.showBottomPromo ?? true }
+      ? // Product-page promo uses the Promo Banner 2 slot unless the merchant picks another.
+        { ...sec, isActive: draft.productDetail?.showBottomPromo ?? true, config: { variant: 2 as const, ...(sec.config ?? {}) } }
       : sec.id === "sec-prod-related"
       ? { ...sec, isActive: draft.productDetail?.showRelatedProducts ?? true }
       : sec
@@ -659,13 +660,36 @@ export default function CustomizeShell({ initialDraft, homepage, navigation, sec
     [activeGlobalTab]
   );
 
-  const selectedHomepageSection = useMemo(
-    () => sections.find((s) => s.id === selectedSectionId),
-    [sections, selectedSectionId]
-  );
+  // A selected section can be on the homepage OR on the product / collection page lists - their
+  // inspectors used to open only for homepage sections, so product-page sections (e.g. the
+  // "Special Offer Banner") could not be edited. Built-ins whose content the page computes
+  // itself (related products, the collection page's own promo/categories) stay toggle/reorder only.
+  const NON_EDITABLE_PAGE_SECTIONS = ["sec-prod-related", "sec-col-promo", "sec-col-categories"];
+  const selectedSectionScope: "home" | "product" | "collection" | null = useMemo(() => {
+    if (!selectedSectionId) return null;
+    if (sections.some((s) => s.id === selectedSectionId)) return "home";
+    if (NON_EDITABLE_PAGE_SECTIONS.includes(selectedSectionId)) return null;
+    if (productSections.some((s) => s.id === selectedSectionId)) return "product";
+    if (collectionSections.some((s) => s.id === selectedSectionId)) return "collection";
+    return null;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sections, productSections, collectionSections, selectedSectionId]);
+
+  const selectedHomepageSection = useMemo(() => {
+    const list = selectedSectionScope === "product" ? productSections : selectedSectionScope === "collection" ? collectionSections : sections;
+    return list.find((s) => s.id === selectedSectionId);
+  }, [sections, productSections, collectionSections, selectedSectionId, selectedSectionScope]);
 
   const updateSelectedSection = (patch: Partial<HomepageSection>) => {
     if (!selectedSectionId) return;
+    if (selectedSectionScope === "product") {
+      updateProductSections(productSections.map((s) => (s.id === selectedSectionId ? { ...s, ...patch } : s)));
+      return;
+    }
+    if (selectedSectionScope === "collection") {
+      updateCollectionSections(collectionSections.map((s) => (s.id === selectedSectionId ? { ...s, ...patch } : s)));
+      return;
+    }
     const next = sections.map((s) => (s.id === selectedSectionId ? { ...s, ...patch } : s));
     updateDraftSections(next);
   };

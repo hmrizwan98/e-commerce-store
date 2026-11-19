@@ -4,6 +4,7 @@ import { docData } from "./utils";
 import { isPublicBlogPost } from "@/lib/blog/visibility";
 import { isPublicTestimonial } from "@/lib/testimonials/seed";
 import { isBannerLive } from "@/lib/banners/schedule";
+import { realImage } from "@/lib/images/real-image";
 import type { BlogPost } from "@/types/blog-post";
 import type { Testimonial } from "@/types/testimonial";
 import type { CmsPage } from "@/types/page";
@@ -69,5 +70,9 @@ export async function queryLiveBanners(db: Firestore, storeId: string, placement
     .where("isActive", "==", true)
     .orderBy("order", "asc")
     .get();
-  return snap.docs.map((d) => docData<Banner>(d)).filter((b): b is Banner => b !== null && isBannerLive(b, now));
+  return snap.docs
+    .map((d) => docData<Banner>(d))
+    .filter((b): b is Banner => b !== null && isBannerLive(b, now))
+    // A placeholder image (e.g. installer sample promos) is "no image" on the storefront.
+    .map((b) => ({ ...b, imageDesktop: realImage(b.imageDesktop) ?? "", imageMobile: realImage(b.imageMobile) }));
 }

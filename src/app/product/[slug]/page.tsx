@@ -7,10 +7,10 @@ import {
 } from "@/lib/firebase/repositories/products";
 import { getApprovedReviewsByProduct } from "@/lib/firebase/repositories/reviews";
 import { getActiveThemeConfig } from "@/lib/theme/theme-repository";
-import { getFirstBanner } from "@/lib/firebase/repositories/banners";
 import ThemeProductDetailAdapter from "@/components/theme/ThemeProductDetailAdapter";
 import { getPaymentSettings, getShippingSettings, getGeneralSettings } from "@/lib/firebase/repositories/site-settings";
 import ExtraPageSections from "@/components/collection/ExtraPageSections";
+import { productPageSections } from "@/lib/theme/page-sections";
 
 import type { Metadata } from "next";
 
@@ -59,7 +59,7 @@ export default async function ProductDetailPage({
     notFound();
   }
 
-  const [variants, relatedProducts, reviews, crossSellProducts, upsellProducts, theme, shipping, payments, promoBanner, general] = await Promise.all([
+  const [variants, relatedProducts, reviews, crossSellProducts, upsellProducts, theme, shipping, payments, general] = await Promise.all([
     getProductVariants(product.id),
     getRelatedProducts(product),
     getApprovedReviewsByProduct(product.id, 6),
@@ -68,8 +68,6 @@ export default async function ProductDetailPage({
     getActiveThemeConfig(),
     getShippingSettings().catch(() => null),
     getPaymentSettings().catch(() => null),
-    // Store Admin → Promo Banners, slot "promo2" (the product page's promo block).
-    getFirstBanner("promo2").catch(() => null),
     getGeneralSettings().catch(() => null),
   ]);
   // Real delivery / COD facts for the "Delivery & Returns" block (nothing invented).
@@ -110,9 +108,9 @@ export default async function ProductDetailPage({
         productCardSettings={theme.productCard}
         productDetailSettings={theme.productDetail}
         storeInfo={storeInfo}
-        promoBanner={promoBanner}
       />
-      <ExtraPageSections sections={theme.productDetail?.sections} theme={theme} />
+      {/* Built-in promo + merchant-added sections, in Customizer order (Customizer → Product page). */}
+      <ExtraPageSections sections={productPageSections(theme.productDetail)} theme={theme} resolved />
     </>
   );
 }

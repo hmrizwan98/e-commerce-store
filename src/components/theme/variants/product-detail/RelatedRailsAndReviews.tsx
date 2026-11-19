@@ -5,20 +5,16 @@ import { StarIcon } from "@heroicons/react/24/solid";
 import SectionSliderProductCard from "@/components/SectionSliderProductCard";
 import ReviewItem from "@/components/ReviewItem";
 import ButtonSecondary from "@/shared/Button/ButtonSecondary";
-import SectionPromo2 from "@/components/SectionPromo2";
 import ModalViewAllReviews from "@/app/product-detail/ModalViewAllReviews";
 import RecentlyViewedSection from "@/components/RecentlyViewedSection";
 import type { Product } from "@/types/product";
 import type { Review } from "@/types/review";
-import type { Banner } from "@/types/banner";
 import type { ProductCardThemeConfig, ProductDetailThemeConfig } from "@/lib/theme/theme-types";
 
 export interface RelatedRailsAndReviewsProps {
   product: Product;
   reviews: Review[];
   relatedProducts: Product[];
-  /** Store Admin → Promo Banners, slot "promo2" - no banner, no promo block. */
-  promoBanner?: Banner | null;
   crossSellProducts: Product[];
   upsellProducts: Product[];
   productCardSettings?: ProductCardThemeConfig;
@@ -31,7 +27,6 @@ export default function RelatedRailsAndReviews({
   product,
   reviews,
   relatedProducts,
-  promoBanner,
   crossSellProducts,
   upsellProducts,
   productCardSettings,
@@ -41,7 +36,6 @@ export default function RelatedRailsAndReviews({
 }: RelatedRailsAndReviewsProps) {
   const showReviews = productDetailSettings?.showReviews ?? true;
   const showRelated = productDetailSettings?.showRelatedProducts ?? true;
-  const showPromo = productDetailSettings?.showBottomPromo ?? true;
 
   return (
     <div className="mt-12 sm:mt-16 space-y-10 sm:space-y-16 pb-20 lg:pb-32">
@@ -127,11 +121,6 @@ export default function RelatedRailsAndReviews({
 
       <RecentlyViewedSection excludeProductId={product.id} productCardSettings={productCardSettings} />
 
-      {showPromo && promoBanner && (
-        <div className="pb-20 xl:pb-28 lg:pt-14">
-          <SectionPromo2 banner={promoBanner} />
-        </div>
-      )}
 
       <ModalViewAllReviews
         show={isOpenModalViewAllReviews}

@@ -17,6 +17,7 @@ import SectionMagazine5 from '@/app/blog/SectionMagazine5';
 import SectionBrands from '@/components/SectionBrands';
 import SectionSocialGallery from '@/components/SectionSocialGallery';
 import JsonLd from '@/components/seo/JsonLd';
+import { realImage } from '@/lib/images/real-image';
 
 import {
   getFeaturedProducts,
@@ -153,7 +154,7 @@ async function renderSectionInner(
       const placement = variant === 2 ? 'promo2' : variant === 3 ? 'promo3' : 'promo1';
       const banners = await getBannersByPlacement(placement);
       const dbBanner = banners[0];
-      const promoImage = section.config.imageUrl || dbBanner?.imageDesktop;
+      const promoImage = realImage(section.config.imageUrl) || realImage(dbBanner?.imageDesktop);
       const promoTitle = heading || dbBanner?.title;
       // No banner in Store Admin → Promo Banners and no image/heading set on the section: hide it.
       if (!promoImage && !promoTitle) return null;

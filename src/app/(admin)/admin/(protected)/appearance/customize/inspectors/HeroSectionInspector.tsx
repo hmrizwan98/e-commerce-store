@@ -94,7 +94,36 @@ export default function HeroSectionInspector({ draft, onChange }: HeroSectionIns
 
         <div>
           <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-            Banner Height (px)
+            Image Display
+          </label>
+          <NativeSelect size="sm"
+            className={inputClass}
+            value={banner.imageFit ?? "full"}
+            onChange={(e) => updateBanner({ imageFit: e.target.value as "full" | "cover" })}
+          >
+            <option value="full">Show the whole image (no cropping)</option>
+            <option value="cover">Fill a fixed height (may crop edges)</option>
+          </NativeSelect>
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+            Choose &quot;whole image&quot; when your banner image contains text. Add a separate mobile image on each slide for phones.
+          </p>
+        </div>
+
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={banner.rounded ?? false}
+            onChange={(e) => updateBanner({ rounded: e.target.checked })}
+            className="w-4 h-4 rounded text-sky-600 focus:ring-sky-500"
+          />
+          <span className="text-xs font-semibold text-slate-900 dark:text-slate-100">
+            Rounded corners (inset from the screen edge)
+          </span>
+        </label>
+
+        <div className={(banner.imageFit ?? "full") === "full" ? "opacity-60" : ""}>
+          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+            Banner Height (px){(banner.imageFit ?? "full") === "full" ? " - used with “Fill a fixed height”" : ""}
           </label>
           <input
             type="number"

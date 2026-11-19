@@ -183,9 +183,11 @@ test("categories link to their real page (/category/{slug}), never the non-exist
 });
 
 test("promo slots on other pages use the store's real banner or nothing", () => {
-  assert.match(read("src/app/product/[slug]/page.tsx"), /getFirstBanner\("promo2"\)/);
-  assert.match(read("src/app/product/[slug]/ProductDetailClient.tsx"), /showBottomPromo \?\? true\) && promoBanner &&/);
-  assert.match(read("src/components/theme/variants/product-detail/RelatedRailsAndReviews.tsx"), /showPromo && promoBanner &&/);
+  // Product page: the promo is the Customizer's "Special Offer Banner" section, rendered by the
+  // shared section renderer (store's Promo Banner 2 / the section's own content, or nothing).
+  assert.match(read("src/app/product/[slug]/page.tsx"), /<ExtraPageSections sections=\{productPageSections\(theme\.productDetail\)\} theme=\{theme\} resolved \/>/);
+  assert.doesNotMatch(code("src/app/product/[slug]/ProductDetailClient.tsx"), /SectionPromo2/);
+  assert.doesNotMatch(code("src/components/theme/variants/product-detail/RelatedRailsAndReviews.tsx"), /SectionPromo2/);
   assert.match(read("src/components/collection/CollectionPageView.tsx"), /showPromo && promoBanner &&/);
   assert.match(read("src/app/search/page.tsx"), /\{promoBanner && \(/);
   assert.match(read("src/app/contact/page.tsx"), /getFirstBanner\("promo1"\)/);

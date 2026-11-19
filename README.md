@@ -2930,6 +2930,12 @@ Details, inventory and the Store Admin source of every section: `PLATFORM_AUDIT_
 - The product image slider (`ProductGallery layout="thumbnails"`: all images, thumbnails, prev/next, counter) is used by **every** product-page design (Luxury, Minimal, Bold, default) - it was only in Luxury, so stores on another design (e.g. Zyvora on Modern Minimal) showed the old grid.
 - Admin → Add product: `createProductAction` returns the real result; a slug already used by a live product in the store is refused; the form can't submit twice, shows a "created" toast and opens the product list; errors keep the entered data.
 
+## Footer, filters, hero banner, product-page sections (2026-11-19)
+- **Footer** columns come from the footer menu (`lib/nav/footer-groups.ts`: plain links → "Shop" / "Customer care", items with sub-links → their own column) plus Settings → General contact details and Settings → Social links.
+- **Product filters** use the store's own products (`getFilterFacets` → colours, sizes, price range, categories that have products) and the store currency; the homepage "What's trending" grid applies the filters to its products.
+- **Hero banner** (`banner.imageFit`): `"full"` (default) shows the whole image without cropping; `"cover"` = fixed height. `banner.rounded` (default off). Both in Customizer → Hero.
+- **Product page sections**: Customizer → Product page sections (built-in "Special Offer Banner" + added sections) are editable and render in order via `productPageSections()`. Placeholder images count as no image (`lib/images/real-image.ts`).
+
 ## Tests
 
 Plain `node:test` scripts run with `tsx` (no test framework needed):
@@ -2949,6 +2955,7 @@ npx tsx scripts/test-routing-resolution.ts         # hostname parsing, admin-{sl
 npx tsx --require ./scripts/stub-server-only.cjs --test scripts/test-p1.ts   # P1: delivery status, channels/templates, contact, payment proof, branding, domain banner
 npx tsx --require ./scripts/stub-server-only.cjs --test scripts/test-p2.ts   # P2: nav filtering, blog visibility, seed samples, no demo fallbacks, demo routes, cache keys
 npx tsx --require ./scripts/stub-server-only.cjs --test scripts/test-targeted-bugs.ts   # product image slider on every product-page design; product create flow
+npx tsx --require ./scripts/stub-server-only.cjs --test scripts/test-storefront-ui.ts   # footer columns, store-based filters, hero image display, product-page sections
 npx tsc --noEmit && npm run build
 ```
 

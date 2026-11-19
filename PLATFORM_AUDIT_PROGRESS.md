@@ -54,6 +54,39 @@ When merchants upload banners for hero sliders through Store Admin, images looke
 - All previous suites pass: targeted product bugs 6/6, P0 22/22, P1 12/12, P2 18/18, routing 13/13, store assistant 183/183.
 - `tsc --noEmit` and `next lint`: **0 errors**.
 
+## Storefront UI fixes (2026-11-19): footer, filters, hero banner, product-page sections - awaiting approval
+
+Production runs **`b187bc8`** (Vercel READY 2026-11-18 13:09; it contains P0-P2 and the 2026-11-18 slider/product fixes). Everything below is **local only**: tested, not committed, not deployed.
+
+| # | Root cause (traced) | Fix |
+|---|---|---|
+| 1 Footer | All 3 stores' footer menus are **flat** links. `MultiColumnFooter` (and the classic `Footer`) turned **every link into a column heading** with an empty list, so headings looked scattered. There was also a hardcoded "English (US)" pill, and no contact info. | `groupFooterMenu` (`lib/nav/footer-groups.ts`) groups plain links into **Shop** and **Customer care** columns; items with sub-links keep their own column. The redesigned footer has a brand column (logo, description, social links), link columns with headings, a **Contact** column (Settings → General address/email/phone, only filled ones), the newsletter (Customizer switch) and a copyright/payment bar. It is responsive (2 columns on phones, up to 12-col grid on desktop) and uses theme colours. The classic footer uses the same grouping. |
+| 2 "What's trending now" filters | `TabFilters` printed `${min}$ - ${max}$` with a fixed **1-500** range, plus demo colours/sizes (`lib/filters/constants.ts`); `SidebarFilters` also had demo categories ("Clothing", "Footwear"). The category tabs were all DB categories, including ones with **no products**. On the homepage the Filter panel only changed the URL - **nothing was filtered**. | `getFilterFacets()` makes one lean, cached read of the store's active products and yields colours, sizes, price range and categories-with-products (`lib/filters/facets.ts`). Prices are shown in the **store currency** (`useFormatMoney`). A filter with no values is hidden; with no options at all, there is no Filter button. Collection/search/collection-2 show only categories that have products. The homepage grid shows tabs only for categories present in that section, and the URL filters are now applied to the grid (`applyClientFilters`). |
+| 3 Hero banner | `FullWidthImageHero` forced a fixed height (`heightPx`, 400) with `object-cover`, so banners with text in the image were cropped. It also always drew `rounded-3xl` + a border while rendered edge-to-edge. | New default `banner.imageFit = "full"`: the whole image at its own aspect ratio (slides share one grid cell, so there is no fixed height and no cropping), with mobile images still used on phones. `"cover"` (the old fixed height + focal position) is optional. `banner.rounded` defaults to **off**; when on, the banner is inset in the container. Customizer → Hero gains **Image Display** and **Rounded corners** controls. Saved banner settings/images are untouched. |
+| 4 Product-page section | The block in the screenshot is the built-in **"Special Offer Banner"** (`sec-prod-promo`). It showed the installer's sample **Promo Banner 2 "Beauty Essentials"**, whose image is `/images/placeholder.png` (the empty frame), plus a `<Logo>` with no props, which renders "STORE". It could be toggled in the Customizer but **not edited**: the inspector only opened for homepage sections, and the product page ignored the section's config and order. | The product page now renders `productPageSections(theme.productDetail)`, i.e. the built-in promo **plus merchant-added sections in Customizer order**, through the shared section renderer. Section edits (heading, text, image, button, promo slot) apply; the default stays slot 2. The Customizer opens inspectors for product-page sections and saves them to `productDetail.sections`. Related products, reviews and recently viewed stay in the product page (related: toggle/reorder only, its content is computed). A placeholder image counts as "no image" everywhere (text-only promo) and is labelled as sample in Admin; the "STORE" logo was removed from promos. |
+
+**Behaviour change to note:** the product-page promo now uses the store's theme promo style (e.g. the Luxe design on Glamix and Hafiz Traderz), the same as their homepage promos. Zyvora (generic) looks the same as before.
+
+### Files
+- **New:** `src/lib/nav/footer-groups.ts`, `src/lib/filters/facets.ts`, `src/lib/images/real-image.ts`, `scripts/test-storefront-ui.ts`.
+- **Footer:** `MultiColumnFooter.tsx` (rewritten), `ThemeFooterAdapter.tsx`, `shared/Footer/Footer.tsx`, `ClientProviders.tsx`, `layout.tsx`, `theme-customizer-preview/{page,PreviewRuntime}.tsx`.
+- **Filters:** `TabFilters.tsx`, `SidebarFilters.tsx`, `HeaderFilterSection.tsx`, `HeaderFilterSearchPage.tsx`, `SectionGridFeatureItems.tsx`, `collection/CollectionPageView.tsx`, `app/collection-2/page.tsx`, `app/search/page.tsx`, `repositories/products.ts` (`getFilterFacets`).
+- **Hero:** `FullWidthImageHero.tsx`, `HeroSectionInspector.tsx`, `types/theme.ts`.
+- **Product page:** `lib/theme/page-sections.ts`, `collection/ExtraPageSections.tsx`, `app/product/[slug]/page.tsx`, `ProductDetailClient.tsx`, `RelatedRailsAndReviews.tsx`, `Luxury/Minimal/BoldProductDetail.tsx`, `CustomizeShell.tsx`, `HomeContent.tsx`, `SectionPromo1/2.tsx`, `storefront-queries.ts`, `seed-content.ts`.
+- **Tests:** `test-p2.ts` updated for the new product-promo flow; `test-slider-responsive.ts` now runs the cover tests with `imageFit: "cover"` and adds a default whole-image test.
+
+### Tests (2026-11-19)
+- `test-storefront-ui.ts` **11/11**; `test-slider-responsive.ts` **8/8**.
+- All other suites pass: P0 22, P1 12, P2 18, targeted 6, routing 13, Store Assistant 183, and the rest.
+- `tsc`, `next lint` and `next build` pass.
+- **Browser: not verified** (local only, no authenticated session).
+
+### Browser checklist (after deploy)
+1. Zyvora footer shows **Shop / Customer care / Contact** columns; check phone width.
+2. "What's trending now": prices in Rs, only categories that have products, and the Filter panel changes the grid.
+3. Hero: whole image visible on desktop and mobile, no odd corners. Try Customizer → Hero → "Fill a fixed height" and "Rounded corners".
+4. Customizer → Product page → click **Special Offer Banner**: edit heading/image → Save → the product page shows it. Reorder it against an added section. Turn it off → gone.
+
 ## Targeted fixes (2026-11-18): product slider + product creation - awaiting approval
 
 ### 1. Product image slider "regression"

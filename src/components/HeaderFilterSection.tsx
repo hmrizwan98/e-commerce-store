@@ -15,6 +15,11 @@ export interface HeaderFilterSectionProps {
   tabs?: string[];
   activeTab?: string;
   onTabChange?: (tab: string) => void;
+  /** The store's own filter options; empty -> that filter is hidden (no Filter button at all
+   * when there is nothing to filter by). */
+  filterColors?: string[];
+  filterSizes?: string[];
+  filterPriceRange?: [number, number] | null;
 }
 
 const HeaderFilterSection: FC<HeaderFilterSectionProps> = ({
@@ -24,7 +29,11 @@ const HeaderFilterSection: FC<HeaderFilterSectionProps> = ({
   tabs = ["All items"],
   activeTab = "All items",
   onTabChange,
+  filterColors = [],
+  filterSizes = [],
+  filterPriceRange = null,
 }) => {
+  const hasFilters = filterColors.length > 0 || filterSizes.length > 0 || Boolean(filterPriceRange);
   const [isOpen, setIsOpen] = useState(false);
   const [localActiveTab, setLocalActiveTab] = useState(activeTab);
 
@@ -57,6 +66,7 @@ const HeaderFilterSection: FC<HeaderFilterSectionProps> = ({
           ))}
         </Nav>
 
+        {hasFilters && (
         <div className="flex-shrink-0">
           <button
             type="button"
@@ -71,6 +81,7 @@ const HeaderFilterSection: FC<HeaderFilterSectionProps> = ({
             />
           </button>
         </div>
+        )}
       </div>
 
       <Transition
@@ -83,7 +94,7 @@ const HeaderFilterSection: FC<HeaderFilterSectionProps> = ({
         leaveTo="opacity-0"
       >
         <div className="w-full border-b border-neutral-200 dark:border-neutral-700 my-8"></div>
-        <TabFilters />
+        <TabFilters colors={filterColors} sizes={filterSizes} priceRange={filterPriceRange} />
       </Transition>
     </div>
   );

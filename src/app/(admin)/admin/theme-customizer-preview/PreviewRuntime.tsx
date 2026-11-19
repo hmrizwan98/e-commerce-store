@@ -18,6 +18,7 @@ export interface PreviewRuntimeProps {
   initialTheme: SystemThemeConfig;
   storeName: string;
   socialLinks?: GeneralSettings["socialLinks"];
+  storeContact?: Pick<GeneralSettings, "storeAddress" | "storeEmail" | "storePhone">;
   tenantId: string;
   /** Public storefront origin (e.g. https://glamix.webriiz.com) for pages the preview can't render. */
   storefrontOrigin: string;
@@ -34,7 +35,7 @@ export interface PreviewRuntimeProps {
  * - intercepts link clicks: the iframe lives on the admin host, so storefront links are mapped to
  *   preview pages or opened on the public storefront - never followed into an admin page.
  */
-export default function PreviewRuntime({ initialTheme, storeName, socialLinks, tenantId, storefrontOrigin, children }: PreviewRuntimeProps) {
+export default function PreviewRuntime({ initialTheme, storeName, socialLinks, storeContact, tenantId, storefrontOrigin, children }: PreviewRuntimeProps) {
   const router = useRouter();
   const [theme, setTheme] = useState(initialTheme);
 
@@ -113,7 +114,7 @@ export default function PreviewRuntime({ initialTheme, storeName, socialLinks, t
       <ThemeAnnouncementBarAdapter announcementSettings={theme.announcementBar} topBar={theme.header?.topBar} />
       <SiteHeader headerSettings={theme.header} cartSettings={theme.cart} logos={theme.logos} storeName={storeName} />
       <main className="min-h-[60vh]">{children}</main>
-      <Footer footerSettings={theme.footer} logos={theme.logos} storeName={storeName} socialLinks={socialLinks} />
+      <Footer footerSettings={theme.footer} logos={theme.logos} storeName={storeName} socialLinks={socialLinks} storeContact={storeContact} />
       <ThemePopupModal popupConfig={theme.popup} tenantId={tenantId} themePresetId={theme.presetId} />
     </>
   );

@@ -3,6 +3,8 @@ import ThemeProductCardAdapter from "@/components/theme/ThemeProductCardAdapter"
 import Pagination from "@/shared/Pagination/Pagination";
 import { searchProducts } from "@/lib/firebase/repositories/products";
 import { getCategories } from "@/lib/firebase/repositories/categories";
+import { getFilterFacets } from "@/lib/firebase/repositories/products";
+import { categoriesWithProducts } from "@/lib/filters/facets";
 import { getActiveThemeConfig } from "@/lib/theme/theme-repository";
 import { GRID_GAP_WIDE } from "@/lib/theme/grid";
 import {
@@ -20,11 +22,13 @@ const PageCollection2 = async ({
   searchParams: RawSearchParams;
 }) => {
   const params = parseProductSearchParams(searchParams, (await getActiveThemeConfig()).collection?.productsPerPage);
-  const [{ products, totalPages }, categories, theme] = await Promise.all([
+  const [{ products, totalPages }, allCategories, theme, facets] = await Promise.all([
     searchProducts(params),
     getCategories(),
     getActiveThemeConfig(),
+    getFilterFacets(),
   ]);
+  const categories = categoriesWithProducts(allCategories, facets);
 
   return (
     <div className={`nc-PageCollection2`}>
@@ -44,7 +48,7 @@ const PageCollection2 = async ({
             {/* LOOP ITEMS */}
             <div className="flex flex-col lg:flex-row">
               <div className="lg:w-1/3 xl:w-1/4 pr-4">
-                <SidebarFilters categories={categories} />
+                <SidebarFilters categories={categories} availableColors={facets.colors} availableSizes={facets.sizes} priceRange={facets.priceRange} />
               </div>
               <div className="flex-shrink-0 mb-10 lg:mb-0 lg:mx-4 border-t lg:border-t-0"></div>
               <div className="flex-1 ">

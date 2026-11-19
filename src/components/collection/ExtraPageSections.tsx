@@ -6,8 +6,17 @@ import type { HomepageSection } from "@/types/homepage-section";
 
 /** Sections the admin added to a page in the Customizer (e.g. the product page), rendered with
  * the homepage section renderer below the page content, in editor order. */
-export default async function ExtraPageSections({ sections, theme }: { sections?: HomepageSection[]; theme: SystemThemeConfig }) {
-  const list = extraPageSections(sections);
+export default async function ExtraPageSections({
+  sections,
+  theme,
+  resolved = false,
+}: {
+  sections?: HomepageSection[];
+  theme: SystemThemeConfig;
+  /** `sections` is already the final ordered list (e.g. productPageSections) - don't filter again. */
+  resolved?: boolean;
+}) {
+  const list = resolved ? sections ?? [] : extraPageSections(sections);
   if (!list.length) return null;
   const rendered = (await Promise.all(list.map((sec) => renderSection(sec, theme)))).filter(Boolean);
   if (!rendered.length) return null;

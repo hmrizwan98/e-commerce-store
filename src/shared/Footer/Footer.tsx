@@ -1,5 +1,6 @@
 "use client";
 
+import { groupFooterMenu } from "@/lib/nav/footer-groups";
 import Logo from "@/shared/Logo/Logo";
 import SocialsList1 from "@/shared/SocialsList1/SocialsList1";
 import React, { useState } from "react";
@@ -33,18 +34,18 @@ export interface FooterProps {
   logos?: ThemeLogos;
   storeName?: string;
   socialLinks?: GeneralSettings["socialLinks"];
+  /** Settings → General contact details (only filled ones are shown). */
+  storeContact?: Pick<GeneralSettings, "storeAddress" | "storeEmail" | "storePhone">;
 }
 
-const Footer: React.FC<FooterProps> = ({ footerSettings, logos, storeName = "Webriiz", socialLinks }) => {
+const Footer: React.FC<FooterProps> = ({ footerSettings, logos, storeName = "Webriiz", socialLinks, storeContact }) => {
   const isSuppressed = useChromeSuppressed();
   const footerItems = useMenu("footer");
-  const widgetMenus: WidgetFooterMenu[] = footerItems.map((item) => ({
-    id: item.id,
-    title: item.name,
-    menus: (item.children ?? []).map((child) => ({
-      href: child.href,
-      label: child.name,
-    })),
+  // Plain menu links are grouped into columns (each used to become an empty column heading).
+  const widgetMenus: WidgetFooterMenu[] = groupFooterMenu(footerItems).map((group, i) => ({
+    id: `footer-group-${i}`,
+    title: group.title,
+    menus: group.links.map((link) => ({ href: link.href, label: link.name })),
   }));
 
   const showCopyright = footerSettings?.showCopyright ?? true;
@@ -72,7 +73,7 @@ const Footer: React.FC<FooterProps> = ({ footerSettings, logos, storeName = "Web
   if (isSuppressed) return null;
 
   if (footerSettings?.variant) {
-    return <ThemeFooterAdapter footerSettings={footerSettings} logos={logos} storeName={storeName} socialLinks={socialLinks} />;
+    return <ThemeFooterAdapter footerSettings={footerSettings} logos={logos} storeName={storeName} socialLinks={socialLinks} storeContact={storeContact} />;
   }
 
   const renderWidgetMenuItem = (menu: WidgetFooterMenu, index: number) => {

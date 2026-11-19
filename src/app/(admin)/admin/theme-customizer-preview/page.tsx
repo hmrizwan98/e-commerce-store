@@ -131,6 +131,7 @@ export default async function ThemeCustomizerPreviewPage({ searchParams }: Previ
         initialTheme={draft}
         storeName={general.storeName}
         socialLinks={general.socialLinks}
+        storeContact={{ storeAddress: general.storeAddress, storeEmail: general.storeEmail, storePhone: general.storePhone }}
         tenantId={tenant.id}
         storefrontOrigin={storefrontOrigin}
       >

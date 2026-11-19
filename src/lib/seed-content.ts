@@ -1,5 +1,6 @@
 import { THEME_PRESETS } from "@/lib/themes/theme-presets";
 import type { Banner } from "@/types/banner";
+import { isPlaceholderImage } from "@/lib/images/real-image";
 
 /**
  * Identifies installer SAMPLE content so Store Admin can label it. Banners and FAQs are only
@@ -13,7 +14,7 @@ const norm = (v: string | undefined | null) => (v ?? "").trim();
  * the store's own Cloudinary folder. A banner still showing a stock photo is sample content. */
 export function isSampleBanner(b: Pick<Banner, "imageDesktop" | "imageMobile"> | null | undefined): boolean {
   if (!b) return false;
-  return [b.imageDesktop, b.imageMobile].some((u) => /^https?:\/\/images\.unsplash\.com\//i.test(norm(u)));
+  return [b.imageDesktop, b.imageMobile].some((u) => /^https?:\/\/images\.unsplash\.com\//i.test(norm(u)) || isPlaceholderImage(u));
 }
 
 const SEED_FAQ_KEYS: ReadonlySet<string> = new Set(

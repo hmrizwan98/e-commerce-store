@@ -15,7 +15,6 @@ import toast from "react-hot-toast";
 import SectionSliderProductCard from "@/components/SectionSliderProductCard";
 import ReviewItem from "@/components/ReviewItem";
 import ButtonSecondary from "@/shared/Button/ButtonSecondary";
-import SectionPromo2 from "@/components/SectionPromo2";
 import ModalViewAllReviews from "@/app/product-detail/ModalViewAllReviews";
 import NotifyAddTocart from "@/components/NotifyAddTocart";
 import AccordionInfo from "@/components/AccordionInfo";
@@ -28,7 +27,6 @@ import { useAddToCart } from "@/hooks/useAddToCart";
 import { trackEvent } from "@/lib/analytics/track";
 import type { Product, ProductVariant } from "@/types/product";
 import type { Review } from "@/types/review";
-import type { Banner } from "@/types/banner";
 import type { ProductCardThemeConfig, ProductDetailThemeConfig } from "@/lib/theme/theme-types";
 
 export interface ProductDetailClientProps {
@@ -42,8 +40,6 @@ export interface ProductDetailClientProps {
   productDetailSettings?: ProductDetailThemeConfig;
   /** Real store delivery/payment facts for the product page (never invented). */
   storeInfo?: PdpStoreInfo;
-  /** Store Admin → Promo Banners, slot "promo2" - no banner, no promo block. */
-  promoBanner?: Banner | null;
 }
 
 export interface PdpStoreInfo {
@@ -62,7 +58,6 @@ const ProductDetailClient: React.FC<ProductDetailClientProps> = ({
   productCardSettings,
   productDetailSettings,
   storeInfo,
-  promoBanner,
 }) => {
   const {
     selections,
@@ -404,11 +399,6 @@ const ProductDetailClient: React.FC<ProductDetailClientProps> = ({
 
           <RecentlyViewedSection excludeProductId={product.id} productCardSettings={productCardSettings} />
 
-          {(productDetailSettings?.showBottomPromo ?? true) && promoBanner && (
-            <div className="pb-20 xl:pb-28 lg:pt-14">
-              <SectionPromo2 banner={promoBanner ?? undefined} />
-            </div>
-          )}
         </div>
       </main>
 

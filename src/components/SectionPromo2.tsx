@@ -1,6 +1,5 @@
 import React, { FC } from "react";
 import ButtonPrimary from "@/shared/Button/ButtonPrimary";
-import Logo from "@/shared/Logo/Logo";
 import backgroundLineSvg from "@/images/Moon.svg";
 import type { Banner } from "@/types/banner";
 import type { Route } from "@/routers/types";
@@ -80,8 +79,7 @@ const SectionPromo2: FC<SectionPromo2Props> = ({
               {badgeText}
             </span>
           )}
-          <Logo className="w-28" />
-          {heading && (
+            {heading && (
             <h2 className="font-bold text-3xl sm:text-4xl xl:text-5xl !leading-[1.15] tracking-tight text-slate-900 dark:text-white">
               {heading}
             </h2>
