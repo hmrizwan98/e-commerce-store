@@ -96,10 +96,12 @@ const FullWidthImageHero: FC<FullWidthImageHeroProps> = ({
   const fit = banner?.imageFit ?? "full";
   const rounded = banner?.rounded === true;
   const isCover = fit === "cover";
+  const isFill = fit === "fill";
+  const ambientBackdrop = banner?.ambientBackdrop !== false;
   const hasAnyMobileImage = slides.some((s) => Boolean(s.imageMobile));
 
   // Single slide default mode: keeps native aspect ratio without forcing container height
-  const isNaturalSingleSlide = slides.length === 1 && !isCover && !banner?.heightPx && !banner?.mobileHeightPx;
+  const isNaturalSingleSlide = (slides.length === 1 && !isCover && !isFill && !banner?.heightPx && !banner?.mobileHeightPx) || fit === "auto" || banner?.heightPx === 0;
 
   // Responsive container height classes:
   // - On desktop: md:h-[var(--hero-h-desktop,480px)]
@@ -158,18 +160,37 @@ const FullWidthImageHero: FC<FullWidthImageHeroProps> = ({
       );
     }
 
+    if (isFill) {
+      return (
+        <div className={`relative w-full h-full overflow-hidden ${extraClass}`}>
+          <Image
+            fill
+            sizes={sizes}
+            className={`w-full h-full object-fill ${bgPosClass}`}
+            src={src}
+            alt={alt}
+            priority={index === 0}
+            loading={index === 0 ? "eager" : "lazy"}
+            fetchPriority={index === 0 ? "high" : "low"}
+          />
+        </div>
+      );
+    }
+
     // Contain Mode: Complete image uncropped + ambient color-matched background so no gaps
     return (
-      <div className={`relative w-full h-full flex items-center justify-center overflow-hidden bg-slate-950/80 ${extraClass}`}>
+      <div className={`relative w-full h-full flex items-center justify-center overflow-hidden ${ambientBackdrop ? "bg-slate-950/80" : "bg-black/95"} ${extraClass}`}>
         {/* Ambient blurred backdrop fills aspect differences seamlessly */}
-        <Image
-          fill
-          sizes="10vw"
-          className="w-full h-full object-cover scale-110 blur-2xl opacity-35 dark:opacity-25 pointer-events-none select-none filter"
-          src={src}
-          alt=""
-          aria-hidden="true"
-        />
+        {ambientBackdrop && (
+          <Image
+            fill
+            sizes="10vw"
+            className="w-full h-full object-cover scale-110 blur-2xl opacity-35 dark:opacity-25 pointer-events-none select-none filter"
+            src={src}
+            alt=""
+            aria-hidden="true"
+          />
+        )}
         {/* Uncropped, unstretched full image */}
         <div className="relative w-full h-full flex items-center justify-center z-[2]">
           <Image

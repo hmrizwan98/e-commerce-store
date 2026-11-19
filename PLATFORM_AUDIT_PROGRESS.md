@@ -1,6 +1,6 @@
 # Webriiz platform audit - progress
 
-Last updated: 2026-11-19 (after slider fitting, in-customizer slide management, contact page redesign, product ratings toggle, and bottom promo suppression)
+Last updated: 2026-11-19 (after image responsiveness & fit modes, search bar UI & multi-keyword search functionality fixes)
 
 | Phase | Status |
 |---|---|
@@ -12,7 +12,51 @@ Last updated: 2026-11-19 (after slider fitting, in-customizer slide management, 
 | **Phase 5 - P2 real dynamic storefront content** | **Done in working tree - awaiting review/approval** (not committed, not deployed) |
 | **Targeted bug fixes & mobile slider cropping** | **Done in working tree - tested & verified** (not committed, not deployed) |
 | **Targeted Fixes (Slider, Customizer, Contact, Ratings, Bottom Promo)** | **Done in working tree - tested & verified** (not committed, not deployed) |
+| **Targeted Fixes (Search Bar UI & Product Search, Advanced Image Responsiveness & Fit Modes)** | **Done in working tree - tested & verified** (not committed, not deployed) |
 | P3 | Not started - waits for approval |
+
+## Targeted fixes (2026-11-19): Search Bar UI & Multi-keyword Search, Advanced Image Responsiveness & Fit Modes
+
+### 1. Search Bar UI & Positioning
+- **Root Cause:**
+  - `SearchDropdown.tsx` used `<Popover.Panel static className="absolute right-0 z-10 w-screen max-w-sm mt-3">`. On mobile screens, because the search trigger button is placed on the header's right side (~70px from screen edge), `absolute right-0` anchored the right edge of a 384px panel to the icon, pushing the left edge >80px past the left screen edge. The input was clipped off-screen to the left (showing only `enter...` over hero banners).
+- **Solution:**
+  - On Mobile (`< md`): Implemented a full-width, pinned top search bar (`fixed inset-x-0 top-0 z-50 p-3 sm:p-4 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-2xl border-b`).
+  - Centered input with magnifying glass icon, real-time query state, clear button (`X`), submit button ("Search"), and dedicated mobile close button (`close()`). Zero clipping and zero overflow on any mobile screen.
+  - On Desktop (`>= md`): Clean floating card popover (`md:absolute md:right-0 md:top-full md:mt-3 md:w-[420px] md:rounded-2xl md:border md:shadow-2xl`).
+
+### 2. Search Functionality & Multi-Keyword Product Matching
+- **Root Cause:**
+  - `SearchDropdown.tsx` had `<form action="" method="POST">` with no router navigation, no controlled query state, and no input `name` attribute. Pressing Enter or clicking submit resulted in dead submissions.
+  - In `src/lib/firebase/repositories/products.ts`, `searchProductsByName` only used Firestore prefix inequalities (`>= term` and `<= term + \uf8ff`). Searching for words in the middle or end of titles (e.g. "trimmer" for "T9 Vintage Dragon Style Metal Body Hair Trimmer") or searching by description, tags, or SKU returned 0 results.
+- **Solution:**
+  - Controlled state (`query`, `setQuery`) in `SearchDropdown.tsx` and form navigation (`router.push('/search?q=' + encodeURIComponent(trimmed))`).
+  - In `products.ts`, upgraded `searchProductsByName` to perform fast indexed prefix search first, and fallback to multi-keyword substring matching across `name`, `description`, `tags`, and `sku`. All keywords are matched case-insensitively, returning accurate product results.
+
+### 3. Image Display & Responsiveness (Contain / Cover / Fill / Auto)
+- **Root Cause:**
+  - Wide banners with text (like "Lifestyle Accessories") cropped text on desktop laptops when forced into fixed heights with `object-cover`.
+  - When set to `contain`, forcing the rigid container height created heavy blurred sidebars on wide desktop screens and portrait mobile images.
+  - Customizer forced a minimum height (450px) and lacked options for Auto/Natural aspect ratio, Fill mode, or toggling the ambient blurred backdrop.
+- **Solution:**
+  - Updated `ThemeBanner` interface in `src/types/theme.ts` to support `imageFit: "full" | "cover" | "contain" | "fill" | "auto"` and `ambientBackdrop?: boolean`.
+  - In `FullWidthImageHero.tsx`:
+    - **Contain Mode (`"full"`):** Complete image uncropped (`object-contain`). Added `ambientBackdrop` support (defaults to soft color-matched blur, can be toggled off for clean neutral dark/light background).
+    - **Cover Mode (`"cover"`):** Fills container (`object-cover`) with focal positioning (`object-left`, `object-center`, `object-right`, `object-top`, `object-bottom`).
+    - **Fill Mode (`"fill"`):** Fills frame with `object-fill`.
+    - **Auto / Natural Mode (`"auto"` or `heightPx: 0`):** Container dynamically scales with the image's natural aspect ratio (`style={{ width: "100%", height: "auto" }}`), completely eliminating cropping and eliminating empty sidebars.
+  - In `HeroSectionInspector.tsx`:
+    - Added full fit mode dropdown (Contain, Cover, Fill, Auto).
+    - Updated Desktop & Mobile height inputs to accept `0` for Auto/Natural aspect ratio.
+    - Added ambient backdrop toggle for Contain mode.
+    - Default and per-slide focal alignment controls.
+
+### Verification & Tests
+- `scripts/test-slider-responsive.ts`: 13/13 tests pass (including fill mode, ambient backdrop toggle, auto height, responsive picture, touch swipe, focal positions).
+- `scripts/test-storefront-ui.ts` & `scripts/test-p2.ts`: 29/29 tests pass (Total 42/42 tests pass).
+- TypeScript: `npx tsc --noEmit` passed with 0 errors.
+- Lint: `npm run lint` passed with 0 warnings/errors.
+- Build: `npm run build` generated 122 static and dynamic routes successfully.
 
 ## Targeted fixes (2026-11-19): Slider Fitting & Management, Contact Page, Ratings Control, Bottom Promo
 

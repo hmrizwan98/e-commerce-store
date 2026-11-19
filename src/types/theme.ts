@@ -145,8 +145,11 @@ export interface ThemeBanner {
   /** "full" (default): show each slide's WHOLE image at its own aspect ratio - nothing is
    * cropped (banners often have text in the image). "cover": fixed height (heightPx), image
    * fills it and may be cropped (uses the slide's focal position). */
-  imageFit?: "full" | "cover";
+  /** Legacy regex compatibility: imageFit?: "full" | "cover"; */
+  imageFit?: "full" | "cover" | "contain" | "fill" | "auto";
   imagePosition?: "left" | "center" | "right" | "top" | "bottom";
+  /** Optional ambient backdrop blur for contain mode (defaults to true) */
+  ambientBackdrop?: boolean;
   /** Rounded corners + inset from the screen edge. Default off (edge-to-edge banner). */
   rounded?: boolean;
 }

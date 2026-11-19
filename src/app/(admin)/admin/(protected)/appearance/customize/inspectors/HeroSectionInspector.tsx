@@ -487,15 +487,19 @@ export default function HeroSectionInspector({ draft, onChange }: HeroSectionIns
           <NativeSelect size="sm"
             className={inputClass}
             value={banner.imageFit ?? "full"}
-            onChange={(e) => updateBanner({ imageFit: e.target.value as "full" | "cover" })}
+            onChange={(e) => updateBanner({ imageFit: e.target.value as any })}
           >
             <option value="full">Show the whole image (no cropping) - Contain</option>
             <option value="cover">Fill a fixed height (cropping allowed) - Cover</option>
+            <option value="fill">Fill entire area (stretch to fit) - Fill</option>
+            <option value="auto">Natural aspect ratio (Auto height, no crop &amp; no sidebars) - Auto</option>
           </NativeSelect>
           <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-            <strong>Contain:</strong> Keeps 100% of the image visible without stretching, and smoothly fills borders with ambient tones.
+            <strong>Contain:</strong> Keeps 100% of the image visible without stretching or cropping.
             <br />
-            <strong>Cover:</strong> Fills the entire slider container; uses your focal position to avoid cutting key subjects.
+            <strong>Cover:</strong> Fills the entire slider container; uses focal position to avoid cutting key subjects.
+            <br />
+            <strong>Auto:</strong> Container dynamically scales to match image natural aspect ratio (zero crop &amp; zero sidebars).
           </p>
         </div>
 
@@ -514,30 +518,54 @@ export default function HeroSectionInspector({ draft, onChange }: HeroSectionIns
           </NativeSelect>
         </div>
 
+        {(banner.imageFit === "full" || !banner.imageFit) && (
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={banner.ambientBackdrop !== false}
+              onChange={(e) => updateBanner({ ambientBackdrop: e.target.checked })}
+              className="w-4 h-4 rounded text-sky-600 focus:ring-sky-500"
+            />
+            <span className="text-xs text-slate-800 dark:text-slate-200">
+              Soft ambient backdrop blur for Contain mode
+            </span>
+          </label>
+        )}
+
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className={labelClass}>Desktop Height (px)</label>
             <input
               type="number"
               className={inputClass}
-              min={250}
-              max={800}
+              min={0}
+              max={900}
               step={10}
+              placeholder="0 (Auto)"
               value={banner.heightPx ?? 450}
-              onChange={(e) => updateBanner({ heightPx: Number(e.target.value) || 450 })}
+              onChange={(e) => {
+                const val = e.target.value === "" ? 0 : Number(e.target.value);
+                updateBanner({ heightPx: isNaN(val) ? 0 : val });
+              }}
             />
+            <span className="text-[10px] text-slate-400">Set 0 for Auto / Natural ratio</span>
           </div>
           <div>
             <label className={labelClass}>Mobile Height (px)</label>
             <input
               type="number"
               className={inputClass}
-              min={200}
-              max={650}
+              min={0}
+              max={700}
               step={10}
+              placeholder="0 (Auto)"
               value={banner.mobileHeightPx ?? 360}
-              onChange={(e) => updateBanner({ mobileHeightPx: Number(e.target.value) || 360 })}
+              onChange={(e) => {
+                const val = e.target.value === "" ? 0 : Number(e.target.value);
+                updateBanner({ mobileHeightPx: isNaN(val) ? 0 : val });
+              }}
             />
+            <span className="text-[10px] text-slate-400">Set 0 for Auto / Adaptive</span>
           </div>
         </div>
 

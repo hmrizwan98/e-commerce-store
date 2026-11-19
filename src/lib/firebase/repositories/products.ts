@@ -448,7 +448,9 @@ export async function searchProductsByName(q: string, limit = 24): Promise<Produ
 
   return safeQuery("searchProductsByName", [], async () => {
     const col = await tenantCollection(COLLECTION);
-    const snap = await col
+    
+    // 1. Fast indexed prefix query on nameLower
+    const prefixSnap = await col
       .where("status", "==", "active")
       .where("isDeleted", "==", false)
       .where("nameLower", ">=", term)
@@ -456,9 +458,46 @@ export async function searchProductsByName(q: string, limit = 24): Promise<Produ
       .limit(limit)
       .get();
 
-    return snap.docs
+    const prefixResults = prefixSnap.docs
       .map((doc) => docData<Product>(doc))
       .filter((p): p is Product => p !== null);
+
+    if (prefixResults.length >= limit) {
+      return prefixResults;
+    }
+
+    // 2. Substring & multi-keyword match fallback across active products
+    const seenIds = new Set(prefixResults.map((p) => p.id));
+    const allActiveSnap = await col
+      .where("status", "==", "active")
+      .where("isDeleted", "==", false)
+      .limit(100)
+      .get();
+
+    const words = term.split(/\s+/).filter(Boolean);
+    const keywordMatches: Product[] = [];
+
+    for (const doc of allActiveSnap.docs) {
+      if (seenIds.has(doc.id)) continue;
+      const product = docData<Product>(doc);
+      if (!product) continue;
+
+      const nameLower = (product.nameLower || product.name || "").toLowerCase();
+      const descLower = (product.description || "").toLowerCase();
+      const skuLower = (product.sku || "").toLowerCase();
+      const tagsStr = Array.isArray(product.tags) ? product.tags.join(" ").toLowerCase() : "";
+
+      const matchesAllWords = words.every(
+        (w) => nameLower.includes(w) || descLower.includes(w) || skuLower.includes(w) || tagsStr.includes(w)
+      );
+
+      if (matchesAllWords) {
+        keywordMatches.push(product);
+        if (prefixResults.length + keywordMatches.length >= limit) break;
+      }
+    }
+
+    return [...prefixResults, ...keywordMatches];
   }, [q, limit]);
 }
 

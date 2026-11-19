@@ -213,6 +213,35 @@ test("FullWidthImageHero: custom height controls and contain mode with ambient b
   assert.ok(html.includes("blur-2xl"), "Contain mode has ambient backdrop");
 });
 
+test("FullWidthImageHero: Fill mode renders object-fill and respects focal position", () => {
+  const slide = toHeroSlide(makeBanner({ imageDesktop: "/images/banner.webp", backgroundPosition: "top" }));
+  const html = ReactDOMServer.renderToStaticMarkup(
+    React.createElement(FullWidthImageHero, { data: [slide], banner: { imageFit: "fill" as any } })
+  );
+  assert.ok(html.includes("object-fill"), "Expected object-fill in fill mode");
+  assert.ok(html.includes("object-top"), "Expected object-top focal position");
+});
+
+test("FullWidthImageHero: ambientBackdrop false disables blurred backdrop in contain mode", () => {
+  const slide = toHeroSlide(makeBanner({ imageDesktop: "/images/banner.webp" }));
+  const html = ReactDOMServer.renderToStaticMarkup(
+    React.createElement(FullWidthImageHero, {
+      data: [slide],
+      banner: { heightPx: 450, imageFit: "full", ambientBackdrop: false },
+    })
+  );
+  assert.ok(!html.includes("blur-2xl"), "Ambient blur backdrop should be disabled when ambientBackdrop is false");
+  assert.ok(html.includes("object-contain"), "Image should still be uncropped object-contain");
+});
+
+test("FullWidthImageHero: setting heightPx to 0 triggers natural unconstrained aspect ratio", () => {
+  const slide = toHeroSlide(makeBanner({ imageDesktop: "/images/wide-1584x672.webp" }));
+  const html = ReactDOMServer.renderToStaticMarkup(
+    React.createElement(FullWidthImageHero, { data: [slide], banner: { heightPx: 0 } })
+  );
+  assert.ok(html.includes("height:auto"), "heightPx: 0 should enable natural aspect ratio");
+});
+
 test("SectionPromo2: suppresses sample Beauty Essentials when not customized", () => {
   // Sample banner without custom content
   const sampleBanner = makeBanner({
