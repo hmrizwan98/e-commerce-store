@@ -1,6 +1,6 @@
 import React from "react";
 import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { verifySessionCookie, isAdminClaim } from "@/lib/firebase/admin-auth";
 import { ADMIN_SESSION_COOKIE } from "@/lib/firebase/require-admin";
 import { RETURN_SESSION_COOKIE } from "@/lib/firebase/impersonation";
@@ -9,6 +9,9 @@ import AdminShell from "@/components/admin/AdminShell";
 import ImpersonationBanner from "@/components/admin/ImpersonationBanner";
 
 import { getBrandingSettings } from "@/lib/firebase/repositories/site-settings";
+import { getStorefrontUrl } from "@/lib/platform/tenant-url";
+import { getPlatformBaseUrl } from "@/lib/platform/base-url";
+import { storefrontOriginFromAdminHost } from "@/lib/theme/preview-links";
 
 export default async function AdminProtectedLayout({
   children,
@@ -47,10 +50,15 @@ export default async function AdminProtectedLayout({
   // /api/admin/impersonate/start and /return).
   const isImpersonating = Boolean(cookies().get(RETURN_SESSION_COOKIE)?.value);
 
+  const h = headers();
+  const proto = (h.get("x-forwarded-proto") === "https" ? "https" : "http") as "http" | "https";
+  const rawHost = h.get("x-forwarded-host") ?? h.get("host");
+  const storefrontUrl = storefrontOriginFromAdminHost(rawHost, proto) ?? getStorefrontUrl(tenant, getPlatformBaseUrl());
+
   return (
     <>
       {isImpersonating && <ImpersonationBanner />}
-      <AdminShell email={decoded.email} adminTheme={adminTheme}>{children}</AdminShell>
+      <AdminShell email={decoded.email} adminTheme={adminTheme} storefrontUrl={storefrontUrl}>{children}</AdminShell>
     </>
   );
 }

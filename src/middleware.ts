@@ -128,7 +128,7 @@ export function middleware(req: NextRequest) {
     if (pathname === "/") {
       const url = req.nextUrl.clone();
       url.pathname = "/admin";
-      return NextResponse.rewrite(url, { request: { headers: requestHeaders } });
+      return NextResponse.redirect(url);
     }
 
     if (!pathname.startsWith("/admin") && !pathname.startsWith("/_next") && !pathname.startsWith("/api")) {
@@ -148,7 +148,7 @@ export function middleware(req: NextRequest) {
     if (pathname === "/") {
       const url = req.nextUrl.clone();
       url.pathname = "/admin";
-      return NextResponse.rewrite(url, { request: { headers: requestHeaders } });
+      return NextResponse.redirect(url);
     }
 
     if (!pathname.startsWith("/admin") && !pathname.startsWith("/_next") && !pathname.startsWith("/api")) {
@@ -173,7 +173,7 @@ export function middleware(req: NextRequest) {
     if ((pathname === "/admin" || pathname.startsWith("/admin/")) && rootDomain && !hostname.includes("localhost")) {
       const adminUrl = new URL(req.url);
       adminUrl.hostname = `admin-${parsed.slug}.${rootDomain}`;
-      adminUrl.pathname = pathname === "/admin" ? "/" : pathname.slice(6);
+      adminUrl.pathname = pathname;
       return NextResponse.redirect(adminUrl);
     }
 

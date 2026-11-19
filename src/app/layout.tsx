@@ -14,7 +14,7 @@ import { poppins } from "@/lib/theme/default-font";
 import { getCurrentTenant } from "@/lib/tenant/current";
 import { getCustomDomainRedirect } from "@/lib/domains/redirect";
 import { isPlatformDomainRequest } from "@/lib/tenant/platform-domain";
-import { FRONTSTORE_PREVIEW_HEADER } from "@/lib/tenant/constants";
+import { FRONTSTORE_PREVIEW_HEADER, IS_ADMIN_HOST_HEADER, IS_SUPER_ADMIN_HOST_HEADER } from "@/lib/tenant/constants";
 import { requestMemo } from "@/lib/request-cache";
 import { PLATFORM_SITE_URL } from "@/lib/marketing/site-url";
 import type { Theme, FontKey } from "@/types/theme";
@@ -210,6 +210,9 @@ export default async function RootLayout({
 
   const activeFontVariables = Array.from(new Set([bodyFont.variable, headingFont.variable])).join(" ");
 
+  const reqHeaders = headers();
+  const isAdminHost = reqHeaders.get(IS_ADMIN_HOST_HEADER) === "1" || reqHeaders.get(IS_SUPER_ADMIN_HOST_HEADER) === "1";
+
   return (
     <html
       lang="en"
@@ -236,6 +239,7 @@ export default async function RootLayout({
       <body className="bg-[var(--background,white)] dark:bg-[var(--background,#171717)] text-[var(--text,#111827)] dark:text-[var(--text,#e5e5e5)]">
         <CurrencyProvider currency={general.currency} currencySymbol={general.currencySymbol}>
           <ClientProviders
+            isAdminHost={isAdminHost}
             headerSettings={theme.header}
             footerSettings={theme.footer}
             storeName={general.storeName}

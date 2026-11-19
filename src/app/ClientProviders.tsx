@@ -27,6 +27,7 @@ import { usePathname } from "next/navigation";
 import type { GeneralSettings } from "@/types/site-settings";
 
 export interface ClientProvidersProps {
+  isAdminHost?: boolean;
   children: React.ReactNode;
   headerSettings: ThemeHeader;
   footerSettings: ThemeFooter;
@@ -52,6 +53,7 @@ export interface ClientProvidersProps {
  * Component and export generateMetadata() (dynamic favicon/title need that).
  */
 const ClientProviders: React.FC<ClientProvidersProps> = ({
+  isAdminHost,
   children,
   headerSettings,
   footerSettings,
@@ -69,12 +71,19 @@ const ClientProviders: React.FC<ClientProvidersProps> = ({
   storeContact,
 }) => {
   const pathname = usePathname();
+  const isClientAdminHost = typeof window !== "undefined" && Boolean(
+    window.location.hostname.startsWith("admin-") ||
+    window.location.hostname.startsWith("admin.") ||
+    window.location.hostname.startsWith("superadmin.")
+  );
   const isAdminRoute = Boolean(
-    pathname && (
+    isAdminHost ||
+    isClientAdminHost ||
+    (pathname && (
       pathname.startsWith("/admin") ||
       pathname.startsWith("/superadmin") ||
       pathname.includes("/admin")
-    )
+    ))
   );
 
   if (isAdminRoute) {

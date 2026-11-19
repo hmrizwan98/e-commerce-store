@@ -33,6 +33,12 @@ export function useChromeSuppressed(opts?: { includeAdmin?: boolean }): boolean 
   if (pathname?.startsWith(THEME_PREVIEW_ROUTE_PREFIX) && !isPreviewMode) return true;
   if (!tenantId) return true;
   if (pathname?.startsWith("/superadmin")) return true;
+  if (typeof window !== "undefined") {
+    const host = window.location.hostname;
+    if ((host.startsWith("admin-") || host.startsWith("admin.") || host.startsWith("superadmin.")) && !isPreviewMode) {
+      return true;
+    }
+  }
   if (opts?.includeAdmin && pathname?.startsWith("/admin")) return true;
   return false;
 }

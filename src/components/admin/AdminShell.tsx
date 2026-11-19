@@ -120,10 +120,12 @@ const COLLAPSE_STORAGE_KEY = "admin_sidebar_collapsed";
 export default function AdminShell({
   email,
   adminTheme = "indigo",
+  storefrontUrl,
   children,
 }: {
   email?: string;
   adminTheme?: string;
+  storefrontUrl?: string;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -443,19 +445,29 @@ export default function AdminShell({
                 <Bars3Icon className="w-5 h-5" />
               </button>
               {(() => {
-                let storefrontUrl = "/";
-                if (typeof window !== "undefined") {
+                let resolvedStorefrontUrl = storefrontUrl;
+                if (!resolvedStorefrontUrl && typeof window !== "undefined") {
                   const host = window.location.hostname;
+                  const proto = window.location.protocol;
+                  const port = window.location.port ? `:${window.location.port}` : "";
                   const tenantSlugMatch = window.location.pathname.match(/\/store\/([^\/]+)/);
                   if (tenantSlugMatch) {
-                    storefrontUrl = `/store/${tenantSlugMatch[1]}`;
+                    resolvedStorefrontUrl = `/store/${tenantSlugMatch[1]}`;
+                  } else if (host.startsWith("admin-")) {
+                    const storefrontHost = host.slice(6);
+                    resolvedStorefrontUrl = `${proto}//${storefrontHost}${port}/`;
                   } else if (host.startsWith("admin.")) {
                     const storefrontHost = host.slice(6);
-                    storefrontUrl = `${window.location.protocol}//${storefrontHost}${window.location.port ? ":" + window.location.port : ""}/`;
+                    resolvedStorefrontUrl = `${proto}//${storefrontHost}${port}/`;
+                  } else {
+                    resolvedStorefrontUrl = "/";
                   }
                 }
                 return (
-                  <a href={storefrontUrl} className="text-xs font-semibold text-white/90 hover:text-white bg-white/15 hover:bg-white/25 px-3 py-1.5 rounded-lg transition-colors backdrop-blur-xs">
+                  <a
+                    href={resolvedStorefrontUrl || "/"}
+                    className="text-xs font-semibold text-white/90 hover:text-white bg-white/15 hover:bg-white/25 px-3 py-1.5 rounded-lg transition-colors backdrop-blur-xs flex items-center gap-1"
+                  >
                     ← Storefront
                   </a>
                 );
