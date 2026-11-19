@@ -1,6 +1,6 @@
 # Webriiz platform audit - progress
 
-Last updated: 2026-11-18 (after targeted slider/product fixes & responsive hero slider image cropping fix)
+Last updated: 2026-11-19 (after slider fitting, in-customizer slide management, contact page redesign, product ratings toggle, and bottom promo suppression)
 
 | Phase | Status |
 |---|---|
@@ -11,7 +11,58 @@ Last updated: 2026-11-18 (after targeted slider/product fixes & responsive hero 
 | Phase 4 - P1 admin controls & real functionality | Done (approved) |
 | **Phase 5 - P2 real dynamic storefront content** | **Done in working tree - awaiting review/approval** (not committed, not deployed) |
 | **Targeted bug fixes & mobile slider cropping** | **Done in working tree - tested & verified** (not committed, not deployed) |
+| **Targeted Fixes (Slider, Customizer, Contact, Ratings, Bottom Promo)** | **Done in working tree - tested & verified** (not committed, not deployed) |
 | P3 | Not started - waits for approval |
+
+## Targeted fixes (2026-11-19): Slider Fitting & Management, Contact Page, Ratings Control, Bottom Promo
+
+### 1. Slider Images Container Strategy & Image Fit Options
+- **Root Cause:** When `fit === "full"` (default), `FullWidthImageHero.tsx` used CSS grid `[grid-area:1/1]` where all slides shared a single grid cell and each image had `width: 100%, height: auto`. In this grid layout, the row height expanded to the MAX height of all child slides. Shorter images had empty letterboxing gaps above and below, and `banner.heightPx` set by the merchant in Customizer was completely ignored.
+- **Solution:**
+  - Implemented stable responsive container sizing using `--hero-h-desktop` (configured desktop height, default 450px) and `--hero-h-mobile` (custom mobile height, default 360px).
+  - Added **Contain** mode: Renders the complete image with `object-contain` (0% cropped, 0% distorted) over a hardware-accelerated ambient blurred backdrop matching the image's own colors. No raw gaps, no layout jumps between slides of different dimensions.
+  - Added **Cover** mode: Fills the slider area using `object-cover` with focal alignment (`object-top`, `object-center`, `object-bottom`, `object-left`, `object-right`).
+  - Seamless responsive transitions between slides via absolute crossfading.
+
+### 2. Full Slider Management Inside Store Admin Customizer
+- **Root Cause:** Customizer previously only offered external links to `/admin/hero-slides/new` and `/admin/hero-slides` in another tab, forcing merchants out of the theme editor.
+- **Solution:**
+  - Added server actions in `appearance/customize/actions.ts`: `getHeroSlidesForCustomizerAction`, `saveHeroSlideForCustomizerAction`, `deleteHeroSlideForCustomizerAction`, `reorderHeroSlidesForCustomizerAction`, `toggleHeroSlideActiveForCustomizerAction`.
+  - Rebuilt `HeroSectionInspector.tsx` with full embedded slide management: list slides, reorder (up/down), toggle active, delete with confirmation, and add/edit slides inline.
+  - Slide form supports uploading Desktop image (required) and Mobile image (optional) with `ImageUploader`, focal position picker, title, subtitle, CTA text and link.
+  - Banner settings include: Image fitting mode (Contain vs Cover), Default focal position, Desktop Height (px), Mobile Height (px), rounded corners, and overlay controls.
+  - Preserves all existing slides, URLs, and tenant isolation; backward-compatible with `"full"`.
+
+### 3. Contact Page Redesign
+- **Root Cause:** Page previously had awkward spacing, huge empty gaps when only email was set, and displayed an unrelated sample promotional banner ("New Arrivals in Jewelry") at the bottom.
+- **Solution:**
+  - Rebuilt `src/app/contact/page.tsx` with a clean 2-column responsive layout (`grid-cols-1 lg:grid-cols-12`).
+  - Left column: Dynamic cards for verified tenant contact info (Email card with `mailto:`, Phone card with `tel:`, Address card, Social links, Customer support guarantee badge).
+  - Right column: Clean card enclosing `ContactForm` with preserved validation and rate limiting.
+  - Suppressed sample promotional banners (`isSampleBanner(promoBanner)`) from appearing at the bottom of the contact page.
+
+### 4. Product Page Ratings Control
+- **Root Cause:** Rating stars and rating summaries appeared unconditionally on product pages without merchant control.
+- **Solution:**
+  - Added `showRatings?: boolean` to `ProductDetailThemeConfig` in `src/lib/theme/theme-types.ts`.
+  - Added toggle in `ProductDetailTab.tsx` ("Show Product Ratings & Star Badges").
+  - Updated `ProductDetailClient.tsx`, `MinimalProductDetail.tsx`, `BoldProductDetail.tsx`, `LuxuryProductDetail.tsx`, and `RelatedRailsAndReviews.tsx` to conditionally hide star badges and rating summaries when disabled.
+  - Reviews system, review submission, and review records remain completely intact. Setting is tenant-scoped and independent per store.
+
+### 5. Product Page Bottom Section (Beauty Essentials)
+- **Root Cause:** `productPageSections` rendered `SectionPromo2` pointing to sample banner `promo2` ("Beauty Essentials" with placeholder image). When `bannerImg` was absent, `SectionPromo2` rendered an empty `w-full lg:w-1/2` container on the left, leaving an awkward asymmetric layout.
+- **Solution:**
+  - In `SectionPromo2.tsx`: Automatically suppressed sample banners (`isSampleBanner(banner)` or `title === "Beauty Essentials"`) when no merchant custom content is provided.
+  - When merchant provides real text-only promo content, layout centers gracefully without leaving an empty column.
+  - In `ProductDetailTab.tsx`: "Promotional Deals Banner (Bottom Section)" toggle defaults to `false` when not set, giving merchants explicit control.
+
+### Verification & Tests
+- `scripts/test-slider-responsive.ts`: 10/10 tests pass (including custom height, contain mode with ambient backdrop, and sample promo suppression).
+- `scripts/test-storefront-ui.ts`: 11/11 tests pass.
+- `scripts/test-p2.ts`: 18/18 tests pass.
+- `npx tsc --noEmit`: 0 errors.
+- `npm run lint`: 0 errors / 0 warnings.
+- `npm run build`: Production build succeeded, all 122 pages generated cleanly.
 
 ## Targeted fix (2026-11-18): Responsive slider image cropping on mobile
 

@@ -45,6 +45,7 @@ export default function BoldProductDetail({
   const panelStyle = productDetailSettings?.purchasePanelStyle ?? "sticky";
   const isSticky = panelStyle === "sticky";
   const showWishlist = productDetailSettings?.showWishlist ?? true;
+  const showRatings = productDetailSettings?.showRatings ?? true;
   const lowStock = !s.isOutOfStock && s.activeStock > 0 && s.activeStock <= LOW_STOCK_THRESHOLD;
 
   return (
@@ -73,14 +74,16 @@ export default function BoldProductDetail({
             <div className={`${panelStyle === "compact" ? "space-y-4 p-4" : "space-y-6 p-6"} border-2 border-[var(--border)] rounded-lg`}>
               <div>
                 <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-[var(--heading)]">{product.name}</h1>
-                <div className="flex items-center mt-3 gap-3">
-                  <a href="#reviews" className="flex items-center text-sm font-bold">
-                    <StarIcon className="w-5 h-5 pb-[1px] text-yellow-400" />
-                    <span className="ml-1">{product.rating ? product.rating.toFixed(1) : "New"}</span>
-                    <span className="mx-1.5">·</span>
-                    <span className="underline">{product.numberOfReviews || 0} reviews</span>
-                  </a>
-                </div>
+                {showRatings && (
+                  <div className="flex items-center mt-3 gap-3">
+                    <a href="#reviews" className="flex items-center text-sm font-bold">
+                      <StarIcon className="w-5 h-5 pb-[1px] text-yellow-400" />
+                      <span className="ml-1">{product.rating ? product.rating.toFixed(1) : "New"}</span>
+                      <span className="mx-1.5">·</span>
+                      <span className="underline">{product.numberOfReviews || 0} reviews</span>
+                    </a>
+                  </div>
+                )}
               </div>
 
               <Prices contentClass="py-1.5 px-3 text-2xl font-black" price={s.activePrice} compareAtPrice={s.activeCompareAtPrice} />

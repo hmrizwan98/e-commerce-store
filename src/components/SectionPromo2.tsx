@@ -5,6 +5,7 @@ import type { Banner } from "@/types/banner";
 import type { Route } from "@/routers/types";
 import { safeImageSrc } from "@/utils/safeImageSrc";
 import { getObjectPositionClass } from "@/lib/banners/position";
+import { isSampleBanner } from "@/lib/seed-content";
 
 export interface SectionPromo2Props {
   className?: string;
@@ -25,6 +26,15 @@ const SectionPromo2: FC<SectionPromo2Props> = ({
   ctaHref: customCtaHref,
   badgeText: customBadgeText,
 }) => {
+  // Hide if it's installer sample content (e.g. "Beauty Essentials") and merchant has not entered real custom content
+  const isSample = Boolean(
+    (banner && isSampleBanner(banner)) ||
+    (!customHeading && banner?.title === "Beauty Essentials")
+  );
+  if (isSample && !customHeading && !customSubHeading) {
+    return null;
+  }
+
   // Store Admin → Promo Banners (or the section's own text) only - no demo copy or illustration.
   const heading = banner?.title || customHeading;
   const subHeading = banner?.description || banner?.subtitle || customSubHeading;
@@ -39,8 +49,8 @@ const SectionPromo2: FC<SectionPromo2Props> = ({
 
   return (
     <div className={`nc-SectionPromo2 ${className}`}>
-      <div className="relative flex flex-col-reverse lg:flex-row items-center justify-between bg-yellow-50/80 dark:bg-slate-800/80 rounded-3xl p-6 sm:p-10 lg:p-16 overflow-hidden gap-8">
-        <div className="absolute inset-0 pointer-events-none">
+      <div className={`relative flex flex-col-reverse ${bannerImg ? "lg:flex-row items-center justify-between" : "items-center justify-center text-center"} bg-amber-500/10 dark:bg-slate-800/80 border border-amber-500/20 dark:border-slate-700/60 rounded-3xl p-6 sm:p-10 lg:p-14 overflow-hidden gap-8`}>
+        <div className="absolute inset-0 pointer-events-none opacity-40">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             className="w-full h-full object-contain dark:opacity-5"
@@ -49,9 +59,9 @@ const SectionPromo2: FC<SectionPromo2Props> = ({
           />
         </div>
 
-        {/* Image Container on Left */}
-        <div className="relative w-full lg:w-1/2 flex items-center justify-center z-[1]">
-          {bannerImg && (
+        {/* Image Container on Left (Only when bannerImg exists) */}
+        {bannerImg && (
+          <div className="relative w-full lg:w-1/2 flex items-center justify-center z-[1]">
             <picture className="block w-full">
               {mobileImg && (
                 <source media="(max-width: 767px)" srcSet={mobileImg} />
@@ -63,23 +73,23 @@ const SectionPromo2: FC<SectionPromo2Props> = ({
                 className={`w-full max-h-[420px] object-cover rounded-2xl shadow-lg ${bgPosClass}`}
               />
             </picture>
-          )}
-          {banner?.overlayColor && (banner.overlayOpacity ?? 0) > 0 && (
-            <div
-              className="absolute inset-0 z-[1] pointer-events-none rounded-2xl overflow-hidden"
-              style={{ backgroundColor: banner.overlayColor, opacity: banner.overlayOpacity ?? 0 }}
-            />
-          )}
-        </div>
+            {banner?.overlayColor && (banner.overlayOpacity ?? 0) > 0 && (
+              <div
+                className="absolute inset-0 z-[1] pointer-events-none rounded-2xl overflow-hidden"
+                style={{ backgroundColor: banner.overlayColor, opacity: banner.overlayOpacity ?? 0 }}
+              />
+            )}
+          </div>
+        )}
 
-        {/* Text Copy on Right */}
-        <div className="w-full lg:w-1/2 relative z-[1] space-y-4">
+        {/* Text Copy on Right (or centered when no image) */}
+        <div className={`w-full ${bannerImg ? "lg:w-1/2" : "max-w-2xl mx-auto"} relative z-[1] space-y-4`}>
           {badgeText && (
             <span className="text-xs font-bold tracking-widest text-amber-700 dark:text-amber-400 uppercase block">
               {badgeText}
             </span>
           )}
-            {heading && (
+          {heading && (
             <h2 className="font-bold text-3xl sm:text-4xl xl:text-5xl !leading-[1.15] tracking-tight text-slate-900 dark:text-white">
               {heading}
             </h2>
@@ -89,7 +99,7 @@ const SectionPromo2: FC<SectionPromo2Props> = ({
               {subHeading}
             </p>
           )}
-          <div className="pt-4 flex items-center gap-4">
+          <div className={`pt-3 flex items-center gap-4 ${bannerImg ? "" : "justify-center"}`}>
             <ButtonPrimary
               href={ctaHref as Route}
               className="dark:bg-slate-200 dark:text-slate-900 shadow-md"

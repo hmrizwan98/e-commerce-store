@@ -68,6 +68,8 @@ const ProductDetailClient: React.FC<ProductDetailClientProps> = ({
     activeStock,
     isOutOfStock,
   } = useProductOptions(product, variants);
+
+  const showRatings = productDetailSettings?.showRatings ?? true;
   const [qualitySelected, setQualitySelected] = useState(1);
   const [isOpenModalViewAllReviews, setIsOpenModalViewAllReviews] =
     useState(false);
@@ -221,26 +223,30 @@ const ProductDetailClient: React.FC<ProductDetailClientProps> = ({
               price={activePrice}
             />
 
-            <div className="h-7 border-l border-slate-300 dark:border-slate-700"></div>
+            {showRatings && (
+              <>
+                <div className="h-7 border-l border-slate-300 dark:border-slate-700"></div>
 
-            <div className="flex items-center">
-              <a href="#reviews" className="flex items-center text-sm font-medium">
-                <StarIcon className="w-5 h-5 pb-[1px] text-yellow-400" />
-                <div className="ml-1.5 flex">
-                  <span>{product.rating ? product.rating.toFixed(1) : "New"}</span>
-                  <span className="block mx-2">·</span>
-                  <span className="text-slate-600 dark:text-slate-400 underline">
-                    {product.numberOfReviews || 0} reviews
-                  </span>
+                <div className="flex items-center">
+                  <a href="#reviews" className="flex items-center text-sm font-medium">
+                    <StarIcon className="w-5 h-5 pb-[1px] text-yellow-400" />
+                    <div className="ml-1.5 flex">
+                      <span>{product.rating ? product.rating.toFixed(1) : "New"}</span>
+                      <span className="block mx-2">·</span>
+                      <span className="text-slate-600 dark:text-slate-400 underline">
+                        {product.numberOfReviews || 0} reviews
+                      </span>
+                    </div>
+                  </a>
                 </div>
-              </a>
-              {isOutOfStock && (
-                <>
-                  <span className="hidden sm:block mx-2.5">·</span>
-                  <span className="hidden sm:block text-sm text-red-600">Sold out</span>
-                </>
-              )}
-            </div>
+              </>
+            )}
+            {isOutOfStock && (
+              <>
+                <span className="hidden sm:block mx-2.5">·</span>
+                <span className="hidden sm:block text-sm text-red-600">Sold out</span>
+              </>
+            )}
           </div>
         </div>
 
@@ -282,11 +288,11 @@ const ProductDetailClient: React.FC<ProductDetailClientProps> = ({
     return (
       <div id="reviews">
         <h2 className="text-2xl font-semibold flex items-center">
-          <StarIcon className="w-7 h-7 mb-0.5" />
-          <span className="ml-1.5">
-            {" "}
-            {product.rating ? product.rating.toFixed(1) : "New"} ·{" "}
-            {product.numberOfReviews || 0} Reviews
+          {showRatings && <StarIcon className="w-7 h-7 mb-0.5" />}
+          <span className={showRatings ? "ml-1.5" : ""}>
+            {showRatings
+              ? `${product.rating ? product.rating.toFixed(1) : "New"} · ${product.numberOfReviews || 0} Reviews`
+              : `Customer Reviews (${product.numberOfReviews || 0})`}
           </span>
         </h2>
 

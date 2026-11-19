@@ -90,3 +90,57 @@ export async function getLiveHomepageSectionsAction(): Promise<HomepageSection[]
   await requireAdmin();
   return JSON.parse(JSON.stringify(await getAllHomepageSectionsForAdmin()));
 }
+
+import { getAllBannersForAdmin } from "@/lib/firebase/repositories/banners";
+import {
+  createBanner,
+  updateBanner,
+  deleteBanner,
+  reorderBanners,
+  setBannerActive,
+  type BannerFormInput,
+} from "@/lib/firebase/banner-actions";
+import type { Banner } from "@/types/banner";
+
+export async function getHeroSlidesForCustomizerAction(): Promise<Banner[]> {
+  await requireAdmin();
+  const banners = await getAllBannersForAdmin("hero");
+  return JSON.parse(JSON.stringify(banners));
+}
+
+export async function saveHeroSlideForCustomizerAction(
+  id: string | null,
+  input: BannerFormInput
+): Promise<{ ok: true; id: string }> {
+  await requireAdmin();
+  let slideId = id;
+  if (slideId) {
+    await updateBanner(slideId, input);
+  } else {
+    slideId = await createBanner("hero", input);
+  }
+  revalidatePath("/admin/appearance/customize/preview");
+  return { ok: true, id: slideId };
+}
+
+export async function deleteHeroSlideForCustomizerAction(id: string): Promise<{ ok: true }> {
+  await requireAdmin();
+  await deleteBanner(id);
+  revalidatePath("/admin/appearance/customize/preview");
+  return { ok: true };
+}
+
+export async function reorderHeroSlidesForCustomizerAction(orderedIds: string[]): Promise<{ ok: true }> {
+  await requireAdmin();
+  await reorderBanners(orderedIds);
+  revalidatePath("/admin/appearance/customize/preview");
+  return { ok: true };
+}
+
+export async function toggleHeroSlideActiveForCustomizerAction(id: string, isActive: boolean): Promise<{ ok: true }> {
+  await requireAdmin();
+  await setBannerActive(id, isActive);
+  revalidatePath("/admin/appearance/customize/preview");
+  return { ok: true };
+}
+

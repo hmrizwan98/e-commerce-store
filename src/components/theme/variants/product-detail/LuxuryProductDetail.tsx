@@ -45,6 +45,7 @@ export default function LuxuryProductDetail({
   const panelStyle = productDetailSettings?.purchasePanelStyle ?? "sticky";
   const isSticky = panelStyle === "sticky";
   const showWishlist = productDetailSettings?.showWishlist ?? true;
+  const showRatings = productDetailSettings?.showRatings ?? true;
 
   const reviewCount = product.numberOfReviews ?? 0;
   const rating = product.rating ?? 0;
@@ -95,20 +96,22 @@ export default function LuxuryProductDetail({
                 </div>
 
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-                  {reviewCount > 0 && rating > 0 ? (
-                    <a href="#reviews" className="flex items-center gap-1 text-[var(--muted)] hover:text-[var(--heading)]">
-                      <span className="flex">
-                        {[1, 2, 3, 4, 5].map((i) => (
-                          <StarIcon key={i} className={`w-4 h-4 ${i <= Math.round(rating) ? "text-amber-400" : "text-slate-200"}`} />
-                        ))}
-                      </span>
-                      <span className="font-medium text-[var(--heading)]">{rating.toFixed(1)}</span>
-                      <span>({reviewCount} {reviewCount === 1 ? "review" : "reviews"})</span>
-                    </a>
-                  ) : (
-                    <a href="#reviews" className="text-[var(--muted)] hover:text-[var(--heading)]">
-                      No reviews yet
-                    </a>
+                  {showRatings && (
+                    reviewCount > 0 && rating > 0 ? (
+                      <a href="#reviews" className="flex items-center gap-1 text-[var(--muted)] hover:text-[var(--heading)]">
+                        <span className="flex">
+                          {[1, 2, 3, 4, 5].map((i) => (
+                            <StarIcon key={i} className={`w-4 h-4 ${i <= Math.round(rating) ? "text-amber-400" : "text-slate-200"}`} />
+                          ))}
+                        </span>
+                        <span className="font-medium text-[var(--heading)]">{rating.toFixed(1)}</span>
+                        <span>({reviewCount} {reviewCount === 1 ? "review" : "reviews"})</span>
+                      </a>
+                    ) : (
+                      <a href="#reviews" className="text-[var(--muted)] hover:text-[var(--heading)]">
+                        No reviews yet
+                      </a>
+                    )
                   )}
                   <span className="flex items-center gap-1.5 text-[var(--muted)]">
                     <span className={`w-2 h-2 rounded-full ${stockState.dot}`} />

@@ -35,6 +35,7 @@ export default function RelatedRailsAndReviews({
   setIsOpenModalViewAllReviews,
 }: RelatedRailsAndReviewsProps) {
   const showReviews = productDetailSettings?.showReviews ?? true;
+  const showRatings = productDetailSettings?.showRatings ?? true;
   const showRelated = productDetailSettings?.showRelatedProducts ?? true;
 
   return (
@@ -44,9 +45,11 @@ export default function RelatedRailsAndReviews({
           <hr className="border-slate-200 dark:border-slate-700" />
           <div id="reviews">
             <h2 className="text-2xl font-semibold flex items-center">
-              <StarIcon className="w-7 h-7 mb-0.5" />
-              <span className="ml-1.5">
-                {product.rating ? product.rating.toFixed(1) : "New"} · {product.numberOfReviews || 0} Reviews
+              {showRatings && <StarIcon className="w-7 h-7 mb-0.5" />}
+              <span className={showRatings ? "ml-1.5" : ""}>
+                {showRatings
+                  ? `${product.rating ? product.rating.toFixed(1) : "New"} · ${product.numberOfReviews || 0} Reviews`
+                  : `Customer Reviews (${product.numberOfReviews || 0})`}
               </span>
             </h2>
 

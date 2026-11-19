@@ -58,6 +58,7 @@ export interface ProductDetailThemeConfig {
   showCompare?: boolean;
   showWishlist?: boolean;
   showReviews?: boolean;
+  showRatings?: boolean;
   showRelatedProducts?: boolean;
   showBottomPromo?: boolean;
   sections?: HomepageSection[];

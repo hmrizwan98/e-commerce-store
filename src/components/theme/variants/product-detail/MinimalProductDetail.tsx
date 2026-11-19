@@ -40,6 +40,7 @@ export default function MinimalProductDetail({
   const showCompare = productDetailSettings?.showCompare ?? true;
   const clickableGallery = (productDetailSettings?.galleryStyle ?? "clickable-thumbnails") === "clickable-thumbnails";
   const showWishlist = productDetailSettings?.showWishlist ?? true;
+  const showRatings = productDetailSettings?.showRatings ?? true;
   // Minimal's own default is a normal (non-sticky) panel.
   const panelStyle = productDetailSettings?.purchasePanelStyle ?? "standard";
 
@@ -71,15 +72,19 @@ export default function MinimalProductDetail({
                 <h2 className="text-2xl sm:text-3xl font-semibold text-[var(--heading)]">{product.name}</h2>
                 <div className="flex items-center mt-5 space-x-4 sm:space-x-5">
                   <Prices contentClass="py-1 px-2 md:py-1.5 md:px-3 text-lg font-semibold" price={s.activePrice} />
-                  <div className="h-7 border-l border-slate-300 dark:border-slate-700" />
-                  <a href="#reviews" className="flex items-center text-sm font-medium">
-                    <StarIcon className="w-5 h-5 pb-[1px] text-yellow-400" />
-                    <div className="ml-1.5 flex">
-                      <span>{product.rating ? product.rating.toFixed(1) : "New"}</span>
-                      <span className="block mx-2">·</span>
-                      <span className="text-slate-600 dark:text-slate-400 underline">{product.numberOfReviews || 0} reviews</span>
-                    </div>
-                  </a>
+                  {showRatings && (
+                    <>
+                      <div className="h-7 border-l border-slate-300 dark:border-slate-700" />
+                      <a href="#reviews" className="flex items-center text-sm font-medium">
+                        <StarIcon className="w-5 h-5 pb-[1px] text-yellow-400" />
+                        <div className="ml-1.5 flex">
+                          <span>{product.rating ? product.rating.toFixed(1) : "New"}</span>
+                          <span className="block mx-2">·</span>
+                          <span className="text-slate-600 dark:text-slate-400 underline">{product.numberOfReviews || 0} reviews</span>
+                        </div>
+                      </a>
+                    </>
+                  )}
                   {s.isOutOfStock && <span className="hidden sm:block text-sm text-red-600 ml-2.5">Sold out</span>}
                 </div>
               </div>

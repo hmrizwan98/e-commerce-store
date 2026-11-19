@@ -192,3 +192,36 @@ test("SectionPromo1, SectionPromo2, SectionPromo3: render responsive picture wit
   assert.ok(p3Html.includes("<picture"), "SectionPromo3 uses picture element");
   assert.ok(p3Html.includes("media=\"(max-width: 767px)\""), "SectionPromo3 has mobile source query");
 });
+
+test("FullWidthImageHero: custom height controls and contain mode with ambient backdrop", () => {
+  const slides = [
+    toHeroSlide(makeBanner({ imageDesktop: "/images/slide1-1584x672.webp" })),
+    toHeroSlide(makeBanner({ imageDesktop: "/images/slide2-768x1376.webp" })),
+  ];
+
+  // Custom height applied to CSS variables
+  const html = ReactDOMServer.renderToStaticMarkup(
+    React.createElement(FullWidthImageHero, {
+      data: slides,
+      banner: { heightPx: 550, mobileHeightPx: 380, imageFit: "full" },
+    })
+  );
+
+  assert.ok(html.includes("--hero-h-desktop:550px"), "Desktop custom height applied");
+  assert.ok(html.includes("--hero-h-mobile:380px"), "Mobile custom height applied");
+  assert.ok(html.includes("object-contain"), "Contain mode uses object-contain");
+  assert.ok(html.includes("blur-2xl"), "Contain mode has ambient backdrop");
+});
+
+test("SectionPromo2: suppresses sample Beauty Essentials when not customized", () => {
+  // Sample banner without custom content
+  const sampleBanner = makeBanner({
+    title: "Beauty Essentials",
+    imageDesktop: "/images/placeholder.png",
+  });
+  const html = ReactDOMServer.renderToStaticMarkup(
+    React.createElement(SectionPromo2, { banner: sampleBanner })
+  );
+  assert.equal(html, "", "Sample Beauty Essentials banner must be hidden when merchant hasn't customized it");
+});
+

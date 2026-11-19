@@ -141,10 +141,12 @@ export interface ThemeBanner {
   textAlign?: "left" | "center" | "right";
   buttonStyle?: "solid" | "outline";
   heightPx?: number;
+  mobileHeightPx?: number;
   /** "full" (default): show each slide's WHOLE image at its own aspect ratio - nothing is
    * cropped (banners often have text in the image). "cover": fixed height (heightPx), image
    * fills it and may be cropped (uses the slide's focal position). */
   imageFit?: "full" | "cover";
+  imagePosition?: "left" | "center" | "right" | "top" | "bottom";
   /** Rounded corners + inset from the screen edge. Default off (edge-to-edge banner). */
   rounded?: boolean;
 }
