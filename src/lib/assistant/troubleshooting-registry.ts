@@ -494,18 +494,25 @@ export const TROUBLESHOOTING_REGISTRY: TroubleshootingEntry[] = [
   },
   {
     id: "export_import_not_working",
-    title: "Export / Import / Backup Produces No File",
-    keywords: ["export", "import", "backup", "csv", "excel", "download file", "export file", "report download", "bulk import", "bulk export"],
-    symptomUrdu: "Export / Import / Backup / Report ka button dabaya lekin koi file nahi bani.",
-    symptomEnglish: "Clicked an Export / Import / Backup / Report button but no file was produced.",
+    title: "Export / Import / Backup Questions",
+    keywords: ["backup", "download file", "order export", "customer export", "report download", "backup download"],
+    symptomUrdu: "Backup ya export ka button dabaya lekin file foran nahi mili.",
+    symptomEnglish: "Clicked an Export or Backup button but file was not produced immediately.",
     checklist: [
-      { urdu: "Ye buttons (Products Bulk Import/Export, Order Export, Customer Export, Finance Reports, order Documents) abhi sirf request record karte hain - history mein 'queued' dikhta hai. **Settings → Backup** ki request platform team ko jati hai aur woh manually tayyar karti hai (status: Pending review → Approved → Completed).", english: "These buttons (Products Bulk Import/Export, Order Export, Customer Export, Finance Reports, order Documents) only record a request for now - history shows 'queued'. **Settings → Backup** requests go to the platform team, who prepare them manually (status: Pending review → Approved → Completed)." },
+      {
+        urdu: "**Products Bulk Import & Export** ab mukammal active hai: aap Catalog → Products → Bulk Import/Export se CSV/Excel upload karke direct products import kar sakte hain aur 'Export All Products' se direct CSV download kar sakte hain.",
+        english: "**Products Bulk Import & Export** is now fully functional: you can upload CSV/Excel to import products and click 'Export All Products' to download a CSV immediately.",
+      },
+      {
+        urdu: "Settings → Backup aur Order/Customer Export ki request queue hoti hai aur platform team manually tayyar karti hai (status: Pending review → Approved → Completed).",
+        english: "Settings → Backup and Order/Customer Export requests are queued and processed (status: Pending review → Approved → Completed).",
+      },
     ],
-    fixUrdu: "Ye expected hai - file banane wala hissa abhi available nahi. Filhal data admin ki lists aur order page (🖨️ Print invoice → Save as PDF) se hasil karein.",
-    fixEnglish: "This is expected - the part that generates files isn't available yet. For now use the admin lists and the order page (🖨️ Print invoice → Save as PDF).",
+    fixUrdu: "Products import ya export ke liye **Catalog → Products → Bulk Import/Export** istemal karein jahan se real CSV export aur import foran ho jata hai.",
+    fixEnglish: "For products import or export, use **Catalog → Products → Bulk Import/Export** which supports immediate CSV/Excel import and export.",
     route: "/admin/products/bulk",
     actionLabel: "Open Bulk Import/Export",
-    exampleQuestions: ["Export button kaam nahi kar raha", "Backup file nahi bani"],
+    exampleQuestions: ["Backup file nahi mili", "Order export file kahan hai"],
   },
   {
     id: "cart_issue",

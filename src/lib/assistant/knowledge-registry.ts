@@ -163,7 +163,7 @@ export const KNOWLEDGE_REGISTRY: KnowledgeEntry[] = [
   },
   {
     id: "product_bulk_import_export",
-    title: "Bulk Import / Export Products (not available yet)",
+    title: "Bulk Import & Export Products (CSV / Excel)",
     category: "catalog",
     keywords: [
       "bulk import",
@@ -177,15 +177,30 @@ export const KNOWLEDGE_REGISTRY: KnowledgeEntry[] = [
       "products excel",
       "products csv",
       "bulk upload",
+      "bulk products",
+      "import excel",
+      "import csv",
+      "product image url",
+      "bulk image",
+      "bulk image url",
+      "csv image",
+      "import image",
+      "import images",
     ],
     navigationPath: ["Catalog", "Products", "Bulk Import/Export"],
     route: "/admin/products/bulk",
     actionLabel: "Open Bulk Import/Export",
     instructionsUrdu:
-      "**Catalog → Products → Bulk Import/Export** page maujood hai, lekin ye **abhi sirf request record karta hai** - koi CSV/Excel file na banti hai na parhi jati hai (feature abhi available nahi). Filhal products ek ek kar ke **Add Product** se add karein, ya milta julta product **Duplicate** kar ke edit karein.",
+      "**Products ko Bulk Import aur Export karne ka mukammal tareeqa:**\n\n1. **/admin/products/bulk** kholein (ya **Catalog → Products** mein **Bulk Import / Export** par click karein).\n\n**A. Products CSV / Excel se Import Kaise Karein:**\n- **Sample Template Download Karein:** Page par **Download Sample CSV** ka button dabayein taake aapko standard columns mil jayein: `Name, Price, CompareAtPrice, SKU, Stock, Category, Description, Images, Status`.\n- **Images ka Tareeqa:** CSV mein image URL dalna **optional (ikhtiyari)** hai. Agar URL na ho toh khali chhor dein, product bina image ke import ho jayega aur baad mein Admin se direct upload ho sakta hai. Agar images dalni hon toh supplier website se image link copy karke ya ImgBB/PostImages par images upload karke unke direct links CSV mein daal sakte hain.\n- **File Upload:** Apni `.csv` ya Excel `.xlsx` file ko drag-and-drop karein ya click karke select karein.\n- **Instant Preview:** Upload hote hi pehle 5 products ka table preview aur valid products count dikhayega.\n- **Start Import:** 'Start Import' dabayein, products safe 400-batch write se bina kisi slug collision ke foran store mein add ho jayenge.\n\n**B. Products Export Kaise Karein:**\n- **Export All Products (.CSV)** button dabayein.\n- Store ke tamam active products ki mukammal CSV file aapke computer mein foran download ho jayegi.\n\n**C. History & Status:**\n- Import ya Export mukammal hote hi niche table mein **Completed** green badge aur kitne products import/export huay wo date/time ke saath dikhata hai.",
     instructionsEnglish:
-      "The **Catalog → Products → Bulk Import/Export** page exists, but it **only records a request for now** - no CSV/Excel file is produced or read (the feature isn't available yet). For now, add products one by one with **Add Product**, or **Duplicate** a similar product and edit it.",
-    exampleQuestions: ["Products Excel se import kaise karun?", "Can I bulk upload products from CSV?"],
+      "**How to Bulk Import and Export Products:**\n\n1. Open **/admin/products/bulk** (or go to **Catalog → Products → Bulk Import / Export**).\n\n**A. Importing Products via CSV or Excel:**\n- **Download Sample Template:** Click **Download Sample CSV** to get the standard format with pre-filled columns: `Name, Price, CompareAtPrice, SKU, Stock, Category, Description, Images, Status`.\n- **Image Handling:** Image URLs are **optional**. If you leave the Images column empty, products will import normally and you can upload images directly from the Admin later. To include images, paste direct links copied from your supplier's website or uploaded to free image hosts like ImgBB.\n- **File Upload:** Drag and drop or browse to select your `.csv` or `.xlsx` file.\n- **Instant Preview:** View the 5-row preview table and valid product count.\n- **Start Import:** Click **Start Import** to safely ingest products in batches with automatic unique slug resolution.\n\n**B. Exporting Products:**\n- Click **Export All Products (.CSV)** to instantly download a full CSV backup of your store's active catalog.\n\n**C. History & Status:**\n- History dynamically shows **Completed** with row counts and exact timestamps.",
+    exampleQuestions: [
+      "Products Excel se import kaise karun?",
+      "Can I bulk upload products from CSV?",
+      "Bulk import me image url kahan se dalein?",
+      "Agar image url na dalein to kya hoga?",
+      "Products export kaise karun?",
+    ],
   },
   {
     id: "create_category",
