@@ -11,7 +11,17 @@ import { deleteImagesByUrls, diffRemovedImages } from "@/lib/images/cleanup";
 import { getProductById } from "@/lib/firebase/repositories/products";
 import { logProductActivity } from "@/lib/firebase/repositories/product-activity-logs";
 import { generateSku } from "@/lib/firebase/services/sku-generator";
-import { queueProductExport, queueProductImport } from "@/lib/firebase/services/product-bulk-service";
+import {
+  queueProductExport,
+  queueProductImport,
+  executeProductBulkImport,
+  executeProductBulkExport,
+} from "@/lib/firebase/services/product-bulk-service";
+import type {
+  BulkImportProductItem,
+  BulkImportResult,
+  BulkExportResult,
+} from "@/types/product-bulk-operation";
 import type {
   Product,
   ProductAttribute,
@@ -372,4 +382,24 @@ export async function requestProductImport(fileName?: string): Promise<void> {
   await requireAdmin();
   await queueProductImport(fileName);
   revalidatePath("/admin/products/bulk");
+}
+
+export async function executeProductBulkImportAction(
+  items: BulkImportProductItem[],
+  fileName?: string
+): Promise<BulkImportResult> {
+  await requireAdmin();
+  const result = await executeProductBulkImport(items, fileName);
+  revalidatePath("/admin/products");
+  revalidatePath("/admin/products/bulk");
+  revalidatePath("/collection");
+  revalidatePath("/");
+  return result;
+}
+
+export async function executeProductBulkExportAction(): Promise<BulkExportResult> {
+  await requireAdmin();
+  const result = await executeProductBulkExport();
+  revalidatePath("/admin/products/bulk");
+  return result;
 }

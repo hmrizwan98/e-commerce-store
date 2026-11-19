@@ -14,3 +14,28 @@ export interface ProductBulkOperation {
   note?: string;
   createdAt?: number;
 }
+
+export interface BulkImportProductItem {
+  name: string;
+  price: number;
+  compareAtPrice?: number;
+  sku?: string;
+  stock?: number;
+  category?: string;
+  description?: string;
+  images?: string[];
+  status?: "active" | "draft";
+}
+
+export interface BulkImportResult {
+  success: boolean;
+  importedCount: number;
+  errors: string[];
+}
+
+export interface BulkExportResult {
+  filename: string;
+  headers: string[];
+  rows: (string | number)[][];
+  count: number;
+}

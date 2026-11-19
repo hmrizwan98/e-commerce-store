@@ -1,6 +1,6 @@
 # Webriiz platform audit - progress
 
-Last updated: 2026-11-19 (after image responsiveness & fit modes, search bar UI & multi-keyword search functionality fixes)
+Last updated: 2026-11-19 (after real Shopify/WooCommerce-style CSV & Excel product bulk import/export engine)
 
 | Phase | Status |
 |---|---|
@@ -13,7 +13,27 @@ Last updated: 2026-11-19 (after image responsiveness & fit modes, search bar UI 
 | **Targeted bug fixes & mobile slider cropping** | **Done in working tree - tested & verified** (not committed, not deployed) |
 | **Targeted Fixes (Slider, Customizer, Contact, Ratings, Bottom Promo)** | **Done in working tree - tested & verified** (not committed, not deployed) |
 | **Targeted Fixes (Search Bar UI & Product Search, Advanced Image Responsiveness & Fit Modes)** | **Done in working tree - tested & verified** (not committed, not deployed) |
+| **Bulk Product Import & Export Engine (CSV & Excel)** | **Done in working tree - tested & verified** (not committed, not deployed) |
 | P3 | Not started - waits for approval |
+
+## Targeted fixes (2026-11-19): Real Bulk Product Import & Export Engine (Shopify & WooCommerce Standard)
+
+### 1. Functional CSV & Excel File Import
+- **Previous State:** Architecture stub with a text field (`File name (optional)`) that queued an empty record into Firestore without actually accepting or parsing any file.
+- **Solution:**
+  - Added Sample CSV Template download button (`sample-products-template.csv`) with pre-filled columns: `Name, Price, CompareAtPrice, SKU, Stock, Category, Description, Images, Status`.
+  - Added drag & drop / file picker accepting `.csv`, `.xlsx`, and `.xls` files up to 20MB.
+  - Client-side parser with flexible column mapping (handles `Name`, `Title`, `Product Name`, `Price`, `Regular Price`, `SKU`, `Stock`, `Qty`, `Category`, `Images`, etc.).
+  - Instant file summary & interactive table preview of the first 5 rows before importing.
+  - Server action `executeProductBulkImportAction` validates products, auto-creates/resolves categories, generates unique collision-free slugs, computes search facets, and executes Firestore batch writes in chunks of 400 products.
+  - Updates history status to `completed` with actual row count and timestamp.
+
+### 2. Functional Product CSV Export
+- **Previous State:** "Request export" button created a stub record with status `queued` and produced no downloadable file.
+- **Solution:**
+  - Server action `executeProductBulkExportAction` fetches all active products for the tenant, resolves category IDs into readable category names, and generates RFC 4180 compliant CSV rows.
+  - Triggers instant browser download of `products-export-YYYY-MM-DD.csv`.
+  - Records completed operation in `productBulkOperations` history with item count.
 
 ## Targeted fixes (2026-11-19): Search Bar UI & Multi-keyword Search, Advanced Image Responsiveness & Fit Modes
 
