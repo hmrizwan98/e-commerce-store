@@ -10,6 +10,9 @@ import {
   ShoppingBagIcon,
   TagIcon,
   BuildingStorefrontIcon,
+  ArrowLeftIcon,
+  ArrowTopRightOnSquareIcon,
+  ArrowPathIcon,
   ArchiveBoxIcon,
   TruckIcon,
   RectangleStackIcon,
@@ -134,6 +137,11 @@ export default function AdminShell({
   const [mobileOpen, setMobileOpen] = useState(false);
   const [assistantOpen, setAssistantOpen] = useState(false);
   const [floatingAssistantVisible, setFloatingAssistantVisible] = useState(true);
+  const [pendingHref, setPendingHref] = useState<string | null>(null);
+
+  useEffect(() => {
+    setPendingHref(null);
+  }, [pathname]);
 
   const preset = getAdminThemePreset(adminTheme);
   const colorScale = generateColorScale(preset.accentColor);
@@ -271,6 +279,25 @@ export default function AdminShell({
 
   const normalizedPathname = (pathname || "").replace(/^\/store\/[^\/]+/, "") || "/admin";
 
+  const isSubPage = Boolean(
+    normalizedPathname &&
+    normalizedPathname !== "/admin" &&
+    normalizedPathname !== "/admin/"
+  );
+
+  const handleBack = () => {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      router.back();
+    } else {
+      const segments = normalizedPathname.split("/").filter(Boolean);
+      if (segments.length > 2) {
+        router.push(`/${segments.slice(0, 2).join("/")}` as any);
+      } else {
+        router.push("/admin");
+      }
+    }
+  };
+
   const isActive = (href: string) => {
     if (href === "/admin") {
       return normalizedPathname === "/admin";
@@ -347,10 +374,17 @@ export default function AdminShell({
               {group.items.map((item) => {
                 const Icon = item.icon;
                 const active = isActive(item.href);
+                const isPending = pendingHref === item.href;
                 return (
                   <Link
                     key={item.href}
                     href={item.href as any}
+                    prefetch={true}
+                    onClick={() => {
+                      if (item.href !== pathname) {
+                        setPendingHref(item.href);
+                      }
+                    }}
                     title={collapsed ? item.label : undefined}
                     className={`relative flex items-center h-11 transition-colors group cursor-pointer ${collapsed ? "justify-center px-0" : "justify-between pl-4 pr-3"
                       }`}
@@ -358,7 +392,7 @@ export default function AdminShell({
                     {active && (
                       <motion.div
                         layoutId="curvedActiveTab"
-                        className="absolute inset-0 bg-[#f0f4fa] dark:bg-slate-950 rounded-l-2xl shadow-xs z-0"
+                        className="absolute inset-0 bg-[#f0f4fa] dark:bg-slate-950 rounded-l-2xl shadow-xs z-0 pointer-events-none"
                         transition={{ type: "spring", stiffness: 450, damping: 35 }}
                       >
                         {/* Top Concave Curve Notch - Inward Curve */}
@@ -384,14 +418,17 @@ export default function AdminShell({
                       {!collapsed && (
                         <div className="flex items-center gap-2 truncate">
                           <span className="truncate text-xs font-extrabold tracking-tight">{item.label}</span>
-                          {badgeFor(item.href) > 0 && (
+                          {isPending && (
+                            <ArrowPathIcon className="w-3.5 h-3.5 animate-spin text-primary-400 shrink-0" />
+                          )}
+                          {badgeFor(item.href) > 0 && !isPending && (
                             <span className="px-1.5 py-0.5 text-[9px] font-black rounded-full bg-rose-500 text-white shadow-2xs leading-none shrink-0">
                               {badgeLabel(badgeFor(item.href))}
                             </span>
                           )}
                         </div>
                       )}
-                      {collapsed && badgeFor(item.href) > 0 && (
+                      {collapsed && badgeFor(item.href) > 0 && !isPending && (
                         <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-rose-500 ring-2 ring-slate-900" />
                       )}
                     </div>
@@ -445,6 +482,21 @@ export default function AdminShell({
               >
                 <Bars3Icon className="w-5 h-5" />
               </button>
+
+              {/* Back button for detail/edit subpages */}
+              {isSubPage && (
+                <button
+                  type="button"
+                  onClick={handleBack}
+                  className="text-xs font-bold text-white bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-lg transition-colors backdrop-blur-xs flex items-center gap-1.5 cursor-pointer shadow-xs"
+                  title="Go back to previous page"
+                >
+                  <ArrowLeftIcon className="w-3.5 h-3.5" />
+                  <span>Back</span>
+                </button>
+              )}
+
+              {/* View Storefront Link */}
               {(() => {
                 let resolvedStorefrontUrl = storefrontUrl;
                 if (!resolvedStorefrontUrl && typeof window !== "undefined") {
@@ -467,9 +519,14 @@ export default function AdminShell({
                 return (
                   <a
                     href={resolvedStorefrontUrl || "/"}
-                    className="text-xs font-semibold text-white/90 hover:text-white bg-white/15 hover:bg-white/25 px-3 py-1.5 rounded-lg transition-colors backdrop-blur-xs flex items-center gap-1"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs font-semibold text-white/90 hover:text-white bg-white/15 hover:bg-white/25 px-2.5 py-1.5 rounded-lg transition-colors backdrop-blur-xs flex items-center gap-1.5 cursor-pointer"
+                    title="Open live storefront website in new tab"
                   >
-                    ← Storefront
+                    <BuildingStorefrontIcon className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Storefront</span>
+                    <ArrowTopRightOnSquareIcon className="w-3 h-3 text-white/70" />
                   </a>
                 );
               })()}
@@ -528,7 +585,7 @@ export default function AdminShell({
         </header>
 
         {/* Dashboard Main View Area */}
-        <main className="flex-1 p-4 md:p-6 pb-28 md:pb-32 overflow-y-auto overflow-x-hidden relative flex flex-col min-h-0 print:block print:p-0 print:overflow-visible">{children}</main>
+        <main className="flex-1 p-4 md:p-6 pb-6 md:pb-8 overflow-y-auto overflow-x-hidden relative flex flex-col min-h-0 print:block print:p-0 print:overflow-visible">{children}</main>
       </div>
 
       {/* Floating Action Button (Fixed Bottom-Right Position across every page) */}
