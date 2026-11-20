@@ -259,11 +259,11 @@ export default async function AdminOrdersPage({
 
       {/* Pagination */}
       {(nextHref || prevHref) && (
-        <div className="flex items-center justify-between pt-2">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
           <span className="text-xs font-medium text-slate-500">
             Showing recent page entries
           </span>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 sm:pr-48">
             <Link
               href={(prevHref ?? "#") as any}
               aria-disabled={!prevHref}

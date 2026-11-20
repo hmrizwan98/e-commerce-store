@@ -283,24 +283,32 @@ export default async function AdminProductsPage({
 
         {/* Pagination Footer */}
         {(prevHref || nextHref) && (
-          <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs bg-slate-50/50 dark:bg-slate-800/30">
+          <div className="p-4 sm:px-6 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs bg-slate-50/50 dark:bg-slate-800/30">
             <div>
-              {prevHref && (
+              {prevHref ? (
                 <Link
                   href={prevHref as any}
-                  className="px-3.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 font-bold text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-900 transition-colors"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 font-bold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-2xs"
                 >
                   ← Previous Page
                 </Link>
+              ) : (
+                <span className="text-slate-400 dark:text-slate-500 font-medium">Page {cursorStack.length + 1}</span>
               )}
             </div>
-            <div>
+            <div className="flex items-center gap-3 sm:pr-48">
+              {prevHref && (
+                <span className="text-slate-400 dark:text-slate-500 font-mono text-[11px]">
+                  Page {cursorStack.length + 1}
+                </span>
+              )}
               {nextHref && (
                 <Link
                   href={nextHref as any}
-                  className="px-3.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 font-bold text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-900 transition-colors"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-indigo-200 dark:border-indigo-800 font-extrabold text-indigo-600 dark:text-indigo-400 bg-indigo-50/80 dark:bg-indigo-950/50 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition-all shadow-2xs hover:scale-[1.02] active:scale-[0.98]"
                 >
-                  Next Page →
+                  <span>Next Page</span>
+                  <span>→</span>
                 </Link>
               )}
             </div>

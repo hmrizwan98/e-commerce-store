@@ -18,7 +18,7 @@ export interface ImageUploaderProps {
   onUploadingChange?: (uploading: boolean) => void;
 }
 
-type QueueStatus = "preparing" | "compressing" | "uploading" | "done" | "error";
+type QueueStatus = "waiting" | "preparing" | "compressing" | "uploading" | "done" | "error";
 
 interface UploadResult {
   url: string;
@@ -42,6 +42,7 @@ interface QueueItem {
 }
 
 const STAGE_LABEL: Record<QueueStatus, string> = {
+  waiting: "Queued…",
   preparing: "Preparing image…",
   compressing: "Compressing…",
   uploading: "Uploading…",
@@ -115,6 +116,11 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const initialValueRef = useRef<Set<string>>(new Set(value));
+  const valueRef = useRef<string[]>(value);
+
+  useEffect(() => {
+    valueRef.current = value;
+  }, [value]);
 
   const anyInFlight = queue.some((q) => q.status !== "done" && q.status !== "error");
   useEffect(() => {
@@ -180,17 +186,32 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
         updateItem(id, { progress: percent })
       );
       updateItem(id, { status: "done", progress: 100, result });
-      onChange(multiple ? [...value, result.url] : [result.url]);
+      const nextValue = multiple ? [...valueRef.current, result.url] : [result.url];
+      valueRef.current = nextValue;
+      onChange(nextValue);
     } catch (err) {
       updateItem(id, { status: "error", error: err instanceof Error ? err.message : "Upload failed" });
     }
   };
 
-  const handleFiles = (files: FileList | null) => {
+  const handleFiles = async (files: FileList | null) => {
     if (!files || !files.length) return;
-    Array.from(files).forEach((file) => {
-      processFile(file).catch(() => {});
-    });
+    const fileList = Array.from(files);
+
+    const newItems: QueueItem[] = fileList.map((file) => ({
+      id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      file,
+      fileName: file.name,
+      status: "waiting" as QueueStatus,
+      progress: 0,
+      originalSize: file.size,
+    }));
+
+    setQueue((prev) => [...prev, ...newItems]);
+
+    for (const item of newItems) {
+      await processFile(item.file, item.id);
+    }
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -200,8 +221,10 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
   };
 
   const removeAt = async (index: number) => {
-    const url = value[index];
-    onChange(value.filter((_, i) => i !== index));
+    const url = valueRef.current[index];
+    const next = valueRef.current.filter((_, i) => i !== index);
+    valueRef.current = next;
+    onChange(next);
     if (url && !initialValueRef.current.has(url)) {
       try {
         await deleteUploadedImageAction(url);

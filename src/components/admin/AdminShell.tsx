@@ -133,6 +133,7 @@ export default function AdminShell({
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [assistantOpen, setAssistantOpen] = useState(false);
+  const [floatingAssistantVisible, setFloatingAssistantVisible] = useState(true);
 
   const preset = getAdminThemePreset(adminTheme);
   const colorScale = generateColorScale(preset.accentColor);
@@ -527,24 +528,44 @@ export default function AdminShell({
         </header>
 
         {/* Dashboard Main View Area */}
-        <main className="flex-1 p-4 md:p-6 overflow-y-auto overflow-x-hidden relative flex flex-col min-h-0 print:block print:p-0 print:overflow-visible">{children}</main>
+        <main className="flex-1 p-4 md:p-6 pb-28 md:pb-32 overflow-y-auto overflow-x-hidden relative flex flex-col min-h-0 print:block print:p-0 print:overflow-visible">{children}</main>
       </div>
 
       {/* Floating Action Button (Fixed Bottom-Right Position across every page) */}
-      {!assistantOpen && (
-        <button
-          type="button"
-          onClick={() => setAssistantOpen(true)}
-          aria-label="Open Store Assistant"
-          className="print:hidden fixed bottom-6 right-6 z-40 flex items-center gap-2.5 px-4 py-3 rounded-full bg-gradient-to-r from-primary-6000 to-indigo-600 hover:from-primary-700 hover:to-indigo-700 text-white font-extrabold text-xs shadow-xl shadow-primary-6000/30 hover:scale-105 active:scale-95 transition-all border border-white/20 group cursor-pointer"
-        >
-          <SparklesIcon className="w-4 h-4 text-amber-300 animate-pulse group-hover:rotate-12 transition-transform" />
-          <span className="tracking-tight font-extrabold">Store Assistant</span>
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-          </span>
-        </button>
+      {!assistantOpen && floatingAssistantVisible && (
+        <div className="print:hidden fixed bottom-6 right-6 z-40 flex items-center group">
+          <button
+            type="button"
+            onClick={() => setAssistantOpen(true)}
+            aria-label="Open Store Assistant"
+            className="flex items-center gap-2.5 pl-4 pr-2.5 py-2.5 rounded-full bg-gradient-to-r from-primary-6000 to-indigo-600 hover:from-primary-700 hover:to-indigo-700 text-white font-extrabold text-xs shadow-xl shadow-primary-6000/30 hover:scale-[1.02] active:scale-95 transition-all border border-white/20 cursor-pointer"
+          >
+            <SparklesIcon className="w-4 h-4 text-amber-300 animate-pulse group-hover:rotate-12 transition-transform" />
+            <span className="tracking-tight font-extrabold">Store Assistant</span>
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <span
+              role="button"
+              tabIndex={0}
+              onClick={(e) => {
+                e.stopPropagation();
+                setFloatingAssistantVisible(false);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.stopPropagation();
+                  setFloatingAssistantVisible(false);
+                }
+              }}
+              title="Hide floating button (available anytime in top bar and sidebar)"
+              className="ml-1 p-1 rounded-full hover:bg-white/20 text-white/70 hover:text-white transition-colors cursor-pointer"
+            >
+              <XMarkIcon className="w-3.5 h-3.5" />
+            </span>
+          </button>
+        </div>
       )}
 
       {/* Store Assistant Slide-Over Drawer */}

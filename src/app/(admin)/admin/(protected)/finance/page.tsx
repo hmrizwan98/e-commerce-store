@@ -155,7 +155,7 @@ export default async function AdminFinancePage({
         </div>
 
         {(nextHref || prevHref) && (
-          <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-200/60 dark:border-slate-800/60">
+          <div className="flex items-center justify-end gap-2 pt-4 sm:pr-48 border-t border-slate-200/60 dark:border-slate-800/60">
             <Link
               href={prevHref ?? "#"}
               aria-disabled={!prevHref}

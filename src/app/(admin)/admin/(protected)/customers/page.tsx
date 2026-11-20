@@ -167,7 +167,7 @@ export default async function AdminCustomersPage({
       </div>
 
       {(nextHref || prevHref) && (
-        <div className="flex items-center justify-end gap-2 px-5 py-3.5 rounded-2xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 shadow-lg text-xs font-medium">
+        <div className="flex items-center justify-end gap-2 px-5 py-3.5 sm:pr-48 rounded-2xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 shadow-lg text-xs font-medium">
           <Link
             href={prevHref ?? "#"}
             aria-disabled={!prevHref}
