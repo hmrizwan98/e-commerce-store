@@ -1,4 +1,5 @@
 import React from "react";
+import Link from "next/link";
 import Pagination from "@/shared/Pagination/Pagination";
 import SectionSliderCollections from "@/components/SectionSliderLargeProduct";
 import SectionPromo1 from "@/components/SectionPromo1";
@@ -71,9 +72,29 @@ const PageSearch = async ({ searchParams }: { searchParams: RawSearchParams }) =
             ))}
           </div>
           {!products.length && (
-            <p className="mt-10 text-center text-slate-500 dark:text-slate-400">
-              No products found.
-            </p>
+            <div className="p-12 sm:p-16 text-center bg-slate-50 dark:bg-slate-800/40 rounded-3xl border border-slate-200/80 dark:border-slate-800 mt-8 space-y-4">
+              <div className="w-16 h-16 mx-auto rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shadow-xs border border-indigo-100 dark:border-indigo-900/50">
+                <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-lg font-bold text-slate-800 dark:text-slate-200">
+                  {q ? `No products found for "${q}"` : "No products found"}
+                </p>
+                <p className="text-sm text-slate-400 mt-1 max-w-sm mx-auto">
+                  Try checking for spelling errors, using different keywords, or exploring our collection.
+                </p>
+              </div>
+              <div className="pt-2">
+                <Link
+                  href="/collection"
+                  className="inline-flex items-center px-5 py-2.5 rounded-full text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-700 transition-colors shadow-sm"
+                >
+                  Browse Entire Collection
+                </Link>
+              </div>
+            </div>
           )}
 
           {/* PAGINATION */}

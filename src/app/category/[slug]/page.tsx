@@ -1,5 +1,6 @@
 import React from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Pagination from "@/shared/Pagination/Pagination";
@@ -90,9 +91,29 @@ const PageCategory = async ({
               ))}
             </div>
             {!products.length && (
-              <p className="mt-10 text-center text-slate-500 dark:text-slate-400">
-                No products in this category yet.
-              </p>
+              <div className="p-12 sm:p-16 text-center bg-slate-50 dark:bg-slate-800/40 rounded-3xl border border-slate-200/80 dark:border-slate-800 mt-6 space-y-4">
+                <div className="w-16 h-16 mx-auto rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shadow-xs border border-indigo-100 dark:border-indigo-900/50">
+                  <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-lg font-bold text-slate-800 dark:text-slate-200">
+                    No products in this category yet
+                  </p>
+                  <p className="text-sm text-slate-400 mt-1 max-w-sm mx-auto">
+                    New items are added regularly. Browse our entire collection in the meantime.
+                  </p>
+                </div>
+                <div className="pt-2">
+                  <Link
+                    href="/collection"
+                    className="inline-flex items-center px-5 py-2.5 rounded-full text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-700 transition-colors shadow-sm"
+                  >
+                    Browse Entire Collection
+                  </Link>
+                </div>
+              </div>
             )}
 
             <div className="flex flex-col mt-12 lg:mt-16 space-y-5 sm:space-y-0 sm:space-x-3 sm:flex-row sm:justify-between sm:items-center">

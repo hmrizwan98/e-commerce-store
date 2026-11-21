@@ -171,6 +171,7 @@ export async function getProductsByIds(ids: string[], limit = 8): Promise<Produc
 
 export interface SearchProductsParams {
   category?: string; // category display name - resolved to a categoryId below
+  categories?: string[]; // multiple category names or IDs
   categoryId?: string; // use directly when the caller already has the id (skips the name lookup)
   brand?: string; // brandId
   color?: string[];
@@ -221,16 +222,30 @@ export async function searchProducts(
       .where("status", "==", "active")
       .where("isDeleted", "==", false);
 
-    let categoryId: string | undefined = params.categoryId;
-    if (!categoryId && params.category) {
-      const categories = await getCategories();
-      const match = categories.find(
-        (c) => c.name.toLowerCase() === params.category!.toLowerCase()
-      );
-      if (!match) {
+    // Resolve category or multiple categories
+    const categoryNames = params.categories?.length
+      ? params.categories
+      : params.category
+      ? [params.category]
+      : [];
+
+    const targetCategoryIds: string[] = [];
+    if (params.categoryId) {
+      targetCategoryIds.push(params.categoryId);
+    }
+    if (categoryNames.length > 0) {
+      const allCats = await getCategories();
+      for (const name of categoryNames) {
+        const match = allCats.find(
+          (c) => c.name.toLowerCase() === name.toLowerCase() || c.id === name || c.slug === name
+        );
+        if (match && !targetCategoryIds.includes(match.id)) {
+          targetCategoryIds.push(match.id);
+        }
+      }
+      if (targetCategoryIds.length === 0) {
         return { products: [], total: 0, totalPages: 1 };
       }
-      categoryId = match.id;
     }
 
     const colorValues = params.color?.length ? params.color.map((c) => c.toLowerCase()).slice(0, 10) : undefined;
@@ -241,8 +256,12 @@ export async function searchProducts(
     let inMemoryColor: string[] | undefined;
     let inMemorySize: string[] | undefined;
 
-    if (categoryId) {
-      query = query.where("categoryIds", "array-contains", categoryId);
+    if (targetCategoryIds.length === 1) {
+      query = query.where("categoryIds", "array-contains", targetCategoryIds[0]);
+      inMemoryColor = colorValues;
+      inMemorySize = sizeValues;
+    } else if (targetCategoryIds.length > 1) {
+      query = query.where("categoryIds", "array-contains-any", targetCategoryIds.slice(0, 10));
       inMemoryColor = colorValues;
       inMemorySize = sizeValues;
     } else if (colorValues) {
@@ -257,12 +276,6 @@ export async function searchProducts(
     }
 
     if (params.inStock) {
-      // NOTE: this is itself a range filter on `stock` - combining inStock with
-      // a price range simultaneously would ask Firestore for two different
-      // inequality fields in one query, which it rejects. Not reachable today
-      // (no UI sets both at once yet); if inStock gets its own filter control,
-      // pick one field as the "true" range filter and refine the other in
-      // memory, same as minRating below.
       query = query.where("stock", ">", 0);
     }
 
@@ -283,42 +296,130 @@ export async function searchProducts(
         case "price-desc":
           query = query.orderBy("price", "desc");
           break;
-        case "newest":
-          query = query.orderBy("createdAt", "desc");
-          break;
         case "rating":
           query = query.orderBy("rating", "desc");
           break;
+        case "newest":
         default:
-          query = query.orderBy("isFeatured", "desc").orderBy("order", "asc");
+          query = query.orderBy("createdAt", "desc");
       }
     }
 
     return safeQuery("searchProducts", { products: [], total: 0, totalPages: 1 }, async () => {
-      const countSnap = await query.count().get();
-      const total = countSnap.data().count;
-      const totalPages = Math.max(1, Math.ceil(total / pageSize));
+      try {
+        const countSnap = await query.count().get();
+        const total = countSnap.data().count;
+        const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
-      const snap = await query
-        .offset((safePage - 1) * pageSize)
-        .limit(pageSize)
-        .get();
+        const snap = await query
+          .offset((safePage - 1) * pageSize)
+          .limit(pageSize)
+          .get();
 
-      let products = snap.docs
-        .map((doc) => docData<Product>(doc))
-        .filter((p): p is Product => p !== null);
+        let products = snap.docs
+          .map((doc) => docData<Product>(doc))
+          .filter((p): p is Product => p !== null);
 
-      if (inMemoryColor) {
-        products = products.filter((p) => p.colorFacets?.some((c) => inMemoryColor!.includes(c.toLowerCase())));
+        if (inMemoryColor) {
+          products = products.filter((p) => p.colorFacets?.some((c) => inMemoryColor!.includes(c.toLowerCase())));
+        }
+        if (inMemorySize) {
+          products = products.filter((p) => p.sizeFacets?.some((s) => inMemorySize!.includes(s.toLowerCase())));
+        }
+        if (params.minRating != null) {
+          products = products.filter((p) => (p.rating ?? 0) >= params.minRating!);
+        }
+
+        // Float featured products to top when default or featured sort is requested
+        if (!params.sort || params.sort === "featured") {
+          products.sort((a, b) => {
+            if (Boolean(b.isFeatured) !== Boolean(a.isFeatured)) {
+              return b.isFeatured ? 1 : -1;
+            }
+            return 0;
+          });
+        }
+
+        return { products, total, totalPages };
+      } catch (err) {
+        console.warn("[searchProducts] indexed query failed, falling back to resilient in-memory query:", err);
+        // Resilient fallback: uses only basic single-field filters which never require composite indexes
+        let fallbackQuery = col
+          .where("status", "==", "active")
+          .where("isDeleted", "==", false);
+
+        if (targetCategoryIds.length === 1) {
+          fallbackQuery = fallbackQuery.where("categoryIds", "array-contains", targetCategoryIds[0]);
+        } else if (targetCategoryIds.length > 1) {
+          fallbackQuery = fallbackQuery.where("categoryIds", "array-contains-any", targetCategoryIds.slice(0, 10));
+        }
+
+        const fallbackSnap = await fallbackQuery.limit(500).get();
+        let allProducts = fallbackSnap.docs
+          .map((doc) => docData<Product>(doc))
+          .filter((p): p is Product => p !== null);
+
+        if (params.brand) {
+          allProducts = allProducts.filter((p) => p.brandId === params.brand);
+        }
+        if (params.inStock) {
+          allProducts = allProducts.filter((p) => (p.stock ?? 0) > 0);
+        }
+        if (params.sale) {
+          allProducts = allProducts.filter((p) => p.badge === "sale" || p.isOnSale === true);
+        }
+        if (params.minPrice != null) {
+          allProducts = allProducts.filter((p) => p.price >= params.minPrice!);
+        }
+        if (params.maxPrice != null) {
+          allProducts = allProducts.filter((p) => p.price <= params.maxPrice!);
+        }
+        if (colorValues?.length) {
+          allProducts = allProducts.filter((p) => p.colorFacets?.some((c) => colorValues.includes(c.toLowerCase())));
+        }
+        if (sizeValues?.length) {
+          allProducts = allProducts.filter((p) => p.sizeFacets?.some((s) => sizeValues.includes(s.toLowerCase())));
+        }
+        if (params.minRating != null) {
+          allProducts = allProducts.filter((p) => (p.rating ?? 0) >= params.minRating!);
+        }
+
+        const getTimestampMillis = (val: any): number => {
+          if (!val) return 0;
+          if (typeof val === "number") return val;
+          if (typeof val.toMillis === "function") return val.toMillis();
+          if (typeof val._seconds === "number") return val._seconds * 1000;
+          return 0;
+        };
+
+        switch (params.sort) {
+          case "price-asc":
+            allProducts.sort((a, b) => a.price - b.price);
+            break;
+          case "price-desc":
+            allProducts.sort((a, b) => b.price - a.price);
+            break;
+          case "rating":
+            allProducts.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
+            break;
+          case "newest":
+            allProducts.sort((a, b) => getTimestampMillis(b.createdAt) - getTimestampMillis(a.createdAt));
+            break;
+          default:
+            allProducts.sort((a, b) => {
+              if (Boolean(b.isFeatured) !== Boolean(a.isFeatured)) {
+                return b.isFeatured ? 1 : -1;
+              }
+              return getTimestampMillis(b.createdAt) - getTimestampMillis(a.createdAt);
+            });
+        }
+
+        const total = allProducts.length;
+        const totalPages = Math.max(1, Math.ceil(total / pageSize));
+        const paginated = allProducts.slice((safePage - 1) * pageSize, safePage * pageSize);
+
+        return { products: paginated, total, totalPages };
       }
-      if (inMemorySize) {
-        products = products.filter((p) => p.sizeFacets?.some((s) => inMemorySize!.includes(s.toLowerCase())));
-      }
-      if (params.minRating != null) {
-        products = products.filter((p) => (p.rating ?? 0) >= params.minRating!);
-      }
-
-      return { products, total, totalPages };
     });
   });
 }

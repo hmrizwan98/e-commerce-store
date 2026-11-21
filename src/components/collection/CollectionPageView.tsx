@@ -1,4 +1,5 @@
 import React from "react";
+import Link from "next/link";
 import Pagination from "@/shared/Pagination/Pagination";
 import SectionSliderCollections from "@/components/SectionSliderLargeProduct";
 import SectionPromo1 from "@/components/SectionPromo1";
@@ -73,18 +74,29 @@ export default async function CollectionPageView({
         <div className="space-y-8 lg:space-y-12">
           {/* COLLECTION HERO BANNER */}
           {showHero && (
-            <div className={`relative overflow-hidden rounded-3xl bg-slate-900 text-white ${heroHeightClass} px-6 sm:px-12 shadow-lg`}>
+            <div className={`relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-indigo-950/80 to-slate-900 text-white ${heroHeightClass} px-6 sm:px-12 shadow-xl border border-slate-800`}>
+              {/* Subtle ambient mesh glow */}
+              <div className="absolute -top-24 -right-24 w-96 h-96 bg-indigo-500/15 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-primary-500/10 rounded-full blur-3xl pointer-events-none" />
+
               {heroImage && (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={heroImage} alt={heroTitle} className="absolute inset-0 w-full h-full object-cover opacity-45" />
+                <img src={heroImage} alt={heroTitle} className="absolute inset-0 w-full h-full object-cover opacity-35" />
               )}
               <div className="relative z-10 max-w-screen-md space-y-3">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-indigo-200 border border-white/10 backdrop-blur-md">
+                  ✨ Catalog Collection
+                </span>
                 <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight drop-shadow-xs">
                   {heroTitle}
                 </h1>
-                {heroSubtitle && (
+                {heroSubtitle ? (
                   <p className="text-sm sm:text-base text-slate-200 font-medium leading-relaxed max-w-xl drop-shadow-xs">
                     {heroSubtitle}
+                  </p>
+                ) : (
+                  <p className="text-sm sm:text-base text-slate-300/90 font-normal leading-relaxed max-w-xl">
+                    Discover and shop from our complete catalog of quality products.
                   </p>
                 )}
               </div>
@@ -105,17 +117,49 @@ export default async function CollectionPageView({
 
                 {/* Right Product Grid */}
                 <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between pb-4 mb-6 border-b border-slate-100 dark:border-slate-800 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+                    <span className="font-medium">
+                      Showing <strong className="text-slate-900 dark:text-white font-semibold">{products.length}</strong> {products.length === 1 ? "product" : "products"}
+                    </span>
+                    {Object.keys(searchParams).some((k) => k !== "page" && searchParams[k]) && (
+                      <Link
+                        href={basePath as any}
+                        className="font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
+                      >
+                        Reset filters ✕
+                      </Link>
+                    )}
+                  </div>
+
                   <div className={`grid ${gridColsClass} ${GRID_GAP_SIDEBAR}`}>
                     {products.map((item) => (
                       <ThemeProductCardAdapter data={item} productCardSettings={theme.productCard} key={item.id} />
                     ))}
                   </div>
+
                   {!products.length && (
-                    <div className="p-12 text-center bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-200/60 dark:border-slate-800 mt-6">
-                      <p className="text-base font-semibold text-slate-700 dark:text-slate-300">
-                        No products match these filters.
-                      </p>
-                      <p className="text-xs text-slate-400 mt-1">Try resetting your filter selections.</p>
+                    <div className="p-12 sm:p-16 text-center bg-slate-50 dark:bg-slate-800/40 rounded-3xl border border-slate-200/80 dark:border-slate-800 mt-4 space-y-4">
+                      <div className="w-16 h-16 mx-auto rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shadow-xs border border-indigo-100 dark:border-indigo-900/50">
+                        <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-lg font-bold text-slate-800 dark:text-slate-200">
+                          No products match these filters
+                        </p>
+                        <p className="text-sm text-slate-400 mt-1 max-w-sm mx-auto">
+                          Try adjusting or resetting your filter criteria to discover more products.
+                        </p>
+                      </div>
+                      <div>
+                        <Link
+                          href={basePath as any}
+                          className="inline-flex items-center px-5 py-2.5 rounded-full text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-700 transition-colors shadow-sm"
+                        >
+                          Reset All Filters
+                        </Link>
+                      </div>
                     </div>
                   )}
 
@@ -139,9 +183,29 @@ export default async function CollectionPageView({
                   ))}
                 </div>
                 {!products.length && (
-                  <p className="mt-10 text-center text-slate-500 dark:text-slate-400">
-                    No products match these filters.
-                  </p>
+                  <div className="p-12 sm:p-16 text-center bg-slate-50 dark:bg-slate-800/40 rounded-3xl border border-slate-200/80 dark:border-slate-800 mt-6 space-y-4">
+                    <div className="w-16 h-16 mx-auto rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shadow-xs border border-indigo-100 dark:border-indigo-900/50">
+                      <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-lg font-bold text-slate-800 dark:text-slate-200">
+                        No products match these filters
+                      </p>
+                      <p className="text-sm text-slate-400 mt-1 max-w-sm mx-auto">
+                        Try resetting your filter selections to browse our full catalog.
+                      </p>
+                    </div>
+                    <div>
+                      <Link
+                        href={basePath as any}
+                        className="inline-flex items-center px-5 py-2.5 rounded-full text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-700 transition-colors shadow-sm"
+                      >
+                        Reset All Filters
+                      </Link>
+                    </div>
+                  </div>
                 )}
                 <div className="flex flex-col mt-12 lg:mt-16 space-y-5 sm:space-y-0 sm:space-x-3 sm:flex-row sm:justify-between sm:items-center">
                   <Pagination

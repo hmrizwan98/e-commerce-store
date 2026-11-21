@@ -657,12 +657,22 @@ const TabFilters = ({ categories = [], showSorting = true, colors = [], sizes = 
 
   // OK
   const renderTabsPriceRage = () => {
+    const isPriceActive =
+      rangePrices[0] !== PRICE_RANGE[0] || rangePrices[1] !== PRICE_RANGE[1];
+
     return (
       <Popover className="relative">
         {({ open, close }) => (
           <>
             <Popover.Button
-              className={`flex items-center justify-center px-4 py-2 text-sm rounded-full border border-primary-500 bg-primary-50 text-primary-900 focus:outline-none `}
+              className={`flex items-center justify-center px-4 py-2 text-sm rounded-full border focus:outline-none select-none
+              ${open ? "!border-primary-500 " : ""}
+                ${
+                  isPriceActive
+                    ? "!border-primary-500 bg-primary-50 text-primary-900"
+                    : "border-neutral-300 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 hover:border-neutral-400 dark:hover:border-neutral-500"
+                }
+                `}
             >
               <svg
                 className="w-4 h-4"
@@ -693,11 +703,17 @@ const TabFilters = ({ categories = [], showSorting = true, colors = [], sizes = 
                 />
               </svg>
 
-              <span className="ml-2 min-w-[90px]">{`${formatMoney(rangePrices[0])} - ${formatMoney(rangePrices[1])}`}</span>
-              {rangePrices[0] === PRICE_RANGE[0] &&
-              rangePrices[1] === PRICE_RANGE[1] ? null : (
+              <span className="ml-2 min-w-[60px]">
+                {isPriceActive
+                  ? `${formatMoney(rangePrices[0])} - ${formatMoney(rangePrices[1])}`
+                  : `Price (${formatMoney(PRICE_RANGE[0])} - ${formatMoney(PRICE_RANGE[1])})`}
+              </span>
+              {!isPriceActive ? (
+                <ChevronDownIcon className="w-4 h-4 ml-2" />
+              ) : (
                 <span
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
                     setRangePrices(PRICE_RANGE);
                     applyFilters({ minPrice: undefined, maxPrice: undefined });
                   }}

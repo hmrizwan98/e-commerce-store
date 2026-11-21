@@ -124,6 +124,7 @@ function revalidateStorefront(slug?: string) {
   revalidatePath("/collection");
   revalidatePath("/collection-2");
   revalidatePath("/search");
+  revalidatePath("/category/[slug]", "page");
   if (slug) revalidatePath(`/product/${slug}`);
 }
 

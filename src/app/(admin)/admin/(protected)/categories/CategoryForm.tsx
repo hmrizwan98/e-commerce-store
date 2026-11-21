@@ -8,10 +8,24 @@ import { createCategory, updateCategory, type CategoryFormInput } from "./action
 import { slugify } from "@/lib/utils/slugify";
 import type { Category } from "@/types/category";
 
-const CategoryForm: React.FC<{ mode: "create" | "edit"; category?: Category; allCategories: Category[] }> = ({
+export interface CategoryProductOption {
+  id: string;
+  name: string;
+  categoryIds?: string[];
+  price?: number;
+  images?: string[];
+}
+
+const CategoryForm: React.FC<{
+  mode: "create" | "edit";
+  category?: Category;
+  allCategories: Category[];
+  products?: CategoryProductOption[];
+}> = ({
   mode,
   category,
   allCategories,
+  products = [],
 }) => {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
@@ -31,6 +45,33 @@ const CategoryForm: React.FC<{ mode: "create" | "edit"; category?: Category; all
   const [seoTitle, setSeoTitle] = useState(category?.seoTitle ?? "");
   const [seoDescription, setSeoDescription] = useState(category?.seoDescription ?? "");
   const [imageUploading, setImageUploading] = useState(false);
+
+  // Product assignment
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>(() => {
+    if (!category?.id) return [];
+    return products.filter((p) => p.categoryIds?.includes(category.id)).map((p) => p.id);
+  });
+  const [productSearch, setProductSearch] = useState("");
+
+  const filteredProducts = products.filter((p) =>
+    p.name.toLowerCase().includes(productSearch.toLowerCase().trim())
+  );
+
+  const toggleProduct = (id: string) => {
+    setSelectedProductIds((prev) =>
+      prev.includes(id) ? prev.filter((pId) => pId !== id) : [...prev, id]
+    );
+  };
+
+  const selectAllFiltered = () => {
+    const idsToAdd = filteredProducts.map((p) => p.id);
+    setSelectedProductIds((prev) => Array.from(new Set([...prev, ...idsToAdd])));
+  };
+
+  const deselectAllFiltered = () => {
+    const idsToRemove = new Set(filteredProducts.map((p) => p.id));
+    setSelectedProductIds((prev) => prev.filter((id) => !idsToRemove.has(id)));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,6 +93,7 @@ const CategoryForm: React.FC<{ mode: "create" | "edit"; category?: Category; all
       showOnHomepage,
       seoTitle: seoTitle.trim() || undefined,
       seoDescription: seoDescription.trim() || undefined,
+      productIds: selectedProductIds,
     };
     setSubmitting(true);
     try {
@@ -151,6 +193,89 @@ const CategoryForm: React.FC<{ mode: "create" | "edit"; category?: Category; all
           <input type="checkbox" checked={showOnHomepage} onChange={(e) => setShowOnHomepage(e.target.checked)} />
           Show on homepage
         </label>
+      </div>
+
+      <div className={cardClass}>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-neutral-100 dark:border-neutral-800">
+          <div>
+            <h3 className="font-semibold text-slate-900 dark:text-white">Assign Products</h3>
+            <p className="text-xs text-neutral-500">
+              Select products to include in this category ({selectedProductIds.length} selected).
+            </p>
+          </div>
+          {products.length > 0 && (
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={selectAllFiltered}
+                className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
+              >
+                Select all
+              </button>
+              <span className="text-neutral-300 dark:text-neutral-700">|</span>
+              <button
+                type="button"
+                onClick={deselectAllFiltered}
+                className="text-xs font-semibold text-neutral-500 hover:underline"
+              >
+                Clear
+              </button>
+            </div>
+          )}
+        </div>
+
+        {products.length > 0 ? (
+          <div className="space-y-3">
+            <input
+              type="text"
+              placeholder="Search products to assign..."
+              value={productSearch}
+              onChange={(e) => setProductSearch(e.target.value)}
+              className={inputClass}
+            />
+            <div className="max-h-64 overflow-y-auto space-y-1.5 pr-1 divide-y divide-neutral-100 dark:divide-neutral-800">
+              {filteredProducts.map((p) => {
+                const isChecked = selectedProductIds.includes(p.id);
+                return (
+                  <label
+                    key={p.id}
+                    className={`flex items-center gap-3 pt-2 pb-1.5 px-2 rounded-lg cursor-pointer transition-colors ${
+                      isChecked ? "bg-indigo-50/60 dark:bg-indigo-950/30" : "hover:bg-neutral-50 dark:hover:bg-neutral-800/40"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={() => toggleProduct(p.id)}
+                      className="rounded border-neutral-300 text-indigo-600 focus:ring-indigo-500"
+                    />
+                    {p.images?.[0] ? (
+                      <div className="w-9 h-9 rounded-md bg-slate-100 dark:bg-slate-800 overflow-hidden shrink-0 relative">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={p.images[0]} alt="" className="w-full h-full object-cover" />
+                      </div>
+                    ) : (
+                      <div className="w-9 h-9 rounded-md bg-slate-100 dark:bg-slate-800 shrink-0 flex items-center justify-center text-xs text-slate-400">
+                        📦
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">{p.name}</p>
+                      {p.price !== undefined && (
+                        <p className="text-xs text-neutral-400">Rs. {p.price.toLocaleString()}</p>
+                      )}
+                    </div>
+                  </label>
+                );
+              })}
+              {filteredProducts.length === 0 && (
+                <p className="text-xs text-neutral-400 py-4 text-center">No products match your search.</p>
+              )}
+            </div>
+          </div>
+        ) : (
+          <p className="text-xs text-neutral-400 py-2">No products available in the store yet.</p>
+        )}
       </div>
 
       <div className={cardClass}>

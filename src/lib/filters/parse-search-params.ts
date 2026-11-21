@@ -26,9 +26,11 @@ export function parseProductSearchParams(
   const minPriceRaw = getOne(searchParams, "minPrice");
   const maxPriceRaw = getOne(searchParams, "maxPrice");
   const pageRaw = getOne(searchParams, "page");
+  const categories = getAll(searchParams, "category");
 
   return {
-    category: getOne(searchParams, "category"),
+    category: categories[0],
+    categories: categories.length > 0 ? categories : undefined,
     color: getAll(searchParams, "color"),
     size: getAll(searchParams, "size"),
     sale: getOne(searchParams, "sale") === "true",
